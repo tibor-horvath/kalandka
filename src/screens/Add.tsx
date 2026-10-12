@@ -1,0 +1,272 @@
+import { useEffect, useRef, useState } from 'react';
+import { Basket, Bee, Bouquet, RoundFlower, Sprout, Tree } from '../components/art';
+import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import {
+  ADD_LEVELS,
+  LEVEL_UP_STREAK,
+  BOX_W,
+  LEFT_X,
+  SCENE_H,
+  SCENE_W,
+  afterTask,
+  chooseOffer,
+  buildAddRound,
+  questionFeedback,
+  rightFeedback,
+  runningTotal,
+  tourFeedback,
+  tourOrder,
+  type AddItem,
+  type Offer
+} from '../games/add/logic';
+import { numberCount } from '../lib/numbers';
+import { speak } from '../lib/speech';
+import { useProgress } from '../state/progress';
+
+type Phase = 'ask' | 'tour' | 'solved';
+
+function StarIcon({ on }: { on: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" className={on ? 'star is-on' : 'star'}>
+      <path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6-4.9-4.6 6.6-.8z" />
+    </svg>
+  );
+}
+
+const HOME = { x: SCENE_W / 2, y: 40 };
+const BASKET = { x: LEFT_X + BOX_W / 2, y: SCENE_H / 2 + 10 };
+const TOUR_STEP_MS = 850;
+
+/** Méhecske: a + b = ? Tap flowers or bouquets and the bee counts them; pick the total. */
+export function Add({ onBack }: { onBack: () => void }) {
+  const { progress, update } = useProgress();
+  const [round] = useState(() => buildAddRound(progress.addRound, progress.addLevel));
+  const countingOn = round.level.strategy === 'on';
+  const [phase, setPhase] = useState<Phase>('ask');
+  const [visited, setVisited] = useState<AddItem[]>([]);
+  const [bee, setBee] = useState(HOME);
+  const [wrong, setWrong] = useState<number | null>(null);
+  /** Csepi's suggestion after this task: harder, easier, or nothing. */
+  const [offer, setOffer] = useState<Offer>(null);
+  const rewarded = useRef(false);
+  /** This task needed help (a wrong pick happened). */
+  const missed = useRef(false);
+  const tour = useRef<number | null>(null);
+
+  const fb = phase === 'solved' ? rightFeedback(round, offer) : phase === 'tour' ? tourFeedback(round) : questionFeedback(round);
+  const hasBouquets = round.items.some((i) => i.kind === 'ten');
+
+  useEffect(() => {
+    speak(questionFeedback(round).speech);
+    return () => {
+      if (tour.current !== null) window.clearInterval(tour.current);
+    };
+  }, [round]);
+
+  const stopTour = () => {
+    if (tour.current !== null) window.clearInterval(tour.current);
+    tour.current = null;
+  };
+
+  const flyTo = (item: AddItem) => setBee({ x: item.x, y: item.y - (item.kind === 'ten' ? 60 : 46) });
+
+  const visit = (item: AddItem) => {
+    if (phase === 'solved') return;
+    stopTour();
+    flyTo(item);
+    if (visited.some((v) => v.id === item.id)) return;
+    const next = [...visited, item];
+    setVisited(next);
+    speak(numberCount(runningTotal(round, next)));
+  };
+
+  const tapBasket = () => {
+    if (phase === 'solved') return;
+    setBee({ x: BASKET.x, y: BASKET.y - 90 });
+    speak(`A kosárban ${numberCount(round.a)}.`);
+  };
+
+  /** After a wrong pick the bee tours everything on its own: tens first, then ones, counting aloud. */
+  const startTour = () => {
+    stopTour();
+    setPhase('tour');
+    setVisited([]);
+    speak(tourFeedback(round).speech);
+    if (countingOn) setBee({ x: BASKET.x, y: BASKET.y - 90 });
+    const order = tourOrder(round);
+    let i = 0;
+    tour.current = window.setInterval(() => {
+      const item = order[i];
+      if (!item) {
+        stopTour();
+        return;
+      }
+      i++;
+      flyTo(item);
+      const seen = order.slice(0, i);
+      setVisited(seen);
+      speak(numberCount(runningTotal(round, seen)), { queue: true });
+    }, TOUR_STEP_MS);
+  };
+
+  const answer = (n: number) => {
+    if (phase === 'solved') return;
+    if (n === round.sum) {
+      stopTour();
+      setPhase('solved');
+      setWrong(null);
+      setBee(HOME);
+      const step = afterTask({ level: progress.addLevel, streak: progress.addStreak, misses: progress.addMisses }, !missed.current);
+      setOffer(step.offer);
+      speak(rightFeedback(round, step.offer).speech);
+      if (!rewarded.current) {
+        rewarded.current = true;
+        update((p) => ({ ...p, seeds: p.seeds + 1, addSolved: p.addSolved + 1, addStreak: step.streak, addMisses: step.misses }));
+      }
+    } else {
+      setWrong(n);
+      missed.current = true;
+      // The stars empty at once; the level itself only changes if the child chooses so later.
+      update((p) => ({ ...p, addStreak: 0 }));
+      startTour();
+    }
+  };
+
+  // App keys this screen by round, so the next sum remounts with fresh state.
+  const next = () => update((p) => ({ ...p, addRound: p.addRound + 1 }));
+
+  /** The child's answer to Csepi's offer, then the next sum. */
+  const choose = (accept: boolean) => {
+    if (!offer) return;
+    update((p) => {
+      const s = chooseOffer({ level: p.addLevel, streak: p.addStreak, misses: p.addMisses }, offer, accept);
+      return { ...p, addLevel: s.level, addStreak: s.streak, addMisses: s.misses, addRound: p.addRound + 1 };
+    });
+  };
+
+  const isVisited = (id: string) => visited.some((v) => v.id === id);
+
+  return (
+    <div className="screen screen--add">
+      <div className="meadow" aria-hidden="true" />
+
+      <header className="topbar">
+        <RoundButton label="Vissza a kertbe" onClick={onBack}>
+          <BackIcon />
+        </RoundButton>
+        <div className="equation" aria-label={`${round.a} meg ${round.b}, mennyi?`}>
+          <span className="equation__a">{round.a}</span>
+          <span>+</span>
+          <span className="equation__b">{round.b}</span>
+          <span>=</span>
+          <span className={`equation__sum${phase === 'solved' ? ' is-solved' : ''}`}>{phase === 'solved' ? round.sum : '?'}</span>
+        </div>
+        <div className="topbar__right">
+          <div
+            className="level-pill"
+            aria-label={`${progress.addLevel + 1}. szint: ${ADD_LEVELS[progress.addLevel]?.name ?? ''}. ${progress.addStreak} csillag az ötből a következő szintig.`}
+          >
+            <span className="level-pill__num">{progress.addLevel + 1}. szint</span>
+            <span className="level-pill__stars" aria-hidden="true">
+              {Array.from({ length: LEVEL_UP_STREAK }, (_, i) => (
+                <StarIcon key={i} on={i < progress.addStreak} />
+              ))}
+            </span>
+          </div>
+          <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
+            <SpeakerIcon />
+          </RoundButton>
+        </div>
+      </header>
+
+      <div className="add-scene" style={{ width: SCENE_W, height: SCENE_H }}>
+        <div className="add-scene__bed" style={{ left: LEFT_X, width: BOX_W }} />
+        <div className="add-scene__bed" style={{ right: 0, width: BOX_W }} />
+        <div className="add-scene__plus" aria-hidden="true">+</div>
+
+        {countingOn && (
+          <button type="button" className="basket" style={{ left: BASKET.x, top: BASKET.y }} onClick={tapBasket} aria-label={`Kosár, benne ${round.a} virág`}>
+            <Basket petal={round.petalA} count={round.a} />
+            <span className="basket__label">{round.a}</span>
+          </button>
+        )}
+
+        {round.items.map((item) => {
+          const petal = item.group === 'a' ? round.petalA : round.petalB;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              className={`add-flower add-flower--${item.kind}${isVisited(item.id) ? ' is-visited' : ''}${phase === 'solved' ? ' is-happy' : ''}`}
+              style={{ left: item.x, top: item.y }}
+              onClick={() => visit(item)}
+              aria-label={item.kind === 'ten' ? 'Csokor: tíz virág' : isVisited(item.id) ? 'Megszámolt virág' : 'Virág – koppints rá, és a méhecske megszámolja'}
+            >
+              {item.kind === 'ten' ? <Bouquet petal={petal} width={56} /> : <RoundFlower petal={petal} width={round.level.bundles ? 54 : 64} />}
+            </button>
+          );
+        })}
+
+        <span className="bee" style={{ left: bee.x, top: bee.y }} aria-hidden="true">
+          <Bee width={70} />
+        </span>
+      </div>
+
+      {hasBouquets && (
+        <div className="legend" aria-label="Egy csokorban tíz virág van">
+          <Bouquet petal="#FFFFFF" width={26} /> = 10 virág
+        </div>
+      )}
+
+      <div className="add-guide">
+        <GuideBubble mood={fb.mood} tone={fb.tone}>
+          {fb.text}
+        </GuideBubble>
+      </div>
+
+      {phase === 'solved' && offer ? (
+        <div className="choices choices--add offer" role="group" aria-label="Válassz">
+          {offer === 'up' ? (
+            <>
+              <button type="button" className="offer__btn" onClick={() => choose(false)}>
+                <RoundFlower petal={round.petalB} width={72} />
+                <span>Maradok még</span>
+              </button>
+              <button type="button" className="offer__btn offer__btn--go" onClick={() => choose(true)}>
+                <Tree />
+                <span>Nehezebbet!</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" className="offer__btn offer__btn--go" onClick={() => choose(true)}>
+                <Sprout />
+                <span>Könnyebbet kérek</span>
+              </button>
+              <button type="button" className="offer__btn" onClick={() => choose(false)}>
+                <RoundFlower petal={round.petalB} width={72} />
+                <span>Maradok</span>
+              </button>
+            </>
+          )}
+        </div>
+      ) : (
+      <div className="choices choices--add">
+        {round.choices.map((n) => {
+          const state = phase === 'solved' && n === round.sum ? ' is-right' : wrong === n && phase === 'tour' ? ' is-wrong' : '';
+          return (
+            <button key={n} type="button" className={`choice choice--number choice--short${state}`} onClick={() => answer(n)} aria-label={`${n}`}>
+              <span className="choice__numeral">{n}</span>
+            </button>
+          );
+        })}
+        {phase === 'solved' && (
+          <button type="button" className="big-btn" onClick={next}>
+            Új feladat <NextIcon />
+          </button>
+        )}
+      </div>
+      )}
+    </div>
+  );
+}

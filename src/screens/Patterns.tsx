@@ -1,0 +1,103 @@
+import { useEffect, useRef, useState } from 'react';
+import { PatternFlower } from '../components/art';
+import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { CHOICES, FLOWER_LABELS, buildRound, hintFeedback, solvedFeedback, startFeedback, type FlowerKind } from '../games/patterns/logic';
+import { speak } from '../lib/speech';
+import { useProgress } from '../state/progress';
+
+export function Patterns({ onBack }: { onBack: () => void }) {
+  const { progress, update } = useProgress();
+  const roundNo = progress.patternRound;
+  const round = buildRound(roundNo);
+  const [picked, setPicked] = useState<FlowerKind | null>(null);
+  const [wrong, setWrong] = useState<FlowerKind | null>(null);
+  const [misses, setMisses] = useState(0);
+  const rewarded = useRef<number | null>(null);
+
+  const solved = picked === round.answer;
+  const fb = solved ? solvedFeedback() : wrong ? hintFeedback(round, misses) : startFeedback();
+
+  useEffect(() => {
+    setPicked(null);
+    setWrong(null);
+    setMisses(0);
+    speak(startFeedback().speech);
+  }, [roundNo]);
+
+  const pick = (kind: FlowerKind) => {
+    if (solved) return;
+    if (kind === round.answer) {
+      setPicked(kind);
+      setWrong(null);
+      speak(solvedFeedback().speech);
+      if (rewarded.current !== roundNo) {
+        rewarded.current = roundNo;
+        update((p) => ({ ...p, seeds: p.seeds + 1, patternsSolved: p.patternsSolved + 1 }));
+      }
+    } else {
+      const m = misses + 1;
+      setWrong(kind);
+      setMisses(m);
+      speak(hintFeedback(round, m).speech);
+    }
+  };
+
+  const next = () => update((p) => ({ ...p, patternRound: p.patternRound + 1 }));
+  const slots: (FlowerKind | null)[] = [...round.shown, solved ? round.answer : null];
+
+  return (
+    <div className="screen screen--patterns">
+      <div className="meadow" aria-hidden="true" />
+
+      <header className="topbar">
+        <RoundButton label="Vissza a kertbe" onClick={onBack}>
+          <BackIcon />
+        </RoundButton>
+        <h1 className="screen-title">Melyik virág jön ezután?</h1>
+        <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
+          <SpeakerIcon />
+        </RoundButton>
+      </header>
+
+      <div className="bed">
+        <div className="bed__row">
+          {slots.map((kind, i) => (
+            <div key={i} className="bed__slot">
+              {kind ? (
+                <span role="img" aria-label={FLOWER_LABELS[kind]} className={i === 5 ? 'pop-in' : undefined}>
+                  <PatternFlower kind={kind} />
+                </span>
+              ) : (
+                <div className="bed__question" aria-label="Kérdőjel: ide jön a következő virág">?</div>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="bed__soil" aria-hidden="true" />
+      </div>
+
+      <div className="patterns-guide">
+        <GuideBubble mood={fb.mood} tone={fb.tone}>
+          {fb.text}
+        </GuideBubble>
+      </div>
+
+      <div className="choices">
+        {CHOICES.map((kind) => {
+          const state = solved && kind === round.answer ? ' is-right' : wrong === kind && !solved ? ' is-wrong' : '';
+          return (
+            <button key={kind} type="button" className={`choice${state}`} onClick={() => pick(kind)} aria-label={`${FLOWER_LABELS[kind]} – ültesd el a kérdőjel helyére`}>
+              <PatternFlower kind={kind} width={90} />
+              <span>{FLOWER_LABELS[kind]}</span>
+            </button>
+          );
+        })}
+        {solved && (
+          <button type="button" className="big-btn" onClick={next}>
+            Új virágsor <NextIcon />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
