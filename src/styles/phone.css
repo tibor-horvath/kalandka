@@ -99,13 +99,28 @@
 
 /* Portrait home: one scrolling column; the hill is painted on the scrolling background so it moves with the cards. */
 .stage--portrait .screen--home {
+  --hill-y: calc(var(--safe-t) + 336px);
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
   background:
-    radial-gradient(ellipse 130% 100px at 50% calc(var(--safe-t) + 336px), var(--grass) 99%, transparent 100%) local,
-    linear-gradient(to bottom, transparent calc(var(--safe-t) + 336px), var(--grass) 0) local,
+    radial-gradient(ellipse 130% 100px at 50% var(--hill-y), var(--grass) 99%, transparent 100%) local,
+    linear-gradient(to bottom, transparent var(--hill-y), var(--grass) 0) local,
     var(--sky);
 }
+/*
+ * Portrait home topbar: seeds, map, sound and parents fill the row, so the brand drops its icon.
+ * With the child's figure as well the buttons get a row of their own under the title (and the hill moves down with them);
+ * the title then has its row to itself and keeps the icon.
+ */
+.stage--portrait .screen--home .topbar { flex-wrap: wrap; row-gap: 10px; }
+.stage--portrait .screen--home .brand > svg { display: none; }
+.stage--portrait .screen--home .topbar:has(.kid-chip) .brand > svg { display: block; }
+.stage--portrait .screen--home .brand__world { font-size: 22px; }
+.stage--portrait .screen--home .topbar__right { gap: 6px; margin-left: auto; }
+.stage--portrait .screen--home .topbar:has(.kid-chip) .topbar__right { width: 100%; }
+.stage--portrait .screen--home .topbar__right .kid-chip { margin-right: auto; }
+.stage--portrait .screen--home:has(.kid-chip) { --hill-y: calc(var(--safe-t) + 385px); }
 /* The bleed layers would add 1000 px of empty scrolling; the stage already fills the phone screen. */
 .stage--portrait .screen--home::before,
 .stage--portrait .screen--home .hill { display: none; }
