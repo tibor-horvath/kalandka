@@ -1,0 +1,15 @@
+# Squash-merged PR titles become commit messages; keep them Conventional Commits.
+name: PR title
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  title:
+    name: Conventional title
+    uses: tibor-horvath/ci-toolkit/.github/workflows/pr-title-lint.yml@v1
+    permissions:
+      pull-requests: read

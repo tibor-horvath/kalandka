@@ -1,0 +1,21 @@
+# Runtime dependency advisories. Weekly too, since advisories appear without any change here.
+name: Audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths: [package.json, package-lock.json]
+  schedule:
+    - cron: "0 6 * * 1" # Mondays
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  audit:
+    name: npm audit
+    uses: tibor-horvath/ci-toolkit/.github/workflows/node-audit.yml@v1
+    with:
+      node-version: "22.x"
+    permissions:
+      contents: read

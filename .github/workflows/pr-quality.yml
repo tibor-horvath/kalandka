@@ -1,0 +1,33 @@
+# PR-only checks: bundle size delta vs main and Lighthouse scores on the static build.
+name: PR quality
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  bundle-size:
+    name: Bundle size
+    uses: tibor-horvath/ci-toolkit/.github/workflows/bundle-size.yml@v1
+    with:
+      node-version: "22.x"
+      # Precached by the service worker, so every KB lands on the tablets.
+      max-gzip-increase-kb: "25"
+    permissions:
+      contents: read
+      pull-requests: write
+
+  lighthouse:
+    name: Lighthouse
+    uses: tibor-horvath/ci-toolkit/.github/workflows/lighthouse-ci.yml@v1
+    with:
+      node-version: "22.x"
+      # Local baseline (Oct 2026): performance 0.94, accessibility 0.93, best practices 0.82.
+      # Minimums leave room for runner noise.
+      min-performance: "0.8"
+      min-accessibility: "0.9"
+      min-best-practices: "0.75"
+    permissions:
+      contents: read

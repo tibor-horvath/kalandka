@@ -1,0 +1,37 @@
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "chore"
+    groups:
+      # Frameworks that must move together, or the app breaks between PRs.
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      tooling:
+        patterns: ["vite", "@vitejs/*", "vite-plugin-pwa", "vitest", "@vitest/*", "typescript"]
+      fonts:
+        patterns: ["@fontsource/*"]
+      # Everything else that is low-risk, batched into one weekly PR.
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+        exclude-patterns: ["react", "react-dom", "vite", "vitest"]
+    ignore:
+      # Majors of these are migrations, not updates: schedule them deliberately.
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"

@@ -2,7 +2,8 @@
 
 Kalandka is a static PWA: `npm run build` produces `dist/`, and that folder is all there is to host.
 It runs on **Azure Static Web Apps** (Free tier), created from [`infra/main.bicep`](../infra/main.bicep) and filled with the Static Web Apps CLI.
-There is no CI pipeline; deploys are run by hand.
+Every push to `main` is built, tested and deployed by GitHub Actions (`.github/workflows/ci.yml`); see [CI](../README.md#ci).
+Manual deploys with the SWA CLI still work for previews and emergencies.
 
 ## What gets created
 
@@ -41,7 +42,16 @@ az account set --subscription "<subscription name or id>"
 
    The output `url` is the site's default address (`https://<random-name>.azurestaticapps.net`).
 
-3. Build and upload the app (same as every later release, see below).
+3. Connect GitHub Actions to the site (once):
+
+   ```bash
+   az staticwebapp secrets list -n kalandka --query properties.apiKey -o tsv
+   ```
+
+   In the GitHub repo, open Settings → Environments, create an environment named `production`, and add the value as the secret `AZURE_STATIC_WEB_APPS_API_TOKEN`.
+   Optionally restrict the environment to the `main` branch, or add required reviewers to approve each deploy.
+
+4. Push to `main` (or run the CI workflow by hand on `main`) to deploy.
 
 ### Bicep parameters
 
@@ -57,6 +67,12 @@ Pass them with `--parameters`, e.g. `--parameters customDomain=www.kalandka.hu`.
 Re-running the deployment is safe; it only changes what differs.
 
 ## Releasing a new version
+
+Merge to `main`. The `CI` workflow builds and tests, then the **Deploy to production** job uploads that same `dist/` to the site.
+The job only runs when the build, tests and secret scan passed, and the run page links the live URL.
+To redeploy without a new commit, run the `CI` workflow from the Actions tab on `main`.
+
+By hand, from a local checkout:
 
 ```bash
 npm test
@@ -107,7 +123,12 @@ Put the token in a TXT record at `kalandka.hu`, then point the apex at the site 
 
 ## Rolling back
 
-There is no one-click rollback for CLI deploys. Check out the last good commit, build and deploy it:
+Quickest: revert the bad commit on `main`; the pipeline deploys the result.
+
+Within 7 days (the build artifact's retention), you can also open the last good `CI` run on `main` in the Actions tab and re-run its **Deploy to production** job, which uploads that run's build again.
+The next push to `main` deploys over it, so revert the bad commit too.
+
+Or by hand: check out the last good commit, build and deploy it:
 
 ```bash
 git checkout <good-commit>
@@ -129,6 +150,7 @@ This deletes the site and its custom domain bindings. DNS records at your provid
 | Symptom | Likely cause |
 | --- | --- |
 | Tablets still show the old version | They have not been online and opened the app since the deploy; or `sw.js` was cached by a proxy. Check its `cache-control` header is `no-cache`. |
-| `deploy` fails with an auth error | Token was reset or belongs to another site. Fetch it again with `az staticwebapp secrets list`. |
+| `deploy` fails with an auth error | Token was reset or belongs to another site. Fetch it again with `az staticwebapp secrets list` and update the `AZURE_STATIC_WEB_APPS_API_TOKEN` secret of the `production` environment. |
+| Deploy job fails with "deployment_token was not provided" | The secret is missing, or was added at repo level under another name. It must be called `AZURE_STATIC_WEB_APPS_API_TOKEN`, in the `production` environment or the repo. |
 | Custom domain stuck in "Validating" | DNS record not yet visible, or a CNAME used for an apex domain. |
 | Fonts or icons missing offline | Their file type is not in `workbox.globPatterns` in `vite.config.ts`. |

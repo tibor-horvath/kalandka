@@ -1,0 +1,66 @@
+# Build and test on every push to main and every PR, plus a secret scan of the new commits.
+# Pushes to main (and manual runs on main) then deploy the tested build to Azure Static Web Apps.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  node:
+    name: Node
+    uses: tibor-horvath/ci-toolkit/.github/workflows/node-build-test.yml@v1
+    with:
+      node-version: "22.x"
+      # No ESLint yet; `npm run build` already type-checks with `tsc -b`.
+      lint-script: ""
+      typecheck-script: ""
+      # `npm test` is `vitest` (watch mode locally); run once in CI.
+      test-args: --run
+    permissions:
+      contents: read
+
+  secrets:
+    name: Secret scan
+    uses: tibor-horvath/ci-toolkit/.github/workflows/secret-scan.yml@v1
+    permissions:
+      contents: read
+
+  deploy:
+    name: Deploy to production
+    # Only main is deployed; PRs stop after the checks above.
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [node, secrets]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.static_web_app_url }}
+    concurrency:
+      # One deploy at a time; a newer one waits instead of cancelling a half-finished upload.
+      group: deploy-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      # The dist/ the node job built and tested, so what ships is exactly what passed.
+      - name: Download build
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: build
+          path: dist
+
+      - name: Deploy to Azure Static Web Apps
+        id: deploy
+        uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9 # v1
+        with:
+          action: upload
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          app_location: dist
+          skip_app_build: true
+          skip_api_build: true

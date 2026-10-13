@@ -1,0 +1,21 @@
+# actionlint + shellcheck for this repo's own workflows.
+name: Workflow lint
+
+on:
+  pull_request:
+    paths: [".github/**"]
+  push:
+    branches: [main]
+    paths: [".github/**"]
+
+permissions: {}
+
+jobs:
+  lint:
+    name: actionlint
+    uses: tibor-horvath/ci-toolkit/.github/workflows/workflow-lint.yml@v1
+    with:
+      # The toolkit is consumed at the moving @v1 tag, which the pin check would flag.
+      require-pinned-actions: false
+    permissions:
+      contents: read
