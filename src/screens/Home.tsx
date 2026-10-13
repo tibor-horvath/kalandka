@@ -17,7 +17,7 @@ export type GameId = 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'trace';
 
 const COMING_SOON = [
   { name: 'Cserépbarátok', skill: 'Tízes barátok' },
-  { name: 'Szüret', skill: 'Kivonás' }
+  { name: 'Titkos kert', skill: 'Meglepetés' }
 ];
 
 function TrailArt() {

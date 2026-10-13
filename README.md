@@ -11,7 +11,7 @@ Kalandka is the umbrella brand; Számkertész (the counting garden) is its first
 | Virágsor | Patterns (AB, ABC, AAB, ABB) | Pick the flower that continues the row. A wrong pick reads the row back as a hint. |
 | Számvetés | Meeting the numbers 1–20 | Open from the start. Numbers come in order; the child taps each seed so it sprouts while Csepi counts, then the numeral, its dots and its word appear. No timer. 6–10 show as a five plus the rest, 11–20 as a full ten-frame plus the rest. |
 | Magvillantás | Recognising amounts at a glance | Opens after numbers 1–5 in Számvetés. Seeds show for 2.5–3 s, then the child picks how many; "Mutasd újra!" shows them again any time. A wrong pick uncovers the seeds and counts them together. |
-| Méhecske | Addition, 5 to 100 | Opens after numbers 1–10 in Számvetés. Two groups of flowers, "a + b = ?", pick the total. Tap a flower and the bee counts it; a wrong pick sends the bee round everything, counting aloud. Eight levels (up to 5, up to 10, counting on from a basket, up to 20, crossing ten, round tens, up to 100, up to 100 with carrying); from 20 on a bouquet stands for ten. Adaptive and child-led: after five first-try answers Csepi offers "harder or stay?" (tree / flower), after three tasks in a row that needed help she offers "easier or stay?" (sprout / flower). Always one step, the child decides. |
+| Méhecske | Addition and subtraction, 5 to 100 | Opens after numbers 1–10 in Számvetés. Two groups of flowers, "a + b = ?", pick the total; on the take levels the child taps b of the a flowers, the bee carries them to the hive, and they pick how many are left ("a − b = ?"). Tap a flower and the bee counts it; a wrong pick sends the bee round everything, counting aloud. Seventeen levels, adding and taking away in turn (up to 5, up to 10 gathering or counting on from a basket, up to 20, crossing ten, round tens, up to 100, up to 100 with carrying); from 20 on a bouquet stands for ten. Adaptive and child-led: after five first-try answers Csepi offers "harder or stay?" (tree / flower), after three tasks in a row that needed help she offers "easier or stay?" (sprout / flower). Always one step, the child decides. |
 | Mézút | Writing the digits 0–9 | Open from the start. The child leads the bee along a dotted honey trail in writing order (1–9, then 0); 4, 5 and 7 take two strokes. The trail is forgiving: the finger may wander within a soft lane, and the honey always follows the trail, never the wobble. Off the lane nothing fails: the bee waits, the next stretch glows, a thread leads back and Csepi says "Gyere vissza a mézes útra!". Honey drops pop with a rising bubble sound (and a light vibration where supported); a see-through bee shows the way at the start, on "Mutasd az utat!" and after a quiet spell. |
 
 Each solved task earns a seed; each watered plant is added to the garden on the home screen.
@@ -62,7 +62,7 @@ src/
 ## Not done yet
 
 - Recorded Hungarian voice for Csepi (the browser voice is a stand-in).
-- Locked games: Cserépbarátok and Szüret (subtraction); tapping them makes Csepi say they open soon.
+- Locked games: Cserépbarátok (number pairs that make ten) and a still-unnamed slot (Titkos kert); tapping them makes Csepi say they open soon.
 
 ## Deploy
 
