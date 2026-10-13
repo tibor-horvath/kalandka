@@ -74,11 +74,11 @@ describe('stickers', () => {
   it('belong to known games, three per skill step, with unique ids', () => {
     expect(new Set(STICKERS.map((s) => s.id)).size).toBe(STICKERS.length);
     for (const g of STICKER_GAMES) expect(STICKERS.filter((s) => s.game === g.id && !s.set)).toHaveLength(3);
-    expect(STICKERS.filter((s) => s.set).map((s) => s.id)).toEqual(['trace-fade', 'trace-memory', 'path-repeat', 'path-two']);
+    expect(STICKERS.filter((s) => s.set).map((s) => s.id)).toEqual(['trace-fade', 'trace-memory', 'path-repeat', 'path-two', 'sort-two', 'sort-rule']);
   });
 
   it('keeps each world’s stickers to its own album page and home screen', () => {
-    expect(STICKER_GAMES.filter((g) => g.world === 'robot').map((g) => g.id)).toEqual(['path']);
+    expect(STICKER_GAMES.filter((g) => g.world === 'robot').map((g) => g.id)).toEqual(['path', 'sort']);
     const p = { ...DEFAULT_PROGRESS, learnSolved: 5, pathSolved: 1 };
     expect(newStickers(p, 'garden').map((s) => s.id)).toEqual(['learn-5']);
     expect(newStickers(p, 'robot').map((s) => s.id)).toEqual(['path-first']);
@@ -90,6 +90,15 @@ describe('stickers', () => {
     expect(ids(10)).toEqual(['path-first']);
     expect(ids(11)).toEqual(['path-first', 'path-plan']);
     expect(ids(999)).toEqual(['path-first', 'path-plan', 'path-turn', 'path-repeat', 'path-two']);
+  });
+
+  it('gives a Válogatógép sticker for the first round solved on its level', () => {
+    const ids = (sortSolved: number) => earnedStickers({ ...DEFAULT_PROGRESS, sortSolved }).map((s) => s.id);
+    expect(ids(0)).toEqual([]);
+    expect(ids(1)).toEqual(['sort-first']);
+    expect(ids(10)).toEqual(['sort-first']);
+    expect(ids(11)).toEqual(['sort-first', 'sort-shape']);
+    expect(ids(999)).toEqual(['sort-first', 'sort-shape', 'sort-odd', 'sort-two', 'sort-rule']);
   });
 
   it('gives the faded-trail stickers only for digits written on a faded trail', () => {

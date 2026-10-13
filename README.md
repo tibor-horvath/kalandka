@@ -27,15 +27,17 @@ Each solved task earns a seed; each watered plant is added to the garden on the 
 | --- | --- | --- |
 | Robotút | Algorithmic thinking, planning, debugging | Lead the little robot across the workshop floor to its battery. Ten levels, five courses each: stepping with arrows (each tap moves at once), with crates in the way; planning a whole program of arrow cards and pressing Indulás; long courses; repeat cards (×2, ×3) with arrows; turning the way the robot faces (Előre, Fordulj balra/jobbra); turning round crates; repeats with turns; two batteries in one program. On the advanced levels a battery under the floor limits the program to the shortest way plus one or two steps: teal cells are charge, yellow what the plan will use; a plan too long shows orange ghost cells past the battery. When the charge runs out the robot sputters, leans over and dims, and orange dots show the steps it was short of. Courses are generated from the level and round and always checked to be possible. A bump plays once (the robot squashes against the crate or wall, sparks, a crate wobbles or the wall edge flashes) and stops the robot; Csavar names the card ("Az első kártyánál…"), and the robot rolls back to the start; nothing fails. "Mutasd az utat!" dots the way on the floor. A finished course shows "Feltöltve!" and earns a bolt. |
 
-Mérleg, Mintagép and Válogatógép are shown as machines still being built.
+| Válogatógép | Sorting and classifying, finding a rule | Parts come down the belt one at a time and the child taps the box each belongs in (the parts still to come wait in closed crates, so nothing on the belt looks "small" by comparison). Tapping the part has Csavar say what it is ("nagy piros kör"). Seven levels, five rounds each: two colours with nothing else changing (for 4-year-olds), three colours, shapes, big and small; Kakukktojás (three rows of four parts, tap the one that is different; exactly one feature singles it out); Két szabály (one box for one colour and shape together, e.g. red circles, the other for the rest, with near misses); Mi a szabály? (the boxes have no labels, Csavar puts in two examples that differ only in the rule, the child carries on). A part in the wrong box gets "Hoppá" and Csavar names what to look at; after a second try the right box lights up (the odd part after a third). A finished round shows "Kész!" and earns a bolt. Colours differ in lightness too (light yellow, mid red, dark blue). |
+
+Mérleg and Mintagép are shown as machines still being built.
 
 ### Robotműhely rewards
 
 | Part | How it works |
 | --- | --- |
-| Robotépítő | The child's own robot. Each solved Robotút course earns a bolt (csavar); bolts buy parts in six slots (head, antenna, body, arms, legs, paint), 2–7 bolts each. A bought part stays the child's: swapping back is free. Every part on the cards is drawn on the child's own robot, so they see it before buying. |
+| Robotépítő | The child's own robot. Each solved Robotút course and Válogatógép round earns a bolt (csavar); bolts buy parts in six slots (head, antenna, body, arms, legs, paint), 2–7 bolts each. A bought part stays the child's: swapping back is free. Every part on the cards is drawn on the child's own robot, so they see it before buying. |
 | Robot friends | Kutyabot at 2 new parts, a drone at 5, Csavarka at 8, Macskabot at 12. Each is welcomed once with its own screen and stays on the shelf and in the workshop; tapping one makes it hop. |
-| Stickers | Robotút has its own album page (the album opens on the world it was opened from, with a tab for the other): Első út, Tervező, Fordulós, then Ismétlő and Két elem. Each world's new stickers pop on its own home screen. |
+| Stickers | Robotműhely has its own album page (the album opens on the world it was opened from, with a tab for the other). Robotút: Első út, Tervező, Fordulós, then Ismétlő and Két elem. Válogatógép: Első válogatás, Formák, Kakukktojás, then Két szabály and Szabálykereső. Each world's new stickers pop on its own home screen. |
 
 The same rules as the garden: rewards are only ever added, nothing is random, nothing depends on time played.
 
@@ -75,6 +77,7 @@ src/
   games/trace/logic.ts      Mézút digit trails, forgiving finger following, honey-drop checkpoints
   games/pots/logic.ts       Cserépbarátok levels, rounds, pot layout and Csepi's lines
   games/robot/path.ts       Robotút levels, course generator (shortest-way search), running a program, energy, Csavar's lines
+  games/robot/sort.ts       Válogatógép levels, parts and boxes, odd-one-out rows, hidden-rule examples, Csavar's lines
   lib/numbers.ts            Hungarian number words 1–100 ("két csepp" vs. counting "kettő", articles)
   lib/speech.ts             Csepi's voice via browser hu-HU text-to-speech (placeholder for recorded audio)
   lib/sound.ts              synthesised pops and chimes (Web Audio) and light vibration
@@ -86,7 +89,7 @@ src/
   state/insights.ts         plain-language notes for parents; the multiplication gate
   state/levels.ts           per-game level settings for the parents' corner (read current, apply new start)
   components/               Csepi, Csavar and the robot art, artwork, buttons, speech bubble, home-screen top-bar controls (hub), scaling stage (1180×820 tablet, 390 px phone)
-  screens/                  WorldMap, Home, Garden (Kiskert), Album (Matricáim), Learn, Water, Patterns, Flash, Add, Trace, Pots, Rest; robot/ (RobotHome, Path, Workshop); parents/ (Gate, ParentArea and its pages)
+  screens/                  WorldMap, Home, Garden (Kiskert), Album (Matricáim), Learn, Water, Patterns, Flash, Add, Trace, Pots, Rest; robot/ (RobotHome, Path, Sort, Workshop); parents/ (Gate, ParentArea and its pages)
 ```
 
 ## Design rules carried into code

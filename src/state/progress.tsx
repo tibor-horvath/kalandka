@@ -82,6 +82,9 @@ export interface Progress {
   /** Robotút course: which one comes next, and how many were done (five per level). */
   pathRound: number;
   pathSolved: number;
+  /** Válogatógép round: which one comes next, and how many were done (five per level, see SORT_LEVELS). */
+  sortRound: number;
+  sortSolved: number;
   /** Bolts spent in Robotépítő; the balance is bolts − boltsSpent. */
   boltsSpent: number;
   /** Robot parts bought (see state/robotParts.ts); the starting parts are always owned. */
@@ -141,6 +144,8 @@ export const DEFAULT_PROGRESS: Progress = {
   bolts: 0,
   pathRound: 0,
   pathSolved: 0,
+  sortRound: 0,
+  sortSolved: 0,
   boltsSpent: 0,
   robotOwned: [],
   robotLook: {},

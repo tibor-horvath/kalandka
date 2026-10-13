@@ -1,4 +1,6 @@
+import type { ReactNode } from 'react';
 import type { Cmd } from '../games/robot/path';
+import type { Color, Part, Shape } from '../games/robot/sort';
 import type { Mood } from '../lib/types';
 
 // Robotműhely's drawings: Csavar the guide, the little robot on the Robotút floor, its battery, crates and bolts.
@@ -190,6 +192,115 @@ export function Gear({ size = 52, color = '#9FB3C8' }: { size?: number; color?: 
       ))}
       <circle cx="24" cy="24" r="15" fill={color} />
       <circle cx="24" cy="24" r="6" fill="#FFFFFF" />
+    </svg>
+  );
+}
+
+// ---------- Válogatógép ----------
+
+/** Part colours, each with a darker edge; light yellow, mid red and dark blue differ in lightness too. */
+const PART_FILL: Record<Color, [string, string]> = {
+  red: ['#E5484D', '#9E2A2E'],
+  blue: ['#2E5FA8', '#183A6E'],
+  yellow: ['#FFC93C', '#A97C00']
+};
+const HOLE = '#F4F7FB';
+
+function PartShape({ shape, fill, edge }: { shape: Shape; fill: string; edge: string }) {
+  if (shape === 'round') {
+    return (
+      <>
+        <circle cx="50" cy="50" r="38" fill={fill} stroke={edge} strokeWidth="6" />
+        <circle cx="50" cy="50" r="11" fill={HOLE} stroke={edge} strokeWidth="4" />
+      </>
+    );
+  }
+  if (shape === 'square') {
+    return (
+      <>
+        <rect x="14" y="14" width="72" height="72" rx="10" fill={fill} stroke={edge} strokeWidth="6" />
+        {[27, 73].flatMap((x) => [27, 73].map((y) => <circle key={`${x},${y}`} cx={x} cy={y} r="4.5" fill={edge} />))}
+        <circle cx="50" cy="50" r="11" fill={HOLE} stroke={edge} strokeWidth="4" />
+      </>
+    );
+  }
+  return (
+    <>
+      <path d="M50 10 L90 84 H10 Z" fill={fill} stroke={edge} strokeWidth="6" strokeLinejoin="round" />
+      <circle cx="50" cy="60" r="10" fill={HOLE} stroke={edge} strokeWidth="4" />
+    </>
+  );
+}
+
+/** A machine part for Válogatógép, in a 100 × 100 box; a small one is drawn at 60%, standing on the same bottom edge. */
+export function SortPart({ part }: { part: Part }) {
+  const [fill, edge] = PART_FILL[part.color];
+  return (
+    <g transform={part.size === 'small' ? 'translate(20 36) scale(0.6)' : undefined}>
+      <PartShape shape={part.shape} fill={fill} edge={edge} />
+    </g>
+  );
+}
+
+const LABEL_INK = '#5E7184';
+
+/** The sign on a Válogatógép box: what goes in, drawn so a child who cannot read yet sees it. */
+export function BinSign({ match, hidden = false, size = 56 }: { match: Partial<Part>; hidden?: boolean; size?: number }) {
+  const svg = (children: ReactNode) => (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 100 100">
+      {children}
+    </svg>
+  );
+  if (hidden) {
+    return svg(
+      <text x="50" y="74" textAnchor="middle" fontSize="70" fontWeight="800" fill={LABEL_INK}>
+        ?
+      </text>
+    );
+  }
+  const { color, shape, size: big } = match;
+  if (color && shape) return svg(<SortPart part={{ color, shape, size: 'big' }} />);
+  if (color) {
+    const [fill, edge] = PART_FILL[color];
+    return svg(<path d="M50 8 C72 36 84 52 84 66 A34 34 0 0 1 16 66 C16 52 28 36 50 8 Z" fill={fill} stroke={edge} strokeWidth="6" strokeLinejoin="round" />);
+  }
+  if (shape) return svg(<PartShape shape={shape} fill="#DDE5EE" edge={LABEL_INK} />);
+  if (big) return svg(<SortPart part={{ color: 'blue', shape: 'square', size: big }} />);
+  // The rest: three small mixed parts.
+  return svg(
+    <>
+      <g transform="translate(0 4) scale(0.5)">
+        <PartShape shape="round" fill="#DDE5EE" edge={LABEL_INK} />
+      </g>
+      <g transform="translate(50 4) scale(0.5)">
+        <PartShape shape="triangle" fill="#DDE5EE" edge={LABEL_INK} />
+      </g>
+      <g transform="translate(25 50) scale(0.5)">
+        <PartShape shape="square" fill="#DDE5EE" edge={LABEL_INK} />
+      </g>
+    </>
+  );
+}
+
+/** Válogatógép's tile on the Robotműhely home screen: three parts above an open box. */
+export function SortArt() {
+  return (
+    <svg aria-hidden="true" className="sort-art" width="200" height="83" viewBox="0 0 300 124">
+      <g transform="translate(20 6) scale(0.62)">
+        <SortPart part={{ color: 'red', shape: 'round', size: 'big' }} />
+      </g>
+      <g transform="translate(86 6) scale(0.62)">
+        <SortPart part={{ color: 'yellow', shape: 'triangle', size: 'big' }} />
+      </g>
+      <g transform="translate(152 6) scale(0.62)">
+        <SortPart part={{ color: 'blue', shape: 'square', size: 'big' }} />
+      </g>
+      <path d="M214 30 L238 50 L214 70" fill="none" stroke="#9FB3C8" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M244 64 H296 L288 118 H252 Z" fill="#C98B50" stroke="#8A5A3B" strokeWidth="5" strokeLinejoin="round" />
+      <rect x="10" y="80" width="200" height="22" rx="11" fill="#5E7184" />
+      {[30, 70, 110, 150, 190].map((x) => (
+        <circle key={x} cx={x} cy="91" r="5" fill="#B7C4D2" />
+      ))}
     </svg>
   );
 }

@@ -1,24 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { KidChip, MapButton, ParentsButton, VoiceButton } from '../../components/hub';
-import { Bolt, Gear, PathArt } from '../../components/robot';
+import { Bolt, Gear, PathArt, SortArt } from '../../components/robot';
 import { FriendArt, MyRobot } from '../../components/robotParts';
 import { useForm } from '../../components/Stage';
 import { StickerPop } from '../../components/StickerPop';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../../components/ui';
 import { pathLevelIndex } from '../../games/robot/path';
+import { sortLevelIndex } from '../../games/robot/sort';
 import { speak } from '../../lib/speech';
 import { kidName, useActiveKid, useProfiles } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
 import { markStickerSeen, newStickers } from '../../state/rewards';
 import { boltBalance, canBuyAnything, friendsOf, newFriend } from '../../state/robotParts';
 
-export type RobotGameId = 'path';
+export type RobotGameId = 'path' | 'sort';
 
 /** Machines Csavar is still building: shown asleep, each with what it will teach. */
 const COMING = [
   { name: 'Mérleg', skill: 'Egyenlőség, mérés' },
-  { name: 'Mintagép', skill: 'Nehezebb minták' },
-  { name: 'Válogatógép', skill: 'Csoportosítás' }
+  { name: 'Mintagép', skill: 'Nehezebb minták' }
 ];
 
 const NOTICE_MS = 5000;
@@ -83,6 +83,7 @@ export function RobotHome({
   };
 
   const levelIdx = pathLevelIndex(progress.pathSolved);
+  const sortIdx = sortLevelIndex(progress.sortSolved);
   const workshopBadge = newFriend(progress) ? 'Barát jött!' : canBuyAnything(progress) ? 'Építhetsz!' : null;
 
   return (
@@ -132,6 +133,16 @@ export function RobotHome({
           <PathArt />
           <span className="plot__soil plot__soil--floor" />
           <span className="plot__name">Robotút</span>
+          <span className="plot__cta">
+            <PlayIcon /> Játék
+          </span>
+        </button>
+
+        <button type="button" className="plot plot--play" onClick={() => open('sort')} aria-label="Válogatógép – válogasd szét a darabokat">
+          {progress.sortSolved === 0 ? <span className="plot__badge">Új gép!</span> : <span className="plot__badge">{sortIdx + 1}. szint</span>}
+          <SortArt />
+          <span className="plot__soil plot__soil--floor" />
+          <span className="plot__name">Válogatógép</span>
           <span className="plot__cta">
             <PlayIcon /> Játék
           </span>

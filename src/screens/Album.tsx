@@ -8,7 +8,7 @@ import { STICKERS, STICKER_GAMES, earnedStickers, type Sticker } from '../state/
 import { WORLDS, type WorldId } from '../state/worlds';
 
 /** Robotműhely machines still being built: an empty page column each, so the robot page is not one lonely column. */
-const ROBOT_COMING = ['Mérleg', 'Mintagép', 'Válogatógép'];
+const ROBOT_COMING = ['Mérleg', 'Mintagép'];
 
 /** A little tilt per sticker, so the album looks stuck in by hand (always the same for a sticker). */
 const TILTS = [-6, 4, -2, 5, -4, 3, -5];

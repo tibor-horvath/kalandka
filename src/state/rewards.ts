@@ -6,6 +6,7 @@ import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL } from '../games/pots/logic';
 import { TRACE_ORDER } from '../games/trace/logic';
 import { PLANTS } from '../games/water/logic';
 import { PATH_LEVELS, PATH_ROUNDS_PER_LEVEL } from '../games/robot/path';
+import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL } from '../games/robot/sort';
 import type { GameId } from '../screens/Home';
 import type { RobotGameId } from '../screens/robot/RobotHome';
 import type { Progress } from './progress';
@@ -145,12 +146,16 @@ export const STICKER_GAMES: StickerGame[] = [
   { id: 'add', name: 'Méhecske', color: '#FFC93C', ink: '#10233A', world: 'garden' },
   { id: 'trace', name: 'Mézút', color: '#D9741A', ink: '#FFFFFF', world: 'garden' },
   { id: 'pots', name: 'Cserépbarátok', color: '#2F7D32', ink: '#FFFFFF', world: 'garden' },
-  { id: 'path', name: 'Robotút', color: '#138A86', ink: '#FFFFFF', world: 'robot' }
+  { id: 'path', name: 'Robotút', color: '#138A86', ink: '#FFFFFF', world: 'robot' },
+  { id: 'sort', name: 'Válogatógép', color: '#5E7184', ink: '#FFFFFF', world: 'robot' }
 ];
 
 /** Robotút stickers: a course solved on a level (the first solved course of that level and on). */
 const pathLevel = (name: string) => PATH_LEVELS.findIndex((l) => l.name === name);
 const pathPassed = (name: string) => (p: Progress) => p.pathSolved > pathLevel(name) * PATH_ROUNDS_PER_LEVEL;
+/** Válogatógép stickers: a round solved on a level. */
+const sortLevel = (name: string) => SORT_LEVELS.findIndex((l) => l.name === name);
+const sortPassed = (name: string) => (p: Progress) => p.sortSolved > sortLevel(name) * SORT_ROUNDS_PER_LEVEL;
 
 /** Méhecske levels that close a number range: the last level up to 5, up to 10, and round tens. */
 const ADD_PAST_5 = ADD_LEVELS.findIndex((l) => l.name === '10-ig, gyűjtéssel');
@@ -186,6 +191,11 @@ export const STICKERS: Sticker[] = [
   { id: 'path-turn', game: 'path', mark: '↻', label: 'Fordulós', praise: 'A robot arra megy, amerre néz, és te tudod, merre fordítsd!', earned: pathPassed('Fordulj!') },
   { id: 'path-repeat', game: 'path', mark: '×3', label: 'Ismétlő', praise: 'Az ismétléssel rövid lett a programod!', earned: pathPassed('Ismételd és fordulj'), set: 1 },
   { id: 'path-two', game: 'path', mark: '2', label: 'Két elem', praise: 'Egy programmal két elemet is összegyűjtöttél!', earned: pathPassed('Két elem'), set: 1 },
+  { id: 'sort-first', game: 'sort', mark: '2', label: 'Első válogatás', praise: 'Minden darabot a helyére tettél!', earned: (p) => p.sortSolved >= 1 },
+  { id: 'sort-shape', game: 'sort', mark: '▲', label: 'Formák', praise: 'Már formák szerint is válogatsz!', earned: sortPassed('Formák') },
+  { id: 'sort-odd', game: 'sort', mark: '?', label: 'Kakukktojás', praise: 'Megtalálod, melyik nem illik a többihez!', earned: sortPassed('Kakukktojás') },
+  { id: 'sort-two', game: 'sort', mark: '2+', label: 'Két szabály', praise: 'Egyszerre két dologra is figyelsz!', earned: sortPassed('Két szabály'), set: 1 },
+  { id: 'sort-rule', game: 'sort', mark: '!', label: 'Szabálykereső', praise: 'Kitaláltad a gép titkos szabályát!', earned: sortPassed('Mi a szabály?'), set: 1 },
   { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL * POTS_LEVELS.length }
 ];
 

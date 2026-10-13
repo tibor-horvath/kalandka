@@ -20,6 +20,7 @@ import { Water } from './screens/Water';
 import { WorldMap } from './screens/WorldMap';
 import { Path } from './screens/robot/Path';
 import { RobotHome, type RobotGameId } from './screens/robot/RobotHome';
+import { Sort } from './screens/robot/Sort';
 import { Workshop } from './screens/robot/Workshop';
 import { ProfilesProvider, setActive, useProfiles } from './state/profiles';
 import { useProgress, type Progress } from './state/progress';
@@ -46,7 +47,8 @@ const ROUND_KEY = {
   add: 'addRound',
   trace: 'traceRound',
   pots: 'potsRound',
-  path: 'pathRound'
+  path: 'pathRound',
+  sort: 'sortRound'
 } as const satisfies Record<GameId | RobotGameId, keyof Progress>;
 
 /** Screens a child rests on when time is up, and where an update may reload the app. */
@@ -77,7 +79,7 @@ function Game() {
   useEffect(() => setSpeechRate(progress.voiceRate), [progress.voiceRate]);
   useEffect(() => setSoundEnabled(progress.sounds), [progress.sounds]);
   const world = currentWorld(progress);
-  const csavarTalks = screen === 'path' || screen === 'workshop' || (screen === 'album' && albumFrom === 'workshop') || (screen === 'home' && world === 'robot');
+  const csavarTalks = screen === 'path' || screen === 'sort' || screen === 'workshop' || (screen === 'album' && albumFrom === 'workshop') || (screen === 'home' && world === 'robot');
   // A layout effect, so the voice is set before the new screen's own effects say their first line.
   useLayoutEffect(() => setSpeaker(csavarTalks ? 'robot' : 'csepi'), [csavarTalks]);
   useEffect(() => {
@@ -207,6 +209,7 @@ function Game() {
       {screen === 'trace' && <Trace key={progress.traceRound} onBack={() => go('home')} />}
       {screen === 'pots' && <Pots key={progress.potsRound} onBack={() => go('home')} />}
       {screen === 'path' && <Path key={progress.pathRound} onBack={() => go('home')} />}
+      {screen === 'sort' && <Sort key={progress.sortRound} onBack={() => go('home')} />}
       {!resting && !inParents && progress.warnBefore && remaining <= WARN_SECONDS && <TimeBanner remaining={remaining} />}
       {!resting && !inParents && timeUp && !progress.warnBefore && <TimeBanner remaining={0} />}
       {resting && !inParents && (
