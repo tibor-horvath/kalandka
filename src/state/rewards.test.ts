@@ -3,7 +3,7 @@ import { ADD_LEVELS } from '../games/add/logic';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
 import {
   BEDS,
-  GROW_AFTER,
+  growAfter,
   STICKERS,
   STICKER_GAMES,
   VISITORS,
@@ -41,15 +41,25 @@ describe('Kiskert', () => {
   it('grows a planting after a few more solved tasks', () => {
     const p = plant(withSeeds(3), 2, 'flower');
     expect(grownCount(p)).toBe(0);
-    expect(grownCount({ ...p, seeds: p.seeds + GROW_AFTER - 1 })).toBe(0);
-    expect(grownCount({ ...p, seeds: p.seeds + GROW_AFTER })).toBe(1);
+    expect(grownCount({ ...p, seeds: p.seeds + growAfter('flower') - 1 })).toBe(0);
+    expect(grownCount({ ...p, seeds: p.seeds + growAfter('flower') })).toBe(1);
+  });
+
+  it('grows bigger plants more slowly: flower, then bush, then tree', () => {
+    expect(growAfter('flower')).toBeLessThan(growAfter('bush'));
+    expect(growAfter('bush')).toBeLessThan(growAfter('tree'));
+    let p = plant(plant(withSeeds(13), 0, 'flower'), 1, 'tree');
+    p = { ...p, seeds: p.seeds + growAfter('flower') };
+    expect(grownCount(p)).toBe(1);
+    p = { ...p, seeds: p.seeds + growAfter('tree') - growAfter('flower') };
+    expect(grownCount(p)).toBe(2);
   });
 
   it('brings each visitor once, in order, as the garden grows', () => {
     let p = withSeeds(100);
     for (let i = 0; i < VISITORS[0].after; i++) p = plant(p, i, 'flower');
     expect(newVisitor(p)).toBeNull();
-    p = { ...p, seeds: p.seeds + GROW_AFTER };
+    p = { ...p, seeds: p.seeds + growAfter('flower') };
     expect(newVisitor(p)?.id).toBe('hedgehog');
     p = { ...p, visitorsSeen: 1 };
     expect(newVisitor(p)).toBeNull();

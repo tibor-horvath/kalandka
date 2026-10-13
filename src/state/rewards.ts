@@ -19,18 +19,18 @@ export interface PlantOption {
   id: PlantKind;
   name: string;
   cost: number;
+  /** Solved tasks (seeds earned) after planting until it is grown: the bigger the plant, the longer it takes. */
+  grows: number;
 }
 
 export const PLANT_OPTIONS: PlantOption[] = [
-  { id: 'flower', name: 'Virág', cost: 3 },
-  { id: 'bush', name: 'Áfonyabokor', cost: 6 },
-  { id: 'tree', name: 'Körtefa', cost: 10 }
+  { id: 'flower', name: 'Virág', cost: 3, grows: 3 },
+  { id: 'bush', name: 'Áfonyabokor', cost: 6, grows: 5 },
+  { id: 'tree', name: 'Körtefa', cost: 10, grows: 8 }
 ];
 
 /** Beds in the garden, five in a row like a ten-frame. */
 export const BEDS = 10;
-/** Solved tasks (seeds earned) after planting until a sprout is grown. */
-export const GROW_AFTER = 3;
 
 export interface Bed {
   kind: PlantKind;
@@ -47,13 +47,18 @@ export function bedAt(p: Progress, i: number): Bed | null {
   return p.beds[i] ?? null;
 }
 
-/** 0 … GROW_AFTER: how far a planting has grown. */
+/** Solved tasks a plant of this kind needs to grow. */
+export function growAfter(kind: PlantKind): number {
+  return PLANT_OPTIONS.find((o) => o.id === kind)!.grows;
+}
+
+/** 0 … growAfter(kind): how far a planting has grown. */
 export function growthOf(bed: Bed, seeds: number): number {
-  return Math.min(GROW_AFTER, Math.max(0, seeds - bed.at));
+  return Math.min(growAfter(bed.kind), Math.max(0, seeds - bed.at));
 }
 
 export function isGrown(bed: Bed, seeds: number): boolean {
-  return growthOf(bed, seeds) >= GROW_AFTER;
+  return growthOf(bed, seeds) >= growAfter(bed.kind);
 }
 
 export function grownCount(p: Progress): number {

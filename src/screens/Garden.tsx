@@ -8,11 +8,11 @@ import type { Mood, Tone } from '../lib/types';
 import { useProgress } from '../state/progress';
 import {
   BEDS,
-  GROW_AFTER,
   PLANT_OPTIONS,
   VISITORS,
   bedAt,
   canPlant,
+  growAfter,
   growthOf,
   newVisitor,
   plant,
@@ -89,7 +89,7 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
       else tell(opening());
       return;
     }
-    const left = GROW_AFTER - growthOf(bed, progress.seeds);
+    const left = growAfter(bed.kind) - growthOf(bed, progress.seeds);
     const name = PLANT_OPTIONS.find((o) => o.id === bed.kind)!.name.toLowerCase();
     if (left > 0) tell({ text: tasksLeft(left), speech: `Ebből ${name} lesz. ${tasksLeft(left)}`, mood: 'smile', tone: 'plain' });
     else tell({ text: `Szép ${name}!`, speech: `Milyen szép ${name}!`, mood: 'cheer', tone: 'good' });
@@ -106,7 +106,7 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
     setSelected(nextBed !== undefined && seedBalance(after) >= CHEAPEST ? nextBed : null);
     tell({
       text: 'Elültettük!',
-      speech: `Elültettük! Ebből ${name} lesz. Minden megoldott feladattal nő egy kicsit.`,
+      speech: `Elültettük! Ebből ${name} lesz. Minden megoldott feladattal nő egy kicsit. ${tasksLeft(growAfter(kind))}`,
       mood: 'cheer',
       tone: 'good'
     });
@@ -148,13 +148,14 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
             {Array.from({ length: BEDS }, (_, i) => {
               const bed = bedAt(progress, i);
               const growth = bed ? growthOf(bed, progress.seeds) : 0;
-              const grown = growth >= GROW_AFTER;
+              const needs = bed ? growAfter(bed.kind) : 0;
+              const grown = !!bed && growth >= needs;
               const name = bed ? PLANT_OPTIONS.find((o) => o.id === bed.kind)!.name : '';
               const label = !bed
                 ? `Üres ágyás, ${i + 1}.${selected === i ? ', kiválasztva' : ''}`
                 : grown
                   ? `${name}, ${i + 1}. ágyás`
-                  : `Palánta, ebből ${name.toLowerCase()} lesz. ${tasksLeft(GROW_AFTER - growth)}`;
+                  : `Palánta, ebből ${name.toLowerCase()} lesz. ${tasksLeft(needs - growth)}`;
               return (
                 <button
                   key={i}
@@ -186,7 +187,7 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
                   <span className="kbed__soil" />
                   {bed && !grown && (
                     <span className="kbed__growth" aria-hidden="true">
-                      {Array.from({ length: GROW_AFTER }, (_, k) => (
+                      {Array.from({ length: needs }, (_, k) => (
                         <span key={k} className={k < growth ? 'is-full' : ''} />
                       ))}
                     </span>
@@ -261,7 +262,7 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
             })}
             {selected === null && empty.length > 0 && balance >= CHEAPEST && <p className="plant-options__pick">Koppints egy üres ágyásra!</p>}
           </div>
-          <p className="kiskert__note">A palánta minden megoldott feladattal nő egy kicsit. Három feladat, és kinő.</p>
+          <p className="kiskert__note">A palánta minden megoldott feladattal nő egy kicsit. A virág 3, a bokor 5, a fa 8 feladat alatt nő ki.</p>
         </aside>
       </div>
 

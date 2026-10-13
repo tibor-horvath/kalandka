@@ -21,7 +21,7 @@ Each solved task earns a seed; each watered plant is added to the garden on the 
 
 | Part | How it works |
 | --- | --- |
-| Kiskert | The child's own garden, opened from the eighth plot on the home screen. Seeds are planted in ten beds: a flower (3), a blueberry bush (6) or a pear tree (10). A planting starts as a seedling and grows over the next three solved tasks in any game. |
+| Kiskert | The child's own garden, opened from the eighth plot on the home screen. Seeds are planted in ten beds: a flower (3), a blueberry bush (6) or a pear tree (10). A planting starts as a seedling and grows as the child solves tasks in any game: a flower in 3, a bush in 5, a tree in 8 (shown as dots in rows of five, like a ten-frame). |
 | Visitors | A growing garden brings visitors who stay: Süni at 3 grown plants, Katica at 5, a butterfly at 8 and a blackbird at 10. Each is welcomed once with its own screen. |
 | Matricáim | Three stickers per game, one for each skill step (e.g. Mézút: writing 1–5, 6–9, all digits); Mézút adds two for Halvány út (5 digits, then all ten on the faint trail). Empty places show what comes next; tapping a sticker has Csepi say what it is for. |
 | New sticker | Back on the home screen, a newly earned sticker spins in, sparkles, then flies into its place in the game's album page and settles with a squash. Tapping it replays the animation; with reduced motion it simply appears in place. |
