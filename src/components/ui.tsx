@@ -98,6 +98,23 @@ export function GuideBubble({
   );
 }
 
+/** Kalandka's own mark: the colourful K on a rounded square, the same art as public/icon.svg. Worlds keep their guide's icon. */
+export function KalandkaIcon({ size = 56 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 200 200" aria-hidden="true">
+      <rect width="200" height="200" rx="48" fill="#FFC93C" />
+      <path d="M92 102 L136 152" stroke="#10233A" strokeWidth="30" strokeLinecap="round" />
+      <path d="M72 112 L128 58" stroke="#F26B4F" strokeWidth="30" strokeLinecap="round" />
+      <path d="M66 50 L66 152" stroke="#2E86DE" strokeWidth="30" strokeLinecap="round" />
+      <circle cx="59" cy="68" r="6" fill="#FFFFFF" />
+      <circle cx="74" cy="68" r="6" fill="#FFFFFF" />
+      <circle cx="60" cy="69" r="3" fill="#10233A" />
+      <circle cx="75" cy="69" r="3" fill="#10233A" />
+      <path d="M158 20 Q160 36 176 38 Q160 40 158 56 Q156 40 140 38 Q156 36 158 20 Z" fill="#1F5C9E" />
+    </svg>
+  );
+}
+
 export function KalandkaWordmark({ size = 22, color, accent }: { size?: number; color?: string; accent?: string }) {
   const letters = 'Kalandka'.split('');
   return (

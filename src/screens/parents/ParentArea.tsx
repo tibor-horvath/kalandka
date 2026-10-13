@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Avatar } from '../../components/avatars';
-import { CsepiIcon } from '../../components/Csepi';
+import { KalandkaIcon } from '../../components/ui';
 import { KidScope, kidName, useProfiles } from '../../state/profiles';
 import { KidsPage } from './KidsPage';
 import { LevelsPage } from './LevelsPage';
@@ -118,7 +118,7 @@ export function ParentArea({ start = 'overview', onClose }: { start?: ParentStar
     <div className="pa">
       <nav className="pa-nav" aria-label="Szülői sarok">
         <div className="pa-nav__brand">
-          <CsepiIcon size={44} />
+          <KalandkaIcon size={44} />
           <div>
             <div className="pa-nav__title">Szülői sarok</div>
             <div className="pa-nav__sub">Kalandka · Számkertész</div>

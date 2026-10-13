@@ -5,7 +5,7 @@ import { FitBox } from '../components/FitBox';
 import { ParentsButton } from '../components/hub';
 import { Bolt, Csavar, Gear } from '../components/robot';
 import { useForm } from '../components/Stage';
-import { GuideBubble, KalandkaWordmark, RoundButton, SpeakerIcon } from '../components/ui';
+import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from '../components/ui';
 import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
 import { seedBalance } from '../state/rewards';
@@ -189,6 +189,7 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
     <div className="screen screen--map">
       <header className="topbar">
         <div className="brand">
+          <KalandkaIcon size={phone ? 40 : 56} />
           <div className="brand__text">
             <KalandkaWordmark size={phone ? 24 : 34} />
           </div>

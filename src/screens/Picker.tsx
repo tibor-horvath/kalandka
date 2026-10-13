@@ -1,8 +1,7 @@
 import { useEffect, type CSSProperties } from 'react';
 import { Seed } from '../components/art';
 import { AVATARS, Avatar } from '../components/avatars';
-import { CsepiIcon } from '../components/Csepi';
-import { GuideBubble, KalandkaWordmark, LockIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { GuideBubble, KalandkaIcon, KalandkaWordmark, LockIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import { useForm } from '../components/Stage';
 import { speak } from '../lib/speech';
 import { MAX_KIDS, kidName, progressOf, useProfiles } from '../state/profiles';
@@ -27,7 +26,7 @@ export function Picker({ onPick, onAdd, onParents }: { onPick: (id: string) => v
 
       <header className="topbar">
         <div className="brand">
-          <CsepiIcon size={56} />
+          <KalandkaIcon size={56} />
           <div className="brand__text">
             <KalandkaWordmark size={phone ? 15 : 22} />
             <div className="brand__world">Számkertész</div>

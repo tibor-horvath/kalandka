@@ -90,24 +90,6 @@ export function Csavar({ mood = 'smile', width = 84, className }: { mood?: Mood;
   );
 }
 
-/** Csavar's head on a rounded square: Robotműhely's brand mark. */
-export function CsavarIcon({ size = 56 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 200 200" aria-hidden="true">
-      <rect width="200" height="200" rx="48" fill="#FFC93C" />
-      <g transform="translate(0 30)">
-        <path d="M100 42 V22" stroke={STEEL} strokeWidth="6" strokeLinecap="round" />
-        <circle cx="100" cy="16" r="10" fill="#FFFFFF" />
-        <circle cx="48" cy="76" r="10" fill={STEEL} />
-        <circle cx="152" cy="76" r="10" fill={STEEL} />
-        <rect x="52" y="40" width="96" height="76" rx="24" fill={TEAL_LIGHT} />
-        <rect x="63" y="52" width="74" height="52" rx="15" fill={INK} />
-        <CsavarFace mood="smile" />
-      </g>
-    </svg>
-  );
-}
-
 /** The little robot seen from above, in a 100 × 100 box, its headlight facing up (rotate it to turn). */
 export function Rover() {
   return (

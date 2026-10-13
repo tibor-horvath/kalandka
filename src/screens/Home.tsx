@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { CsepiIcon } from '../components/Csepi';
 import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../components/art';
-import { GuideBubble, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { GuideBubble, KalandkaIcon, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import { KidChip, MapButton, ParentsButton, VoiceButton } from '../components/hub';
 import { DotFace } from '../components/seeds';
 import { PlantIcon } from '../components/garden';
@@ -198,7 +197,7 @@ export function Home({
 
       <header className="topbar">
         <div className="brand">
-          <CsepiIcon size={56} />
+          <KalandkaIcon size={56} />
           <div className="brand__text">
             <KalandkaWordmark size={phone ? 15 : 22} />
             <div className="brand__world">Számkertész</div>

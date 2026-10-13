@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { KidChip, MapButton, ParentsButton, VoiceButton } from '../../components/hub';
-import { Bolt, CsavarIcon, Gear, PathArt } from '../../components/robot';
+import { Bolt, Gear, PathArt } from '../../components/robot';
 import { FriendArt, MyRobot } from '../../components/robotParts';
 import { useForm } from '../../components/Stage';
 import { StickerPop } from '../../components/StickerPop';
-import { GuideBubble, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../../components/ui';
+import { GuideBubble, KalandkaIcon, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../../components/ui';
 import { pathLevelIndex } from '../../games/robot/path';
 import { speak } from '../../lib/speech';
 import { kidName, useActiveKid, useProfiles } from '../../state/profiles';
@@ -91,7 +91,7 @@ export function RobotHome({
 
       <header className="topbar">
         <div className="brand">
-          <CsavarIcon size={56} />
+          <KalandkaIcon size={56} />
           <div className="brand__text">
             <KalandkaWordmark size={phone ? 15 : 22} accent="#0C6E6A" />
             <div className="brand__world">Robotműhely</div>

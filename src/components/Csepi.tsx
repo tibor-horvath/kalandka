@@ -77,14 +77,3 @@ export function Csepi({ mood = 'smile', width = 84, className }: { mood?: Mood; 
     </svg>
   );
 }
-
-/** Csepi on the yellow rounded square: the Kalandka app icon. */
-export function CsepiIcon({ size = 56, label }: { size?: number; label?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 200 200" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
-      <rect width="200" height="200" rx="48" fill="#FFC93C" />
-      <Body />
-      <Face mood="smile" />
-    </svg>
-  );
-}
