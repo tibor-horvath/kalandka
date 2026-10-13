@@ -3,6 +3,7 @@ import { CsepiIcon } from '../components/Csepi';
 import { Bee, PatternFlower, RoundFlower, Seed, Sprout } from '../components/art';
 import { GuideBubble, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import { DotFace } from '../components/seeds';
+import { useForm } from '../components/Stage';
 import { UNLOCK_ADD_AFTER, addLockedSpeech } from '../games/add/logic';
 import { UNLOCK_FLASH_AFTER, flashLockedSpeech } from '../games/learn/logic';
 import { PLANTS } from '../games/water/logic';
@@ -76,6 +77,7 @@ function LockedPlot({ name, skill, art, onTap }: { name: string; skill: string; 
 
 export function Home({ onOpen, onParents }: { onOpen: (game: GameId) => void; onParents: () => void }) {
   const { progress, update } = useProgress();
+  const phone = useForm() !== 'tablet';
   const [notice, setNotice] = useState<Notice | null>(null);
   const noticeTimer = useRef<number | null>(null);
 
@@ -141,7 +143,7 @@ export function Home({ onOpen, onParents }: { onOpen: (game: GameId) => void; on
         <div className="brand">
           <CsepiIcon size={56} />
           <div className="brand__text">
-            <KalandkaWordmark size={22} />
+            <KalandkaWordmark size={phone ? 15 : 22} />
             <div className="brand__world">Számkertész</div>
           </div>
         </div>
@@ -152,7 +154,7 @@ export function Home({ onOpen, onParents }: { onOpen: (game: GameId) => void; on
           </div>
           <button type="button" className="parents-btn" onClick={onParents}>
             <LockIcon size={22} />
-            Szülőknek
+            <span className="parents-btn__label">Szülőknek</span>
           </button>
         </div>
       </header>

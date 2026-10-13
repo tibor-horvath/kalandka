@@ -46,7 +46,7 @@ src/
   state/screenTime.ts       daily limit, play clock and 14-day history, bonus, rest now, evening rest
   state/insights.ts         plain-language notes for parents; the multiplication gate
   state/levels.ts           per-game level settings for the parents' corner (read current, apply new start)
-  components/               Csepi, artwork, buttons, speech bubble, 1180×820 scaling stage
+  components/               Csepi, artwork, buttons, speech bubble, scaling stage (1180×820 tablet, 390 px phone)
   screens/                  Home, Learn, Water, Patterns, Flash, Add, Trace, Rest; parents/ (Gate, ParentArea and its pages)
 ```
 
@@ -57,6 +57,7 @@ src/
 - Bubble text shows digits; speech uses number words with correct Hungarian forms.
 - Pattern flowers differ in shape and lightness as well as colour (colour-blind friendly).
 - Touch targets are at least 64 px; the layout is a fixed 1180×820 stage scaled to the screen.
+- Phones get a 390 px phone stage instead, portrait or landscape (`components/Stage.tsx`, `styles/phone.css`): home, Locsolás, Méhecske, the parents' gate and area and the rest screen have phone layouts; the other games still use the scaled tablet stage. On phones, targets are at least 44 px and the game's choices stay large.
 
 ## Not done yet
 

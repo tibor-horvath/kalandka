@@ -1,0 +1,350 @@
+/*
+ * Phone layouts. The Stage switches to a 390 px-wide portrait or 390 px-tall landscape stage on phones
+ * (.stage--portrait / .stage--landscape, both .is-phone) for the screens that have a phone layout:
+ * home, Locsolás, Méhecske, the parents' gate and area, and the rest screen.
+ * Touch targets stay at least 44 px; the game's main choices stay large.
+ */
+
+.is-phone {
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+}
+
+/* Portrait: content keeps 16 px from the sides and clears the status bar and home indicator. */
+.stage--portrait .screen { padding: var(--safe-t) 0 var(--safe-b); }
+/* Landscape: the screen itself keeps clear of the notch; content uses the full width inside. */
+.stage--landscape .screen { padding: 10px max(16px, var(--safe-r)) max(8px, var(--safe-b)) max(16px, var(--safe-l)); }
+
+/* ---------- shared bits ---------- */
+.is-phone .topbar { padding: 12px 16px 0; gap: 8px; }
+.stage--landscape .topbar { padding: 0; }
+.is-phone .topbar__right { gap: 8px; }
+.is-phone .round-btn { width: 48px; height: 48px; border-radius: 24px; }
+.is-phone .round-btn svg { width: 24px; height: 24px; }
+.is-phone .pill { white-space: nowrap; height: 44px; padding: 0 14px 0 10px; gap: 6px; border-radius: 22px; font-size: 20px; }
+.is-phone .pill svg { width: 22px; height: 22px; }
+.is-phone .big-btn { height: 56px; padding: 0 24px; border-radius: 28px; font-size: 21px; box-shadow: 0 5px 0 var(--leaf-deep); justify-content: center; }
+
+.is-phone .guide { gap: 12px; }
+.is-phone .guide__csepi { width: 48px; height: 74px; }
+.is-phone .bubble { padding: 10px 16px; border-radius: 20px; font-size: 19px; }
+.is-phone .bubble::before { width: 16px; height: 16px; left: -7px; }
+
+/* "Szülőknek": a lock button on phones; the label stays for screen readers. */
+.is-phone .parents-btn { width: 44px; height: 44px; padding: 0; border-radius: 22px; justify-content: center; flex: none; }
+.is-phone .parents-btn svg { width: 20px; height: 20px; }
+.is-phone .parents-btn__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- home ---------- */
+.is-phone .brand { gap: 10px; }
+.is-phone .brand > svg { width: 40px; height: 40px; }
+.is-phone .brand__world { font-size: 24px; }
+.is-phone .home-guide { margin-top: 0; padding: 0 16px; justify-content: stretch; }
+.is-phone .home-guide .guide { flex: 1; min-width: 0; align-items: flex-end; }
+.is-phone .home-guide .guide__csepi { width: 58px; height: 90px; }
+.is-phone .home-guide .bubble { flex: 1; min-width: 0; padding: 12px 10px 12px 18px; box-shadow: 0 5px 0 var(--grass-deep); margin-bottom: 8px; }
+.is-phone .bubble__row { gap: 10px; justify-content: space-between; }
+.is-phone .bubble__kicker { font-size: 16px; }
+.is-phone .bubble__title { font-size: 24px; line-height: 1.05; }
+
+.is-phone .plot { height: 150px; border-radius: 24px; padding: 0 4px 12px; }
+.is-phone .plot--play { border-width: 4px; box-shadow: 0 6px 0 var(--leaf); }
+.is-phone .plot--play:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--leaf); }
+.is-phone .plot__cta { display: none; }
+.is-phone .plot__name { font-size: 21px; margin-top: 8px; }
+.is-phone .plot__skill { font-size: 14px; margin-top: 2px; }
+.is-phone .plot__badge { top: 8px; left: 8px; height: 26px; padding: 0 10px; border-radius: 13px; font-size: 14px; }
+.is-phone .plot__lock { top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 16px; }
+.is-phone .plot__lock svg { width: 16px; height: 16px; }
+.is-phone .plot__soil { width: 96px; height: 14px; margin-top: 0; }
+.is-phone .plot__soil--wide { width: 104px; height: 16px; margin-top: -6px; }
+.is-phone .plot__learn { margin: 0 0 2px; gap: 8px; }
+.is-phone .plot__learn-num { font-size: 46px; }
+.is-phone .plot__learn svg { width: 34px; height: 34px; }
+/* Sprout, seeds and the bee shrink with the card. */
+.is-phone .plot > svg { width: 70px; height: auto; }
+.is-phone .plot--locked > svg { width: 34px; }
+.is-phone .plot .plot__trio svg { width: 32px; height: auto; }
+.is-phone .plot .plot__trio--seeds { gap: 2px; margin-bottom: 4px; }
+.is-phone .plot .plot__trio--seeds svg { width: 28px; }
+.is-phone .plot .plot__trio--bee { gap: 4px; }
+.is-phone .plot .plot__trio--bee svg { width: 54px; }
+.is-phone .plot__mini-sum { font-size: 20px; }
+.is-phone .plot__trail { width: 78px; height: 62px; margin-bottom: 0; }
+.is-phone .plot__trail > svg { width: 78px; height: auto; }
+.is-phone .plot__trail-bee { left: 24px; top: -6px; }
+.is-phone .plot__trail-bee svg { width: 40px; height: auto; }
+
+.is-phone .garden__flower svg { width: 54px; height: auto; }
+.is-phone .garden__empty { font-size: 18px; margin-bottom: 24px; text-align: center; }
+
+/* Portrait home: one scrolling column; the hill is painted on the scrolling background so it moves with the cards. */
+.stage--portrait .screen--home {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(ellipse 130% 100px at 50% calc(var(--safe-t) + 336px), var(--grass) 99%, transparent 100%) local,
+    linear-gradient(to bottom, transparent calc(var(--safe-t) + 336px), var(--grass) 0) local,
+    var(--sky);
+}
+/* The bleed layers would add 1000 px of empty scrolling; the stage already fills the phone screen. */
+.stage--portrait .screen--home::before,
+.stage--portrait .screen--home .hill { display: none; }
+.stage--portrait .screen--home .topbar { padding-top: 18px; }
+.stage--portrait .home-guide { margin-top: 18px; }
+.stage--portrait .plots { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 0 16px; margin-top: 26px; }
+.stage--portrait .plot--locked { height: 128px; }
+.stage--portrait .garden { position: relative; height: auto; min-height: 104px; padding: 18px 16px 8px; gap: 4px; }
+
+/* Landscape home: a side column (title, Csepi, the garden) and the eight plots in a 4 × 2 grid. */
+.stage--landscape .screen--home {
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas: 'top plots' 'guide plots' 'garden plots';
+  column-gap: 16px;
+  row-gap: 12px;
+  padding-top: 14px;
+}
+.stage--landscape .screen--home .hill { left: -100px; right: -100px; top: 210px; bottom: -1000px; height: auto; border-top-left-radius: 50% 40px; border-top-right-radius: 50% 40px; }
+.stage--landscape .screen--home .topbar { grid-area: top; flex-wrap: wrap; row-gap: 8px; }
+.stage--landscape .brand > svg { display: none; }
+.stage--landscape .brand__world { font-size: 22px; }
+.stage--landscape .home-guide { grid-area: guide; padding: 0; }
+.stage--landscape .home-guide .guide { gap: 8px; }
+.stage--landscape .home-guide .guide__csepi { width: 40px; height: 62px; }
+.stage--landscape .home-guide .bubble { padding: 10px 8px 10px 14px; margin-bottom: 0; }
+.stage--landscape .bubble__kicker { font-size: 14px; }
+.stage--landscape .bubble__title { font-size: 18px; }
+.stage--landscape .home-guide .bubble__row { gap: 6px; }
+.stage--landscape .plots { grid-area: plots; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 10px; padding: 2px 0 0; margin: 0; align-content: start; }
+.stage--landscape .plot { height: 154px; }
+.stage--landscape .plot__name { font-size: 18px; }
+.stage--landscape .plot--locked .plot__name { font-size: 16px; }
+.stage--landscape .plot__skill { font-size: 13px; }
+.stage--landscape .garden { grid-area: garden; position: relative; height: auto; padding: 0 0 4px; justify-content: flex-start; align-items: flex-end; gap: 0; }
+.stage--landscape .garden__flower svg { width: 40px; }
+.stage--landscape .garden__flower:nth-last-child(n + 6) { display: none; }
+.stage--landscape .garden__empty { margin: 0 0 8px; font-size: 15px; text-align: left; }
+
+/* ---------- Locsolás ---------- */
+.is-phone .screen--water { display: flex; flex-direction: column; }
+.is-phone .screen--water .topbar { flex: none; }
+.is-phone .dots { height: 40px; padding: 0 14px; gap: 7px; border-radius: 20px; }
+.is-phone .dot { width: 12px; height: 12px; border-radius: 6px; }
+.is-phone .dot--now { width: 24px; }
+.is-phone .lawn { left: -100px; right: -100px; bottom: -1000px; height: calc(1000px + 34%); border-top-width: 12px; }
+
+.is-phone .water-body { flex: 1; min-height: 0; display: flex; gap: 10px; padding: 0; align-items: stretch; }
+.is-phone .water-guide .guide { align-items: center; }
+.is-phone .water-guide .bubble { flex: 1; min-width: 0; }
+
+.is-phone .scene { width: auto; flex: 1; min-height: 0; min-width: 0; }
+.is-phone .sky-tools { flex: none; gap: 6px; }
+.is-phone .cloud-btn > svg { width: 170px; height: auto; }
+.is-phone .screen--water:has(.ten-frame--double) .sky-tools .cloud-btn > svg { width: 130px; }
+.is-phone .cloud-btn__label { height: 30px; padding: 0 12px; border-radius: 15px; font-size: 16px; gap: 6px; }
+.is-phone .can-btn__can svg { width: 80px; height: auto; }
+.is-phone .can-stream { top: 16px; height: 44px; }
+/* The plant takes whatever height is left and scales its drawing to it. */
+.is-phone .planter,
+.is-phone .screen--water:has(.ten-frame--double) .planter { width: auto; height: auto; flex: 1; min-height: 0; margin-top: 2px; }
+.is-phone .plant { flex: 1 1 0; min-height: 0; display: flex; justify-content: center; align-items: flex-end; }
+.is-phone .plant svg { height: 100%; width: auto; max-height: 230px; }
+.is-phone .planter > svg { flex: none; width: 120px; height: auto; }
+.is-phone .puddle { width: 160px; height: 22px; bottom: -8px; }
+.is-phone .falling-drop { animation-name: fall-phone; }
+.is-phone .falling-drop svg { width: 26px; height: auto; }
+@keyframes fall-phone { from { transform: translateY(0); opacity: 1; } 80% { opacity: 1; } to { transform: translateY(150px); opacity: 0; } }
+
+.is-phone .panel { flex: none; border-radius: 24px; padding: 14px 16px 16px; gap: 10px; box-shadow: 0 6px 0 #bfddee; }
+.is-phone .panel__label { font-size: 16px; }
+.is-phone .panel__need { gap: 8px; margin-top: 2px; }
+.is-phone .panel__number { font-size: 48px; }
+.is-phone .panel__unit { font-size: 22px; }
+.is-phone .panel__need svg { width: 24px; height: auto; }
+.is-phone .counter { border-radius: 18px; padding: 6px 14px; }
+.is-phone .counter__value { font-size: 30px; }
+.is-phone .counter__label { font-size: 13px; }
+.is-phone .ten-frame { gap: 6px; }
+.is-phone .slot { height: 48px; border-radius: 14px; border-width: 3px; }
+.is-phone .slot svg { width: 26px; height: auto; }
+.is-phone .ten-frame--double { gap: 6px; }
+.is-phone .ten-frame--double .slot { height: 36px; border-radius: 11px; }
+.is-phone .ten-frame--double .slot svg { width: 20px; }
+.is-phone .ten-frame--double .slot:nth-child(n + 11):nth-child(-n + 15) { margin-top: 6px; }
+/* The hint is for grown-ups reading along; on a phone the space goes to the game. */
+.is-phone .panel__hint { display: none; }
+.is-phone .panel__foot { min-height: 0; }
+.is-phone .panel__foot:empty { display: none; }
+.is-phone .panel__foot .big-btn { flex: 1; margin-left: 0; }
+
+.stage--portrait .water-body { flex-direction: column; padding: 12px 16px 16px; }
+.stage--portrait .scene { align-items: center; }
+
+/* Landscape: Csepi on the left, the cloud and plant in the middle, the ten-frame on the right. */
+.stage--landscape .screen--water .topbar { padding-bottom: 8px; }
+.stage--landscape .water-body { flex-direction: row; gap: 14px; }
+.stage--landscape .water-guide { width: 230px; flex: none; }
+.stage--landscape .water-guide .guide { flex-direction: column-reverse; align-items: flex-start; gap: 8px; }
+.stage--landscape .water-guide .guide__csepi { width: 60px; height: 93px; }
+.stage--landscape .water-guide .bubble { align-self: stretch; }
+.stage--landscape .water-guide .bubble::before { left: 26px; top: auto; bottom: -7px; transform: rotate(45deg); }
+.stage--landscape .cloud-btn > svg { width: 150px; }
+.stage--landscape .screen--water:has(.ten-frame--double) .sky-tools .cloud-btn > svg { width: 120px; }
+.stage--landscape .can-btn__can svg { width: 64px; }
+.stage--landscape .panel { width: 270px; align-self: flex-start; max-height: 100%; padding: 12px 14px 14px; gap: 8px; }
+.stage--landscape .panel__number { font-size: 40px; }
+.stage--landscape .panel__unit { font-size: 19px; }
+.stage--landscape .slot { height: 40px; }
+.stage--landscape .ten-frame--double .slot { height: 30px; }
+.stage--landscape .panel .big-btn { height: 48px; font-size: 18px; padding: 0 12px; }
+
+/* ---------- Méhecske ---------- */
+.is-phone .screen--add { display: flex; flex-direction: column; gap: 8px; }
+.is-phone .screen--add .topbar { flex: none; }
+.is-phone .equation { height: 60px; padding: 0 20px; gap: 12px; border-radius: 30px; font-size: 40px; justify-content: center; }
+.is-phone .level-pill { height: 40px; padding: 0 12px; gap: 6px; border-radius: 20px; }
+.is-phone .level-pill__num { font-size: 17px; }
+.is-phone .level-pill__stars svg { width: 16px; height: 16px; }
+/* The scene fills the room that is left; Add.tsx scales it to fit (and folds it on a portrait phone). */
+.is-phone .add-scene-box { flex: 1 1 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.is-phone .add-scene-fit { position: relative; flex: none; }
+.is-phone .add-scene { position: absolute; left: 0; top: 0; margin: 0; transform-origin: 0 0; }
+.add-scene.is-folded .add-scene__plus { font-size: 80px; }
+.is-phone .legend { margin: 0 auto; font-size: 15px; padding: 2px 12px; }
+.is-phone .add-guide { margin-top: 0; padding: 0 16px; }
+.is-phone .add-guide .guide { flex: 1; min-width: 0; }
+.is-phone .add-guide .bubble { flex: 1; min-width: 0; font-size: 18px; }
+.is-phone .choices--add { margin: 0; padding: 0 16px 12px; gap: 10px; flex-wrap: wrap; }
+.is-phone .choices--add .choice--short { flex: 1 1 0; width: auto; height: 84px; border-radius: 22px; border-width: 4px; box-shadow: 0 6px 0 var(--grass-deep); gap: 2px; }
+.is-phone .choices--add .choice.is-right { box-shadow: 0 6px 0 var(--leaf); }
+.is-phone .choices--add .choice.is-wrong { box-shadow: 0 6px 0 var(--oops); }
+.is-phone .choice__numeral { font-size: 44px; }
+.is-phone .choice__numeral--small { font-size: 28px; }
+.is-phone .dot-card { gap: 4px; max-width: 84px; }
+.is-phone .dot-card span { width: 12px; height: 12px; }
+.is-phone .choices--add .big-btn { flex-basis: 100%; }
+.is-phone .add-wait { height: 84px; }
+.is-phone .offer { gap: 12px; }
+.is-phone .offer__btn { flex: 1 1 0; width: auto; height: 130px; border-radius: 24px; font-size: 18px; box-shadow: 0 6px 0 var(--grass-deep); }
+.is-phone .offer__btn--go { box-shadow: 0 6px 0 var(--leaf); }
+.is-phone .offer__btn svg { max-height: 64px; }
+
+.stage--portrait .screen--add .topbar { flex-wrap: wrap; row-gap: 10px; }
+.stage--portrait .screen--add .equation { order: 3; flex-basis: 100%; }
+/* A margin, not padding: Add.tsx fits the scene to the box's clientWidth, which counts padding. */
+.stage--portrait .screen--add .add-scene-box { margin: 0 16px; }
+
+/* Landscape: the scene on the left, the answers stacked down the right edge. */
+.stage--landscape .screen--add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'top top' 'scene choices' 'legend choices' 'guide choices';
+  column-gap: 14px;
+  row-gap: 6px;
+}
+.stage--landscape .screen--add .topbar { grid-area: top; }
+.stage--landscape .equation { height: 52px; font-size: 36px; }
+.stage--landscape .add-scene-box { grid-area: scene; }
+.stage--landscape .legend { grid-area: legend; }
+.stage--landscape .add-guide { grid-area: guide; padding: 0; }
+.stage--landscape .add-guide .guide__csepi { width: 40px; height: 62px; }
+.stage--landscape .add-guide .bubble { font-size: 17px; padding: 8px 14px; }
+.stage--landscape .choices--add { grid-area: choices; flex-direction: column; flex-wrap: nowrap; align-items: stretch; padding: 4px 0 6px; gap: 10px; }
+.stage--landscape .choices--add > * { flex: 1 1 0; min-height: 0; height: auto; }
+.stage--landscape .choices--add .choice--short { height: auto; }
+.stage--landscape .choice__numeral { font-size: 40px; }
+.stage--landscape .choices--add .big-btn { flex-basis: 0; height: auto; min-height: 48px; padding: 0 8px; gap: 4px; font-size: 18px; }
+.stage--landscape .add-wait { height: auto; }
+.stage--landscape .offer__btn { height: auto; font-size: 15px; gap: 2px; }
+.stage--landscape .offer__btn svg { max-height: 48px; }
+
+/* ---------- screen time ---------- */
+.is-phone .time-banner { top: calc(var(--safe-t) + 66px); height: 38px; padding: 0 14px; border-radius: 19px; font-size: 16px; white-space: nowrap; }
+.is-phone .time-banner svg { width: 20px; height: 20px; }
+.stage--landscape .time-banner { top: 66px; }
+.is-phone .rest { gap: 10px; padding-left: calc(1000px + 24px); padding-right: calc(1000px + 24px); }
+.is-phone .rest > svg:not(.rest__moon) { width: 90px; height: 140px; }
+.is-phone .rest__moon { top: calc(1000px + var(--safe-t) + 24px); right: 1020px; width: 80px; height: 80px; }
+.is-phone .rest__title { font-size: 36px; }
+.is-phone .rest__text { font-size: 18px; max-width: 340px; margin-bottom: 8px; }
+.is-phone .rest .parents-btn { width: auto; padding: 0 18px; gap: 8px; }
+.is-phone .rest .parents-btn__label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+.stage--landscape .rest > svg:not(.rest__moon) { width: 64px; height: 99px; }
+.stage--landscape .rest__title { font-size: 30px; }
+
+/* ---------- parents' gate ---------- */
+.is-phone .gate { padding: calc(1000px + var(--safe-t) + 12px) calc(1000px + 16px) calc(1000px + var(--safe-b) + 12px); }
+.is-phone .gate__card { width: 100%; max-width: 400px; padding: 22px 20px 14px; gap: 10px; border-radius: 24px; }
+.is-phone .gate__title { font-size: 26px; }
+.is-phone .gate__sum { font-size: 38px; }
+.is-phone .gate__answer { height: 56px; min-width: 84px; }
+.is-phone .gate__key { height: 56px; }
+.is-phone .gate__cancel { min-height: 44px; }
+/* Landscape: the question on the left, the keypad on the right. */
+.stage--landscape .gate { padding: calc(1000px + 10px) calc(1000px + max(16px, var(--safe-r))) calc(1000px + max(8px, var(--safe-b))) calc(1000px + max(16px, var(--safe-l))); }
+.stage--landscape .gate__card {
+  max-width: 640px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: 'lock keys' 'title keys' 'lead keys' 'sum keys' 'msg keys' 'cancel keys';
+  column-gap: 24px;
+  row-gap: 8px;
+  justify-items: center;
+  align-content: center;
+  padding: 16px 22px;
+}
+.stage--landscape .gate__lock { grid-area: lock; width: 44px; height: 44px; }
+.stage--landscape .gate__title { grid-area: title; }
+.stage--landscape .gate__lead { grid-area: lead; text-align: center; }
+.stage--landscape .gate__sum { grid-area: sum; font-size: 34px; }
+.stage--landscape .gate__msg { grid-area: msg; text-align: center; }
+.stage--landscape .gate__cancel { grid-area: cancel; }
+.stage--landscape .gate__keys { grid-area: keys; align-self: center; gap: 8px; }
+.stage--landscape .gate__key { height: 52px; }
+
+/* ---------- parents' area ---------- */
+.is-phone .pa-nav { position: static; }
+.is-phone .pa-nav::before { display: none; }
+.is-phone .pa-nav__brand,
+.is-phone .pa-nav__note { display: none; }
+.is-phone .pa-nav__item { flex-direction: column; justify-content: center; gap: 2px; padding: 0 2px; font-size: 12px; text-align: center; border-radius: 14px; }
+.is-phone .pa-page { padding: 18px 16px 24px; gap: 14px; }
+.is-phone .pa-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+.is-phone .pa-h1 { font-size: 30px; }
+.is-phone .pa-card { padding: 16px 18px; border-radius: 18px; }
+.is-phone .pa-today { gap: 16px; }
+.is-phone .pa-today svg { flex: none; width: 104px; height: 104px; }
+.is-phone .pa-bars { height: 100px; gap: 8px; }
+.is-phone .pa-games__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.is-phone .pa-level { flex-wrap: wrap; gap: 12px; padding: 14px 16px; }
+.is-phone .pa-stepper { flex-basis: 100%; justify-content: space-between; }
+.is-phone .pa-stepper__value { width: auto; flex: 1; }
+.is-phone .pa-seg--pill .pa-seg__btn { min-width: 0; flex: 1; }
+.is-phone .pa-inline-field { padding-left: 0; flex-wrap: wrap; }
+.is-phone .pa-confirm span { min-width: 0; }
+
+/* Portrait: the menu becomes a tab bar along the bottom; "back to the game" sits top right. */
+.stage--portrait .pa { flex-direction: column; }
+.stage--portrait .pa-main { flex: 1; padding-top: var(--safe-t); }
+.stage--portrait .pa-nav { order: 2; flex: none; width: auto; flex-direction: row; gap: 4px; padding: 8px 8px calc(8px + var(--safe-b)); }
+.stage--portrait .pa-nav__item { flex: 1 1 0; min-width: 0; height: 60px; }
+.stage--portrait .pa-nav__spacer { display: none; }
+.stage--portrait .pa-nav__back { position: absolute; z-index: 1; top: calc(var(--safe-t) + 14px); right: 16px; height: 44px; padding: 0 14px; gap: 6px; border-radius: 14px; font-size: 17px; }
+.stage--portrait .pa-nav__back svg { width: 18px; height: 18px; }
+.stage--portrait .pa-page { padding-top: 72px; }
+.stage--portrait .pa-grid2 { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+
+/* Landscape: a slim rail on the left, "back to the game" at its foot. */
+.stage--landscape .pa-nav { width: calc(92px + max(8px, var(--safe-l))); padding: 10px 8px max(10px, var(--safe-b)) max(8px, var(--safe-l)); gap: 4px; }
+.stage--landscape .pa-nav__item { height: 60px; font-size: 11px; }
+.stage--landscape .pa-nav__back { flex-direction: column; height: auto; min-height: 56px; padding: 6px 4px; gap: 2px; border-radius: 14px; font-size: 13px !important; line-height: 1.1; text-align: center; }
+.stage--landscape .pa-nav__back svg { width: 18px; height: 18px; }
+.stage--landscape .pa-main { padding-right: var(--safe-r); }
+.stage--landscape .pa-page { padding: 14px 18px 24px; }
+.stage--landscape .pa-h1 { font-size: 28px; }
+.stage--landscape .pa-games__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }

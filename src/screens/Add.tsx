@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Basket, Bee, Bouquet, Hive, RoundFlower, Sprout, Tree } from '../components/art';
+import { useForm } from '../components/Stage';
 import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import {
   ADD_LEVELS,
@@ -27,6 +28,7 @@ import {
   tourOrder,
   untie,
   type AddItem,
+  type AddRound,
   type Offer
 } from '../games/add/logic';
 import { numberCount } from '../lib/numbers';
@@ -57,6 +59,55 @@ const CARRY_MS = 700;
 const LIFT_FRAME_MS = 40;
 /** One hop of the victory lap; the flowers' hop wave uses the same beat. */
 const CHEER_STEP_MS = 150;
+
+/** Portrait phones: the space between the left bed and the right bed folded under it. */
+const FOLD_GAP = 90;
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+/**
+ * The scene as drawn (two beds side by side, 1000×250), or folded for a portrait phone:
+ * the right bed moves under the left one. `place` maps a point of the drawn scene into it,
+ * so the game logic keeps working in the drawn scene's coordinates.
+ */
+function sceneGeometry(round: AddRound, wide: boolean, fold: boolean) {
+  const leftW = bedWidth(round);
+  const rightW = wide ? SCENE_W - leftW - BED_GAP : BOX_W;
+  const rightX = SCENE_W - rightW;
+  const bedH = SCENE_H - 16;
+  if (!fold) {
+    return {
+      width: SCENE_W,
+      height: SCENE_H,
+      place: (p: Point) => p,
+      beds: [
+        { left: LEFT_X, top: 8, width: leftW, height: bedH },
+        { left: rightX, top: 8, width: rightW, height: bedH }
+      ],
+      plusY: SCENE_H / 2,
+      home: HOME
+    };
+  }
+  const width = Math.max(leftW, rightW);
+  const leftDx = (width - leftW) / 2;
+  const rightDx = (width - rightW) / 2 - rightX;
+  const rightDy = SCENE_H + FOLD_GAP;
+  const split = (leftW + rightX) / 2;
+  return {
+    width,
+    height: SCENE_H * 2 + FOLD_GAP,
+    place: (p: Point) => (p.x < split ? { x: p.x + leftDx, y: p.y } : { x: p.x + rightDx, y: p.y + rightDy }),
+    beds: [
+      { left: leftDx, top: 8, width: leftW, height: bedH },
+      { left: (width - rightW) / 2, top: rightDy + 8, width: rightW, height: bedH }
+    ],
+    plusY: SCENE_H + FOLD_GAP / 2,
+    home: { x: width - 40, y: SCENE_H + FOLD_GAP / 2 }
+  };
+}
 
 /** Petals bursting from the right answer card: twelve directions, alternating near and far. */
 const PETALS = Array.from({ length: 12 }, (_, i) => {
@@ -90,6 +141,8 @@ function Dots({ n }: { n: number }) {
 export function Add({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
   const [round] = useState(() => buildAddRound(progress.addRound, progress.addLevel));
+  const form = useForm();
+  const phone = form !== 'tablet';
   const countingOn = round.level.strategy === 'on';
   const gathering = round.level.strategy === 'gather';
   const taking = round.level.strategy === 'take';
@@ -310,6 +363,33 @@ export function Add({ onBack }: { onBack: () => void }) {
 
   const isVisited = (id: string) => visited.some((v) => v.id === id);
 
+  // Phones: the scene fills the room left between the equation and the answers, folded on a portrait phone.
+  const geo = sceneGeometry(round, wide, form === 'portrait');
+  const place = geo.place;
+  const beeAt = bee === HOME ? geo.home : place(bee);
+  const sceneBox = useRef<HTMLDivElement>(null);
+  const [room, setRoom] = useState<{ w: number; h: number } | null>(null);
+  useLayoutEffect(() => {
+    const el = sceneBox.current;
+    if (!phone || !el) return;
+    const measure = () => setRoom({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [phone]);
+  const fitScale = phone && room ? Math.max(0.1, Math.min(room.w / geo.width, room.h / geo.height)) : 1;
+  const sceneFit = (scene: ReactNode) =>
+    phone ? (
+      <div className="add-scene-box" ref={sceneBox}>
+        <div className="add-scene-fit" style={{ width: geo.width * fitScale, height: geo.height * fitScale }}>
+          {scene}
+        </div>
+      </div>
+    ) : (
+      scene
+    );
+
   return (
     <div className="screen screen--add">
       <div className="meadow" aria-hidden="true" />
@@ -345,76 +425,79 @@ export function Add({ onBack }: { onBack: () => void }) {
         </div>
       </header>
 
-      <div className="add-scene" style={{ width: SCENE_W, height: SCENE_H }}>
-        <div className="add-scene__bed" style={{ left: LEFT_X, width: bedWidth(round) }} />
-        <div className="add-scene__bed" style={{ right: 0, width: wide ? SCENE_W - bedWidth(round) - BED_GAP : BOX_W }} />
-        {!taking && (
-          <div className="add-scene__plus" aria-hidden="true">
-            +
-          </div>
-        )}
+      {sceneFit(
+        <div className={`add-scene${form === 'portrait' ? ' is-folded' : ''}`} style={{ width: geo.width, height: geo.height, transform: phone ? `scale(${fitScale})` : undefined }}>
+          {geo.beds.map((b, i) => (
+            <div key={i} className="add-scene__bed" style={b} />
+          ))}
+          {!taking && (
+            <div className="add-scene__plus" style={{ top: geo.plusY }} aria-hidden="true">
+              +
+            </div>
+          )}
 
-        {taking && (
-          <>
-            <span className="add-hive" style={{ left: hive.x, top: hive.y }} aria-hidden="true">
-              <Hive />
-            </span>
-            {moved.map((id, k) => {
-              const picked = items.find((i) => i.id === id);
-              if (!picked) return null;
-              const at = liftOff === id ? spot(picked) : wide ? { x: hive.x, y: HIVE_Y + 20 } : hiveSpot(hive.x, k, moved.length);
-              const state = liftOff === id ? ' is-lifting' : flying === id ? ' is-flying' : wide ? ' is-stored' : '';
-              return (
-                <span key={id} className={`add-carried${state}`} style={{ left: at.x, top: at.y }} aria-hidden="true">
-                  {picked.kind === 'ten' ? <Bouquet petal={round.petalA} width={56} /> : <RoundFlower petal={round.petalA} width={round.level.bundles ? 54 : 64} />}
-                </span>
-              );
-            })}
-          </>
-        )}
+          {taking && (
+            <>
+              <span className="add-hive" style={{ left: place(hive).x, top: place(hive).y }} aria-hidden="true">
+                <Hive />
+              </span>
+              {moved.map((id, k) => {
+                const picked = items.find((i) => i.id === id);
+                if (!picked) return null;
+                const at = place(liftOff === id ? spot(picked) : wide ? { x: hive.x, y: HIVE_Y + 20 } : hiveSpot(hive.x, k, moved.length));
+                const state = liftOff === id ? ' is-lifting' : flying === id ? ' is-flying' : wide ? ' is-stored' : '';
+                return (
+                  <span key={id} className={`add-carried${state}`} style={{ left: at.x, top: at.y }} aria-hidden="true">
+                    {picked.kind === 'ten' ? <Bouquet petal={round.petalA} width={56} /> : <RoundFlower petal={round.petalA} width={round.level.bundles ? 54 : 64} />}
+                  </span>
+                );
+              })}
+            </>
+          )}
 
-        {countingOn && (
-          <button type="button" className="basket" style={{ left: BASKET.x, top: BASKET.y }} onClick={tapBasket} aria-label={`Kosár, benne ${round.a} virág`}>
-            <Basket petal={round.petalA} count={round.a} />
-            <span className="basket__label">{round.a}</span>
-          </button>
-        )}
-
-        {(taking ? items : round.items).map((item) => {
-          const petal = item.group === 'a' ? round.petalA : round.petalB;
-          const at = spot(item);
-          const gone = taking && moved.includes(item.id);
-          const waiting = (gathering && item.group === 'b' && !moved.includes(item.id)) || (taking && !ready && !gone);
-          const label = gone
-            ? 'Üres hely – innen elvitte a méhecske'
-            : waiting
-              ? gathering
-                ? 'Virág – koppints rá, és a méhecske átviszi'
-                : 'Virág – koppints rá, és a méhecske elviszi'
-              : item.kind === 'ten'
-                ? 'Csokor: tíz virág'
-                : isVisited(item.id)
-                  ? 'Megszámolt virág'
-                  : 'Virág – koppints rá, és a méhecske megszámolja';
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className={`add-flower add-flower--${item.kind}${isVisited(item.id) ? ' is-visited' : ''}${gone ? ' is-gone' : ''}${fresh.includes(item.id) ? ' is-fresh' : ''}${gathering && flying === item.id && moved.includes(item.id) ? ' is-flying' : ''}${phase === 'solved' && !gone ? ' is-happy' : ''}`}
-              style={{ left: at.x, top: at.y, '--d': `${Math.max(0, lap.indexOf(item)) * CHEER_STEP_MS}ms` } as CSSProperties}
-              onClick={() => tap(item)}
-              disabled={gone}
-              aria-label={label}
-            >
-              {item.kind === 'ten' ? <Bouquet petal={petal} width={56} /> : <RoundFlower petal={petal} width={round.level.bundles ? 54 : 64} />}
+          {countingOn && (
+            <button type="button" className="basket" style={{ left: place(BASKET).x, top: place(BASKET).y }} onClick={tapBasket} aria-label={`Kosár, benne ${round.a} virág`}>
+              <Basket petal={round.petalA} count={round.a} />
+              <span className="basket__label">{round.a}</span>
             </button>
-          );
-        })}
+          )}
 
-        <span className={`bee${cheer ? ' is-cheering' : ''}`} style={{ left: bee.x, top: bee.y }} aria-hidden="true">
-          <Bee width={70} />
-        </span>
-      </div>
+          {(taking ? items : round.items).map((item) => {
+            const petal = item.group === 'a' ? round.petalA : round.petalB;
+            const at = place(spot(item));
+            const gone = taking && moved.includes(item.id);
+            const waiting = (gathering && item.group === 'b' && !moved.includes(item.id)) || (taking && !ready && !gone);
+            const label = gone
+              ? 'Üres hely – innen elvitte a méhecske'
+              : waiting
+                ? gathering
+                  ? 'Virág – koppints rá, és a méhecske átviszi'
+                  : 'Virág – koppints rá, és a méhecske elviszi'
+                : item.kind === 'ten'
+                  ? 'Csokor: tíz virág'
+                  : isVisited(item.id)
+                    ? 'Megszámolt virág'
+                    : 'Virág – koppints rá, és a méhecske megszámolja';
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`add-flower add-flower--${item.kind}${isVisited(item.id) ? ' is-visited' : ''}${gone ? ' is-gone' : ''}${fresh.includes(item.id) ? ' is-fresh' : ''}${gathering && flying === item.id && moved.includes(item.id) ? ' is-flying' : ''}${phase === 'solved' && !gone ? ' is-happy' : ''}`}
+                style={{ left: at.x, top: at.y, '--d': `${Math.max(0, lap.indexOf(item)) * CHEER_STEP_MS}ms` } as CSSProperties}
+                onClick={() => tap(item)}
+                disabled={gone}
+                aria-label={label}
+              >
+                {item.kind === 'ten' ? <Bouquet petal={petal} width={56} /> : <RoundFlower petal={petal} width={round.level.bundles ? 54 : 64} />}
+              </button>
+            );
+          })}
+
+          <span className={`bee${cheer ? ' is-cheering' : ''}`} style={{ left: beeAt.x, top: beeAt.y }} aria-hidden="true">
+            <Bee width={70} />
+          </span>
+        </div>
+      )}
 
       {hasBouquets && (
         <div className="legend" aria-label="Egy csokorban tíz virág van">

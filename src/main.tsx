@@ -13,6 +13,8 @@ import '@fontsource/nunito/latin-700.css';
 import '@fontsource/nunito/latin-ext-700.css';
 import './styles/global.css';
 import App from './App';
+// After App (which pulls in parents.css), so the phone layouts override both.
+import './styles/phone.css';
 import { listenForInstall } from './lib/install';
 import { registerUpdates } from './lib/update';
 

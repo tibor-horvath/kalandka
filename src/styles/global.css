@@ -235,7 +235,7 @@ h1, h2, p { margin: 0; }
 .equation__sum { min-width: 40px; text-align: center; color: #9fb3a6; }
 .equation__sum.is-solved { color: var(--leaf); animation: pop 0.35s cubic-bezier(.34, 1.56, .64, 1); }
 .add-scene { position: relative; margin: 22px auto 0; }
-.add-scene__bed { position: absolute; top: 8px; bottom: 8px; border-radius: 40px; background: #a8774f; box-shadow: inset 0 -10px 0 #8a5a3b; }
+.add-scene__bed { position: absolute; border-radius: 40px; background: #a8774f; box-shadow: inset 0 -10px 0 #8a5a3b; }
 .add-scene__plus { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 96px; font-weight: 800; color: var(--ink); line-height: 1; }
 .add-flower { position: absolute; transform: translate(-50%, -50%); border: none; background: transparent; padding: 4px; cursor: pointer; line-height: 0; border-radius: 20px; }
 .add-flower::after { content: ''; position: absolute; left: 50%; top: 18px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: #ffe08a; border: 3px solid var(--sun); opacity: 0; transform: scale(0); transition: transform 0.25s, opacity 0.25s; }

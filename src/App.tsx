@@ -13,16 +13,31 @@ import { Patterns } from './screens/Patterns';
 import { Rest, TimeBanner } from './screens/Rest';
 import { Trace } from './screens/Trace';
 import { Water } from './screens/Water';
-import { ProgressProvider, useProgress } from './state/progress';
+import { ProgressProvider, useProgress, type Progress } from './state/progress';
 import { GRACE_SECONDS, WARN_SECONDS, addPlay, isEveningRest, remainingSeconds, today } from './state/screenTime';
 
 type Screen = 'home' | GameId;
 type Parents = 'closed' | 'gate' | 'open';
 
+/**
+ * Screens with a phone layout (with the parents' gate and area and the rest screen, which open over them).
+ * The other games keep the tablet stage on phones until they get their own phone layout.
+ */
+const PHONE_SCREENS: Screen[] = ['home', 'water', 'add'];
+
 /** The play clock ticks in steps of this many seconds. */
 const TICK_SECONDS = 5;
 /** Pause on the home screen before a waiting update reloads the app. */
 const UPDATE_DELAY_MS = 2000;
+/** Each game's round counter goes up when the child moves on to the next task. */
+const ROUND_KEY = {
+  learn: 'learnRound',
+  water: 'waterRound',
+  patterns: 'patternRound',
+  flash: 'flashRound',
+  add: 'addRound',
+  trace: 'traceRound'
+} as const satisfies Record<GameId, keyof Progress>;
 
 function Game() {
   const { progress, update } = useProgress();
@@ -79,6 +94,8 @@ function Game() {
   }, [remaining, day, progress.warnBefore]);
 
   // Time is up in the middle of a task: finish it if parents allow, then home to rest.
+  // The grace ends at a wall-clock deadline, checked every second and on return to the screen,
+  // because a sleeping tablet suspends timers and a single timeout could drift forever.
   useEffect(() => {
     if (!timeUp || screen === 'home' || inParents) return;
     if (!progress.graceToFinish) {
@@ -86,15 +103,35 @@ function Game() {
       return;
     }
     speak('Lejárt a mai játékidő. Fejezd be ezt a feladatot!', { queue: true });
-    const id = window.setTimeout(() => go('home'), GRACE_SECONDS * 1000);
-    return () => window.clearTimeout(id);
+    const deadline = Date.now() + GRACE_SECONDS * 1000;
+    const check = () => {
+      if (Date.now() >= deadline) go('home');
+    };
+    const id = window.setInterval(check, 1000);
+    document.addEventListener('visibilitychange', check);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', check);
+    };
   }, [timeUp, screen, inParents, progress.graceToFinish]);
+
+  // "Ez az utolsó feladat!": once the task in progress is done, the next one does not start.
+  const round = screen === 'home' ? null : progress[ROUND_KEY[screen]];
+  const graceRound = useRef<number | null>(null);
+  useEffect(() => {
+    if (!timeUp || round === null || inParents) {
+      graceRound.current = null;
+      return;
+    }
+    if (graceRound.current === null) graceRound.current = round;
+    else if (round !== graceRound.current) go('home');
+  }, [timeUp, round, inParents]);
 
   const openGate = () => setParents('gate');
   const closeParents = () => setParents('closed');
 
   return (
-    <Stage>
+    <Stage phone={PHONE_SCREENS.includes(screen)}>
       {screen === 'home' && <Home onOpen={go} onParents={openGate} />}
       {screen === 'learn' && <Learn key={progress.learnRound} onBack={() => go('home')} />}
       {screen === 'water' && <Water onBack={() => go('home')} />}

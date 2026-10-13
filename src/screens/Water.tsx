@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Cloud, Drop, GrowingPlant, Pot, WateringCan } from '../components/art';
+import { useForm } from '../components/Stage';
 import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import { CAN_DROPS, addDrop, feedback, growth, introSpeech, maxDropsFor, plantForRound, removeDrop, slotKinds } from '../games/water/logic';
 import { numberCount } from '../lib/numbers';
@@ -10,6 +11,8 @@ const DOTS = 5;
 
 export function Water({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
+  // On phones Csepi talks above the scene instead of inside the panel.
+  const phone = useForm() !== 'tablet';
   const round = progress.waterRound;
   // One plant object per round: effects below key on it, so it must not change between renders.
   const plant = useMemo(() => plantForRound(round), [round]);
@@ -101,6 +104,12 @@ export function Water({ onBack }: { onBack: () => void }) {
   };
   const next = () => update((p) => ({ ...p, waterRound: p.waterRound + 1 }));
 
+  const guide = (
+    <GuideBubble mood={fb.mood} tone={fb.tone}>
+      {fb.text}
+    </GuideBubble>
+  );
+
   const kinds = slotKinds(count, plant.target);
   const scale = growth(count, plant.target);
   const dotIndex = round % DOTS;
@@ -124,6 +133,7 @@ export function Water({ onBack }: { onBack: () => void }) {
       </header>
 
       <div className="water-body">
+        {phone && <div className="water-guide">{guide}</div>}
         <div className="scene">
           <div className="sky-tools">
             <button type="button" className="cloud-btn" onClick={() => add()} aria-label="Koppints a felhőre egy cseppért">
@@ -201,9 +211,7 @@ export function Water({ onBack }: { onBack: () => void }) {
             })}
           </div>
 
-          <GuideBubble mood={fb.mood} tone={fb.tone}>
-            {fb.text}
-          </GuideBubble>
+          {!phone && guide}
 
           <div className="panel__foot">
             {!done && <p className="panel__hint">Koppints egy cseppre, és elveszed. Koppints egy üres helyre, és adsz egyet.</p>}
