@@ -11,6 +11,7 @@ import {
   STEP,
   STRAYED,
   TOLERANCE,
+  arrowPoints,
   buildTraceRound,
   canGrab,
   checkpoints,
@@ -73,7 +74,19 @@ function TrailBee({ at, angle, className }: { at: Pt; angle: number; className?:
   );
 }
 
-/** Mézút: lead the bee along the dotted honey trail to write a digit. No failure: off the trail the bee waits. */
+/** A faint arrow on a faded trail, pointing the way the stroke goes. */
+function TrailArrow({ at, angle }: { at: Pt; angle: number }) {
+  return (
+    <g className="trail__arrow" transform={`translate(${at.x} ${at.y}) rotate(${angle})`}>
+      <path d="M-7 -10 L5 0 L-7 10" />
+    </g>
+  );
+}
+
+/**
+ * Mézút: lead the bee along the dotted honey trail to write a digit. No failure: off the trail the bee waits.
+ * From the second lap the trail is faded (Halvány út) and the see-through bee only comes when asked or after a quiet spell.
+ */
 export function Trace({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
   const shape = useMemo(() => buildTraceRound(progress.traceRound), [progress.traceRound]);
@@ -143,7 +156,7 @@ export function Trace({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     speak(startFeedback(shape).speech);
-    const t = window.setTimeout(runDemo, 900);
+    const t = shape.faded ? undefined : window.setTimeout(runDemo, 900);
     armIdle();
     return () => {
       window.clearTimeout(t);
@@ -184,13 +197,13 @@ export function Trace({ onBack }: { onBack: () => void }) {
     }
     fanfare();
     buzz(40);
-    const f = doneFeedback(shape.digit);
+    const f = doneFeedback(shape.digit, shape.faded);
     setFb(f);
     speak(f.speech);
     if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
     if (!rewarded.current) {
       rewarded.current = true;
-      update((p) => ({ ...p, seeds: p.seeds + 1, traceSolved: p.traceSolved + 1 }));
+      update((p) => ({ ...p, seeds: p.seeds + 1, traceSolved: p.traceSolved + 1, traceFadedSolved: p.traceFadedSolved + (shape.faded ? 1 : 0) }));
     }
   };
 
@@ -279,7 +292,7 @@ export function Trace({ onBack }: { onBack: () => void }) {
 
       <div className="trace-body">
         <FitBox className="trace-fit" width={CARD_W} height={CARD_H}>
-          <div className={`trace-board${done ? ' is-done' : ''}`}>
+          <div className={`trace-board${done ? ' is-done' : ''}${shape.faded ? ' is-faded' : ''}`}>
             <svg
               ref={svg}
               className="trace-svg"
@@ -300,8 +313,13 @@ export function Trace({ onBack }: { onBack: () => void }) {
                 const filled = isDone ? trail : isNow ? trail.slice(0, idx + 1) : [];
                 return (
                   <g key={s}>
-                    {!isDone && <path d={d} className="trail__lane" strokeWidth={TOLERANCE * 1.3} />}
-                    <path d={d} className={`trail__dots${isNow ? ' is-now' : ''}`} />
+                    {!isDone && !shape.faded && <path d={d} className="trail__lane" strokeWidth={TOLERANCE * 1.3} />}
+                    <path d={d} className={`trail__dots${isNow ? ' is-now' : ''}${shape.faded && !isDone ? ' is-faint' : ''}`} />
+                    {shape.faded &&
+                      !isDone &&
+                      arrowPoints(trail)
+                        .filter((k) => !isNow || k > idx)
+                        .map((k) => <TrailArrow key={k} at={trail[k]} angle={heading(trail, k)} />)}
                     {filled.length > 1 && (
                       <>
                         <path d={pathData(filled)} className="trail__honey" />
@@ -309,6 +327,7 @@ export function Trace({ onBack }: { onBack: () => void }) {
                       </>
                     )}
                     {!isDone &&
+                      !shape.faded &&
                       drops[s]
                         .filter((cp) => !isNow || cp > idx)
                         .map((cp) => (

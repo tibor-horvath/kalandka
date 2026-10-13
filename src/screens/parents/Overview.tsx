@@ -4,7 +4,7 @@ import { useProgress } from '../../state/progress';
 import { addBonus, lastSevenDays, playedToday, remainingSeconds, today } from '../../state/screenTime';
 import { ADD_LEVELS, clampLevel, LEVEL_UP_STREAK } from '../../games/add/logic';
 import { LEARN_MAX } from '../../games/learn/logic';
-import { TRACE_ORDER } from '../../games/trace/logic';
+import { TRACE_ORDER, buildTraceRound } from '../../games/trace/logic';
 import { POTS_LEVELS, potsLevelFor } from '../../games/pots/logic';
 import { LEVELS as FLASH_LEVELS, levelFor } from '../../games/flash/logic';
 import { SHAPE_ORDER } from '../../games/patterns/logic';
@@ -76,7 +76,12 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
     },
     { name: 'Virágsor', detail: `${progress.patternsSolved} sor · ${SHAPE_ORDER[progress.patternRound % SHAPE_ORDER.length]} minta`, share: levelShare('patterns') },
     { name: 'Magvillantás', detail: `${flashIdx + 1}. szint · ${FLASH_LEVELS[flashIdx].name}`, share: levelShare('flash') },
-    { name: 'Mézút', detail: `${progress.traceSolved} leírt szám · következő: ${TRACE_ORDER[progress.traceRound % TRACE_ORDER.length]}`, share: Math.min(1, progress.traceSolved / TRACE_ORDER.length) },
+    {
+      name: 'Mézút',
+      detail: `${progress.traceSolved} leírt szám${progress.traceFadedSolved ? ` (${progress.traceFadedSolved} halvány úton)` : ''} · következő: ${buildTraceRound(progress.traceRound).digit}`,
+      // First lap on the full trail, then the faded lap.
+      share: Math.min(1, (Math.min(progress.traceSolved - progress.traceFadedSolved, TRACE_ORDER.length) + progress.traceFadedSolved) / (2 * TRACE_ORDER.length))
+    },
     {
       name: 'Méhecske',
       detail: `${clampLevel(progress.addLevel) + 1}. szint · ${addLevel.name} · ${progress.addStreak}/${LEVEL_UP_STREAK} csillag`,

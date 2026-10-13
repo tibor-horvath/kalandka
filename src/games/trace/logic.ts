@@ -124,7 +124,7 @@ const SHAPES: Record<number, Pt[][]> = {
   9: [stroke(cubic(p(150, 88), p(150, 26), p(56, 22), p(54, 90)), cubic(p(54, 90), p(52, 152), p(148, 156), p(150, 88)), line(p(150, 88), p(140, 286)))]
 };
 
-/** Rounds go 1, 2, … 9, then 0, then start again. */
+/** The first lap goes 1, 2, … 9, then 0. */
 export const TRACE_ORDER = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
 
 export function digitShape(digit: number): DigitShape {
@@ -133,9 +133,40 @@ export function digitShape(digit: number): DigitShape {
   return { digit, strokes };
 }
 
-export function buildTraceRound(round: number): DigitShape {
+export interface TraceRound extends DigitShape {
+  /**
+   * Halvány út: from the second lap on the trail fades to faint dots and a few arrows, with no lane
+   * or honey drops, so the child writes the digit from memory. Following the finger stays just as forgiving.
+   */
+  faded: boolean;
+}
+
+/** A fixed shuffle of TRACE_ORDER for each lap after the first, never repeating the last digit of the lap before. */
+export function lapOrder(lap: number): number[] {
+  if (lap <= 0) return TRACE_ORDER;
+  const order = [...TRACE_ORDER];
+  let seed = lap * 7919 + 17;
+  for (let i = order.length - 1; i > 0; i--) {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    const j = seed % (i + 1);
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  const before = lapOrder(lap - 1).at(-1);
+  if (order[0] === before) [order[0], order[1]] = [order[1], order[0]];
+  return order;
+}
+
+export function buildTraceRound(round: number): TraceRound {
   const r = Math.max(0, Math.floor(round));
-  return digitShape(TRACE_ORDER[r % TRACE_ORDER.length]);
+  const lap = Math.floor(r / TRACE_ORDER.length);
+  return { ...digitShape(lapOrder(lap)[r % TRACE_ORDER.length]), faded: lap > 0 };
+}
+
+/** Where a faded trail shows a direction arrow: a couple per stroke, away from the start and end. */
+export function arrowPoints(pts: Pt[]): number[] {
+  const n = pts.length;
+  const count = n * STEP > 360 ? 3 : n * STEP > 180 ? 2 : 1;
+  return Array.from({ length: count }, (_, k) => Math.round(((k + 1) * (n - 1)) / (count + 1)));
 }
 
 /** SVG path data for a sampled stroke. */
@@ -224,9 +255,17 @@ export interface TraceFeedback {
   tone: Tone;
 }
 
-export function startFeedback(shape: DigitShape): TraceFeedback {
+export function startFeedback(shape: DigitShape & { faded?: boolean }): TraceFeedback {
   const name = digitName(shape.digit);
   const strokes = shape.strokes.length > 1 ? ' Két vonalból áll.' : '';
+  if (shape.faded) {
+    return {
+      text: `Írjunk egy ${name}t! Az út most halvány: emlékszel, merre megy?${strokes}`,
+      speech: `Írjunk egy ${name}t! A mézes út most halvány. Emlékszel, merre megy? Ha kell, megmutatom.${strokes}`,
+      mood: 'smile',
+      tone: 'plain'
+    };
+  }
   return {
     text: `Írjunk egy ${name}t! Vezesd a méhecskét a mézes úton.${strokes}`,
     speech: `Írjunk egy ${name}t! Tedd az ujjad a méhecskére, és vezesd végig a mézes úton.${strokes}`,
@@ -256,9 +295,17 @@ export const GRAB_THE_BEE: TraceFeedback = {
   tone: 'plain'
 };
 
-export function doneFeedback(digit: number): TraceFeedback {
+export function doneFeedback(digit: number, faded = false): TraceFeedback {
   const name = digitName(digit);
   const word = digitWord(digit);
+  if (faded) {
+    return {
+      text: `Ügyes vagy! Emlékezetből írtad: ${digit}.`,
+      speech: `Ügyes vagy, emlékezetből írtad! Ez ${article(name)} ${name}: ${word}.`,
+      mood: 'cheer',
+      tone: 'good'
+    };
+  }
   return {
     text: `Ügyes vagy! Ez ${article(name)} ${name}: ${digit}.`,
     speech: `Ügyes vagy, szépen vezetted! Ez ${article(name)} ${name}: ${word}.`,

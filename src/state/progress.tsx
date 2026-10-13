@@ -36,6 +36,8 @@ export interface Progress {
   /** Mézút round: which digit to trace next (see TRACE_ORDER). */
   traceRound: number;
   traceSolved: number;
+  /** Mézút digits written on a faded trail (Halvány út, from the second lap on). */
+  traceFadedSolved: number;
   potsRound: number;
   /** Cserépbarátok rounds solved; every five move up a level (see POTS_LEVELS); parents can set it. */
   potsSolved: number;
@@ -92,6 +94,7 @@ export const DEFAULT_PROGRESS: Progress = {
   flashSolved: 0,
   traceRound: 0,
   traceSolved: 0,
+  traceFadedSolved: 0,
   potsRound: 0,
   potsSolved: 0,
   potsAnnounced: false,

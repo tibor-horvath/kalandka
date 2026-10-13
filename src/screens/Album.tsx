@@ -46,11 +46,13 @@ export function Album({ onBack }: { onBack: () => void }) {
       </header>
 
       <div className="album">
-        {STICKER_GAMES.map((g) => (
-          <section key={g.id} className="album__game" aria-label={g.name}>
+        {STICKER_GAMES.map((g) => {
+          const own = STICKERS.filter((s) => s.game === g.id);
+          return (
+          <section key={g.id} className={`album__game${own.length > 3 ? ' album__game--more' : ''}`} aria-label={g.name}>
             <h2 className="album__name">{g.name}</h2>
             <div className="album__stickers">
-              {STICKERS.filter((s) => s.game === g.id).map((s) => {
+              {own.map((s) => {
                 const got = earned.includes(s);
                 return (
                   <button
@@ -67,7 +69,8 @@ export function Album({ onBack }: { onBack: () => void }) {
               })}
             </div>
           </section>
-        ))}
+          );
+        })}
       </div>
 
       <div className="album__guide">

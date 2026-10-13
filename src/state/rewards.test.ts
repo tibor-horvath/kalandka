@@ -61,9 +61,17 @@ describe('Kiskert', () => {
 });
 
 describe('stickers', () => {
-  it('belong to known games, three each, with unique ids', () => {
+  it('belong to known games, three per skill step, with unique ids', () => {
     expect(new Set(STICKERS.map((s) => s.id)).size).toBe(STICKERS.length);
-    for (const g of STICKER_GAMES) expect(STICKERS.filter((s) => s.game === g.id)).toHaveLength(3);
+    for (const g of STICKER_GAMES) expect(STICKERS.filter((s) => s.game === g.id && !s.set)).toHaveLength(3);
+    expect(STICKERS.filter((s) => s.set).map((s) => s.id)).toEqual(['trace-fade', 'trace-memory']);
+  });
+
+  it('gives the faded-trail stickers only for digits written on a faded trail', () => {
+    const ids = (p: Progress) => earnedStickers(p).map((s) => s.id).filter((id) => id.startsWith('trace'));
+    expect(ids({ ...DEFAULT_PROGRESS, traceSolved: 30 })).toEqual(['trace-5', 'trace-9', 'trace-0']);
+    expect(ids({ ...DEFAULT_PROGRESS, traceSolved: 15, traceFadedSolved: 5 })).toContain('trace-fade');
+    expect(ids({ ...DEFAULT_PROGRESS, traceSolved: 20, traceFadedSolved: 10 })).toContain('trace-memory');
   });
 
   it('finds the Méhecske levels they are tied to', () => {

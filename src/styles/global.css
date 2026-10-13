@@ -365,6 +365,8 @@ h1, h2, p { margin: 0; }
 .trail__lane { fill: none; stroke: #fff4d1; stroke-linecap: round; stroke-linejoin: round; }
 .trail__dots { fill: none; stroke: #e0b84a; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 0 15; }
 .trail__dots.is-now { stroke: #d99a00; }
+.trail__dots.is-faint { stroke-width: 5; stroke-dasharray: 0 18; opacity: 0.4; }
+.trail__arrow path { fill: none; stroke: #e0b84a; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; opacity: 0.6; }
 .trail__honey { fill: none; stroke: #ffb300; stroke-width: 20; stroke-linecap: round; stroke-linejoin: round; }
 .trail__shine { fill: none; stroke: #ffe08a; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; transform: translate(-3px, -3px); opacity: 0.9; }
 .trail__ring { fill: none; stroke: var(--leaf); stroke-width: 4; stroke-dasharray: 6 8; transform-box: fill-box; transform-origin: center; animation: ring-pulse 1.6s ease-in-out infinite; pointer-events: none; }

@@ -18,7 +18,7 @@ const DROP_MS = 750;
  */
 export function StickerPop({ sticker, seen, onDone }: { sticker: Sticker; seen: string[]; onDone: () => void }) {
   const game = gameOf(sticker);
-  const row = STICKERS.filter((s) => s.game === sticker.game);
+  const row = STICKERS.filter((s) => s.game === sticker.game && (s.set ?? 0) === (sticker.set ?? 0));
   const [run, setRun] = useState(0);
   const [phase, setPhase] = useState<Phase>('measure');
   const [flight, setFlight] = useState<CSSProperties>({});

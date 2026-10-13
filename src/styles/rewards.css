@@ -91,6 +91,12 @@
 .album__sticker:active .sticker { transform: rotate(var(--tilt)) scale(1.1); }
 .album__label { font-family: var(--body); font-size: 15px; font-weight: 700; line-height: 1.15; text-align: center; }
 .album__sticker.is-open .album__label { color: #6b5520; }
+/* A game with a second skill step (Mézút's faded trail) fits five stickers in its column. */
+.album__game--more .album__stickers { gap: 2px; }
+.album__game--more .sticker, .album__game--more .sticker-slot { width: 70px; height: 70px; border-width: 4px; }
+.album__game--more .sticker__mark { font-size: 22px; }
+.album__game--more .album__label { font-size: 13px; }
+.album__game--more .album__sticker { gap: 3px; padding: 2px; }
 .album__guide { display: flex; align-items: center; gap: 12px; padding: 0 32px 24px; }
 .album__guide .bubble { font-size: 22px; padding: 12px 20px; box-shadow: 0 4px 0 #ead9a8; }
 
@@ -209,6 +215,7 @@
 .is-phone .album__game { border-radius: 18px; padding: 10px 4px; gap: 6px; }
 .is-phone .album__name { font-size: 16px; min-height: 0; }
 .stage--portrait .album__stickers { flex-direction: row; justify-content: center; gap: 2px; }
+.stage--portrait .album__game--more .album__stickers { flex-wrap: wrap; }
 .is-phone .album .sticker, .is-phone .album .sticker-slot { width: 52px; height: 52px; border-width: 3px; }
 .is-phone .album .sticker__mark { font-size: 16px; }
 .is-phone .album__label { font-size: 11px; }

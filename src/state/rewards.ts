@@ -115,6 +115,8 @@ export interface Sticker {
   /** Csepi's line when it is collected. */
   praise: string;
   earned: (p: Progress) => boolean;
+  /** A later skill step of the game (Mézút's faded trail), shown as its own row when it pops. */
+  set?: number;
 }
 
 export interface StickerGame {
@@ -160,6 +162,8 @@ export const STICKERS: Sticker[] = [
   { id: 'trace-5', game: 'trace', mark: '1–5', label: 'Írom 5-ig', praise: 'Már ötig írod a számokat!', earned: (p) => p.traceSolved >= 5 },
   { id: 'trace-9', game: 'trace', mark: '6–9', label: 'Írom 9-ig', praise: 'Már kilencig írod a számokat!', earned: (p) => p.traceSolved >= 9 },
   { id: 'trace-0', game: 'trace', mark: '0', label: 'Minden szám', praise: 'Minden számot meg tudsz írni!', earned: (p) => p.traceSolved >= TRACE_ORDER.length },
+  { id: 'trace-fade', game: 'trace', mark: '5', label: 'Halvány út', praise: 'Már halvány úton is írod a számokat!', earned: (p) => p.traceFadedSolved >= 5, set: 1 },
+  { id: 'trace-memory', game: 'trace', mark: '0–9', label: 'Fejből írom', praise: 'Minden számot emlékezetből írsz!', earned: (p) => p.traceFadedSolved >= TRACE_ORDER.length, set: 1 },
   { id: 'pots-5', game: 'pots', mark: '5', label: 'Öt barátai', praise: 'Ismered az öt barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL },
   { id: 'pots-10', game: 'pots', mark: '10', label: 'Tíz barátai', praise: 'Ismered a tíz barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL * 2 },
   { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL * POTS_LEVELS.length }

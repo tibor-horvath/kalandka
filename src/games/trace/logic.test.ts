@@ -5,7 +5,9 @@ import {
   STEP,
   TOLERANCE,
   TRACE_ORDER,
+  arrowPoints,
   buildTraceRound,
+  lapOrder,
   canGrab,
   checkpoints,
   digitShape,
@@ -51,11 +53,37 @@ describe('digit trails', () => {
     expect(two).toEqual([4, 5, 7]);
   });
 
-  it('rounds go 1 to 9, then 0, then around again', () => {
+  it('the first lap goes 1 to 9, then 0, on the full trail', () => {
     expect(buildTraceRound(0).digit).toBe(1);
     expect(buildTraceRound(8).digit).toBe(9);
     expect(buildTraceRound(9).digit).toBe(0);
-    expect(buildTraceRound(10).digit).toBe(1);
+    for (let r = 0; r < TRACE_ORDER.length; r++) expect(buildTraceRound(r).faded).toBe(false);
+  });
+
+  it('later laps fade the trail and mix every digit, without repeating one across laps', () => {
+    for (let lap = 1; lap < 6; lap++) {
+      const rounds = TRACE_ORDER.map((_, i) => buildTraceRound(lap * TRACE_ORDER.length + i));
+      expect(rounds.every((r) => r.faded)).toBe(true);
+      expect(rounds.map((r) => r.digit).sort()).toEqual([...TRACE_ORDER].sort());
+      expect(lapOrder(lap)).not.toEqual(TRACE_ORDER);
+      expect(lapOrder(lap)[0]).not.toBe(lapOrder(lap - 1).at(-1));
+    }
+  });
+
+  it('a faded trail shows an arrow or two along every stroke, away from its ends', () => {
+    for (const d of TRACE_ORDER) {
+      for (const pts of digitShape(d).strokes) {
+        const arrows = arrowPoints(pts);
+        expect(arrows.length).toBeGreaterThan(0);
+        expect(arrows.every((k) => k > 0 && k < pts.length - 1)).toBe(true);
+      }
+    }
+  });
+
+  it('Csepi talks about the faded trail', () => {
+    const r = buildTraceRound(TRACE_ORDER.length);
+    expect(startFeedback(r).text).toContain('halvány');
+    expect(doneFeedback(r.digit, true).text).toContain('Emlékezetből');
   });
 
   it('resample keeps both ends', () => {
