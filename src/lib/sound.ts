@@ -84,6 +84,15 @@ export function powerDown(): void {
   blip(a, 420, 140, t + 0.65, 0.6, 0.12);
 }
 
+/** Csavar starts talking: a quiet two-note "bip-bup". */
+export function robotChirp(): void {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  blip(a, 880, 880, t, 0.09, 0.18);
+  blip(a, 587.33, 587.33, t + 0.11, 0.12, 0.18);
+}
+
 /** A tiny tap on devices that can vibrate (most Android tablets; iPads ignore it). */
 export function buzz(ms = 12): void {
   if (!enabled) return;

@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Stage } from './components/Stage';
 import { setSoundEnabled } from './lib/sound';
 import { applyUpdate, useUpdateWaiting } from './lib/update';
-import { setSpeechEnabled, setSpeechPitch, setSpeechRate, speak, stopSpeaking } from './lib/speech';
+import { setSpeaker, setSpeechEnabled, setSpeechRate, speak, stopSpeaking } from './lib/speech';
 import { Add } from './screens/Add';
 import { Album } from './screens/Album';
 import { Flash } from './screens/Flash';
@@ -78,7 +78,8 @@ function Game() {
   useEffect(() => setSoundEnabled(progress.sounds), [progress.sounds]);
   const world = currentWorld(progress);
   const csavarTalks = screen === 'path' || screen === 'workshop' || (screen === 'album' && albumFrom === 'workshop') || (screen === 'home' && world === 'robot');
-  useEffect(() => setSpeechPitch(csavarTalks ? 0.9 : 1.15), [csavarTalks]);
+  // A layout effect, so the voice is set before the new screen's own effects say their first line.
+  useLayoutEffect(() => setSpeaker(csavarTalks ? 'robot' : 'csepi'), [csavarTalks]);
   useEffect(() => {
     const id = window.setInterval(() => setClock(Date.now()), 60_000);
     return () => window.clearInterval(id);
