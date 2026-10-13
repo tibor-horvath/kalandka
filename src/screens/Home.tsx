@@ -4,6 +4,8 @@ import { AVATARS, Avatar } from '../components/avatars';
 import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../components/art';
 import { GuideBubble, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon, SpeakerOffIcon } from '../components/ui';
 import { DotFace } from '../components/seeds';
+import { PlantIcon } from '../components/garden';
+import { StickerPop } from '../components/StickerPop';
 import { useForm } from '../components/Stage';
 import { UNLOCK_ADD_AFTER, addLockedSpeech } from '../games/add/logic';
 import { UNLOCK_FLASH_AFTER, flashLockedSpeech } from '../games/learn/logic';
@@ -13,10 +15,9 @@ import { setSpeechEnabled, speak } from '../lib/speech';
 import type { Mood } from '../lib/types';
 import { kidName, useActiveKid, useProfiles } from '../state/profiles';
 import { useProgress } from '../state/progress';
+import { BEDS, PLANT_OPTIONS, bedAt, markStickerSeen, newStickers, newVisitor, seedBalance } from '../state/rewards';
 
 export type GameId = 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'trace' | 'pots';
-
-const COMING_SOON = [{ name: 'Titkos kert', skill: 'Meglepetés' }];
 
 function TrailArt() {
   return (
@@ -55,7 +56,6 @@ function PotsArt() {
   );
 }
 
-const SLEEPING = 'Ez a kertrész még alszik. Hamarosan kinyílik!';
 const GARDEN_SLOTS = 12;
 const NOTICE_MS = 6000;
 
@@ -100,7 +100,27 @@ function SwapIcon() {
   );
 }
 
-export function Home({ onOpen, onParents, onSwitch }: { onOpen: (game: GameId) => void; onParents: () => void; onSwitch: () => void }) {
+/** The child's own garden: a flower and a pear tree on one patch of soil. */
+function KiskertArt() {
+  return (
+    <span className="plot__trio plot__trio--kiskert">
+      <PlantIcon kind="flower" />
+      <PlantIcon kind="tree" />
+    </span>
+  );
+}
+
+export function Home({
+  onOpen,
+  onGarden,
+  onParents,
+  onSwitch
+}: {
+  onOpen: (game: GameId) => void;
+  onGarden: () => void;
+  onParents: () => void;
+  onSwitch: () => void;
+}) {
   const { progress, update } = useProgress();
   const { profiles } = useProfiles();
   const kid = useActiveKid();
@@ -108,6 +128,11 @@ export function Home({ onOpen, onParents, onSwitch }: { onOpen: (game: GameId) =
   const phone = useForm() !== 'tablet';
   const [notice, setNotice] = useState<Notice | null>(null);
   const noticeTimer = useRef<number | null>(null);
+  // A sticker earned in a game is celebrated here, one at a time, the earliest first.
+  const sticker = newStickers(progress)[0] ?? null;
+  const balance = seedBalance(progress);
+  const canPlantNow = balance >= Math.min(...PLANT_OPTIONS.map((o) => o.cost)) && Array.from({ length: BEDS }, (_, i) => bedAt(progress, i)).some((b) => !b);
+  const visitorWaiting = newVisitor(progress) !== null;
 
   const learned = progress.learnSolved;
   const flashOpen = progress.unlockAll || learned >= UNLOCK_FLASH_AFTER;
@@ -137,7 +162,7 @@ export function Home({ onOpen, onParents, onSwitch }: { onOpen: (game: GameId) =
     } else if (potsOpen && !progress.potsAnnounced) {
       update((p) => ({ ...p, potsAnnounced: true }));
       showNotice({ kicker: 'Nézd, mi történt!', title: 'Kinyíltak a Cserépbarátok!', mood: 'cheer' }, 'Nézd! Kinyílt egy új kertrész: a Cserépbarátok. Töltsük meg a cserepeket virággal!', true);
-    } else {
+    } else if (!sticker) {
       speak(`${greeting} ${question}`);
     }
     return () => {
@@ -163,7 +188,10 @@ export function Home({ onOpen, onParents, onSwitch }: { onOpen: (game: GameId) =
     const left = UNLOCK_POTS_AFTER - learned;
     showNotice({ kicker: 'Ez a kertrész még alszik.', title: `Ismerj meg még ${left} számot!`, mood: 'think' }, potsLockedSpeech(learned));
   };
-  const tapSleeping = () => showNotice({ kicker: 'Ez a kertrész még alszik.', title: 'Hamarosan kinyílik!', mood: 'sleep' }, SLEEPING);
+  const openGarden = () => {
+    if (!progress.welcomed) update((p) => ({ ...p, welcomed: true }));
+    onGarden();
+  };
 
   const bubble = notice ?? { kicker: greeting, title: question, mood: 'cheer' as Mood };
   const replay = () => speak(notice ? `${notice.kicker} ${notice.title}` : `${greeting} ${question}`);
@@ -209,10 +237,10 @@ export function Home({ onOpen, onParents, onSwitch }: { onOpen: (game: GameId) =
               </span>
             </button>
           )}
-          <div className="pill" aria-label={`${progress.seeds} mag`}>
+          <div className="pill" aria-label={`${balance} mag`}>
             <Seed />
             <span>
-              {progress.seeds}
+              {balance}
               <span className="pill__unit"> mag</span>
             </span>
           </div>
@@ -272,7 +300,7 @@ export function Home({ onOpen, onParents, onSwitch }: { onOpen: (game: GameId) =
 
         <button type="button" className="plot plot--play" onClick={() => open('patterns')} aria-label="Virágsor – mintázatos játék">
           {progress.patternsSolved === 0 && <span className="plot__badge">Új!</span>}
-          <span className="plot__trio">
+          <span className="plot__trio plot__trio--flowers">
             <PatternFlower kind="tulip" width={44} />
             <PatternFlower kind="sun" width={44} />
             <PatternFlower kind="star" width={44} />
@@ -341,10 +369,18 @@ export function Home({ onOpen, onParents, onSwitch }: { onOpen: (game: GameId) =
           <LockedPlot name="Cserépbarátok" skill={`Tízes barátok · még ${UNLOCK_POTS_AFTER - learned} szám`} art={<PotsArt />} onTap={tapPotsLocked} />
         )}
 
-        {COMING_SOON.map((g) => (
-          <LockedPlot key={g.name} name={g.name} skill={g.skill} onTap={tapSleeping} />
-        ))}
+        <button type="button" className="plot plot--play plot--kiskert" onClick={openGarden} aria-label="Kiskertem – ültess a magjaidból">
+          {visitorWaiting ? <span className="plot__badge">Vendég jött!</span> : canPlantNow && <span className="plot__badge">Ültethetsz!</span>}
+          <KiskertArt />
+          <span className="plot__soil" />
+          <span className="plot__name">Kiskertem</span>
+          <span className="plot__cta">
+            <Seed size={22} /> Ültetés
+          </span>
+        </button>
       </div>
+
+      {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}
 
       <div className="garden" aria-label={`A kerted: ${garden.length} virág`}>
         {garden.length === 0 ? (

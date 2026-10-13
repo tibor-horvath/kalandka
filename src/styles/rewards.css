@@ -1,0 +1,331 @@
+/*
+ * Rewards: the Kiskert (planting seeds), its visitors, the sticker album and the new-sticker
+ * animation. Tablet first; the phone layouts follow at the end of this file.
+ */
+
+/* ---------- home: the Kiskert plot ---------- */
+.plot--kiskert .plot__trio--kiskert { align-items: flex-end; gap: 0; }
+.plot__trio--kiskert .gplant-icon { width: 56px; height: 77px; }
+.plot__trio--kiskert .gplant-icon + .gplant-icon { width: 84px; height: 116px; margin-left: -10px; }
+.plot--kiskert .plot__cta svg { margin-left: -6px; }
+
+/* ---------- Kiskert ---------- */
+.screen--garden { display: flex; flex-direction: column; }
+.screen--garden .screen-title { flex: 1; color: var(--leaf-deep); }
+.screen--garden .topbar { gap: 20px; justify-content: flex-start; }
+
+.album-btn { height: 56px; padding: 0 20px 0 12px; border: none; border-radius: 28px; background: var(--paper); color: var(--oops-ink); font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; cursor: pointer; flex: none; }
+.album-btn:active { transform: scale(0.96); }
+.album-btn__icon { width: 34px; height: 34px; border-radius: 50%; background: var(--oops); border: 4px solid #ffe08a; box-sizing: border-box; transform: rotate(-8deg); }
+
+.kiskert { position: relative; flex: 1; min-height: 0; display: flex; gap: 24px; padding: 14px 40px 28px; }
+.kiskert__field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.kbeds { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 10px 12px; padding-top: 18px; }
+.kbed { position: relative; min-height: 0; padding: 0 0 10px; border: none; border-radius: 26px; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; cursor: pointer; }
+.kbed.is-selected { background: rgba(255, 255, 255, 0.6); box-shadow: inset 0 0 0 5px var(--drop); }
+.kbed__plant { flex: 1; min-height: 0; width: 100%; display: flex; align-items: flex-end; justify-content: center; position: relative; z-index: 1; }
+.kbed__plant .pop-in { display: flex; align-items: flex-end; justify-content: center; height: 100%; max-width: 100%; }
+.gplant { display: block; height: 100%; max-height: 200px; width: auto; max-width: 100%; }
+.kbed__plus { width: 52px; height: 52px; margin-bottom: 16px; border-radius: 50%; background: rgba(255, 255, 255, 0.75); color: var(--leaf-deep); display: grid; place-items: center; }
+.kbed.is-selected .kbed__plus { background: var(--drop); color: var(--paper); }
+.kbed__soil { width: 86%; max-width: 130px; height: 32px; margin-top: -14px; border-radius: 50%; background: var(--soil); box-shadow: inset 0 -5px 0 #6e4529; flex: none; }
+.kbed__growth { display: flex; gap: 5px; margin-top: 6px; }
+.kbed__growth span { width: 12px; height: 12px; border-radius: 50%; background: var(--paper); border: 2px solid var(--drop); }
+.kbed__growth span.is-full { background: var(--drop); }
+.kbed:active .kbed__plant { transform: scale(0.97); }
+
+.visitors { flex: none; height: 96px; display: flex; align-items: flex-end; gap: 14px; padding: 0 6px; }
+.visitors__one { transform-origin: 50% 100%; }
+.visitors__next { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-left: auto; }
+.visitors__q { width: 54px; height: 54px; border-radius: 50%; border: 3px dashed #4a5e70; background: rgba(255, 255, 255, 0.7); display: grid; place-items: center; font-size: 28px; font-weight: 800; color: #4a5e70; }
+.visitors__when { font-family: var(--body); font-size: 15px; font-weight: 700; color: #26402c; }
+
+.kiskert__panel { width: 330px; flex: none; background: var(--paper); border-radius: 32px; box-shadow: 0 6px 0 var(--grass-deep); padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.kiskert__say { display: flex; align-items: center; gap: 10px; }
+.kiskert__say .guide { flex: 1; min-width: 0; gap: 14px; }
+.kiskert__say .bubble { --bubble-bg: #f3f7f4; font-size: 22px; padding: 12px 16px; }
+.kiskert__say .bubble--good { --bubble-bg: var(--good-tint); }
+.kiskert__say .round-btn { width: 52px; height: 52px; }
+.plant-options { display: flex; flex-direction: column; gap: 10px; }
+.plant-option { display: flex; flex-direction: column; gap: 2px; }
+.plant-option__btn { min-height: 76px; padding: 6px 12px 6px 8px; border-radius: 22px; border: 3px solid var(--grass-deep); background: var(--good-tint); color: var(--leaf-deep); box-shadow: 0 4px 0 var(--grass-deep); display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; }
+.plant-option__btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--grass-deep); }
+.plant-option__btn:disabled { background: #f2f6f9; border-color: #d6e4ee; box-shadow: none; color: #4a5e70; cursor: default; transform: none; }
+.plant-option__btn:disabled .gplant-icon { opacity: 0.55; }
+.gplant-icon { width: 46px; height: 63px; flex: none; }
+.plant-option__name { flex: 1; font-size: 24px; font-weight: 800; line-height: 1.05; }
+.plant-option__cost { display: flex; align-items: center; gap: 4px; padding: 2px 12px 2px 6px; border-radius: 999px; background: #fff4cf; color: var(--ink); font-size: 22px; font-weight: 800; }
+.plant-option__hint { padding-left: 16px; font-family: var(--body); font-size: 16px; font-weight: 700; color: var(--ink-soft); }
+.plant-options__pick { text-align: center; font-family: var(--body); font-size: 17px; font-weight: 800; color: var(--drop-deep); }
+.kiskert__note { margin-top: auto; font-family: var(--body); font-size: 16px; font-weight: 700; line-height: 1.35; color: var(--ink-soft); }
+
+/* A new visitor: the whole screen welcomes it. */
+.visitor-pop { position: absolute; z-index: 6; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: rgba(221, 240, 250, 0.94); text-align: center; overflow: hidden; }
+.visitor-pop__rays { position: absolute; left: 50%; top: 50%; width: 900px; height: 900px; margin: -450px 0 0 -450px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 224, 138, 0.9) 0%, rgba(255, 224, 138, 0) 60%); animation: glow-in 0.8s ease-out both; }
+.visitor-pop > :not(.visitor-pop__rays) { position: relative; }
+.visitor-pop__kicker { font-size: 22px; font-weight: 800; color: var(--leaf-deep); background: var(--paper); border-radius: 999px; padding: 6px 20px; animation: settle 0.5s ease-out both; }
+.visitor-pop__title { font-size: 64px; font-weight: 800; line-height: 1; animation: title-pop 0.5s cubic-bezier(.3, 1.6, .5, 1) 0.2s both; }
+.visitor-pop__art { margin: 6px 0 12px; animation: visitor-walk 1s cubic-bezier(.3, 1.2, .5, 1) 0.4s both; }
+.visitor-pop .big-btn { animation: settle 0.4s ease-out 1.2s both; }
+@keyframes visitor-walk { from { transform: translateX(-320px) rotate(-6deg); opacity: 0; } 70% { transform: translateX(14px) rotate(3deg); opacity: 1; } to { transform: none; } }
+@keyframes glow-in { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes title-pop { from { transform: translateY(20px) scale(0.8); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------- stickers ---------- */
+.sticker { --sticker: var(--oops); --sticker-ink: #ffffff; --tilt: 0deg; width: 96px; height: 96px; border-radius: 50%; background: var(--sticker); color: var(--sticker-ink); border: 5px solid #ffffff; box-shadow: 0 0 0 2px #ead9a8, 0 5px 0 #ead9a8; display: grid; place-items: center; transform: rotate(var(--tilt)); flex: none; }
+.sticker-slot { width: 96px; height: 96px; border-radius: 50%; border: 4px dashed #c9b27a; color: #8a6d2a; display: grid; place-items: center; flex: none; }
+.sticker__mark { font-family: var(--display); font-size: 29px; font-weight: 800; line-height: 1; white-space: nowrap; }
+
+/* ---------- album ---------- */
+.screen--album { background: #fff8e6; display: flex; flex-direction: column; }
+.screen--album::before { background: #fff8e6; }
+.screen--album .screen-title { flex: 1; color: var(--oops-ink); }
+.screen--album .topbar { gap: 20px; justify-content: flex-start; }
+.screen--album .round-btn--white, .screen--album .pill { box-shadow: 0 4px 0 #ead9a8; }
+.album { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 14px; padding: 18px 32px 12px; }
+.album__game { background: var(--paper); border-radius: 26px; padding: 16px 6px; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 5px 0 #ead9a8; min-width: 0; }
+.album__name { font-size: 20px; font-weight: 800; line-height: 1.1; text-align: center; min-height: 44px; display: flex; align-items: center; overflow-wrap: anywhere; hyphens: auto; }
+.album__stickers { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 8px; }
+.album__sticker { border: none; background: none; padding: 4px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; color: var(--ink); }
+.album__sticker:active .sticker { transform: rotate(var(--tilt)) scale(1.1); }
+.album__label { font-family: var(--body); font-size: 15px; font-weight: 700; line-height: 1.15; text-align: center; }
+.album__sticker.is-open .album__label { color: #6b5520; }
+.album__guide { display: flex; align-items: center; gap: 12px; padding: 0 32px 24px; }
+.album__guide .bubble { font-size: 22px; padding: 12px 20px; box-shadow: 0 4px 0 #ead9a8; }
+
+/* ---------- a new sticker ---------- */
+.sticker-pop { position: absolute; z-index: 7; inset: -1000px; padding: 1000px; background: #fff8e6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; overflow: hidden; }
+.sticker-pop__title { font-size: 64px; font-weight: 800; line-height: 1; color: var(--oops-ink); animation: title-pop 0.5s cubic-bezier(.3, 1.6, .5, 1) 0.55s both; }
+.sticker-pop__stage { position: relative; width: 240px; height: 260px; display: grid; place-items: center; }
+.sticker-pop__flyer { position: relative; width: 220px; height: 220px; border-radius: 50%; overflow: hidden; opacity: 0; }
+.sticker-pop__flyer .sticker { width: 220px; height: 220px; border-width: 10px; box-shadow: none; }
+.sticker-pop__flyer .sticker__mark { font-size: 66px; }
+.is-fly .sticker-pop__flyer { overflow: visible; opacity: 1; animation: sticker-fly 3.4s cubic-bezier(.3, .7, .4, 1) both; }
+/* The shine sweeps across inside the round sticker. */
+.sticker-pop__shine { position: absolute; inset: 10px; border-radius: 50%; overflow: hidden; pointer-events: none; }
+.sticker-pop__shine::after { content: ''; position: absolute; top: -40px; left: 0; width: 56px; height: 300px; background: rgba(255, 255, 255, 0.55); transform: translateX(-160%) rotate(25deg); }
+.is-fly .sticker-pop__shine::after { animation: sticker-shine 0.7s ease-in-out 1.05s both; }
+.sticker-pop__glow { position: absolute; left: 50%; top: 50%; width: 340px; height: 340px; margin: -170px 0 0 -170px; border-radius: 50%; background: radial-gradient(circle, #ffe08a 0%, rgba(255, 224, 138, 0) 70%); animation: sticker-glow 1s ease-out 0.5s both; }
+.sticker-pop__ray { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: rotate(var(--a)); }
+.sticker-pop__ray svg { position: absolute; left: -17px; top: -17px; animation: sticker-ray 0.8s ease-out both; }
+
+.sticker-pop__card { position: relative; background: var(--paper); border-radius: 30px; box-shadow: 0 6px 0 #ead9a8; padding: 16px 30px 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.sticker-pop__game { margin: 0; font-size: 26px; font-weight: 800; line-height: 1; }
+.sticker-pop__row { display: flex; gap: 30px; }
+.sticker-pop__place { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 130px; }
+.sticker-pop__place .sticker, .sticker-pop__place .sticker-slot { width: 120px; height: 120px; }
+.sticker-pop__place .sticker__mark { font-size: 36px; }
+.sticker-pop__label { font-family: var(--body); font-size: 16px; font-weight: 700; text-align: center; }
+.sticker-pop__label.is-open { color: #6b5520; }
+.sticker-pop__stuck { position: relative; padding: 0; border: none; background: none; border-radius: 50%; cursor: pointer; }
+.sticker-pop__ring { position: absolute; inset: 0; border-radius: 50%; border: 6px solid var(--sun); animation: sticker-ring 0.7s ease-out both; pointer-events: none; }
+
+.sticker-pop__foot { display: flex; align-items: center; gap: 24px; margin-top: 14px; min-height: 76px; }
+.sticker-pop__say .bubble { font-size: 22px; padding: 12px 20px; box-shadow: 0 4px 0 #ead9a8; max-width: 440px; }
+.sticker-pop__foot > * { visibility: hidden; }
+.is-landed .sticker-pop__foot > * { visibility: visible; animation: settle 0.4s ease-out both; }
+
+/* Spins in, lands big, wobbles, shines, then flies into its place (--dx, --dy, --s from StickerPop) and squashes. */
+@keyframes sticker-fly {
+  0% { transform: translate(0, -420px) scale(0.4) rotate(-200deg); opacity: 0; }
+  22% { transform: translate(0, 0) scale(1.18) rotate(10deg); opacity: 1; }
+  29% { transform: translate(0, 0) scale(0.94) rotate(-5deg); }
+  36% { transform: translate(0, 0) scale(1.03) rotate(2deg); }
+  42%, 68% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  72% { transform: translate(0, -30px) scale(1.05) rotate(4deg); }
+  88% { transform: translate(var(--dx), calc(var(--dy) + 5px)) scale(var(--s)) rotate(-8deg); }
+  93% { transform: translate(var(--dx), calc(var(--dy) + 12px)) scale(calc(var(--s) * 1.16), calc(var(--s) * 0.84)) rotate(-6deg); }
+  97% { transform: translate(var(--dx), calc(var(--dy) - 2px)) scale(calc(var(--s) * 0.94), calc(var(--s) * 1.06)) rotate(-6deg); }
+  100% { transform: translate(var(--dx), var(--dy)) scale(var(--s)) rotate(-6deg); opacity: 1; }
+}
+@keyframes sticker-shine { from { transform: translateX(-160%) rotate(25deg); } to { transform: translateX(260%) rotate(25deg); } }
+@keyframes sticker-ray { 0% { transform: translateX(40px) scale(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateX(190px) scale(1); opacity: 0; } }
+@keyframes sticker-glow { 0% { transform: scale(0.3); opacity: 0; } 30% { opacity: 0.9; } 100% { transform: scale(1.6); opacity: 0; } }
+@keyframes sticker-ring { from { transform: scale(0.8); opacity: 0.9; } to { transform: scale(1.5); opacity: 0; } }
+
+/* ---------- phones ---------- */
+.is-phone .plot__trio--kiskert .gplant-icon { width: 38px; height: 52px; }
+.is-phone .plot__trio--kiskert .gplant-icon + .gplant-icon { width: 56px; height: 77px; }
+
+.is-phone .screen--garden .topbar, .is-phone .screen--album .topbar { gap: 8px; flex: none; }
+.is-phone .album-btn { height: 44px; width: 44px; padding: 0; justify-content: center; }
+.is-phone .album-btn__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.is-phone .album-btn__icon { width: 28px; height: 28px; }
+
+.stage--portrait .kiskert { flex-direction: column; gap: 12px; padding: 8px 16px 16px; }
+.stage--portrait .kiskert__field { justify-content: center; }
+.stage--portrait .kbeds { flex: none; grid-template-rows: repeat(2, 150px); padding-top: 8px; gap: 10px 4px; }
+.stage--portrait .kbed { padding-bottom: 6px; border-radius: 16px; }
+.stage--portrait .kbed__soil { height: 18px; margin-top: -8px; }
+.stage--portrait .kbed__plus { width: 36px; height: 36px; margin-bottom: 8px; }
+.stage--portrait .kbed__plus svg { width: 18px; height: 18px; }
+.stage--portrait .kbed__growth span { width: 9px; height: 9px; }
+.stage--portrait .visitors { height: 80px; margin-top: 12px; }
+.stage--portrait .visitors .visitor-art { width: 84px; height: 70px; }
+.stage--portrait .visitors__q { width: 40px; height: 40px; font-size: 20px; }
+.stage--portrait .kiskert__panel { width: auto; padding: 14px; gap: 10px; border-radius: 24px; }
+.stage--portrait .plant-options { flex-direction: row; gap: 8px; }
+.stage--portrait .plant-option { flex: 1; min-width: 0; }
+.stage--portrait .plant-option__btn { flex-direction: column; gap: 2px; padding: 6px 4px 8px; min-height: 0; text-align: center; border-radius: 18px; }
+.stage--portrait .plant-option__name { font-size: 15px; }
+.stage--portrait .plant-option__cost { font-size: 17px; }
+.stage--portrait .plant-option__cost svg { width: 16px; height: 16px; }
+.stage--portrait .plant-option__hint { padding: 0; font-size: 13px; text-align: center; }
+.stage--portrait .plant-options__pick { font-size: 14px; }
+.stage--portrait .kiskert__note { display: none; }
+.stage--portrait .kiskert__say .bubble { font-size: 18px; }
+
+.stage--landscape .kiskert { gap: 12px; padding: 8px 0 0; }
+.stage--landscape .kbeds { padding-top: 0; gap: 4px 8px; }
+.stage--landscape .kbed__soil { height: 16px; margin-top: -8px; }
+.stage--landscape .kbed__plus { width: 34px; height: 34px; margin-bottom: 6px; }
+.stage--landscape .kbed__growth span { width: 8px; height: 8px; }
+.stage--landscape .visitors { height: 46px; }
+.stage--landscape .visitors .visitor-art { width: 52px; height: 43px; }
+.stage--landscape .visitors__q { width: 34px; height: 34px; font-size: 18px; }
+.stage--landscape .visitors__when { font-size: 12px; }
+.stage--landscape .kiskert__panel { width: 250px; padding: 10px; gap: 6px; border-radius: 20px; }
+.stage--landscape .kiskert__say .guide__csepi { display: none; }
+.stage--landscape .kiskert__say .bubble { font-size: 16px; padding: 8px 12px; }
+.stage--landscape .kiskert__say .bubble::before { display: none; }
+.stage--landscape .plant-options { gap: 4px; }
+.stage--landscape .plant-option__btn { min-height: 48px; padding: 2px 8px 2px 4px; border-radius: 16px; }
+.stage--landscape .gplant-icon { width: 30px; height: 41px; }
+.stage--landscape .plant-option__name { font-size: 17px; }
+.stage--landscape .plant-option__cost { font-size: 16px; }
+.stage--landscape .plant-option__hint { font-size: 12px; padding-left: 8px; }
+.stage--landscape .plant-options__pick { font-size: 13px; }
+.stage--landscape .kiskert__note { display: none; }
+
+.is-phone .visitor-pop__title { font-size: 40px; }
+.is-phone .visitor-pop__kicker { font-size: 17px; }
+.is-phone .visitor-pop .visitor-art { width: 200px; height: 167px; }
+.stage--landscape .visitor-pop .visitor-art { width: 150px; height: 125px; }
+.stage--landscape .visitor-pop__title { font-size: 34px; }
+
+.stage--portrait .album { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px 16px; overflow-y: auto; }
+.stage--landscape .album { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; padding: 8px 0; }
+.is-phone .album__game { border-radius: 18px; padding: 10px 4px; gap: 6px; }
+.is-phone .album__name { font-size: 16px; min-height: 0; }
+.stage--portrait .album__stickers { flex-direction: row; justify-content: center; gap: 2px; }
+.is-phone .album .sticker, .is-phone .album .sticker-slot { width: 52px; height: 52px; border-width: 3px; }
+.is-phone .album .sticker__mark { font-size: 16px; }
+.is-phone .album__label { font-size: 11px; }
+.stage--landscape .album__stickers { gap: 2px; }
+.stage--landscape .album__name { font-size: 13px; }
+.stage--landscape .album .sticker, .stage--landscape .album .sticker-slot { width: 46px; height: 46px; }
+.stage--landscape .album__label { display: none; }
+.is-phone .album__guide { padding: 0 16px 12px; }
+.stage--landscape .album__guide { padding: 0 0 4px; }
+.is-phone .album__guide .bubble { font-size: 17px; }
+
+.is-phone .sticker-pop { gap: 6px; }
+.is-phone .sticker-pop__title { font-size: 40px; }
+.is-phone .sticker-pop__stage { width: 170px; height: 180px; }
+.is-phone .sticker-pop__flyer, .is-phone .sticker-pop__flyer .sticker { width: 150px; height: 150px; }
+.is-phone .sticker-pop__flyer .sticker { border-width: 7px; }
+.is-phone .sticker-pop__flyer .sticker__mark { font-size: 46px; }
+.is-phone .sticker-pop__card { padding: 12px 14px; border-radius: 22px; }
+.is-phone .sticker-pop__game { font-size: 20px; }
+.is-phone .sticker-pop__row { gap: 8px; }
+.is-phone .sticker-pop__place { width: 96px; }
+.is-phone .sticker-pop__place .sticker, .is-phone .sticker-pop__place .sticker-slot { width: 76px; height: 76px; }
+.is-phone .sticker-pop__place .sticker__mark { font-size: 24px; }
+.is-phone .sticker-pop__label { font-size: 13px; }
+.stage--portrait .sticker-pop__foot { flex-direction: column; gap: 12px; padding: 0 16px; }
+.is-phone .sticker-pop__say .bubble { font-size: 17px; }
+.stage--landscape .sticker-pop { flex-direction: row; flex-wrap: wrap; align-content: center; column-gap: 24px; }
+.stage--landscape .sticker-pop__title { width: 100%; text-align: center; font-size: 30px; }
+.stage--landscape .sticker-pop__stage { width: 130px; height: 150px; }
+.stage--landscape .sticker-pop__flyer, .stage--landscape .sticker-pop__flyer .sticker { width: 120px; height: 120px; }
+.stage--landscape .sticker-pop__flyer .sticker__mark { font-size: 36px; }
+.stage--landscape .sticker-pop__foot { width: 100%; justify-content: center; margin-top: 4px; min-height: 56px; }
+.stage--landscape .sticker-pop__say .guide__csepi { display: none; }
+
+/* ---------- living garden: plants sway, visitors potter about ---------- */
+/* Slow, small movements on a loop; each bed starts at its own point (--sway-delay) so nothing moves in step. */
+.kbed__sway { display: flex; align-items: flex-end; justify-content: center; height: 100%; max-width: 100%; transform-origin: 50% 100%; }
+.kbed__sway.is-poked { animation: plant-wiggle 0.7s ease-out; }
+.kbed .gplant { transform-origin: 50% 100%; animation: plant-sway 4.5s ease-in-out var(--sway-delay, 0s) infinite; }
+.kbed .gplant--tree { animation-duration: 6s; animation-name: tree-sway; }
+.kbed .gplant--bush { animation-name: bush-breathe; animation-duration: 5s; }
+.kbed .gplant--sprout { animation-duration: 3s; }
+.plot__trio--kiskert .gplant-icon { transform-origin: 50% 100%; animation: plant-sway 4.5s ease-in-out infinite; }
+.plot__trio--kiskert .gplant-icon + .gplant-icon { animation: tree-sway 6s ease-in-out -2s infinite; }
+.garden__flower svg { transform-origin: 50% 100%; animation: plant-sway 4.5s ease-in-out infinite; }
+.garden__flower:nth-child(3n + 2) svg { animation-delay: -1.5s; }
+.garden__flower:nth-child(3n) svg { animation-delay: -3s; }
+
+@keyframes plant-sway { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+@keyframes tree-sway { 0%, 100% { transform: rotate(-1deg); } 50% { transform: rotate(1deg); } }
+@keyframes bush-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, 0.97); } }
+@keyframes plant-wiggle {
+  0% { transform: rotate(0) scale(1); }
+  20% { transform: rotate(-7deg) scale(1.05, 0.95); }
+  45% { transform: rotate(6deg) scale(0.97, 1.04); }
+  70% { transform: rotate(-3deg); }
+  100% { transform: rotate(0) scale(1); }
+}
+
+.vis-part { transform-box: fill-box; }
+.vis-hedgehog { transform-origin: 50% 100%; animation: hedgehog-waddle 3.4s ease-in-out infinite; }
+.vis-ladybug { transform-origin: 50% 55%; animation: ladybug-turn 4.2s ease-in-out infinite; }
+.vis-legs { transform-origin: 50% 50%; animation: ladybug-legs 0.28s ease-in-out infinite alternate; }
+.vis-butterfly { transform-origin: 50% 50%; animation: butterfly-float 2.4s ease-in-out infinite; }
+.vis-wing { animation: wing-flap 0.45s ease-in-out infinite alternate; }
+.vis-wing--l { transform-origin: 100% 50%; }
+.vis-wing--r { transform-origin: 0% 50%; }
+.vis-blackbird { transform-origin: 50% 100%; animation: bird-hop 3.8s ease-out infinite; }
+.vis-head { transform-origin: 20% 90%; animation: bird-look 3.8s ease-in-out infinite; }
+
+@keyframes hedgehog-waddle {
+  0%, 100% { transform: translateX(0) rotate(0) scale(1, 1); }
+  25% { transform: translateX(-14px) rotate(-2deg) scale(1.01, 0.98); }
+  50% { transform: translateX(0) rotate(0) scale(1, 1.03); }
+  75% { transform: translateX(14px) rotate(2deg) scale(1.01, 0.98); }
+}
+@keyframes ladybug-turn { 0%, 100% { transform: rotate(-10deg) translateY(0); } 50% { transform: rotate(10deg) translateY(-2px); } }
+@keyframes ladybug-legs { from { transform: scaleX(1); } to { transform: scaleX(0.9); } }
+@keyframes butterfly-float { 0%, 100% { transform: translate(0, 0) rotate(-4deg); } 50% { transform: translate(3px, -7px) rotate(4deg); } }
+@keyframes wing-flap { from { transform: scaleX(1); } to { transform: scaleX(0.45); } }
+@keyframes bird-hop {
+  0%, 62%, 100% { transform: translateY(0) scale(1, 1); }
+  66% { transform: translateY(0) scale(1.06, 0.92); }
+  72% { transform: translateY(-12px) scale(0.96, 1.05); }
+  78% { transform: translateY(0) scale(1.05, 0.94); }
+  82% { transform: translateY(-5px) scale(1, 1); }
+  86% { transform: translateY(0) scale(1, 1); }
+}
+@keyframes bird-look { 0%, 30%, 100% { transform: rotate(0); } 38%, 52% { transform: rotate(-12deg); } 58% { transform: rotate(4deg); } }
+
+/* Tapping a visitor: a happy jump. */
+.visitors__one { padding: 0; border: none; background: none; border-radius: 18px; cursor: pointer; }
+.visitors__hop { display: inline-block; transform-origin: 50% 100%; }
+.visitors__hop.is-poked { animation: visitor-happy 0.7s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes visitor-happy {
+  0% { transform: translateY(0) scale(1, 1); }
+  15% { transform: translateY(0) scale(1.12, 0.86); }
+  45% { transform: translateY(-26px) scale(0.92, 1.1) rotate(-6deg); }
+  70% { transform: translateY(0) scale(1.08, 0.92); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+/* Home screen: the tiles' flowers and sprout sway, the bees hover (their wings already flap). */
+.screen--home .plot > svg,
+.screen--home .plot__trio--flowers > svg,
+.screen--home .plot__pot > svg:first-child { transform-origin: 50% 100%; animation: plant-sway 4.5s ease-in-out infinite; }
+.screen--home .plot__trio--flowers > svg:nth-child(2) { animation-delay: -1.5s; }
+.screen--home .plot__trio--flowers > svg:nth-child(3) { animation-delay: -3s; }
+.screen--home .plot__pot:nth-child(2) > svg:first-child { animation-delay: -2s; }
+.screen--home .plot__trio--bee > svg,
+.screen--home .plot__trail-bee > svg { animation: bee-hover 1.8s ease-in-out infinite; }
+.screen--home .plot__trail-bee > svg { animation-delay: -0.9s; }
+@keyframes bee-hover { 0%, 100% { transform: translate(0, 0) rotate(0); } 30% { transform: translate(2px, -5px) rotate(-4deg); } 65% { transform: translate(-2px, -2px) rotate(3deg); } }
+
+/* Infinite loops would flicker under the global 0.01 ms reduced-motion rule: stop them outright. */
+@media (prefers-reduced-motion: reduce) {
+  .gplant, .gplant-icon, .garden__flower svg, .vis-part, .kbed__sway, .visitors__hop,
+  .screen--home .plot > svg, .screen--home .plot__trio--flowers > svg, .screen--home .plot__pot > svg:first-child,
+  .screen--home .plot__trio--bee > svg, .screen--home .plot__trail-bee > svg { animation: none !important; }
+}

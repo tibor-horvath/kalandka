@@ -16,6 +16,17 @@ Kalandka is the umbrella brand; Számkertész (the counting garden) is its first
 | Cserépbarátok | Number friends of 5 and 10 | Opens after numbers 1–10 in Számvetés. A window box of 5 or 10 pots (rows of five, like a ten-frame); some already flower, and the child picks how many more fill the box. Tapping an empty pot plants a sprout and Csepi counts it; a wrong pick has Csepi count the empty pots together. A right answer makes them bloom in a second colour and shows "3 + 7 = 10". Three levels, five solved rounds each: friends of five, friends of ten in order, friends of ten scattered. |
 
 Each solved task earns a seed; each watered plant is added to the garden on the home screen.
+
+## Rewards
+
+| Part | How it works |
+| --- | --- |
+| Kiskert | The child's own garden, opened from the eighth plot on the home screen. Seeds are planted in ten beds: a flower (3), a blueberry bush (6) or a pear tree (10). A planting starts as a seedling and grows over the next three solved tasks in any game. |
+| Visitors | A growing garden brings visitors who stay: Süni at 3 grown plants, Katica at 5, a butterfly at 8 and a blackbird at 10. Each is welcomed once with its own screen. |
+| Matricáim | Three stickers per game, one for each skill step (e.g. Mézút: writing 1–5, 6–9, all digits). Empty places show what comes next; tapping a sticker has Csepi say what it is for. |
+| New sticker | Back on the home screen, a newly earned sticker spins in, sparkles, then flies into its place in the game's album page and settles with a squash. Tapping it replays the animation; with reduced motion it simply appears in place. |
+
+Rewards are only ever added: nothing wilts, nothing is taken away, nothing is random and nothing depends on time played. Stickers come from skill progress, never from the number of tasks; a starting level set by parents (or progress from before the stickers existed) fills the album without a celebration.
 The parents' area opens through a gate (a two-digit multiplication such as 6 × 9 on a keypad, which 5–7 year olds cannot do yet). It is a separate full-screen space with a menu: **Áttekintés** (today's time ring, the last 7 days, plain-language notes on what is going well or hard, progress per game), **Képernyőidő** (daily limit, +10 minutes, rest now, warning and finish-the-task switches, evening rest), **Szintek** (a starting level per game with −/+ steppers, all games open) and **Beállítások** (Csepi's voice and speaking speed, sound effects, privacy, a two-step progress reset).
 
 Screen time: only active play counts (app visible, parents' area closed) and the count starts again each day. Two minutes before the end a badge appears and Csepi says so; at the limit a child in a game may finish the task (up to 2 minutes), then a rest screen appears that only the parents' gate dismisses. "Pihenő most" ends play for today; evening rest blocks play from 18–20:00 until 7:00. Resetting progress does not reset today's play time.
@@ -45,11 +56,12 @@ src/
   lib/speech.ts             Csepi's voice via browser hu-HU text-to-speech (placeholder for recorded audio)
   lib/sound.ts              synthesised pops and chimes (Web Audio) and light vibration
   state/progress.tsx        seeds, garden and rounds, saved to localStorage
+  state/rewards.ts          Kiskert planting and growth, visitors, stickers and which ones are new
   state/screenTime.ts       daily limit, play clock and 14-day history, bonus, rest now, evening rest
   state/insights.ts         plain-language notes for parents; the multiplication gate
   state/levels.ts           per-game level settings for the parents' corner (read current, apply new start)
   components/               Csepi, artwork, buttons, speech bubble, scaling stage (1180×820 tablet, 390 px phone)
-  screens/                  Home, Learn, Water, Patterns, Flash, Add, Trace, Pots, Rest; parents/ (Gate, ParentArea and its pages)
+  screens/                  Home, Garden (Kiskert), Album (Matricáim), Learn, Water, Patterns, Flash, Add, Trace, Pots, Rest; parents/ (Gate, ParentArea and its pages)
 ```
 
 ## Design rules carried into code
@@ -64,7 +76,8 @@ src/
 ## Not done yet
 
 - Recorded Hungarian voice for Csepi (the browser voice is a stand-in).
-- A still-unnamed game slot (Titkos kert); tapping it makes Csepi say it opens soon.
+- What happens once the Kiskert's ten beds are full (a second garden, or replanting); seeds keep counting meanwhile.
+- Parents' overview of stickers and the garden.
 
 ## Deploy
 

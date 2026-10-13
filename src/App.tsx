@@ -4,7 +4,9 @@ import { setSoundEnabled } from './lib/sound';
 import { applyUpdate, useUpdateWaiting } from './lib/update';
 import { setSpeechEnabled, setSpeechRate, speak, stopSpeaking } from './lib/speech';
 import { Add } from './screens/Add';
+import { Album } from './screens/Album';
 import { Flash } from './screens/Flash';
+import { Garden } from './screens/Garden';
 import { Home, type GameId } from './screens/Home';
 import { Learn } from './screens/Learn';
 import { Gate } from './screens/parents/Gate';
@@ -19,7 +21,8 @@ import { ProfilesProvider, setActive, useProfiles } from './state/profiles';
 import { useProgress, type Progress } from './state/progress';
 import { GRACE_SECONDS, WARN_SECONDS, addPlay, isEveningRest, remainingSeconds, today } from './state/screenTime';
 
-type Screen = 'home' | GameId;
+/** The Kiskert and the sticker album sit beside the home screen: no task runs there. */
+type Screen = 'home' | 'garden' | 'album' | GameId;
 type Parents = 'closed' | 'gate' | 'open';
 
 /** The play clock ticks in steps of this many seconds. */
@@ -36,6 +39,10 @@ const ROUND_KEY = {
   trace: 'traceRound',
   pots: 'potsRound'
 } as const satisfies Record<GameId, keyof Progress>;
+
+function isGame(s: Screen): s is GameId {
+  return s in ROUND_KEY;
+}
 
 function Game() {
   const { progress, update } = useProgress();
@@ -102,7 +109,7 @@ function Game() {
   // because a sleeping tablet suspends timers and a single timeout could drift forever.
   useEffect(() => {
     if (!timeUp || screen === 'home' || inParents) return;
-    if (!progress.graceToFinish) {
+    if (!progress.graceToFinish || !isGame(screen)) {
       go('home');
       return;
     }
@@ -120,7 +127,7 @@ function Game() {
   }, [timeUp, screen, inParents, progress.graceToFinish]);
 
   // "Ez az utolsó feladat!": once the task in progress is done, the next one does not start.
-  const round = screen === 'home' ? null : progress[ROUND_KEY[screen]];
+  const round = isGame(screen) ? progress[ROUND_KEY[screen]] : null;
   const graceRound = useRef<number | null>(null);
   useEffect(() => {
     if (!timeUp || round === null || inParents) {
@@ -149,7 +156,9 @@ function Game() {
   return (
     <Stage>
       {screen === 'home' && showPicker && <Picker onPick={pick} onAdd={() => openGate('add')} onParents={() => openGate()} />}
-      {screen === 'home' && !showPicker && <Home key={profiles.activeId} onOpen={go} onParents={() => openGate()} onSwitch={switchKid} />}
+      {screen === 'home' && !showPicker && <Home key={profiles.activeId} onOpen={go} onGarden={() => go('garden')} onParents={() => openGate()} onSwitch={switchKid} />}
+      {screen === 'garden' && <Garden onBack={() => go('home')} onAlbum={() => go('album')} />}
+      {screen === 'album' && <Album onBack={() => go('garden')} />}
       {screen === 'learn' && <Learn key={progress.learnRound} onBack={() => go('home')} />}
       {screen === 'water' && <Water onBack={() => go('home')} />}
       {screen === 'patterns' && <Patterns onBack={() => go('home')} />}

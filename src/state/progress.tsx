@@ -1,8 +1,18 @@
 import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../games/add/logic';
+import { markEarnedSeen, type Bed } from './rewards';
 
 export interface Progress {
+  /** Every seed ever earned (one per solved task); the balance to plant is seeds − seedsSpent. */
   seeds: number;
+  /** Seeds planted in the Kiskert. */
+  seedsSpent: number;
+  /** The Kiskert's beds (see BEDS in rewards.ts); null is an empty bed. */
+  beds: (Bed | null)[];
+  /** Kiskert visitors already welcomed (see VISITORS). */
+  visitorsSeen: number;
+  /** Stickers already celebrated; the rest of the earned ones get the sticker animation. */
+  stickersSeen: string[];
   /** Plant ids grown in the watering game, oldest first. */
   garden: string[];
   waterRound: number;
@@ -61,6 +71,10 @@ export interface Progress {
 
 export const DEFAULT_PROGRESS: Progress = {
   seeds: 0,
+  seedsSpent: 0,
+  beds: [],
+  visitorsSeen: 0,
+  stickersSeen: [],
   garden: [],
   waterRound: 0,
   patternRound: 0,
@@ -109,7 +123,9 @@ export function migrate(p: Progress): Progress {
 /** One child's saved progress, filled up with defaults. Saves without a version predate the add levels. */
 export function readProgress(saved: unknown): Progress {
   const raw = saved && typeof saved === 'object' ? (saved as Partial<Progress>) : {};
-  return migrate({ ...DEFAULT_PROGRESS, addLevelsVersion: 1, ...raw });
+  const p = migrate({ ...DEFAULT_PROGRESS, addLevelsVersion: 1, ...raw });
+  // Saves from before the stickers: what was already earned goes into the album without a celebration each.
+  return raw.stickersSeen ? p : markEarnedSeen(p);
 }
 
 export type Update = (fn: (p: Progress) => Progress) => void;

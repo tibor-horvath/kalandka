@@ -1,4 +1,5 @@
 import { LEVEL_SETTINGS } from '../../state/levels';
+import { markEarnedSeen } from '../../state/rewards';
 import { useProgress } from '../../state/progress';
 import { Check } from './controls';
 
@@ -40,7 +41,8 @@ export function LevelsPage() {
           const idx = Math.max(0, s.options.findIndex((o) => o.value === s.current(progress)));
           const atMin = idx === 0;
           const atMax = idx === s.options.length - 1;
-          const go = (step: number) => update((p) => s.apply(p, s.options[idx + step].value));
+          // A starting level set here is not something the child played for: no sticker celebration for it.
+          const go = (step: number) => update((p) => markEarnedSeen(s.apply(p, s.options[idx + step].value)));
           return (
             <section key={s.id} className="pa-level" aria-label={s.game}>
               <div className={`pa-tile ${about.tile}`} aria-hidden="true">

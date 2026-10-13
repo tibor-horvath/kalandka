@@ -7,6 +7,7 @@ import { useForm } from '../components/Stage';
 import { speak } from '../lib/speech';
 import { MAX_KIDS, kidName, progressOf, useProfiles } from '../state/profiles';
 import { remainingSeconds, today } from '../state/screenTime';
+import { seedBalance } from '../state/rewards';
 
 const SPEECH = 'Szia! Ki játszik most? Koppints a képedre!';
 
@@ -63,7 +64,7 @@ export function Picker({ onPick, onAdd, onParents }: { onPick: (id: string) => v
               type="button"
               className="kid-card"
               style={{ '--ring': AVATARS[kid.avatar].ring } as CSSProperties}
-              aria-label={`${name}, ${p.seeds} mag${resting ? ', mára pihen' : ''}`}
+              aria-label={`${name}, ${seedBalance(p)} mag${resting ? ', mára pihen' : ''}`}
               onClick={() => onPick(kid.id)}
             >
               {resting && <span className="kid-card__badge">Pihen</span>}
@@ -71,7 +72,7 @@ export function Picker({ onPick, onAdd, onParents }: { onPick: (id: string) => v
               <span className="kid-card__name">{name}</span>
               <span className="kid-card__seeds">
                 <Seed size={24} />
-                {p.seeds} mag
+                {seedBalance(p)} mag
               </span>
             </button>
           );
