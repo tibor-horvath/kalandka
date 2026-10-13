@@ -85,7 +85,10 @@ The deployment token gives write access to the site. Do not commit it or paste i
 ### How the update reaches tablets
 
 `public/staticwebapp.config.json` (copied into `dist/`) makes `sw.js`, `registerSW.js`, `manifest.webmanifest` and `index.html` uncacheable, while hashed files in `/assets/` are cached for a year.
-The service worker uses `prompt` mode, driven by `src/lib/update.ts`: when the app is opened or brought back from the background online (and every hour while it stays open) it checks for a new version and downloads it in the background.
+The service worker precaches every file the app uses (`workbox.globPatterns` in `vite.config.ts`) on the first visit, and serves the app from that cache afterwards, online or not.
+So an installed tablet makes no requests while playing; the only traffic is the update check.
+The service worker uses `prompt` mode, driven by `src/lib/update.ts`: when the app is opened, and when it is brought back from the background or left open (at most once an hour), it requests `sw.js` once to look for a new version.
+A new version is downloaded in the background, and only the files whose content changed are fetched again.
 The new version takes over only on the home screen: the app reloads into it two seconds after the child is back in the garden, never during a game or in the parents' corner.
 A tablet that stays offline keeps the old version until it is next online.
 
@@ -150,9 +153,9 @@ This deletes the site and its custom domain bindings. DNS records at your provid
 
 | Symptom | Likely cause |
 | --- | --- |
-| Tablets still show the old version | They have not been online and opened the app since the deploy; or `sw.js` was cached by a proxy. Check its `cache-control` header is `no-cache`. |
+| Tablets still show the old version | They have not been online and opened the app since the deploy (an app kept open checks at most once an hour); or `sw.js` was cached by a proxy. Check its `cache-control` header is `no-cache`. |
 | `deploy` fails with an auth error | Token was reset or belongs to another site. Fetch it again with `az staticwebapp secrets list` and update the `AZURE_STATIC_WEB_APPS_API_TOKEN` secret of the `production` environment. |
 | Deploy job fails with "deployment_token was not provided" | The secret is missing, or was added at repo level under another name. It must be called `AZURE_STATIC_WEB_APPS_API_TOKEN`, in the `production` environment or the repo. |
 | Custom domain stuck in "Validating" | DNS record not yet visible, or a CNAME used for an apex domain. |
-| Fonts or icons missing offline | Their file type is not in `workbox.globPatterns` in `vite.config.ts`. |
+| Fonts, icons or sounds missing offline | Their file type is not in `workbox.globPatterns` in `vite.config.ts`. The build prints how many files it precached (`precache N entries`). |
 | Home-screen icon wrong or blank | PNG icons are generated from `public/icon.svg` at build time by `pwa-assets.config.ts`; edit the SVG, not the PNGs. |

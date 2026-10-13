@@ -5,8 +5,12 @@
 import { useSyncExternalStore } from 'react';
 import { registerSW } from 'virtual:pwa-register';
 
-/** A tablet can stay open for days, so look for a new version now and then, not only on launch. */
-const CHECK_EVERY_MS = 60 * 60 * 1000;
+/**
+ * Everything the app needs is precached by the service worker, so once installed it never asks
+ * the server for anything except this check: one small `sw.js` request, at most once an hour.
+ * A tablet can stay open for days, so it also runs while the app is left open, not only on launch.
+ */
+const CHECK_EVERY_MS = 5 * 60 * 1000;
 
 let waiting = false;
 let apply: ((reload?: boolean) => Promise<void>) | null = null;
@@ -19,17 +23,22 @@ export function registerUpdates(): void {
       waiting = true;
       listeners.forEach((l) => l());
     },
-    onRegisteredSW(url, registration) {
+    onRegisteredSW(_url, registration) {
       if (!registration) return;
-      const check = async () => {
+      // Registering already made the browser look for a new version.
+      let lastCheck = Date.now();
+      const check = () => {
         if (waiting || registration.installing || !navigator.onLine || document.visibilityState !== 'visible') return;
-        // Skip the check when the server is unreachable instead of letting update() throw.
-        const res = await fetch(url, { cache: 'no-store', headers: { 'cache-control': 'no-cache' } }).catch(() => null);
-        if (res?.ok) await registration.update().catch(() => {});
+        if (Date.now() - lastCheck < CHECK_EVERY_MS) return;
+        lastCheck = Date.now();
+        // update() rejects when the server is unreachable; the next check tries again.
+        registration.update().catch(() => {});
       };
-      window.setInterval(check, CHECK_EVERY_MS);
+      // Poll more often than the limit so a check is not up to two hours late; `check` throttles it.
+      window.setInterval(check, CHECK_EVERY_MS / 4);
       // Reopening an app left in the background does not reload the page, so the browser
-      // would not look for a new version on its own: check whenever it comes back on screen.
+      // would not look for a new version on its own: check when it comes back on screen
+      // (still at most once an hour, as tablets are woken many times a day).
       document.addEventListener('visibilitychange', check);
     }
   });

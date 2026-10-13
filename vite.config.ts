@@ -24,8 +24,12 @@ export default defineConfig({
         theme_color: '#FFC93C',
         categories: ['education', 'games', 'kids']
       },
+      // Precache the whole app on first visit, so later launches load nothing from the server
+      // (offline or not) and an update downloads only the files whose content changed.
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}']
+        // Audio and images are listed ahead of use, so recordings or pictures added later work offline too.
+        // Plain .woff fonts are left out: every browser that runs the app picks the .woff2.
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,ico,woff2,mp3,m4a,ogg}']
       }
     })
   ],
