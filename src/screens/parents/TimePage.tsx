@@ -1,5 +1,5 @@
 import { useProgress } from '../../state/progress';
-import { EVENING_OPTIONS, LIMIT_OPTIONS, addBonus, formatMinutes, playedToday, remainingSeconds, restNow, today } from '../../state/screenTime';
+import { BONUS_OPTIONS, EVENING_OPTIONS, LIMIT_OPTIONS, addBonus, formatMinutes, playedToday, remainingSeconds, restNow, today } from '../../state/screenTime';
 import { Check } from './controls';
 
 export function TimePage() {
@@ -54,11 +54,12 @@ export function TimePage() {
           )}
         </div>
         <div className="pa-row">
-          {(limit > 0 || restingNow) && (
-            <button type="button" className="pa-btn" onClick={() => update((p) => addBonus(p, today()))}>
-              +10 perc ma
-            </button>
-          )}
+          {(limit > 0 || restingNow) &&
+            BONUS_OPTIONS.map((m) => (
+              <button key={m} type="button" className="pa-btn" onClick={() => update((p) => addBonus(p, today(), m * 60))}>
+                +{m} perc ma
+              </button>
+            ))}
           <button type="button" className="pa-btn pa-btn--quiet" disabled={restingNow} onClick={() => update((p) => restNow(p, today()))}>
             <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />

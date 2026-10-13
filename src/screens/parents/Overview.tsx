@@ -1,7 +1,7 @@
 import { insights } from '../../state/insights';
 import { LEVEL_SETTINGS } from '../../state/levels';
 import { useProgress } from '../../state/progress';
-import { addBonus, lastSevenDays, playedToday, remainingSeconds, today } from '../../state/screenTime';
+import { BONUS_OPTIONS, addBonus, lastSevenDays, playedToday, remainingSeconds, today } from '../../state/screenTime';
 import { ADD_LEVELS, clampLevel, LEVEL_UP_STREAK } from '../../games/add/logic';
 import { LEARN_MAX } from '../../games/learn/logic';
 import { TRACE_ORDER, buildTraceRound } from '../../games/trace/logic';
@@ -109,11 +109,12 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
             <div className="pa-big">{!limit ? 'Nincs napi korlát' : left > 0 ? `Még ${Math.max(1, Math.ceil(left / 60))} perc` : 'Lejárt'}</div>
             <div className="pa-muted">{limit ? 'A pihenő előtt Csepi szól.' : 'Napi keretet a Képernyőidő oldalon adhatsz meg.'}</div>
             <div className="pa-row">
-              {limit > 0 && (
-                <button type="button" className="pa-btn" onClick={() => update((p) => addBonus(p, today()))}>
-                  +10 perc ma
-                </button>
-              )}
+              {limit > 0 &&
+                BONUS_OPTIONS.map((m) => (
+                  <button key={m} type="button" className="pa-btn" onClick={() => update((p) => addBonus(p, today(), m * 60))}>
+                    +{m} perc ma
+                  </button>
+                ))}
               <button type="button" className="pa-link" onClick={() => onGo('time')}>
                 Beállítás
               </button>

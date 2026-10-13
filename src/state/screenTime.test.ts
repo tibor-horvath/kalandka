@@ -37,6 +37,11 @@ describe('screen time', () => {
     expect(remainingSeconds(p, DAY)).toBe(600);
   });
 
+  it('adds five minutes for today', () => {
+    const p = addBonus(addPlay({ ...DEFAULT_PROGRESS, screenLimitMin: 5 }, 300, DAY), DAY, 300);
+    expect(remainingSeconds(p, DAY)).toBe(300);
+  });
+
   it('keeps a per-day history for the weekly chart, at most two weeks', () => {
     let p = { ...DEFAULT_PROGRESS };
     for (let d = 1; d <= 20; d++) p = addPlay(p, 60 * d, `2026-10-${String(d).padStart(2, '0')}`);

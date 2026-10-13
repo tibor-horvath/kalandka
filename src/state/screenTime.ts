@@ -12,7 +12,9 @@ export const MORNING_HOUR = 7;
 export const WARN_SECONDS = 120;
 /** After the limit, a child in the middle of a task gets this long to finish it. */
 export const GRACE_SECONDS = 120;
-/** How much the "+10 perc ma" button adds. */
+/** What the "+5 perc ma" and "+10 perc ma" buttons add, in minutes. */
+export const BONUS_OPTIONS = [5, 10];
+/** Default bonus: "+10 perc ma". */
 export const BONUS_SECONDS = 600;
 /** Days of play history kept for the weekly chart. */
 export const HISTORY_DAYS = 14;
@@ -42,10 +44,10 @@ export function addPlay(p: Progress, seconds: number, day: string): Progress {
   return { ...q, playSeconds: q.playSeconds + seconds, playHistory: history };
 }
 
-/** "+10 perc ma": more time today, and it lifts a "Pihenő most" set earlier today. */
-export function addBonus(p: Progress, day: string): Progress {
+/** "+5 / +10 perc ma": more time today, and it lifts a "Pihenő most" set earlier today. */
+export function addBonus(p: Progress, day: string, seconds = BONUS_SECONDS): Progress {
   const q = rollDay(p, day);
-  return { ...q, bonusSeconds: q.bonusSeconds + BONUS_SECONDS, restDay: q.restDay === day ? '' : q.restDay };
+  return { ...q, bonusSeconds: q.bonusSeconds + seconds, restDay: q.restDay === day ? '' : q.restDay };
 }
 
 /** "Pihenő most": no more play today. */
