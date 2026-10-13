@@ -85,7 +85,8 @@ The deployment token gives write access to the site. Do not commit it or paste i
 ### How the update reaches tablets
 
 `public/staticwebapp.config.json` (copied into `dist/`) makes `sw.js`, `registerSW.js`, `manifest.webmanifest` and `index.html` uncacheable, while hashed files in `/assets/` are cached for a year.
-The service worker is registered with `autoUpdate`: the next time the app is opened online it fetches the new version and reloads into it.
+The service worker uses `prompt` mode, driven by `src/lib/update.ts`: when the app is opened or brought back from the background online (and every hour while it stays open) it checks for a new version and downloads it in the background.
+The new version takes over only on the home screen: the app reloads into it two seconds after the child is back in the garden, never during a game or in the parents' corner.
 A tablet that stays offline keeps the old version until it is next online.
 
 To check a release: open the site, then in the browser's dev tools under Application → Service workers confirm the new worker is active, or compare the `index-*.js` file name in Network with the one in `dist/assets/`.

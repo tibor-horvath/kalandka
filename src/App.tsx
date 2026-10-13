@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Stage } from './components/Stage';
 import { setSoundEnabled } from './lib/sound';
+import { applyUpdate, useUpdateWaiting } from './lib/update';
 import { setSpeechEnabled, setSpeechRate, speak, stopSpeaking } from './lib/speech';
 import { Add } from './screens/Add';
 import { Flash } from './screens/Flash';
@@ -20,6 +21,8 @@ type Parents = 'closed' | 'gate' | 'open';
 
 /** The play clock ticks in steps of this many seconds. */
 const TICK_SECONDS = 5;
+/** Pause on the home screen before a waiting update reloads the app. */
+const UPDATE_DELAY_MS = 2000;
 
 function Game() {
   const { progress, update } = useProgress();
@@ -48,6 +51,15 @@ function Game() {
   const timeUp = remaining <= 0 || evening;
   const resting = timeUp && screen === 'home';
   const inParents = parents !== 'closed';
+  const updateWaiting = useUpdateWaiting();
+
+  // A downloaded update reloads the app only on the home screen, after a short pause,
+  // so it never cuts into a game or the parents' corner. Opening a game first cancels it.
+  useEffect(() => {
+    if (!updateWaiting || screen !== 'home' || inParents) return;
+    const id = window.setTimeout(applyUpdate, UPDATE_DELAY_MS);
+    return () => window.clearTimeout(id);
+  }, [updateWaiting, screen, inParents]);
 
   // Play clock: only while the app is on screen, the parents' area is closed and the child is not resting.
   useEffect(() => {

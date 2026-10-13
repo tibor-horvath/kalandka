@@ -6,7 +6,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // A new version waits until the child is back on the home screen (src/lib/update.ts registers it).
+      registerType: 'prompt',
+      injectRegister: false,
       // PNG icons, favicon and <head> links are generated from public/icon.svg (see pwa-assets.config.ts).
       pwaAssets: { config: true },
       manifest: {
