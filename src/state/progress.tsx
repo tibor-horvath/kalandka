@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { ADD_LEVELS_VERSION, migrateAddLevel } from '../games/add/logic';
 
 export interface Progress {
   seeds: number;
@@ -18,6 +19,8 @@ export interface Progress {
   addStreak: number;
   /** Méhecske tasks in a row that needed help; three offer an easier level. */
   addMisses: number;
+  /** Which Méhecske ladder addLevel indexes into; older saves are migrated on load. */
+  addLevelsVersion: number;
   addAnnounced: boolean;
   flashSolved: number;
   /** Mézút round: which digit to trace next (see TRACE_ORDER). */
@@ -66,6 +69,7 @@ export const DEFAULT_PROGRESS: Progress = {
   addLevel: 0,
   addStreak: 0,
   addMisses: 0,
+  addLevelsVersion: ADD_LEVELS_VERSION,
   addAnnounced: false,
   flashSolved: 0,
   traceRound: 0,
@@ -90,11 +94,18 @@ export const DEFAULT_PROGRESS: Progress = {
 
 const KEY = 'kalandka.progress.v1';
 
+/** Saves from before the gather and take levels: keep the child on the same sums. */
+export function migrate(p: Progress): Progress {
+  if (p.addLevelsVersion >= ADD_LEVELS_VERSION) return p;
+  const played = p.addSolved > 0 || p.addLevel > 0;
+  return { ...p, addLevel: played ? migrateAddLevel(p.addLevel) : 0, addLevelsVersion: ADD_LEVELS_VERSION };
+}
+
 export function loadProgress(): Progress {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return DEFAULT_PROGRESS;
-    return { ...DEFAULT_PROGRESS, ...(JSON.parse(raw) as Partial<Progress>) };
+    return migrate({ ...DEFAULT_PROGRESS, addLevelsVersion: 1, ...(JSON.parse(raw) as Partial<Progress>) });
   } catch {
     return DEFAULT_PROGRESS;
   }

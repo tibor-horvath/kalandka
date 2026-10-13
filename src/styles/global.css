@@ -239,7 +239,6 @@ h1, h2, p { margin: 0; }
 .add-flower { position: absolute; transform: translate(-50%, -50%); border: none; background: transparent; padding: 4px; cursor: pointer; line-height: 0; border-radius: 20px; }
 .add-flower::after { content: ''; position: absolute; left: 50%; top: 18px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: #ffe08a; border: 3px solid var(--sun); opacity: 0; transform: scale(0); transition: transform 0.25s, opacity 0.25s; }
 .add-flower.is-visited::after { opacity: 1; transform: scale(1); }
-.add-flower.is-happy { animation: wobble 0.6s ease-in-out 2; }
 .basket { position: absolute; transform: translate(-50%, -50%); border: none; background: transparent; padding: 0; cursor: pointer; line-height: 0; }
 .basket__label { position: absolute; left: 50%; top: 100px; transform: translate(-50%, -50%); width: 64px; height: 64px; border-radius: 50%; background: var(--paper); border: 4px solid #c2185b; display: grid; place-items: center; font-size: 40px; font-weight: 800; color: #c2185b; line-height: 1; }
 .bee { position: absolute; z-index: 3; transform: translate(-50%, -50%); transition: left 0.55s ease-in-out, top 0.55s ease-in-out; pointer-events: none; }
@@ -374,3 +373,42 @@ h1, h2, p { margin: 0; }
 @keyframes burst-spark { from { transform: translate(0, 0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(0.3); opacity: 0; } }
 @keyframes bee-wait { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-4px) rotate(-6deg); } 75% { transform: translateY(-4px) rotate(6deg); } }
 @keyframes bee-happy { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.25) rotate(-12deg); } }
+
+/* Méhecske gather and take levels: flowers walk to their new bed, carried ones wait under the hive, answers start as dots. */
+/* Carried flowers hang under the bee: same timing as .bee, tilted and lifted while in the air, then set down. */
+.add-flower { transition: left 0.55s ease-in-out, top 0.55s ease-in-out, transform 0.25s ease-out; }
+.add-flower.is-flying { z-index: 2; transform: translate(-50%, -62%) rotate(-10deg) scale(0.9); }
+.add-flower.is-gone { opacity: 0.3; filter: grayscale(1); cursor: default; }
+.add-hive, .add-carried { position: absolute; transform: translate(-50%, -50%); line-height: 0; pointer-events: none; }
+.add-carried { z-index: 2; transform: translate(-50%, -50%) scale(0.69); transition: left 0.55s ease-in-out, top 0.55s ease-in-out, transform 0.3s ease-out; }
+.add-carried.is-flying { transform: translate(-50%, -62%) rotate(-10deg) scale(0.85); }
+.add-carried.is-lifting { transform: translate(-50%, -50%) scale(1); transition: none; }
+
+/* Right answer: a hop wave across the flowers (--d staggers it), the bee spins, petals burst from the card. */
+.add-flower.is-happy { animation: add-hop 0.5s cubic-bezier(.34, 1.56, .64, 1) var(--d, 0ms) 2 both; }
+.bee.is-cheering > svg { animation: bee-happy 0.7s ease-in-out 3; transform-box: fill-box; transform-origin: center; }
+.choices--add .choice { position: relative; }
+.choices--add .choice.is-right { animation: pop 0.35s cubic-bezier(.34, 1.56, .64, 1); }
+.cheer { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+.cheer span { position: absolute; width: 16px; height: 16px; margin: -8px; border-radius: 50% 50% 50% 0; box-shadow: 0 0 0 2px #00000014; animation: cheer-petal 0.9s cubic-bezier(.2, .7, .3, 1) forwards; }
+.equation.is-reveal { animation: settle 0.45s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes add-hop {
+  0%, 100% { transform: translate(-50%, -50%); }
+  40% { transform: translate(-50%, -80%) scale(1.15) rotate(-6deg); }
+  70% { transform: translate(-50%, -46%) scale(0.96, 1.04); }
+}
+@keyframes cheer-petal {
+  from { transform: translate(0, 0) rotate(0) scale(0.4); opacity: 1; }
+  70% { opacity: 1; }
+  to { transform: translate(var(--dx), var(--dy)) rotate(var(--turn)) scale(1); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .add-flower, .add-carried, .bee { transition: none; }
+  .add-flower.is-happy, .bee.is-cheering > svg, .cheer span, .equation.is-reveal { animation: none; }
+  .cheer { display: none; }
+}
+.add-wait { height: 150px; }
+.dot-card { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; max-width: 128px; }
+.dot-card span { width: 20px; height: 20px; border-radius: 50%; background: var(--drop-deep); }
+.choice__numeral--small { font-size: 44px; }

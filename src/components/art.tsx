@@ -220,6 +220,17 @@ export function Basket({ petal, count }: { petal: string; count: number }) {
   );
 }
 
+/** Where the bee carries flowers on the take-away levels. */
+export function Hive({ width = 110 }: { width?: number }) {
+  return (
+    <svg aria-hidden="true" width={width} height={Math.round(width * 0.82)} viewBox="0 0 110 90">
+      <path d="M55 4 C28 4 14 22 14 48 C14 72 30 86 55 86 C80 86 96 72 96 48 C96 22 82 4 55 4 Z" fill="#FFC93C" />
+      <path d="M20 30 H90 M15 50 H95 M20 70 H90" stroke="#E0A21F" strokeWidth="5" strokeLinecap="round" />
+      <rect x="41" y="58" width="28" height="22" rx="11" fill="#10233A" />
+    </svg>
+  );
+}
+
 export function Seed({ size = 30 }: { size?: number }) {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 30 30">

@@ -13,7 +13,7 @@ describe('parent insights', () => {
   });
 
   it('puts a struggle first, with a concrete tip', () => {
-    const list = insights({ ...DEFAULT_PROGRESS, ...played, addLevel: 4, addMisses: 2, learnSolved: 14 }, DAY);
+    const list = insights({ ...DEFAULT_PROGRESS, ...played, addLevel: 7, addMisses: 2, learnSolved: 14 }, DAY);
     expect(list[0].tone).toBe('tip');
     expect(list[0].title).toBe('A Méhecskében a „20-ig, tízes átlépéssel” még nehéz.');
     expect(list[1].title).toBe('14 számot ismer 20-ig.');
