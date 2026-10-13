@@ -320,6 +320,71 @@
   100% { transform: translateY(0) scale(1, 1); }
 }
 
+/*
+ * Visitors roam: each one owns a lane of the strip (its button, a size container) and travels from
+ * one end to the other and back, turning round at each end. --far is the length of the lane.
+ */
+.visitors { position: relative; z-index: 2; }
+.visitors .visitors__one { flex: 1 1 0; min-width: 92px; container-type: inline-size; text-align: left; line-height: 0; }
+.visitors__roam { --far: calc(100cqw - 100%); display: inline-block; animation: roam-walk 16s linear var(--roam-delay, 0s) infinite; }
+.visitors__roam--ladybug { animation-name: roam-crawl; animation-duration: 18s; }
+.visitors__roam--butterfly { animation-name: roam-flutter; animation-duration: 12s; animation-timing-function: ease-in-out; }
+.visitors__roam--blackbird { animation-name: roam-hop; animation-duration: 14s; }
+/* The blackbird's hops now carry it along the lane; its standing hop would double them. */
+.visitors .vis-blackbird { animation: none; }
+.stage--portrait .visitors .visitors__one { min-width: 84px; }
+.stage--landscape .visitors .visitors__one { min-width: 52px; }
+
+@keyframes roam-walk {
+  0%, 6% { translate: 0 0; scale: 1 1; }
+  44% { translate: var(--far) 0; scale: 1 1; }
+  50% { translate: var(--far) 0; scale: -1 1; }
+  88% { translate: 0 0; scale: -1 1; }
+  94%, 100% { translate: 0 0; scale: 1 1; }
+}
+/* The ladybug is drawn head up: it turns its head the way it crawls. */
+@keyframes roam-crawl {
+  0%, 4% { translate: 0 0; rotate: 0deg; }
+  10% { translate: 0 0; rotate: 80deg; }
+  44% { translate: var(--far) 0; rotate: 80deg; }
+  50% { translate: var(--far) 0; rotate: -80deg; }
+  86% { translate: 0 0; rotate: -80deg; }
+  92%, 100% { translate: 0 0; rotate: 0deg; }
+}
+/* The butterfly loops up over the beds and back down to its place. */
+@keyframes roam-flutter {
+  0% { translate: 0 0; }
+  15% { translate: calc(var(--far) * 0.25) -40px; }
+  30% { translate: calc(var(--far) * 0.5) -10px; }
+  45% { translate: calc(var(--far) * 0.75) -54px; }
+  55% { translate: var(--far) -20px; }
+  70% { translate: calc(var(--far) * 0.6) -62px; }
+  85% { translate: calc(var(--far) * 0.3) -16px; }
+  100% { translate: 0 0; }
+}
+/* The blackbird hops across in four hops, looks about, turns and hops home. */
+@keyframes roam-hop {
+  0%, 8% { translate: 0 0; scale: 1 1; }
+  10% { translate: calc(var(--far) * 0.125) -16px; }
+  12%, 14% { translate: calc(var(--far) * 0.25) 0; }
+  16% { translate: calc(var(--far) * 0.375) -16px; }
+  18%, 20% { translate: calc(var(--far) * 0.5) 0; }
+  22% { translate: calc(var(--far) * 0.625) -16px; }
+  24%, 26% { translate: calc(var(--far) * 0.75) 0; }
+  28% { translate: calc(var(--far) * 0.875) -16px; }
+  30%, 46% { translate: var(--far) 0; scale: 1 1; }
+  48%, 50% { translate: var(--far) 0; scale: -1 1; }
+  52% { translate: calc(var(--far) * 0.875) -16px; }
+  54%, 56% { translate: calc(var(--far) * 0.75) 0; }
+  58% { translate: calc(var(--far) * 0.625) -16px; }
+  60%, 62% { translate: calc(var(--far) * 0.5) 0; }
+  64% { translate: calc(var(--far) * 0.375) -16px; }
+  66%, 68% { translate: calc(var(--far) * 0.25) 0; }
+  70% { translate: calc(var(--far) * 0.125) -16px; }
+  72%, 90% { translate: 0 0; scale: -1 1; }
+  92%, 100% { translate: 0 0; scale: 1 1; }
+}
+
 /* Home screen: the tiles' flowers and sprout sway, the bees hover (their wings already flap). */
 .screen--home .plot > svg,
 .screen--home .plot__trio--flowers > svg,
@@ -334,7 +399,7 @@
 
 /* Infinite loops would flicker under the global 0.01 ms reduced-motion rule: stop them outright. */
 @media (prefers-reduced-motion: reduce) {
-  .gplant, .gplant-icon, .garden__flower svg, .vis-part, .kbed__sway, .visitors__hop,
+  .gplant, .gplant-icon, .garden__flower svg, .vis-part, .kbed__sway, .visitors__hop, .visitors__roam,
   .screen--home .plot > svg, .screen--home .plot__trio--flowers > svg, .screen--home .plot__pot > svg:first-child,
   .screen--home .plot__trio--bee > svg, .screen--home .plot__trail-bee > svg { animation: none !important; }
 }

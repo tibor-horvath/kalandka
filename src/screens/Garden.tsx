@@ -198,7 +198,7 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
           </div>
 
           <div className="visitors" aria-label="A kert lakói">
-            {welcomed.map((v) => (
+            {welcomed.map((v, k) => (
               <button
                 key={v.id}
                 type="button"
@@ -210,8 +210,10 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
                   tell({ text: `Szia, ${v.name}!`, speech: `Ő ${v.name}. Itt lakik a kertedben.`, mood: 'cheer', tone: 'good' });
                 }}
               >
-                <span key={poked(v.id)} className={`visitors__hop${poked(v.id) ? ' is-poked' : ''}`}>
-                  <VisitorArt id={v.id} width={92} />
+                <span className={`visitors__roam visitors__roam--${v.id}`} style={{ '--roam-delay': `${-k * 3.5}s` } as CSSProperties}>
+                  <span key={poked(v.id)} className={`visitors__hop${poked(v.id) ? ' is-poked' : ''}`}>
+                    <VisitorArt id={v.id} width={92} />
+                  </span>
                 </span>
               </button>
             ))}
