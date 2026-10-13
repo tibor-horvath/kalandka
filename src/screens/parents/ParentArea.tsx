@@ -1,12 +1,17 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { Avatar } from '../../components/avatars';
 import { CsepiIcon } from '../../components/Csepi';
+import { KidScope, kidName, useProfiles } from '../../state/profiles';
+import { KidsPage } from './KidsPage';
 import { LevelsPage } from './LevelsPage';
 import { Overview } from './Overview';
 import { SettingsPage } from './SettingsPage';
 import { TimePage } from './TimePage';
 import '../../styles/parents.css';
 
-export type ParentPage = 'overview' | 'time' | 'levels' | 'settings';
+export type ParentPage = 'overview' | 'kids' | 'time' | 'levels' | 'settings';
+/** Where the area opens: a page, or straight into adding a child (from "Ki játszik?"). */
+export type ParentStart = ParentPage | 'add';
 
 const PAGES: { id: ParentPage; label: string; icon: ReactNode }[] = [
   {
@@ -18,6 +23,18 @@ const PAGES: { id: ParentPage; label: string; icon: ReactNode }[] = [
         <rect x="14" y="3" width="7" height="5" rx="2" />
         <rect x="14" y="12" width="7" height="9" rx="2" />
         <rect x="3" y="16" width="7" height="5" rx="2" />
+      </>
+    )
+  },
+  {
+    id: 'kids',
+    label: 'Gyerekek',
+    icon: (
+      <>
+        <circle cx="9" cy="8" r="3.5" />
+        <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+        <circle cx="17" cy="9" r="2.8" />
+        <path d="M16 14a5 5 0 0 1 6 6" />
       </>
     )
   },
@@ -59,9 +76,35 @@ const PAGES: { id: ParentPage; label: string; icon: ReactNode }[] = [
   }
 ];
 
+/** On a shared device: whose overview, time and levels the page shows. */
+function KidSwitch({ viewId, onView }: { viewId: string; onView: (id: string) => void }) {
+  const { profiles } = useProfiles();
+  return (
+    <div className="pa-kidbar" role="radiogroup" aria-label="Melyik gyerek?">
+      {profiles.kids.map((kid) => (
+        <button
+          key={kid.id}
+          type="button"
+          role="radio"
+          aria-checked={kid.id === viewId}
+          className={`pa-kidbar__kid${kid.id === viewId ? ' is-on' : ''}`}
+          onClick={() => onView(kid.id)}
+        >
+          <Avatar id={kid.avatar} size={32} />
+          {kidName(kid)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** The parents' area: its own calm, adult space with a menu, separate from the garden. */
-export function ParentArea({ onClose }: { onClose: () => void }) {
-  const [page, setPage] = useState<ParentPage>('overview');
+export function ParentArea({ start = 'overview', onClose }: { start?: ParentStart; onClose: () => void }) {
+  const { profiles } = useProfiles();
+  const [page, setPage] = useState<ParentPage>(start === 'add' ? 'kids' : start);
+  // Opens on the child who is playing; parents can look at the others without changing who plays.
+  const [viewId, setViewId] = useState(profiles.activeId);
+  const shownId = profiles.kids.some((k) => k.id === viewId) ? viewId : profiles.activeId;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -105,10 +148,20 @@ export function ParentArea({ onClose }: { onClose: () => void }) {
         </button>
       </nav>
       <main className="pa-main">
-        {page === 'overview' && <Overview onGo={setPage} />}
-        {page === 'time' && <TimePage />}
-        {page === 'levels' && <LevelsPage />}
-        {page === 'settings' && <SettingsPage />}
+        {page === 'kids' ? (
+          <KidsPage startAdding={start === 'add'} onView={(id, to) => {
+              setViewId(id);
+              setPage(to);
+            }} />
+        ) : (
+          <KidScope kidId={shownId}>
+            {profiles.kids.length > 1 && <KidSwitch viewId={shownId} onView={setViewId} />}
+            {page === 'overview' && <Overview onGo={setPage} />}
+            {page === 'time' && <TimePage />}
+            {page === 'levels' && <LevelsPage />}
+            {page === 'settings' && <SettingsPage />}
+          </KidScope>
+        )}
       </main>
     </div>
   );

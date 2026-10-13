@@ -14,8 +14,11 @@ const EVENING_REST = {
   speech: 'Este van, a kert is alszik. Jó éjszakát! Reggel újra várlak.'
 };
 
-/** Shown when today's play time is used up, or during evening rest. Only the parents' gate leads on. */
-export function Rest({ evening = false, onParents }: { evening?: boolean; onParents: () => void }) {
+/**
+ * Shown when today's play time is used up, or during evening rest. Only the parents' gate leads on;
+ * on a shared device a sibling whose own time is left can take over (onSwitch).
+ */
+export function Rest({ evening = false, onParents, onSwitch }: { evening?: boolean; onParents: () => void; onSwitch?: () => void }) {
   const copy = evening ? EVENING_REST : DAY_REST;
 
   useEffect(() => {
@@ -35,10 +38,17 @@ export function Rest({ evening = false, onParents }: { evening?: boolean; onPare
         {copy.title}
       </h1>
       <p className="rest__text">{copy.text}</p>
-      <button type="button" className="parents-btn parents-btn--night" onClick={onParents}>
-        <LockIcon size={22} />
-        Szülőknek
-      </button>
+      <div className="rest__actions">
+        {onSwitch && (
+          <button type="button" className="parents-btn parents-btn--night" onClick={onSwitch}>
+            Másik gyerek játszik
+          </button>
+        )}
+        <button type="button" className="parents-btn parents-btn--night" onClick={onParents}>
+          <LockIcon size={22} />
+          Szülőknek
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { CsepiIcon } from '../components/Csepi';
+import { AVATARS, Avatar } from '../components/avatars';
 import { Bee, PatternFlower, RoundFlower, Seed, Sprout } from '../components/art';
 import { GuideBubble, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon, SpeakerOffIcon } from '../components/ui';
 import { DotFace } from '../components/seeds';
@@ -9,6 +10,7 @@ import { UNLOCK_FLASH_AFTER, flashLockedSpeech } from '../games/learn/logic';
 import { PLANTS } from '../games/water/logic';
 import { setSpeechEnabled, speak } from '../lib/speech';
 import type { Mood } from '../lib/types';
+import { kidName, useActiveKid, useProfiles } from '../state/profiles';
 import { useProgress } from '../state/progress';
 
 export type GameId = 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'trace';
@@ -75,8 +77,22 @@ function LockedPlot({ name, skill, art, onTap }: { name: string; skill: string; 
   );
 }
 
-export function Home({ onOpen, onParents }: { onOpen: (game: GameId) => void; onParents: () => void }) {
+function SwapIcon() {
+  return (
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 8h14" />
+      <path d="M14 4l4 4-4 4" />
+      <path d="M20 16H6" />
+      <path d="M10 12l-4 4 4 4" />
+    </svg>
+  );
+}
+
+export function Home({ onOpen, onParents, onSwitch }: { onOpen: (game: GameId) => void; onParents: () => void; onSwitch: () => void }) {
   const { progress, update } = useProgress();
+  const { profiles } = useProfiles();
+  const kid = useActiveKid();
+  const shared = profiles.kids.length > 1;
   const phone = useForm() !== 'tablet';
   const [notice, setNotice] = useState<Notice | null>(null);
   const noticeTimer = useRef<number | null>(null);
@@ -84,7 +100,9 @@ export function Home({ onOpen, onParents }: { onOpen: (game: GameId) => void; on
   const learned = progress.learnSolved;
   const flashOpen = progress.unlockAll || learned >= UNLOCK_FLASH_AFTER;
   const addOpen = progress.unlockAll || learned >= UNLOCK_ADD_AFTER;
-  const greeting = progress.welcomed ? 'Szia, de jó, hogy itt vagy!' : 'Szia, én Csepi vagyok!';
+  // On a shared device Csepi greets each child by name.
+  const hello = shared ? `Szia, ${kidName(kid)}! De jó, hogy itt vagy!` : 'Szia, de jó, hogy itt vagy!';
+  const greeting = progress.welcomed ? hello : 'Szia, én Csepi vagyok!';
   const question = 'Melyik játékot választod?';
 
   /** Sticky notices (an unlock) stay until the next tap; hints fade after a few seconds. */
@@ -156,6 +174,21 @@ export function Home({ onOpen, onParents }: { onOpen: (game: GameId) => void; on
           </div>
         </div>
         <div className="topbar__right">
+          {shared && (
+            <button
+              type="button"
+              className="kid-chip"
+              style={{ '--ring': AVATARS[kid.avatar].ring } as CSSProperties}
+              aria-label={`${kidName(kid)} játszik. Másik gyerek választása`}
+              onClick={onSwitch}
+            >
+              <Avatar id={kid.avatar} size={46} />
+              <span className="kid-chip__name">{kidName(kid)}</span>
+              <span className="kid-chip__swap">
+                <SwapIcon />
+              </span>
+            </button>
+          )}
           <div className="pill" aria-label={`${progress.seeds} mag`}>
             <Seed />
             <span>

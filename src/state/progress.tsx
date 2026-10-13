@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../games/add/logic';
 
 export interface Progress {
@@ -92,8 +92,6 @@ export const DEFAULT_PROGRESS: Progress = {
   welcomed: false
 };
 
-const KEY = 'kalandka.progress.v1';
-
 /** Saves from before the gather and take levels: keep the child on the same sums. */
 export function migrate(p: Progress): Progress {
   if (p.addLevelsVersion >= ADD_LEVELS_VERSION) return p;
@@ -101,41 +99,19 @@ export function migrate(p: Progress): Progress {
   return { ...p, addLevel: played ? migrateAddLevel(p.addLevel, p.addLevelsVersion) : 0, addLevelsVersion: ADD_LEVELS_VERSION };
 }
 
-export function loadProgress(): Progress {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return DEFAULT_PROGRESS;
-    return migrate({ ...DEFAULT_PROGRESS, addLevelsVersion: 1, ...(JSON.parse(raw) as Partial<Progress>) });
-  } catch {
-    return DEFAULT_PROGRESS;
-  }
+/** One child's saved progress, filled up with defaults. Saves without a version predate the add levels. */
+export function readProgress(saved: unknown): Progress {
+  const raw = saved && typeof saved === 'object' ? (saved as Partial<Progress>) : {};
+  return migrate({ ...DEFAULT_PROGRESS, addLevelsVersion: 1, ...raw });
 }
 
-function saveProgress(p: Progress): void {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(p));
-  } catch {
-    // Private mode or blocked storage: the game still works, it just forgets.
-  }
-}
+export type Update = (fn: (p: Progress) => Progress) => void;
 
-type Update = (fn: (p: Progress) => Progress) => void;
-
-const ProgressContext = createContext<{ progress: Progress; update: Update } | null>(null);
-
-export function ProgressProvider({ children }: { children: ReactNode }) {
-  const [progress, setProgress] = useState<Progress>(loadProgress);
-
-  useEffect(() => saveProgress(progress), [progress]);
-
-  const update = useCallback<Update>((fn) => setProgress((p) => fn(p)), []);
-  const value = useMemo(() => ({ progress, update }), [progress, update]);
-
-  return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>;
-}
+/** The progress of one child; provided by KidScope (see profiles.tsx). */
+export const ProgressContext = createContext<{ progress: Progress; update: Update } | null>(null);
 
 export function useProgress() {
   const ctx = useContext(ProgressContext);
-  if (!ctx) throw new Error('useProgress must be used inside ProgressProvider');
+  if (!ctx) throw new Error('useProgress must be used inside KidScope');
   return ctx;
 }

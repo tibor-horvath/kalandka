@@ -112,6 +112,41 @@
 .stage--portrait .plot--locked { height: 128px; }
 .stage--portrait .garden { position: relative; height: auto; min-height: 104px; padding: 18px 16px 8px; gap: 4px; }
 
+/* Home topbar on a phone: the active child shows as their figure alone. */
+.is-phone .kid-chip { height: 44px; padding: 0; border-width: 3px; border-radius: 22px; }
+.is-phone .kid-chip .avatar { width: 38px; height: 38px; }
+.is-phone .kid-chip__name,
+.is-phone .kid-chip__swap { display: none; }
+/* The chip needs the room of the brand icon. */
+.is-phone .topbar:has(.kid-chip) .brand > svg { display: none; }
+
+/* "Ki játszik?" on a phone: two columns of cards that scroll if there are many. */
+.is-phone .screen--picker { overflow-y: auto; overscroll-behavior: contain; }
+.is-phone .screen--picker::before,
+.is-phone .screen--picker .hill { display: none; }
+.is-phone .kids { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 26px 16px 24px; }
+.stage--landscape .kids { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 14px 0 12px; }
+.is-phone .kid-card,
+.is-phone .kids:has(> .kid-card:nth-child(5)) .kid-card { width: auto; height: 200px; border-width: 4px; border-radius: 26px; box-shadow: 0 6px 0 var(--ring); gap: 6px; }
+.is-phone .kid-card--add,
+.is-phone .kids:has(> .kid-card:nth-child(5)) .kid-card--add { box-shadow: none; }
+.is-phone .kid-card .avatar,
+.is-phone .kids:has(> .kid-card:nth-child(5)) .kid-card .avatar { width: 100px; height: 100px; }
+.is-phone .kid-card__name,
+.is-phone .kids:has(> .kid-card:nth-child(5)) .kid-card__name { font-size: 26px; }
+.is-phone .kid-card--add .kid-card__name { font-size: 22px; }
+.is-phone .kid-card__seeds { height: 30px; padding: 0 12px 0 8px; font-size: 16px; }
+.is-phone .kid-card__seeds svg { width: 20px; height: 20px; }
+.is-phone .kid-card__plus,
+.is-phone .kids:has(> .kid-card:nth-child(5)) .kid-card__plus { width: 64px; height: 64px; }
+.is-phone .kid-card__badge { top: 8px; right: 8px; height: 26px; font-size: 14px; }
+.stage--portrait .screen--picker .topbar { padding-top: 18px; }
+.stage--portrait .screen--picker .home-guide { margin-top: 18px; }
+.stage--landscape .screen--picker { padding-top: 14px; }
+.stage--landscape .screen--picker .home-guide { padding: 0; margin-top: 8px; }
+.stage--landscape .screen--picker .kid-card { height: 176px; }
+.stage--landscape .screen--picker .kid-card .avatar { width: 84px; height: 84px; }
+
 /* Landscape home: a side column (title, Csepi, the garden) and the eight plots in a 4 × 2 grid. */
 .stage--landscape .screen--home {
   display: grid;
@@ -527,3 +562,18 @@
 .stage--landscape .pa-page { padding: 14px 18px 24px; }
 .stage--landscape .pa-h1 { font-size: 28px; }
 .stage--landscape .pa-games__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* Parents' children page and the child switch on a phone. */
+.is-phone .pa-kidbar { padding: 14px 16px 0; }
+.stage--portrait .pa-kidbar { padding-top: 72px; }
+.stage--landscape .pa-kidbar { padding: 14px 18px 0; }
+.is-phone .pa-kidbar + .pa-page { padding-top: 14px; }
+.stage--portrait .pa-nav__item { font-size: 11px; }
+.is-phone .pa-kid { flex-wrap: wrap; gap: 10px 14px; padding: 14px 16px; }
+.is-phone .pa-kid > svg { width: 48px; height: 48px; }
+.is-phone .pa-kid__time { width: auto; flex-basis: 100%; }
+.is-phone .pa-kid__actions { flex-basis: 100%; justify-content: flex-end; }
+.is-phone .pa-kidform { flex-direction: column; align-items: stretch; }
+.is-phone .pa-kidform__preview { display: none; }
+.is-phone .pa-avatars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stage--landscape .pa-avatars { grid-template-columns: repeat(6, minmax(0, 1fr)); }

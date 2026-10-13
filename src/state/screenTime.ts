@@ -95,3 +95,13 @@ export function formatMinutes(seconds: number): string {
   const m = Math.floor(seconds / 60);
   return m < 1 ? 'kevesebb mint 1 perc' : `${m} perc`;
 }
+
+/** "ma", "tegnap", "5 napja" for the last day with play in the history; null if none is kept. */
+export function lastPlayed(p: Progress, now = new Date()): string | null {
+  const days = Object.keys(p.playHistory).filter((k) => p.playHistory[k] > 0).sort();
+  const last = days.at(-1);
+  if (!last) return null;
+  const [y, m, d] = last.split('-').map(Number);
+  const ago = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(y, m - 1, d).getTime()) / 86_400_000);
+  return ago <= 0 ? 'ma' : ago === 1 ? 'tegnap' : `${ago} napja`;
+}

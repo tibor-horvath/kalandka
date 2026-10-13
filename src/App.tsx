@@ -8,12 +8,14 @@ import { Flash } from './screens/Flash';
 import { Home, type GameId } from './screens/Home';
 import { Learn } from './screens/Learn';
 import { Gate } from './screens/parents/Gate';
-import { ParentArea } from './screens/parents/ParentArea';
+import { ParentArea, type ParentStart } from './screens/parents/ParentArea';
 import { Patterns } from './screens/Patterns';
+import { Picker } from './screens/Picker';
 import { Rest, TimeBanner } from './screens/Rest';
 import { Trace } from './screens/Trace';
 import { Water } from './screens/Water';
-import { ProgressProvider, useProgress, type Progress } from './state/progress';
+import { ProfilesProvider, setActive, useProfiles } from './state/profiles';
+import { useProgress, type Progress } from './state/progress';
 import { GRACE_SECONDS, WARN_SECONDS, addPlay, isEveningRest, remainingSeconds, today } from './state/screenTime';
 
 type Screen = 'home' | GameId;
@@ -35,8 +37,13 @@ const ROUND_KEY = {
 
 function Game() {
   const { progress, update } = useProgress();
+  const { profiles, change } = useProfiles();
   const [screen, setScreen] = useState<Screen>('home');
   const [parents, setParents] = useState<Parents>('closed');
+  const [parentStart, setParentStart] = useState<ParentStart>('overview');
+  // "Ki játszik?" comes first on a shared device, unless parents chose to continue with the last child.
+  const [picking, setPicking] = useState(() => profiles.kids.length > 1 && profiles.askOnStart);
+  const showPicker = picking && profiles.kids.length > 1;
   const warned = useRef<string | null>(null);
   // Re-check the evening rest every minute even when nothing else changes.
   const [clock, setClock] = useState(() => Date.now());
@@ -58,7 +65,7 @@ function Game() {
   const remaining = remainingSeconds(progress, day);
   const evening = isEveningRest(progress, new Date(clock));
   const timeUp = remaining <= 0 || evening;
-  const resting = timeUp && screen === 'home';
+  const resting = timeUp && screen === 'home' && !showPicker;
   const inParents = parents !== 'closed';
   const updateWaiting = useUpdateWaiting();
 
@@ -70,22 +77,23 @@ function Game() {
     return () => window.clearTimeout(id);
   }, [updateWaiting, screen, inParents]);
 
-  // Play clock: only while the app is on screen, the parents' area is closed and the child is not resting.
+  // Play clock: only while the app is on screen, a child is chosen, the parents' area is closed and the child is not resting.
   useEffect(() => {
-    if (inParents || resting) return;
+    if (inParents || resting || showPicker) return;
     const id = window.setInterval(() => {
       if (document.visibilityState === 'visible') update((p) => addPlay(p, TICK_SECONDS, today()));
     }, TICK_SECONDS * 1000);
     return () => window.clearInterval(id);
-  }, [inParents, resting, update]);
+  }, [inParents, resting, showPicker, update]);
 
-  // A gentle spoken warning once per day, two minutes before the end (parents can switch it off).
+  // A gentle spoken warning once per day and child, two minutes before the end (parents can switch it off).
   useEffect(() => {
-    if (progress.warnBefore && remaining > 0 && remaining <= WARN_SECONDS && warned.current !== day) {
-      warned.current = day;
+    const key = `${profiles.activeId} ${day}`;
+    if (progress.warnBefore && remaining > 0 && remaining <= WARN_SECONDS && warned.current !== key) {
+      warned.current = key;
       speak('Mindjárt pihenünk. Még két perc játék!', { queue: true });
     }
-  }, [remaining, day, progress.warnBefore]);
+  }, [remaining, day, progress.warnBefore, profiles.activeId]);
 
   // Time is up in the middle of a task: finish it if parents allow, then home to rest.
   // The grace ends at a wall-clock deadline, checked every second and on return to the screen,
@@ -121,12 +129,25 @@ function Game() {
     else if (round !== graceRound.current) go('home');
   }, [timeUp, round, inParents]);
 
-  const openGate = () => setParents('gate');
+  const openGate = (start: ParentStart = 'overview') => {
+    setParentStart(start);
+    setParents('gate');
+  };
   const closeParents = () => setParents('closed');
+  const switchKid = () => {
+    stopSpeaking();
+    setPicking(true);
+  };
+  const pick = (id: string) => {
+    stopSpeaking();
+    change((s) => setActive(s, id));
+    setPicking(false);
+  };
 
   return (
     <Stage>
-      {screen === 'home' && <Home onOpen={go} onParents={openGate} />}
+      {screen === 'home' && showPicker && <Picker onPick={pick} onAdd={() => openGate('add')} onParents={() => openGate()} />}
+      {screen === 'home' && !showPicker && <Home key={profiles.activeId} onOpen={go} onParents={() => openGate()} onSwitch={switchKid} />}
       {screen === 'learn' && <Learn key={progress.learnRound} onBack={() => go('home')} />}
       {screen === 'water' && <Water onBack={() => go('home')} />}
       {screen === 'patterns' && <Patterns onBack={() => go('home')} />}
@@ -135,17 +156,19 @@ function Game() {
       {screen === 'trace' && <Trace key={progress.traceRound} onBack={() => go('home')} />}
       {!resting && !inParents && progress.warnBefore && remaining <= WARN_SECONDS && <TimeBanner remaining={remaining} />}
       {!resting && !inParents && timeUp && !progress.warnBefore && <TimeBanner remaining={0} />}
-      {resting && !inParents && <Rest evening={evening && remaining > 0} onParents={openGate} />}
+      {resting && !inParents && (
+        <Rest evening={evening && remaining > 0} onParents={() => openGate()} onSwitch={profiles.kids.length > 1 && !evening ? switchKid : undefined} />
+      )}
       {parents === 'gate' && <Gate onPass={() => setParents('open')} onCancel={closeParents} />}
-      {parents === 'open' && <ParentArea onClose={closeParents} />}
+      {parents === 'open' && <ParentArea start={parentStart} onClose={closeParents} />}
     </Stage>
   );
 }
 
 export default function App() {
   return (
-    <ProgressProvider>
+    <ProfilesProvider>
       <Game />
-    </ProgressProvider>
+    </ProfilesProvider>
   );
 }
