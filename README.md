@@ -1,9 +1,13 @@
-# Kalandka – Számkertész
+# Kalandka
 
 Hungarian thinking games for children aged 4–7, built as an offline-capable tablet PWA.
-Kalandka is the umbrella brand; Számkertész (the counting garden) is its first world, and Csepi the water drop is the guide.
+Kalandka is the umbrella brand with two worlds: Számkertész (the counting garden, guided by Csepi the water drop) and Robotműhely (the robot workshop for the bigger ones, guided by Csavar the robot).
 
-## Games
+## Worlds
+
+The Kalandka map (Térkép button on each world's home screen) shows the worlds as islands joined by a bridge, with a pin on the one the child was on last. Every world is open to every child; the app opens in the world chosen last. Foggy islands stand for worlds still to come.
+
+## Számkertész games
 
 | Game | Skill | How it plays |
 | --- | --- | --- |
@@ -16,6 +20,14 @@ Kalandka is the umbrella brand; Számkertész (the counting garden) is its first
 | Cserépbarátok | Number friends of 5 and 10 | Opens after numbers 1–10 in Számvetés. A window box of 5 or 10 pots (rows of five, like a ten-frame); some already flower, and the child picks how many more fill the box. Tapping an empty pot plants a sprout and Csepi counts it; a wrong pick has Csepi count the empty pots together. A right answer makes them bloom in a second colour and shows "3 + 7 = 10". Three levels, five solved rounds each: friends of five, friends of ten in order, friends of ten scattered. |
 
 Each solved task earns a seed; each watered plant is added to the garden on the home screen.
+
+## Robotműhely games
+
+| Game | Skill | How it plays |
+| --- | --- | --- |
+| Robotút | Algorithmic thinking, planning, debugging | Lead the little robot across the workshop floor to its battery. Ten levels, five courses each: stepping with arrows (each tap moves at once), with crates in the way; planning a whole program of arrow cards and pressing Indulás; long courses; repeat cards (×2, ×3) with arrows; turning the way the robot faces (Előre, Fordulj balra/jobbra); turning round crates; repeats with turns; two batteries in one program. On the advanced levels a battery under the floor limits the program to the shortest way plus one or two steps: teal cells are charge, yellow what the plan will use; a plan too long shows orange ghost cells past the battery. When the charge runs out the robot sputters, leans over and dims, and orange dots show the steps it was short of. Courses are generated from the level and round and always checked to be possible. A bump plays once (the robot squashes against the crate or wall, sparks, a crate wobbles or the wall edge flashes) and stops the robot; Csavar names the card ("Az első kártyánál…"), and the robot rolls back to the start; nothing fails. "Mutasd az utat!" dots the way on the floor. A finished course shows "Feltöltve!" and earns a bolt. |
+
+Mérleg, Mintagép and Válogatógép are shown as machines still being built. Each solved Robotműhely task earns a bolt (csavar), shown on the workshop shelf.
 
 ## Rewards
 
@@ -52,16 +64,18 @@ src/
   games/add/logic.ts        Méhecske levels, sums, bouquets, level-up rule
   games/trace/logic.ts      Mézút digit trails, forgiving finger following, honey-drop checkpoints
   games/pots/logic.ts       Cserépbarátok levels, rounds, pot layout and Csepi's lines
+  games/robot/path.ts       Robotút levels, course generator (shortest-way search), running a program, energy, Csavar's lines
   lib/numbers.ts            Hungarian number words 1–100 ("két csepp" vs. counting "kettő", articles)
   lib/speech.ts             Csepi's voice via browser hu-HU text-to-speech (placeholder for recorded audio)
   lib/sound.ts              synthesised pops and chimes (Web Audio) and light vibration
   state/progress.tsx        seeds, garden and rounds, saved to localStorage
   state/rewards.ts          Kiskert planting and growth, visitors, stickers and which ones are new
+  state/worlds.ts           the Kalandka worlds and which one the child is in
   state/screenTime.ts       daily limit, play clock and 14-day history, bonus, rest now, evening rest
   state/insights.ts         plain-language notes for parents; the multiplication gate
   state/levels.ts           per-game level settings for the parents' corner (read current, apply new start)
-  components/               Csepi, artwork, buttons, speech bubble, scaling stage (1180×820 tablet, 390 px phone)
-  screens/                  Home, Garden (Kiskert), Album (Matricáim), Learn, Water, Patterns, Flash, Add, Trace, Pots, Rest; parents/ (Gate, ParentArea and its pages)
+  components/               Csepi, Csavar and the robot art, artwork, buttons, speech bubble, home-screen top-bar controls (hub), scaling stage (1180×820 tablet, 390 px phone)
+  screens/                  WorldMap, Home, Garden (Kiskert), Album (Matricáim), Learn, Water, Patterns, Flash, Add, Trace, Pots, Rest; robot/ (RobotHome, Path); parents/ (Gate, ParentArea and its pages)
 ```
 
 ## Design rules carried into code

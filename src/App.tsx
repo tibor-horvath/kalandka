@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Stage } from './components/Stage';
 import { setSoundEnabled } from './lib/sound';
 import { applyUpdate, useUpdateWaiting } from './lib/update';
-import { setSpeechEnabled, setSpeechRate, speak, stopSpeaking } from './lib/speech';
+import { setSpeechEnabled, setSpeechPitch, setSpeechRate, speak, stopSpeaking } from './lib/speech';
 import { Add } from './screens/Add';
 import { Album } from './screens/Album';
 import { Flash } from './screens/Flash';
@@ -17,12 +17,19 @@ import { Pots } from './screens/Pots';
 import { Rest, TimeBanner } from './screens/Rest';
 import { Trace } from './screens/Trace';
 import { Water } from './screens/Water';
+import { WorldMap } from './screens/WorldMap';
+import { Path } from './screens/robot/Path';
+import { RobotHome, type RobotGameId } from './screens/robot/RobotHome';
 import { ProfilesProvider, setActive, useProfiles } from './state/profiles';
 import { useProgress, type Progress } from './state/progress';
 import { GRACE_SECONDS, WARN_SECONDS, addPlay, isEveningRest, remainingSeconds, today } from './state/screenTime';
+import { currentWorld, type WorldId } from './state/worlds';
 
-/** The Kiskert and the sticker album sit beside the home screen: no task runs there. */
-type Screen = 'home' | 'garden' | 'album' | GameId;
+/**
+ * 'home' is the current world's home screen. The Kalandka map, the Kiskert and the sticker album sit
+ * beside it: no task runs there.
+ */
+type Screen = 'home' | 'map' | 'garden' | 'album' | GameId | RobotGameId;
 type Parents = 'closed' | 'gate' | 'open';
 
 /** The play clock ticks in steps of this many seconds. */
@@ -37,10 +44,16 @@ const ROUND_KEY = {
   flash: 'flashRound',
   add: 'addRound',
   trace: 'traceRound',
-  pots: 'potsRound'
-} as const satisfies Record<GameId, keyof Progress>;
+  pots: 'potsRound',
+  path: 'pathRound'
+} as const satisfies Record<GameId | RobotGameId, keyof Progress>;
 
-function isGame(s: Screen): s is GameId {
+/** Screens a child rests on when time is up, and where an update may reload the app. */
+function isHub(s: Screen): boolean {
+  return s === 'home' || s === 'map';
+}
+
+function isGame(s: Screen): s is GameId | RobotGameId {
   return s in ROUND_KEY;
 }
 
@@ -60,6 +73,9 @@ function Game() {
   useEffect(() => setSpeechEnabled(progress.voice), [progress.voice]);
   useEffect(() => setSpeechRate(progress.voiceRate), [progress.voiceRate]);
   useEffect(() => setSoundEnabled(progress.sounds), [progress.sounds]);
+  const world = currentWorld(progress);
+  const csavarTalks = screen === 'path' || (screen === 'home' && world === 'robot');
+  useEffect(() => setSpeechPitch(csavarTalks ? 0.9 : 1.15), [csavarTalks]);
   useEffect(() => {
     const id = window.setInterval(() => setClock(Date.now()), 60_000);
     return () => window.clearInterval(id);
@@ -74,14 +90,14 @@ function Game() {
   const remaining = remainingSeconds(progress, day);
   const evening = isEveningRest(progress, new Date(clock));
   const timeUp = remaining <= 0 || evening;
-  const resting = timeUp && screen === 'home' && !showPicker;
+  const resting = timeUp && isHub(screen) && !showPicker;
   const inParents = parents !== 'closed';
   const updateWaiting = useUpdateWaiting();
 
   // A downloaded update reloads the app only on the home screen, after a short pause,
   // so it never cuts into a game or the parents' corner. Opening a game first cancels it.
   useEffect(() => {
-    if (!updateWaiting || screen !== 'home' || inParents) return;
+    if (!updateWaiting || !isHub(screen) || inParents) return;
     const id = window.setTimeout(applyUpdate, UPDATE_DELAY_MS);
     return () => window.clearTimeout(id);
   }, [updateWaiting, screen, inParents]);
@@ -146,17 +162,27 @@ function Game() {
   const switchKid = () => {
     stopSpeaking();
     setPicking(true);
+    setScreen('home');
   };
   const pick = (id: string) => {
     stopSpeaking();
     change((s) => setActive(s, id));
     setPicking(false);
+    setScreen('home');
+  };
+  const pickWorld = (w: WorldId) => {
+    update((p) => ({ ...p, world: w }));
+    go('home');
   };
 
   return (
     <Stage>
       {screen === 'home' && showPicker && <Picker onPick={pick} onAdd={() => openGate('add')} onParents={() => openGate()} />}
-      {screen === 'home' && !showPicker && <Home key={profiles.activeId} onOpen={go} onGarden={() => go('garden')} onParents={() => openGate()} onSwitch={switchKid} />}
+      {screen === 'home' && !showPicker && world === 'garden' && (
+        <Home key={profiles.activeId} onOpen={go} onGarden={() => go('garden')} onParents={() => openGate()} onSwitch={switchKid} onMap={() => go('map')} />
+      )}
+      {screen === 'home' && !showPicker && world === 'robot' && <RobotHome key={profiles.activeId} onOpen={go} onParents={() => openGate()} onSwitch={switchKid} onMap={() => go('map')} />}
+      {screen === 'map' && !showPicker && <WorldMap onPick={pickWorld} onParents={() => openGate()} />}
       {screen === 'garden' && <Garden onBack={() => go('home')} onAlbum={() => go('album')} />}
       {screen === 'album' && <Album onBack={() => go('garden')} />}
       {screen === 'learn' && <Learn key={progress.learnRound} onBack={() => go('home')} />}
@@ -166,6 +192,7 @@ function Game() {
       {screen === 'add' && <Add key={progress.addRound} onBack={() => go('home')} />}
       {screen === 'trace' && <Trace key={progress.traceRound} onBack={() => go('home')} />}
       {screen === 'pots' && <Pots key={progress.potsRound} onBack={() => go('home')} />}
+      {screen === 'path' && <Path key={progress.pathRound} onBack={() => go('home')} />}
       {!resting && !inParents && progress.warnBefore && remaining <= WARN_SECONDS && <TimeBanner remaining={remaining} />}
       {!resting && !inParents && timeUp && !progress.warnBefore && <TimeBanner remaining={0} />}
       {resting && !inParents && (

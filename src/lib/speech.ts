@@ -27,6 +27,13 @@ export function setSpeechRate(speed: 'slow' | 'normal'): void {
   rate = speed === 'slow' ? 0.85 : 1.0;
 }
 
+/** Csepi speaks a little high; Csavar, the robot, a little lower. */
+let pitch = 1.15;
+
+export function setSpeechPitch(p: number): void {
+  pitch = p;
+}
+
 export function setSpeechEnabled(on: boolean): void {
   enabled = on;
   if (!on) synth()?.cancel();
@@ -46,7 +53,7 @@ export function speak(text: string, { queue = false }: SpeakOptions = {}): void 
     u.lang = 'hu-HU';
     if (voice) u.voice = voice;
     u.rate = rate;
-    u.pitch = 1.15;
+    u.pitch = pitch;
     s.speak(u);
   } catch {
     // Speech is a nice-to-have; the bubble always shows the same text.

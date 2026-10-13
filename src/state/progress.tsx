@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../games/add/logic';
 import { markEarnedSeen, type Bed } from './rewards';
+import type { WorldId } from './worlds';
 
 export interface Progress {
   /** Every seed ever earned (one per solved task); the balance to plant is seeds − seedsSpent. */
@@ -69,6 +70,15 @@ export interface Progress {
   graceToFinish: boolean;
   voiceRate: 'slow' | 'normal';
   welcomed: boolean;
+  /** The world the child last chose on the Kalandka map (see state/worlds.ts). */
+  world: WorldId;
+  /** Csavar has introduced himself. */
+  robotWelcomed: boolean;
+  /** Robotműhely's reward: one bolt per solved task, like the garden's seeds. */
+  bolts: number;
+  /** Robotút course: which one comes next, and how many were done (five per level). */
+  pathRound: number;
+  pathSolved: number;
 }
 
 export const DEFAULT_PROGRESS: Progress = {
@@ -113,7 +123,12 @@ export const DEFAULT_PROGRESS: Progress = {
   warnBefore: true,
   graceToFinish: true,
   voiceRate: 'slow',
-  welcomed: false
+  welcomed: false,
+  world: 'garden',
+  robotWelcomed: false,
+  bolts: 0,
+  pathRound: 0,
+  pathSolved: 0
 };
 
 /** Saves from before the gather and take levels: keep the child on the same sums. */

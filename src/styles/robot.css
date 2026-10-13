@@ -1,0 +1,270 @@
+/* ---------- Robotműhely: the workshop world ----------
+   The world re-colours the shared tokens, so every shared part (plots, buttons, bubbles) turns workshop-blue and teal. */
+.world--robot {
+  --sky: #e6edf6;
+  --grass: #b8c8da;
+  --grass-deep: #9aafc6;
+  --leaf: #138a86;
+  --leaf-deep: #0c5f5c;
+  --good-tint: #ddf3f1;
+  --soil: #7e93ab;
+  --bolt: #f2b33d;
+}
+.world--robot .floor { background: repeating-linear-gradient(90deg, var(--grass) 0 118px, #adbfd2 118px 121px), var(--grass); }
+.world--robot .plot--locked { background: #cfdbe8; border-color: #edf2f8; }
+.world--robot .plot__lock { background: #edf2f8; color: #3e5872; }
+.world--robot .plot__skill { color: #3e5872; }
+.world--robot .garden__empty { color: #2f4a63; }
+.world--robot .bubble__kicker { color: var(--leaf-deep); }
+.plot__soil--floor { background: var(--soil); height: 14px; border-radius: 8px; margin-top: 2px; }
+.screen--robot-home .plot { height: 250px; }
+.screen--robot-home .plot--play > svg { margin-bottom: 8px; }
+.screen--robot-home .plot--locked > svg { width: 64px; height: 64px; margin-bottom: 6px; }
+.is-phone .screen--robot-home .plot { height: 150px; }
+.is-phone .screen--robot-home .plot > svg.path-art { width: 120px; height: auto; }
+.is-phone .screen--robot-home .plot--locked > svg { width: 40px; height: 40px; }
+
+/* Térkép button on every world's home screen. */
+.map-btn { height: 56px; padding: 0 18px; border: 3px solid var(--paper); background: transparent; border-radius: 28px; color: var(--ink); font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; flex: none; }
+.map-btn:active { transform: scale(0.96); }
+.is-phone .map-btn { width: 44px; height: 44px; padding: 0; border-radius: 22px; justify-content: center; }
+.is-phone .map-btn svg { width: 22px; height: 22px; }
+.is-phone .map-btn__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- Kalandka map ---------- */
+.screen--map { background: #9fd3f0; }
+.screen--map::before { background: #9fd3f0; }
+.map-guide { margin-top: 0; }
+.map-guide .bubble { box-shadow: 0 6px 0 #6fb6de; }
+.map-fit { position: relative; }
+.map { position: relative; margin: 14px auto 0; }
+.map__art { position: absolute; inset: 0; }
+.map-waves path { fill: none; stroke: #c9e8f8; stroke-width: 4; stroke-linecap: round; }
+.map-trail { fill: none; stroke: #ffffff; stroke-width: 9; stroke-linecap: round; stroke-dasharray: 0 22; }
+.map-fog { opacity: 0.95; }
+.map-fog__mark { font-family: var(--display); font-size: 40px; font-weight: 800; fill: #9fb3c8; }
+.map-gear { transform-box: fill-box; transform-origin: center; }
+.map-gear > svg { animation: gear-turn 6s linear infinite; transform-box: fill-box; transform-origin: center; }
+.map-spot { position: absolute; border: none; background: transparent; border-radius: 48%; cursor: pointer; padding: 0; display: flex; align-items: flex-end; justify-content: center; }
+.map-spot:active .map-spot__sign { transform: translateY(4px); box-shadow: 0 2px 0 var(--edge); }
+.map-spot:focus-visible { outline-offset: -10px; }
+.map-spot--garden { --edge: #2f7d32; }
+.map-spot--robot { --edge: #138a86; }
+.map-spot__sign { display: grid; grid-template-columns: auto auto; column-gap: 14px; align-items: center; margin-bottom: -26px; padding: 8px 20px 10px; border-radius: 22px; background: var(--paper); border: 4px solid var(--edge); box-shadow: 0 6px 0 var(--edge); text-align: left; }
+.map-spot__name { font-size: 30px; font-weight: 800; line-height: 1.05; }
+.map-spot__about { grid-column: 1; font-family: var(--body); font-size: 15px; font-weight: 700; color: var(--ink-soft); }
+.map-spot__count { grid-column: 2; grid-row: 1 / span 2; display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px 0 10px; border-radius: 22px; background: var(--edge); color: var(--paper); font-size: 22px; font-weight: 800; }
+.map-fogspot { position: absolute; border: none; background: transparent; border-radius: 50%; cursor: pointer; }
+
+@keyframes gear-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .map-gear > svg { animation: none; }
+}
+
+/* ---------- Robotút ---------- */
+.screen--path .screen-title { color: var(--leaf-deep); }
+.path-body { position: relative; display: flex; gap: 26px; padding: 14px 40px 0; align-items: flex-start; }
+.path-frame { width: 640px; height: 540px; display: grid; place-items: center; flex: none; }
+.path-frame { position: relative; }
+.path-board { position: relative; background: var(--paper); padding: 14px; border-radius: 30px; box-shadow: 0 8px 0 var(--grass-deep); }
+.path-board svg { display: block; overflow: visible; }
+.path-tile { fill: #eef3f9; }
+.path-tile.is-alt { fill: #e2eaf3; }
+.path-start { fill: none; stroke: #9fb3c8; stroke-width: 4; stroke-dasharray: 8 8; }
+.path-route { fill: var(--bolt); stroke: #ffffff; stroke-width: 4; transform-box: fill-box; transform-origin: center; animation: route-pop 0.35s cubic-bezier(.34, 1.56, .64, 1) both; }
+/* The robot drives (outer layer) and turns on the spot (inner layer); a step that does both turns first. */
+.path-robot { position: absolute; left: 14px; top: 14px; pointer-events: none; transition: transform 0.32s cubic-bezier(.4, .1, .3, 1); }
+.path-robot__turn { width: 100%; height: 100%; transition: transform 0.26s ease-in-out; }
+.path-robot__turn svg { display: block; }
+.path-battery.is-charged > g { transform-box: fill-box; transform-origin: center; animation: charge 0.6s ease-in-out 3; }
+.path-board.is-done { box-shadow: 0 8px 0 var(--leaf); }
+
+/* Done: a card over the floor says so, with the bolt earned and the way on. */
+.path-win { position: absolute; left: 50%; top: 50%; z-index: 3; transform: translate(-50%, -50%); min-width: 420px; padding: 26px 36px 28px; border-radius: 34px; background: var(--paper); border: 6px solid var(--leaf); box-shadow: 0 10px 0 var(--leaf-deep), 0 0 0 9999px rgba(16, 35, 58, 0.18); display: flex; flex-direction: column; align-items: center; gap: 14px; animation: win-in 0.45s cubic-bezier(.34, 1.56, .64, 1) both; }
+.path-win__rays { position: absolute; inset: -60px; z-index: -1; border-radius: 50%; background: radial-gradient(circle, #ffe08a 0%, rgba(255, 224, 138, 0) 65%); pointer-events: none; }
+.path-win .big-btn { white-space: nowrap; }
+.path-win__title { font-size: 60px; font-weight: 800; line-height: 1; color: var(--leaf-deep); }
+.path-win__reward { display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 22px; border-radius: 28px; background: #fff4d1; color: #7a5300; font-size: 28px; font-weight: 800; }
+@keyframes win-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+
+.path-energy { display: flex; align-items: center; gap: 12px; margin: 0 14px; padding: 12px 16px; border-radius: 24px; background: var(--paper); box-shadow: 0 5px 0 var(--grass-deep); }
+.path-energy__pack { flex: 1; min-width: 0; display: flex; align-items: center; }
+.path-energy__battery.is-many .path-energy__cell { width: 15px; }
+.path-energy__battery { flex: none; display: flex; gap: 4px; padding: 5px; border: 4px solid #2f4a63; border-radius: 14px; background: #f4f7fb; transition: border-color 0.2s; }
+.path-energy__nub { flex: none; width: 8px; height: 18px; border-radius: 0 4px 4px 0; background: #2f4a63; transition: background 0.2s; }
+.path-energy__cell { flex: none; width: 22px; height: 34px; box-sizing: border-box; border: 2px solid transparent; border-radius: 6px; background: #138a86; box-shadow: inset 0 -5px 0 #0c5f5c; transition: background 0.25s, box-shadow 0.25s, border-color 0.25s; }
+.path-energy__cell.is-planned { background: #f6c65b; box-shadow: inset 0 -5px 0 #c98a1a; }
+.path-energy__cell.is-spent { background: transparent; box-shadow: none; border: 2px dashed #b7c4d2; }
+.path-energy__ghosts { flex: none; display: flex; gap: 4px; margin-left: 8px; }
+.path-energy__ghost { width: 16px; height: 30px; box-sizing: border-box; border-radius: 6px; border: 2px dashed var(--oops); background: var(--oops-tint); }
+.path-energy__chip { flex: none; display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px 0 10px; border-radius: 22px; background: #e3ebf4; color: var(--ink); font-size: 22px; font-weight: 800; white-space: nowrap; }
+.path-energy.is-over .path-energy__battery, .path-energy.is-empty .path-energy__battery { border-color: var(--oops); }
+.path-energy.is-over .path-energy__nub, .path-energy.is-empty .path-energy__nub { background: var(--oops); }
+.path-energy.is-over .path-energy__chip, .path-energy.is-empty .path-energy__chip { background: var(--oops-tint); color: var(--oops-ink); }
+.path-energy.is-empty .path-energy__battery { animation: energy-warn 0.9s linear both; }
+
+/* Out of charge: a jolt along the way the robot faces, a cough back, then it leans over and dims. */
+.path-robot__sag { width: 100%; height: 100%; transform-origin: 50% 90%; }
+/* A bump: drive in, squash flat against it, bounce back with a little shake, blink. */
+.path-robot.is-hit .path-robot__sag { transform-origin: center; animation: robot-hit 0.55s ease-out both; }
+.path-robot.is-hit .rover-eye { animation: rover-blink 0.3s ease-in-out 0.12s both; }
+.path-sparks { position: absolute; width: 0; height: 0; pointer-events: none; }
+.path-spark { position: absolute; left: -3px; top: -9px; width: 6px; height: 18px; border-radius: 3px; background: var(--bolt); transform-origin: 3px 9px; transform: rotate(var(--a)) translateY(0) scale(0.3); opacity: 0; animation: robot-spark 0.45s ease-out 0.14s both; }
+.path-crate { transform-box: fill-box; transform-origin: 50% 90%; }
+.path-crate.is-hit { animation: crate-wobble 0.5s ease-out 0.12s both; }
+.path-wallhit { fill: var(--oops); opacity: 0; animation: wall-flash 0.6s ease-out 0.12s both; }
+@keyframes robot-hit { 0% { transform: none; } 28% { transform: translate(calc(var(--jx) * 2.2), calc(var(--jy) * 2.2)) scale(var(--sx), var(--sy)); } 48% { transform: translate(calc(var(--jx) * -0.6), calc(var(--jy) * -0.6)) rotate(-3deg); } 66% { transform: translate(calc(var(--jx) * 0.25), calc(var(--jy) * 0.25)) rotate(2deg); } 82% { transform: rotate(-1deg); } 100% { transform: none; } }
+@keyframes rover-blink { 0%, 100% { transform: none; } 50% { transform: scaleY(0.15); } }
+@keyframes robot-spark { 0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(0.4); } 100% { opacity: 0; transform: rotate(var(--a)) translateY(-26px) scale(1); } }
+@keyframes crate-wobble { 0%, 100% { transform: none; } 25% { transform: rotate(-5deg); } 55% { transform: rotate(3deg); } 80% { transform: rotate(-1deg); } }
+@keyframes wall-flash { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
+.path-robot.is-empty .path-robot__sag { animation: robot-sputter 0.9s ease-out both; }
+.path-robot .rover-eye { transform-box: fill-box; transform-origin: center; }
+.path-robot.is-empty .rover-eye { animation: rover-shut 0.4s ease-in 0.6s both; }
+.path-robot.is-empty .rover-light { animation: rover-dim 0.5s ease-in 0.6s both; }
+.path-puff { position: absolute; top: 4px; border-radius: 50%; background: #c3ccd6; opacity: 0; animation: robot-puff 1.2s ease-out both; }
+.path-empty-badge { position: absolute; left: 24px; top: -40px; padding: 4px 8px; border-radius: 12px; background: var(--paper); box-shadow: 0 3px 0 var(--oops); line-height: 0; animation: badge-pop 0.45s cubic-bezier(.34, 1.56, .64, 1) 1s both; }
+.path-missing { fill: var(--oops-tint); stroke: var(--oops); stroke-width: 4; stroke-dasharray: 6 5; animation: route-pop 0.35s cubic-bezier(.34, 1.56, .64, 1) both; transform-box: fill-box; transform-origin: center; }
+@keyframes energy-warn { 0%, 40% { border-color: var(--oops); } 20%, 60% { border-color: #2f4a63; } 100% { border-color: var(--oops); } }
+@keyframes robot-sputter { 0% { transform: none; } 14% { transform: translate(var(--jx), var(--jy)) rotate(-4deg); } 28% { transform: translate(calc(var(--jx) * -0.35), calc(var(--jy) * -0.35)) rotate(3deg); } 42% { transform: translate(calc(var(--jx) * 0.6), calc(var(--jy) * 0.6)) rotate(-2deg); } 56% { transform: none; } 100% { transform: translate(4px, 6px) rotate(8deg); } }
+@keyframes rover-shut { to { transform: scaleY(0.18); } }
+@keyframes rover-dim { to { opacity: 0.18; } }
+@keyframes robot-puff { 0% { opacity: 0; transform: translate(0, 0) scale(0.4); } 30% { opacity: 0.85; } 100% { opacity: 0; transform: translate(var(--dx), -46px) scale(1.5); } }
+@keyframes badge-pop { 0% { opacity: 0; transform: translateY(8px) scale(0.4); } 70% { opacity: 1; transform: translateY(-2px) scale(1.1); } 100% { opacity: 1; transform: none; } }
+
+.path-left { flex: none; display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
+.path-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.path-program.is-long { grid-template-columns: repeat(4, 74px); gap: 8px; padding: 12px; }
+.path-program.is-long .path-slot { width: 74px; height: 74px; }
+.path-side .bubble { font-size: 24px; }
+
+.path-program { list-style: none; margin: 0; padding: 14px; display: grid; grid-template-columns: repeat(4, 86px); gap: 10px; justify-content: center; background: var(--paper); border-radius: 26px; box-shadow: 0 6px 0 var(--grass-deep); }
+.path-slot { width: 86px; height: 86px; border-radius: 20px; border: 4px dashed #c3d0de; }
+.path-slot:has(.path-card) { border: none; }
+.path-card { position: relative; width: 100%; height: 100%; border-radius: 20px; border: 4px solid var(--leaf); background: var(--good-tint); color: var(--leaf-deep); display: grid; place-items: center; cursor: pointer; padding: 0; animation: pop 0.25s cubic-bezier(.34, 1.56, .64, 1); }
+.path-card:disabled { cursor: default; }
+.path-card.is-now { border-color: var(--bolt); background: #fff4d1; color: #7a5300; }
+.path-card.is-wrong { border-color: var(--oops); background: var(--oops-tint); color: var(--oops-ink); animation: wobble 0.4s; }
+.path-card__no { position: absolute; top: 2px; left: 8px; font-size: 15px; font-weight: 800; opacity: 0.7; }
+.path-card__times { position: absolute; right: -8px; bottom: -8px; min-width: 38px; height: 30px; padding: 0 6px; border-radius: 15px; background: var(--bolt); color: var(--ink); font-size: 20px; font-weight: 800; line-height: 30px; }
+
+.path-palette { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.path-palette--cross { display: grid; grid-template-columns: repeat(3, 104px); grid-template-areas: '. up .' 'left . right' '. down .'; gap: 8px; justify-content: center; }
+.path-palette--cross .path-cmd { width: 104px; height: 104px; }
+.path-cmd--up { grid-area: up; }
+.path-cmd--down { grid-area: down; }
+.path-cmd--left { grid-area: left; }
+.path-cmd--right { grid-area: right; }
+.path-cmd { width: 96px; height: 96px; border-radius: 24px; border: 4px solid var(--paper); background: var(--paper); color: var(--leaf-deep); box-shadow: 0 6px 0 var(--grass-deep); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; padding: 0; }
+.path-cmd:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--grass-deep); }
+.path-cmd:disabled { opacity: 0.5; cursor: default; transform: none; }
+.path-palette--relative .path-cmd { width: 118px; }
+.path-cmd--times { background: #fff4d1; border-color: #fff4d1; color: #7a5300; }
+.path-cmd__label { font-family: var(--body); font-size: 15px; font-weight: 700; line-height: 1.1; }
+.path-cmd__times { font-size: 36px; font-weight: 800; line-height: 1; }
+
+.path-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.peek-btn--robot { border-color: var(--bolt); background: var(--paper); color: #7a5300; box-shadow: 0 6px 0 #d9961e; }
+.peek-btn--robot:disabled, .big-btn--robot:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+@keyframes route-pop { from { transform: scale(0); } to { transform: scale(1); } }
+@keyframes charge { 50% { transform: scale(1.12); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .path-robot, .path-robot__turn { transition: none; }
+  .path-route, .path-card, .path-battery.is-charged > g, .path-win, .path-missing, .path-puff, .path-spark, .path-crate.is-hit, .path-robot.is-hit .path-robot__sag, .path-robot.is-hit .rover-eye { animation: none; }
+  .path-wallhit { animation: wall-flash 0.6s steps(1) both; }
+  .path-energy.is-empty .path-energy__battery, .path-robot.is-empty .path-robot__sag, .path-robot.is-empty .rover-eye,
+  .path-robot.is-empty .rover-light, .path-empty-badge { animation-duration: 1ms; animation-delay: 0s; }
+}
+
+/* ---------- phones ---------- */
+.is-phone .screen--map { display: flex; flex-direction: column; }
+.is-phone .screen--map .topbar, .is-phone .map-guide { flex: none; }
+.is-phone .map-fit { flex: 1 1 0; min-height: 0; margin: 8px 12px 12px; }
+.is-phone .map { margin: 0; }
+.stage--portrait .screen--map .topbar { padding-top: 18px; }
+.stage--landscape .map-guide .guide__csepi { display: none; }
+.stage--landscape .screen--map .topbar { padding-top: 8px; }
+
+.is-phone .screen--path { display: flex; flex-direction: column; }
+.is-phone .screen--path .topbar { flex: none; }
+.is-phone .path-body { flex: 1 1 0; min-height: 0; padding: 8px 16px 14px; gap: 10px; }
+.is-phone .path-fit { min-width: 0; min-height: 0; }
+.is-phone .path-side { gap: 10px; }
+.is-phone .path-side .bubble { font-size: 17px; padding: 10px 14px; }
+.is-phone .path-side .guide { gap: 12px; }
+.is-phone .path-side .guide__csepi { width: 40px; height: 62px; }
+.is-phone .path-program { grid-template-columns: repeat(4, 58px); gap: 8px; padding: 10px; border-radius: 20px; }
+.is-phone .path-slot { width: 58px; height: 58px; border-radius: 14px; border-width: 3px; }
+.is-phone .path-card { border-radius: 14px; border-width: 3px; }
+.is-phone .path-card svg { width: 30px; height: 30px; }
+.is-phone .path-card__no { font-size: 12px; left: 5px; }
+.is-phone .path-card__times { min-width: 30px; height: 24px; line-height: 24px; font-size: 16px; right: -6px; bottom: -6px; }
+.is-phone .path-palette { gap: 8px; }
+.is-phone .path-cmd { width: 68px; height: 68px; border-radius: 18px; box-shadow: 0 4px 0 var(--grass-deep); }
+.is-phone .path-cmd svg { width: 30px; height: 30px; }
+.is-phone .path-palette--relative .path-cmd { width: 90px; }
+.is-phone .path-palette--cross { grid-template-columns: repeat(3, 68px); gap: 6px; }
+.is-phone .path-palette--cross .path-cmd { width: 68px; height: 68px; }
+.is-phone .path-cmd__label { font-size: 12px; }
+.is-phone .path-cmd__times { font-size: 26px; }
+.is-phone .path-actions { gap: 10px; }
+.is-phone .path-energy { padding: 8px 10px; gap: 8px; margin: 0; border-radius: 18px; flex: none; }
+.is-phone .path-energy__cell { width: 13px; }
+.is-phone .path-energy__battery.is-many .path-energy__cell { width: 9px; }
+.is-phone .path-program.is-long { grid-template-columns: repeat(6, 44px); gap: 6px; padding: 8px; }
+.is-phone .path-program.is-long .path-slot { width: 44px; height: 44px; }
+.is-phone .path-energy__battery { gap: 3px; padding: 3px; border-width: 3px; border-radius: 10px; }
+.is-phone .path-energy__nub { width: 5px; height: 12px; }
+.is-phone .path-energy__cell { height: 24px; border-radius: 4px; }
+.is-phone .path-energy__ghost { width: 10px; height: 20px; border-radius: 4px; }
+.is-phone .path-energy__ghosts { gap: 3px; margin-left: 5px; }
+.is-phone .path-energy__chip { height: 34px; padding: 0 10px 0 6px; font-size: 16px; }
+.is-phone .path-energy__chip svg { width: 18px; height: 18px; }
+.is-phone .path-actions .big-btn { height: 52px; padding: 0 22px; font-size: 20px; }
+.is-phone .path-actions .peek-btn { height: 48px; padding: 0 18px; font-size: 18px; }
+
+/* Portrait: Csavar on top, the floor as big as the room allows, the cards and buttons below. */
+.stage--portrait .path-body { flex-direction: column; align-items: stretch; }
+.stage--portrait .path-side, .stage--portrait .path-left { display: contents; }
+.stage--portrait .path-side .guide { order: -1; flex: none; }
+.stage--portrait .path-fit { flex: 1 1 0; }
+.stage--portrait .path-program, .stage--portrait .path-palette, .stage--portrait .path-actions { flex: none; }
+
+/* Landscape: the floor down the left; Csavar, the cards and the buttons beside it. */
+.stage--landscape .screen--path {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: 'board top' 'board side';
+  column-gap: 18px;
+  row-gap: 8px;
+}
+.stage--landscape .screen--path .topbar { grid-area: top; }
+.stage--landscape .path-body { display: contents; }
+.stage--landscape .path-left { grid-area: board; min-height: 0; gap: 8px; }
+.stage--landscape .path-fit { flex: 1 1 0; min-height: 0; }
+.stage--landscape .path-side { grid-area: side; padding: 0 0 6px; overflow-y: auto; }
+.stage--landscape .path-side .guide__csepi { display: none; }
+.stage--landscape .path-program { grid-template-columns: repeat(4, 50px); gap: 6px; padding: 8px; }
+.stage--landscape .path-slot { width: 50px; height: 50px; }
+.stage--landscape .path-palette--cross { grid-template-columns: repeat(3, 56px); }
+.stage--landscape .path-palette--cross .path-cmd, .stage--landscape .path-cmd { width: 56px; height: 56px; }
+.stage--landscape .path-palette--relative .path-cmd { width: 76px; }
+.stage--landscape .path-cmd__label { display: none; }
+.is-phone .path-win { min-width: 0; width: max-content; max-width: 92%; padding: 16px 20px 18px; gap: 10px; border-radius: 26px; border-width: 4px; }
+.is-phone .path-win__title { font-size: 40px; }
+.is-phone .path-win__reward { height: 44px; font-size: 22px; }
+/* Landscape phones: the long programs fold into two rows of six so Indulás stays in view. */
+.stage--landscape .path-side { gap: 6px; }
+.stage--landscape .path-side .bubble { font-size: 14px; padding: 6px 10px; }
+.stage--landscape .path-program { grid-template-columns: repeat(6, 40px); gap: 6px; padding: 6px; }
+.stage--landscape .path-slot { width: 40px; height: 40px; border-radius: 10px; }
+.stage--landscape .path-card svg { width: 24px; height: 24px; }
+.stage--landscape .path-card__no { display: none; }
+.stage--landscape .path-palette--cross .path-cmd, .stage--landscape .path-cmd { width: 52px; height: 52px; }
+.stage--landscape .path-palette--cross { grid-template-columns: repeat(3, 52px); }
+.stage--landscape .path-palette--relative .path-cmd { width: 70px; }
+.stage--landscape .path-actions .big-btn, .stage--landscape .path-actions .peek-btn { height: 44px; font-size: 17px; }
+.stage--landscape .path-energy { padding: 4px 10px; }

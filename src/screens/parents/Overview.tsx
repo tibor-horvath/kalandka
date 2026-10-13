@@ -5,6 +5,7 @@ import { BONUS_OPTIONS, addBonus, lastSevenDays, playedToday, remainingSeconds, 
 import { ADD_LEVELS, clampLevel, LEVEL_UP_STREAK } from '../../games/add/logic';
 import { LEARN_MAX } from '../../games/learn/logic';
 import { TRACE_ORDER, buildTraceRound } from '../../games/trace/logic';
+import { PATH_LEVELS, pathLevelIndex } from '../../games/robot/path';
 import { POTS_LEVELS, potsLevelFor } from '../../games/pots/logic';
 import { LEVELS as FLASH_LEVELS, levelFor } from '../../games/flash/logic';
 import { SHAPE_ORDER } from '../../games/patterns/logic';
@@ -87,7 +88,12 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
       detail: `${clampLevel(progress.addLevel) + 1}. szint · ${addLevel.name} · ${progress.addStreak}/${LEVEL_UP_STREAK} csillag`,
       share: levelShare('add')
     },
-    { name: 'Cserépbarátok', detail: `${potsIdx + 1}. szint · ${POTS_LEVELS[potsIdx].name}`, share: levelShare('pots') }
+    { name: 'Cserépbarátok', detail: `${potsIdx + 1}. szint · ${POTS_LEVELS[potsIdx].name}`, share: levelShare('pots') },
+    {
+      name: 'Robotút',
+      detail: `${progress.pathSolved} pálya · ${pathLevelIndex(progress.pathSolved) + 1}. szint · ${PATH_LEVELS[pathLevelIndex(progress.pathSolved)].name}`,
+      share: levelShare('path')
+    }
   ];
 
   return (

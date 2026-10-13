@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Mood, Tone } from '../lib/types';
 import { Csepi } from './Csepi';
+import { Csavar } from './robot';
 
 const strokeProps = {
   fill: 'none',
@@ -70,11 +71,26 @@ export function RoundButton({ label, onClick, children, tint = 'white' }: { labe
   );
 }
 
-/** Csepi next to a speech bubble whose colour follows the tone. */
-export function GuideBubble({ mood, tone = 'plain', csepiWidth = 66, children, live = true }: { mood: Mood; tone?: Tone; csepiWidth?: number; children: ReactNode; live?: boolean }) {
+/** The world's guide (Csepi in Számkertész, Csavar in Robotműhely) next to a speech bubble whose colour follows the tone. */
+export function GuideBubble({
+  mood,
+  tone = 'plain',
+  csepiWidth = 66,
+  guide = 'csepi',
+  children,
+  live = true
+}: {
+  mood: Mood;
+  tone?: Tone;
+  csepiWidth?: number;
+  guide?: 'csepi' | 'csavar';
+  children: ReactNode;
+  live?: boolean;
+}) {
+  const Guide = guide === 'csavar' ? Csavar : Csepi;
   return (
     <div className="guide">
-      <Csepi mood={mood} width={csepiWidth} className="guide__csepi" />
+      <Guide mood={mood} width={csepiWidth} className="guide__csepi" />
       <div className={`bubble bubble--${tone}`} aria-live={live ? 'polite' : undefined}>
         {children}
       </div>

@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { CsepiIcon } from '../components/Csepi';
-import { AVATARS, Avatar } from '../components/avatars';
 import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../components/art';
-import { GuideBubble, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon, SpeakerOffIcon } from '../components/ui';
+import { GuideBubble, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { KidChip, MapButton, ParentsButton, VoiceButton } from '../components/hub';
 import { DotFace } from '../components/seeds';
 import { PlantIcon } from '../components/garden';
 import { StickerPop } from '../components/StickerPop';
@@ -11,7 +11,7 @@ import { UNLOCK_ADD_AFTER, addLockedSpeech } from '../games/add/logic';
 import { UNLOCK_FLASH_AFTER, flashLockedSpeech } from '../games/learn/logic';
 import { UNLOCK_POTS_AFTER, potsLockedSpeech } from '../games/pots/logic';
 import { PLANTS } from '../games/water/logic';
-import { setSpeechEnabled, speak } from '../lib/speech';
+import { speak } from '../lib/speech';
 import type { Mood } from '../lib/types';
 import { kidName, useActiveKid, useProfiles } from '../state/profiles';
 import { useProgress } from '../state/progress';
@@ -89,17 +89,6 @@ function LockedPlot({ name, skill, art, onTap }: { name: string; skill: string; 
   );
 }
 
-function SwapIcon() {
-  return (
-    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 8h14" />
-      <path d="M14 4l4 4-4 4" />
-      <path d="M20 16H6" />
-      <path d="M10 12l-4 4 4 4" />
-    </svg>
-  );
-}
-
 /** The child's own garden: a flower and a pear tree on one patch of soil. */
 function KiskertArt() {
   return (
@@ -114,12 +103,14 @@ export function Home({
   onOpen,
   onGarden,
   onParents,
-  onSwitch
+  onSwitch,
+  onMap
 }: {
   onOpen: (game: GameId) => void;
   onGarden: () => void;
   onParents: () => void;
   onSwitch: () => void;
+  onMap: () => void;
 }) {
   const { progress, update } = useProgress();
   const { profiles } = useProfiles();
@@ -196,14 +187,6 @@ export function Home({
   const bubble = notice ?? { kicker: greeting, title: question, mood: 'cheer' as Mood };
   const replay = () => speak(notice ? `${notice.kicker} ${notice.title}` : `${greeting} ${question}`);
 
-  // Muting is one tap here; the parents' corner keeps the same switch next to the tempo setting.
-  const toggleVoice = () => {
-    const on = !progress.voice;
-    update((p) => ({ ...p, voice: on }));
-    setSpeechEnabled(on);
-    if (on) speak('Itt vagyok!');
-  };
-
   const garden = progress.garden
     .slice(-GARDEN_SLOTS)
     .map((id) => PLANTS.find((p) => p.id === id))
@@ -222,21 +205,7 @@ export function Home({
           </div>
         </div>
         <div className="topbar__right">
-          {shared && (
-            <button
-              type="button"
-              className="kid-chip"
-              style={{ '--ring': AVATARS[kid.avatar].ring } as CSSProperties}
-              aria-label={`${kidName(kid)} játszik. Másik gyerek választása`}
-              onClick={onSwitch}
-            >
-              <Avatar id={kid.avatar} size={46} />
-              <span className="kid-chip__name">{kidName(kid)}</span>
-              <span className="kid-chip__swap">
-                <SwapIcon />
-              </span>
-            </button>
-          )}
+          {shared && <KidChip onSwitch={onSwitch} />}
           <div className="pill" aria-label={`${balance} mag`}>
             <Seed />
             <span>
@@ -244,19 +213,9 @@ export function Home({
               <span className="pill__unit"> mag</span>
             </span>
           </div>
-          <button
-            type="button"
-            className="voice-btn"
-            aria-pressed={!progress.voice}
-            aria-label={progress.voice ? 'Csepi hangjának némítása' : 'Csepi hangjának bekapcsolása'}
-            onClick={toggleVoice}
-          >
-            {progress.voice ? <SpeakerIcon size={26} /> : <SpeakerOffIcon size={26} />}
-          </button>
-          <button type="button" className="parents-btn" onClick={onParents}>
-            <LockIcon size={22} />
-            <span className="parents-btn__label">Szülőknek</span>
-          </button>
+          <MapButton onClick={onMap} />
+          <VoiceButton />
+          <ParentsButton onClick={onParents} />
         </div>
       </header>
 

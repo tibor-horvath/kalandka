@@ -65,6 +65,25 @@ export function fanfare(): void {
   [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => blip(a, f, f, t + i * 0.1, i === 3 ? 0.5 : 0.18, 0.18));
 }
 
+/** Robotút: the robot drives into a wall or a crate: a soft low thud with a little knock on top. */
+export function thud(): void {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  blip(a, 210, 80, t, 0.2, 0.28);
+  blip(a, 900, 620, t + 0.01, 0.05, 0.08);
+}
+
+/** Robotút's charge runs out: two falling beeps, then a sliding "uuu" as the robot falls asleep. */
+export function powerDown(): void {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  blip(a, 660, 560, t, 0.16, 0.16);
+  blip(a, 520, 400, t + 0.2, 0.2, 0.16);
+  blip(a, 420, 140, t + 0.65, 0.6, 0.12);
+}
+
 /** A tiny tap on devices that can vibrate (most Android tablets; iPads ignore it). */
 export function buzz(ms = 12): void {
   if (!enabled) return;
