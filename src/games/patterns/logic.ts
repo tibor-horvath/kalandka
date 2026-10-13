@@ -16,7 +16,7 @@ export const FLOWER_LABELS: Record<FlowerKind, string> = {
 
 export const CHOICES: FlowerKind[] = ['tulip', 'sun', 'star'];
 
-/** Pattern shapes over slots a/b/c, each six long; the sixth item is the answer. */
+/** Pattern shapes over slots a/b/c, each six long; one of the six is hidden and is the answer. */
 export const SHAPES = {
   AB: [0, 1, 0, 1, 0, 1],
   ABC: [0, 1, 2, 0, 1, 2],
@@ -36,20 +36,44 @@ const PERMUTATIONS: FlowerKind[][] = [
   ['star', 'sun', 'tulip']
 ];
 
+/** Where the gap sits once the first lap is done: inside the row, never the very first flower. */
+const MIDDLE_GAPS = [3, 2, 4, 1];
+
 export interface PatternRound {
   shape: ShapeKey;
   sequence: FlowerKind[];
-  shown: FlowerKind[];
+  /** The row as shown, with null in the gap. */
+  shown: (FlowerKind | null)[];
+  /** Index of the hidden flower; 5 means "what comes next". */
+  gap: number;
   answer: FlowerKind;
 }
 
-/** Rounds cycle through the four shapes, and each full cycle swaps which flowers fill them. */
+export function periodOf(shape: ShapeKey): number {
+  return shape === 'AB' ? 2 : 3;
+}
+
+/**
+ * Rounds cycle through the four shapes, and each full cycle swaps which flowers fill them.
+ * The first lap asks what comes next; after that the missing flower moves into the row.
+ */
 export function buildRound(round: number): PatternRound {
   const r = Math.max(0, Math.floor(round));
+  const lap = Math.floor(r / SHAPE_ORDER.length);
   const shape = SHAPE_ORDER[r % SHAPE_ORDER.length];
-  const kinds = PERMUTATIONS[Math.floor(r / SHAPE_ORDER.length) % PERMUTATIONS.length];
+  const kinds = PERMUTATIONS[lap % PERMUTATIONS.length];
   const sequence = SHAPES[shape].map((slot) => kinds[slot]);
-  return { shape, sequence, shown: sequence.slice(0, 5), answer: sequence[5] };
+  const gap = lap === 0 ? 5 : MIDDLE_GAPS[(r + lap) % MIDDLE_GAPS.length];
+  const shown = sequence.map((k, i) => (i === gap ? null : k));
+  return { shape, sequence, shown, gap, answer: sequence[gap] };
+}
+
+export function isEndGap(round: PatternRound): boolean {
+  return round.gap === 5;
+}
+
+export function screenTitle(round: PatternRound): string {
+  return isEndGap(round) ? 'Melyik virág jön ezután?' : 'Melyik virág hiányzik?';
 }
 
 export interface PatternFeedback {
@@ -59,7 +83,11 @@ export interface PatternFeedback {
   tone: Tone;
 }
 
-export function startFeedback(): PatternFeedback {
+export function startFeedback(round: PatternRound): PatternFeedback {
+  if (!isEndGap(round)) {
+    const text = 'Mondd ki hangosan a sort, és keresd meg, melyik virág hiányzik!';
+    return { text, speech: 'Melyik virág hiányzik? ' + text, mood: 'smile', tone: 'plain' };
+  }
   const text = 'Mondd ki hangosan a sort, és válaszd ki a következő virágot!';
   return { text, speech: 'Melyik virág jön ezután? ' + text, mood: 'smile', tone: 'plain' };
 }
@@ -68,13 +96,29 @@ export function solvedFeedback(): PatternFeedback {
   return { text: 'Ügyes vagy! Megtaláltad a mintát!', speech: 'Ügyes vagy! Megtaláltad a mintát!', mood: 'cheer', tone: 'good' };
 }
 
-/** A wrong pick: read the first three flowers back as a hint, never a "wrong" word. */
+/**
+ * A wrong pick: read part of the row back as a hint, never a "wrong" word.
+ * For a gap inside the row, the first hint reads one whole repeat that the gap does not touch,
+ * the second reads the whole row with a pause at the gap.
+ */
 export function hintFeedback(round: PatternRound, misses: number): PatternFeedback {
-  const firstThree = round.sequence.slice(0, 3).map((k) => FLOWER_NAMES[k]).join(', ');
-  if (misses >= 2) {
-    const text = `Segítek: ${round.shown.map((k) => FLOWER_NAMES[k]).join(', ')}… és most?`;
-    return { text, speech: text, mood: 'think', tone: 'oops' };
+  const names = (kinds: FlowerKind[]) => kinds.map((k) => FLOWER_NAMES[k]).join(', ');
+  if (isEndGap(round)) {
+    const before = round.sequence.slice(0, 5);
+    if (misses >= 2) {
+      const text = `Segítek: ${names(before)}… és most?`;
+      return { text, speech: text, mood: 'think', tone: 'oops' };
+    }
+    const text = `Nézd csak: ${names(round.sequence.slice(0, 3))}… mi jön ezután?`;
+    return { text, speech: text, mood: 'oops', tone: 'oops' };
   }
-  const text = `Nézd csak: ${firstThree}… mi jön ezután?`;
+  if (misses >= 2) {
+    const row = round.shown.map((k) => (k ? FLOWER_NAMES[k] : '?')).join(', ');
+    const spoken = round.shown.map((k) => (k ? FLOWER_NAMES[k] : 'kérdőjel')).join(', ');
+    return { text: `Segítek: ${row}. Mi illik a kérdőjel helyére?`, speech: `Segítek: ${spoken}. Mi illik a kérdőjel helyére?`, mood: 'think', tone: 'oops' };
+  }
+  const period = periodOf(round.shape);
+  const start = round.gap >= period ? 0 : 6 - period;
+  const text = `Nézd csak: ${names(round.sequence.slice(start, start + period))}… mi hiányzik?`;
   return { text, speech: text, mood: 'oops', tone: 'oops' };
 }

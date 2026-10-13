@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { PatternFlower } from '../components/art';
 import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { CHOICES, FLOWER_LABELS, buildRound, hintFeedback, solvedFeedback, startFeedback, type FlowerKind } from '../games/patterns/logic';
+import { CHOICES, FLOWER_LABELS, buildRound, hintFeedback, isEndGap, screenTitle, solvedFeedback, startFeedback, type FlowerKind } from '../games/patterns/logic';
 import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
 
@@ -15,13 +15,13 @@ export function Patterns({ onBack }: { onBack: () => void }) {
   const rewarded = useRef<number | null>(null);
 
   const solved = picked === round.answer;
-  const fb = solved ? solvedFeedback() : wrong ? hintFeedback(round, misses) : startFeedback();
+  const fb = solved ? solvedFeedback() : wrong ? hintFeedback(round, misses) : startFeedback(round);
 
   useEffect(() => {
     setPicked(null);
     setWrong(null);
     setMisses(0);
-    speak(startFeedback().speech);
+    speak(startFeedback(buildRound(roundNo)).speech);
   }, [roundNo]);
 
   const pick = (kind: FlowerKind) => {
@@ -43,7 +43,8 @@ export function Patterns({ onBack }: { onBack: () => void }) {
   };
 
   const next = () => update((p) => ({ ...p, patternRound: p.patternRound + 1 }));
-  const slots: (FlowerKind | null)[] = [...round.shown, solved ? round.answer : null];
+  const slots: (FlowerKind | null)[] = round.shown.map((k, i) => (i === round.gap && solved ? round.answer : k));
+  const gapLabel = isEndGap(round) ? 'Kérdőjel: ide jön a következő virág' : 'Kérdőjel: ide hiányzik egy virág';
 
   return (
     <div className="screen screen--patterns">
@@ -53,7 +54,7 @@ export function Patterns({ onBack }: { onBack: () => void }) {
         <RoundButton label="Vissza a kertbe" onClick={onBack}>
           <BackIcon />
         </RoundButton>
-        <h1 className="screen-title">Melyik virág jön ezután?</h1>
+        <h1 className="screen-title">{screenTitle(round)}</h1>
         <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
           <SpeakerIcon />
         </RoundButton>
@@ -64,11 +65,11 @@ export function Patterns({ onBack }: { onBack: () => void }) {
           {slots.map((kind, i) => (
             <div key={i} className="bed__slot">
               {kind ? (
-                <span role="img" aria-label={FLOWER_LABELS[kind]} className={i === 5 ? 'pop-in' : undefined}>
+                <span role="img" aria-label={FLOWER_LABELS[kind]} className={i === round.gap ? 'pop-in' : undefined}>
                   <PatternFlower kind={kind} />
                 </span>
               ) : (
-                <div className="bed__question" aria-label="Kérdőjel: ide jön a következő virág">?</div>
+                <div className="bed__question" aria-label={gapLabel}>?</div>
               )}
             </div>
           ))}
