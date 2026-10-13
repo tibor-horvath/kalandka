@@ -1,6 +1,6 @@
 # Kalandka – Számkertész
 
-Hungarian thinking games for children aged 5–7, built as an offline-capable tablet PWA.
+Hungarian thinking games for children aged 4–7, built as an offline-capable tablet PWA.
 Kalandka is the umbrella brand; Számkertész (the counting garden) is its first world, and Csepi the water drop is the guide.
 
 ## Games
@@ -27,7 +27,7 @@ Each solved task earns a seed; each watered plant is added to the garden on the 
 | New sticker | Back on the home screen, a newly earned sticker spins in, sparkles, then flies into its place in the game's album page and settles with a squash. Tapping it replays the animation; with reduced motion it simply appears in place. |
 
 Rewards are only ever added: nothing wilts, nothing is taken away, nothing is random and nothing depends on time played. Stickers come from skill progress, never from the number of tasks; a starting level set by parents (or progress from before the stickers existed) fills the album without a celebration.
-The parents' area opens through a gate (a two-digit multiplication such as 6 × 9 on a keypad, which 5–7 year olds cannot do yet). It is a separate full-screen space with a menu: **Áttekintés** (today's time ring, the last 7 days, plain-language notes on what is going well or hard, progress per game), **Képernyőidő** (daily limit, +10 minutes, rest now, warning and finish-the-task switches, evening rest), **Szintek** (a starting level per game with −/+ steppers, all games open) and **Beállítások** (Csepi's voice and speaking speed, sound effects, privacy, a two-step progress reset).
+The parents' area opens through a gate (a two-digit multiplication such as 6 × 9 on a keypad, which 4–7 year olds cannot do yet). It is a separate full-screen space with a menu: **Áttekintés** (today's time ring, the last 7 days, plain-language notes on what is going well or hard, progress per game), **Képernyőidő** (daily limit, +10 minutes, rest now, warning and finish-the-task switches, evening rest), **Szintek** (a starting level per game with −/+ steppers, all games open) and **Beállítások** (Csepi's voice and speaking speed, sound effects, privacy, a two-step progress reset).
 
 Screen time: only active play counts (app visible, parents' area closed) and the count starts again each day. Two minutes before the end a badge appears and Csepi says so; at the limit a child in a game may finish the task (up to 2 minutes), then a rest screen appears that only the parents' gate dismisses. "Pihenő most" ends play for today; evening rest blocks play from 18–20:00 until 7:00. Resetting progress does not reset today's play time.
 
