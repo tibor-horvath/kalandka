@@ -85,6 +85,9 @@
 .is-phone .plot .plot__trio--seeds svg { width: 28px; }
 .is-phone .plot .plot__trio--bee { gap: 4px; }
 .is-phone .plot .plot__trio--bee svg { width: 54px; }
+.is-phone .plot .plot__trio--pots { gap: 0; }
+.is-phone .plot .plot__pot svg { width: 30px; height: auto; }
+.is-phone .plot .plot__pot-space { height: 24px; }
 .is-phone .plot__mini-sum { font-size: 20px; }
 .is-phone .plot__trail { width: 78px; height: 62px; margin-bottom: 0; }
 .is-phone .plot__trail > svg { width: 78px; height: auto; }
@@ -320,6 +323,7 @@
 .is-phone .meadow { left: -100px; right: -100px; height: calc(1000px + 70%); }
 .stage--landscape .meadow { height: calc(1000px + 80%); }
 .is-phone .seedbed { margin: 0; }
+.is-phone .potbox { margin: 0; }
 .stage--portrait .seedbed-box { margin: 0 16px; }
 /* Buttons drawn on the bed keep their real size however small the bed is drawn. */
 .is-phone .seedbed__cover > button { transform: scale(calc(1 / var(--fit-k, 1))); }

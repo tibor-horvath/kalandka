@@ -239,3 +239,14 @@ export function Seed({ size = 30 }: { size?: number }) {
     </svg>
   );
 }
+
+/** A small flower pot for Cserépbarátok, with soil showing at the rim. */
+export function SmallPot({ width = 96 }: { width?: number }) {
+  return (
+    <svg aria-hidden="true" width={width} height={Math.round(width * 0.67)} viewBox="0 0 96 64">
+      <path d="M12 16 H84 L74 64 H22 Z" fill="#C8693E" />
+      <rect x="4" y="4" width="88" height="18" rx="7" fill="#D97E4F" />
+      <ellipse cx="48" cy="7" rx="36" ry="4" fill="#6F4630" />
+    </svg>
+  );
+}

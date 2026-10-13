@@ -235,6 +235,20 @@ h1, h2, p { margin: 0; }
 @keyframes nudge { 0%, 80%, 100% { transform: translate(-50%, -50%) scale(1); } 90% { transform: translate(-50%, -50%) scale(1.12); } }
 .peek-btn { height: 60px; padding: 0 28px; border: 4px solid var(--paper); border-radius: 30px; background: rgba(255, 255, 255, 0.18); color: var(--paper); font-size: 24px; font-weight: 800; cursor: pointer; }
 .peek-btn:active { transform: scale(0.96); }
+
+/* ---------- Cserépbarátok ---------- */
+.potbox { position: relative; margin: 24px auto 0; border-radius: 36px; background: #f3e2c4; box-shadow: inset 0 -10px 0 #dcc199; }
+.potbox__pot { position: absolute; width: 128px; height: 150px; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 0 8px; line-height: 0; }
+.potbox__pot > svg:last-child { margin-top: -10px; }
+.potbox__pot--empty { border: none; background: transparent; border-radius: 24px; cursor: pointer; }
+.potbox__pot--empty:not(.is-counted) > svg:last-child { animation: pot-nudge 2.4s ease-in-out 1.2s infinite; }
+.potbox__pot--empty.is-counted { cursor: default; }
+.potbox__space { height: 66px; }
+.potbox__count { position: relative; display: block; animation: sprout 0.4s cubic-bezier(.34, 1.56, .64, 1) both; transform-origin: 50% 100%; }
+.potbox__count svg { width: 58px; height: 64px; }
+.potbox__num { position: absolute; top: -8px; right: -22px; min-width: 34px; height: 34px; border-radius: 17px; background: var(--paper); color: var(--drop-deep); font-size: 22px; font-weight: 800; line-height: 34px; text-align: center; box-shadow: 0 3px 0 #dcc199; }
+.screen--pots .potbox__pot .pop-in { margin-bottom: -6px; }
+@keyframes pot-nudge { 0%, 80%, 100% { transform: scale(1); } 90% { transform: scale(1.08); } }
 .plot__learn { display: flex; align-items: center; gap: 8px; margin: 34px 0 2px; }
 .plot__learn-num { font-size: 50px; font-weight: 800; line-height: 0.9; color: var(--drop-deep); }
 .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -262,6 +276,10 @@ h1, h2, p { margin: 0; }
 .choice--short { height: 150px; width: 170px; }
 @keyframes flap { from { transform: scaleY(1); } to { transform: scaleY(0.55); } }
 .plot__trio--bee { gap: 6px; align-items: center; margin-bottom: 4px; }
+.plot__trio--pots { gap: 4px; margin-bottom: 2px; }
+.plot__pot { display: flex; flex-direction: column; align-items: center; }
+.plot__pot > svg:last-child { margin-top: -6px; }
+.plot__pot-space { height: 30px; }
 .plot__mini-sum { font-size: 32px; font-weight: 800; color: var(--ink); line-height: 1; }
 .add-flower--ten::after { top: 6px; }
 .legend { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 6px auto 0; width: max-content; padding: 4px 16px; border-radius: 16px; background: var(--paper); font-size: 20px; font-weight: 800; }

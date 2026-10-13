@@ -1,6 +1,7 @@
 import { ADD_LEVELS, clampLevel } from '../games/add/logic';
 import { FLASH_ROUNDS_PER_LEVEL, LEVELS as FLASH_LEVELS, levelFor } from '../games/flash/logic';
 import { LEARN_MAX } from '../games/learn/logic';
+import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL, potsLevelFor } from '../games/pots/logic';
 import { SHAPE_ORDER } from '../games/patterns/logic';
 import { PLANTS } from '../games/water/logic';
 import type { Progress } from './progress';
@@ -15,7 +16,7 @@ export interface LevelOption {
 }
 
 export interface LevelSetting {
-  id: 'learn' | 'water' | 'patterns' | 'flash' | 'add';
+  id: 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'pots';
   game: string;
   hint: string;
   options: LevelOption[];
@@ -83,5 +84,13 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
     options: ADD_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
     current: (p) => clampLevel(p.addLevel),
     apply: (p, v) => ({ ...p, addLevel: v, addStreak: 0, addMisses: 0 })
+  },
+  {
+    id: 'pots',
+    game: 'Cserépbarátok',
+    hint: '5 jó válasz után magától lép tovább.',
+    options: POTS_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
+    current: (p) => POTS_LEVELS.indexOf(potsLevelFor(p.potsSolved)),
+    apply: (p, v) => ({ ...p, potsSolved: v * POTS_ROUNDS_PER_LEVEL })
   }
 ];

@@ -11,6 +11,7 @@ import { Gate } from './screens/parents/Gate';
 import { ParentArea, type ParentStart } from './screens/parents/ParentArea';
 import { Patterns } from './screens/Patterns';
 import { Picker } from './screens/Picker';
+import { Pots } from './screens/Pots';
 import { Rest, TimeBanner } from './screens/Rest';
 import { Trace } from './screens/Trace';
 import { Water } from './screens/Water';
@@ -32,7 +33,8 @@ const ROUND_KEY = {
   patterns: 'patternRound',
   flash: 'flashRound',
   add: 'addRound',
-  trace: 'traceRound'
+  trace: 'traceRound',
+  pots: 'potsRound'
 } as const satisfies Record<GameId, keyof Progress>;
 
 function Game() {
@@ -154,6 +156,7 @@ function Game() {
       {screen === 'flash' && <Flash key={progress.flashRound} onBack={() => go('home')} />}
       {screen === 'add' && <Add key={progress.addRound} onBack={() => go('home')} />}
       {screen === 'trace' && <Trace key={progress.traceRound} onBack={() => go('home')} />}
+      {screen === 'pots' && <Pots key={progress.potsRound} onBack={() => go('home')} />}
       {!resting && !inParents && progress.warnBefore && remaining <= WARN_SECONDS && <TimeBanner remaining={remaining} />}
       {!resting && !inParents && timeUp && !progress.warnBefore && <TimeBanner remaining={0} />}
       {resting && !inParents && (

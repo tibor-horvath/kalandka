@@ -5,6 +5,7 @@ import { addBonus, lastSevenDays, playedToday, remainingSeconds, today } from '.
 import { ADD_LEVELS, clampLevel, LEVEL_UP_STREAK } from '../../games/add/logic';
 import { LEARN_MAX } from '../../games/learn/logic';
 import { TRACE_ORDER } from '../../games/trace/logic';
+import { POTS_LEVELS, potsLevelFor } from '../../games/pots/logic';
 import { LEVELS as FLASH_LEVELS, levelFor } from '../../games/flash/logic';
 import { SHAPE_ORDER } from '../../games/patterns/logic';
 import { PLANTS } from '../../games/water/logic';
@@ -65,6 +66,7 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
   const addLevel = ADD_LEVELS[clampLevel(progress.addLevel)];
   const flashIdx = FLASH_LEVELS.indexOf(levelFor(progress.flashSolved));
   const learned = Math.min(LEARN_MAX, progress.learnSolved);
+  const potsIdx = POTS_LEVELS.indexOf(potsLevelFor(progress.potsSolved));
   const games = [
     { name: 'Számvetés', detail: `${learned} / ${LEARN_MAX} szám`, share: learned / LEARN_MAX },
     {
@@ -79,7 +81,8 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
       name: 'Méhecske',
       detail: `${clampLevel(progress.addLevel) + 1}. szint · ${addLevel.name} · ${progress.addStreak}/${LEVEL_UP_STREAK} csillag`,
       share: levelShare('add')
-    }
+    },
+    { name: 'Cserépbarátok', detail: `${potsIdx + 1}. szint · ${POTS_LEVELS[potsIdx].name}`, share: levelShare('pots') }
   ];
 
   return (

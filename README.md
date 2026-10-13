@@ -13,6 +13,7 @@ Kalandka is the umbrella brand; Számkertész (the counting garden) is its first
 | Magvillantás | Recognising amounts at a glance | Opens after numbers 1–5 in Számvetés. Seeds show for 2.5–3 s, then the child picks how many; "Mutasd újra!" shows them again any time. A wrong pick uncovers the seeds and counts them together. |
 | Méhecske | Addition and subtraction, 5 to 100 | Opens after numbers 1–10 in Számvetés. Two groups of flowers, "a + b = ?", pick the total; on the take levels the child taps b of the a flowers, the bee carries them to the hive, and they pick how many are left ("a − b = ?"). Tap a flower and the bee counts it; a wrong pick sends the bee round everything, counting aloud. Seventeen levels, adding and taking away in turn (up to 5, up to 10 gathering or counting on from a basket, up to 20, crossing ten, round tens, up to 100, up to 100 with carrying); from 20 on a bouquet stands for ten. Adaptive and child-led: after five first-try answers Csepi offers "harder or stay?" (tree / flower), after three tasks in a row that needed help she offers "easier or stay?" (sprout / flower). Always one step, the child decides. |
 | Mézút | Writing the digits 0–9 | Open from the start. The child leads the bee along a dotted honey trail in writing order (1–9, then 0); 4, 5 and 7 take two strokes. The trail is forgiving: the finger may wander within a soft lane, and the honey always follows the trail, never the wobble. Off the lane nothing fails: the bee waits, the next stretch glows, a thread leads back and Csepi says "Gyere vissza a mézes útra!". Honey drops pop with a rising bubble sound (and a light vibration where supported); a see-through bee shows the way at the start, on "Mutasd az utat!" and after a quiet spell. |
+| Cserépbarátok | Number friends of 5 and 10 | Opens after numbers 1–10 in Számvetés. A window box of 5 or 10 pots (rows of five, like a ten-frame); some already flower, and the child picks how many more fill the box. Tapping an empty pot plants a sprout and Csepi counts it; a wrong pick has Csepi count the empty pots together. A right answer makes them bloom in a second colour and shows "3 + 7 = 10". Three levels, five solved rounds each: friends of five, friends of ten in order, friends of ten scattered. |
 
 Each solved task earns a seed; each watered plant is added to the garden on the home screen.
 The parents' area opens through a gate (a two-digit multiplication such as 6 × 9 on a keypad, which 5–7 year olds cannot do yet). It is a separate full-screen space with a menu: **Áttekintés** (today's time ring, the last 7 days, plain-language notes on what is going well or hard, progress per game), **Képernyőidő** (daily limit, +10 minutes, rest now, warning and finish-the-task switches, evening rest), **Szintek** (a starting level per game with −/+ steppers, all games open) and **Beállítások** (Csepi's voice and speaking speed, sound effects, privacy, a two-step progress reset).
@@ -39,6 +40,7 @@ src/
   games/flash/layout.ts     seed layouts shared by both seed games
   games/add/logic.ts        Méhecske levels, sums, bouquets, level-up rule
   games/trace/logic.ts      Mézút digit trails, forgiving finger following, honey-drop checkpoints
+  games/pots/logic.ts       Cserépbarátok levels, rounds, pot layout and Csepi's lines
   lib/numbers.ts            Hungarian number words 1–100 ("két csepp" vs. counting "kettő", articles)
   lib/speech.ts             Csepi's voice via browser hu-HU text-to-speech (placeholder for recorded audio)
   lib/sound.ts              synthesised pops and chimes (Web Audio) and light vibration
@@ -47,7 +49,7 @@ src/
   state/insights.ts         plain-language notes for parents; the multiplication gate
   state/levels.ts           per-game level settings for the parents' corner (read current, apply new start)
   components/               Csepi, artwork, buttons, speech bubble, scaling stage (1180×820 tablet, 390 px phone)
-  screens/                  Home, Learn, Water, Patterns, Flash, Add, Trace, Rest; parents/ (Gate, ParentArea and its pages)
+  screens/                  Home, Learn, Water, Patterns, Flash, Add, Trace, Pots, Rest; parents/ (Gate, ParentArea and its pages)
 ```
 
 ## Design rules carried into code
@@ -62,7 +64,7 @@ src/
 ## Not done yet
 
 - Recorded Hungarian voice for Csepi (the browser voice is a stand-in).
-- Locked games: Cserépbarátok (number pairs that make ten) and a still-unnamed slot (Titkos kert); tapping them makes Csepi say they open soon.
+- A still-unnamed game slot (Titkos kert); tapping it makes Csepi say it opens soon.
 
 ## Deploy
 

@@ -26,6 +26,10 @@ export interface Progress {
   /** Mézút round: which digit to trace next (see TRACE_ORDER). */
   traceRound: number;
   traceSolved: number;
+  potsRound: number;
+  /** Cserépbarátok rounds solved; every five move up a level (see POTS_LEVELS); parents can set it. */
+  potsSolved: number;
+  potsAnnounced: boolean;
   /** Csepi has announced that Magvillantás opened. */
   flashAnnounced: boolean;
   voice: boolean;
@@ -74,6 +78,9 @@ export const DEFAULT_PROGRESS: Progress = {
   flashSolved: 0,
   traceRound: 0,
   traceSolved: 0,
+  potsRound: 0,
+  potsSolved: 0,
+  potsAnnounced: false,
   flashAnnounced: false,
   voice: true,
   sounds: true,

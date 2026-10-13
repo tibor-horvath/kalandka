@@ -1,24 +1,22 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { CsepiIcon } from '../components/Csepi';
 import { AVATARS, Avatar } from '../components/avatars';
-import { Bee, PatternFlower, RoundFlower, Seed, Sprout } from '../components/art';
+import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../components/art';
 import { GuideBubble, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon, SpeakerOffIcon } from '../components/ui';
 import { DotFace } from '../components/seeds';
 import { useForm } from '../components/Stage';
 import { UNLOCK_ADD_AFTER, addLockedSpeech } from '../games/add/logic';
 import { UNLOCK_FLASH_AFTER, flashLockedSpeech } from '../games/learn/logic';
+import { UNLOCK_POTS_AFTER, potsLockedSpeech } from '../games/pots/logic';
 import { PLANTS } from '../games/water/logic';
 import { setSpeechEnabled, speak } from '../lib/speech';
 import type { Mood } from '../lib/types';
 import { kidName, useActiveKid, useProfiles } from '../state/profiles';
 import { useProgress } from '../state/progress';
 
-export type GameId = 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'trace';
+export type GameId = 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'trace' | 'pots';
 
-const COMING_SOON = [
-  { name: 'Cserépbarátok', skill: 'Tízes barátok' },
-  { name: 'Titkos kert', skill: 'Meglepetés' }
-];
+const COMING_SOON = [{ name: 'Titkos kert', skill: 'Meglepetés' }];
 
 function TrailArt() {
   return (
@@ -39,6 +37,20 @@ function BeeArt() {
     <span className="plot__trio plot__trio--bee">
       <Bee width={60} />
       <span className="plot__mini-sum">2+1</span>
+    </span>
+  );
+}
+
+/** Two pots in bloom and an empty one waiting for its friend. */
+function PotsArt() {
+  return (
+    <span className="plot__trio plot__trio--pots">
+      {['#E8577D', '#E8577D', null].map((petal, i) => (
+        <span key={i} className="plot__pot">
+          {petal ? <RoundFlower petal={petal} width={34} /> : <span className="plot__pot-space" />}
+          <SmallPot width={40} />
+        </span>
+      ))}
     </span>
   );
 }
@@ -100,6 +112,7 @@ export function Home({ onOpen, onParents, onSwitch }: { onOpen: (game: GameId) =
   const learned = progress.learnSolved;
   const flashOpen = progress.unlockAll || learned >= UNLOCK_FLASH_AFTER;
   const addOpen = progress.unlockAll || learned >= UNLOCK_ADD_AFTER;
+  const potsOpen = progress.unlockAll || learned >= UNLOCK_POTS_AFTER;
   // On a shared device Csepi greets each child by name.
   const hello = shared ? `Szia, ${kidName(kid)}! De jó, hogy itt vagy!` : 'Szia, de jó, hogy itt vagy!';
   const greeting = progress.welcomed ? hello : 'Szia, én Csepi vagyok!';
@@ -121,6 +134,9 @@ export function Home({ onOpen, onParents, onSwitch }: { onOpen: (game: GameId) =
     } else if (addOpen && !progress.addAnnounced) {
       update((p) => ({ ...p, addAnnounced: true }));
       showNotice({ kicker: 'Nézd, ki jött!', title: 'Megjött a Méhecske!', mood: 'cheer' }, 'Nézd! Megjött a méhecske. Segít összeadni a virágokat!', true);
+    } else if (potsOpen && !progress.potsAnnounced) {
+      update((p) => ({ ...p, potsAnnounced: true }));
+      showNotice({ kicker: 'Nézd, mi történt!', title: 'Kinyíltak a Cserépbarátok!', mood: 'cheer' }, 'Nézd! Kinyílt egy új kertrész: a Cserépbarátok. Töltsük meg a cserepeket virággal!', true);
     } else {
       speak(`${greeting} ${question}`);
     }
@@ -142,6 +158,10 @@ export function Home({ onOpen, onParents, onSwitch }: { onOpen: (game: GameId) =
   const tapAddLocked = () => {
     const left = UNLOCK_ADD_AFTER - learned;
     showNotice({ kicker: 'A méhecske még alszik.', title: `Ismerj meg még ${left} számot!`, mood: 'think' }, addLockedSpeech(learned));
+  };
+  const tapPotsLocked = () => {
+    const left = UNLOCK_POTS_AFTER - learned;
+    showNotice({ kicker: 'Ez a kertrész még alszik.', title: `Ismerj meg még ${left} számot!`, mood: 'think' }, potsLockedSpeech(learned));
   };
   const tapSleeping = () => showNotice({ kicker: 'Ez a kertrész még alszik.', title: 'Hamarosan kinyílik!', mood: 'sleep' }, SLEEPING);
 
@@ -306,6 +326,20 @@ export function Home({ onOpen, onParents, onSwitch }: { onOpen: (game: GameId) =
             <PlayIcon /> Játék
           </span>
         </button>
+
+        {potsOpen ? (
+          <button type="button" className="plot plot--play" onClick={() => open('pots')} aria-label="Cserépbarátok – tízes barátok játék">
+            {progress.potsSolved === 0 && <span className="plot__badge">Új!</span>}
+            <PotsArt />
+            <span className="plot__soil" />
+            <span className="plot__name">Cserépbarátok</span>
+            <span className="plot__cta">
+              <PlayIcon /> Játék
+            </span>
+          </button>
+        ) : (
+          <LockedPlot name="Cserépbarátok" skill={`Tízes barátok · még ${UNLOCK_POTS_AFTER - learned} szám`} art={<PotsArt />} onTap={tapPotsLocked} />
+        )}
 
         {COMING_SOON.map((g) => (
           <LockedPlot key={g.name} name={g.name} skill={g.skill} onTap={tapSleeping} />
