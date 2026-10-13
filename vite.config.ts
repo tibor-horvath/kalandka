@@ -13,7 +13,7 @@ export default defineConfig({
       pwaAssets: { config: true },
       manifest: {
         id: '/',
-        name: 'Kalandka – Számkertész',
+        name: 'Kalandka',
         short_name: 'Kalandka',
         description: 'Számolós és logikai játékok 4–7 éveseknek.',
         lang: 'hu',

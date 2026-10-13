@@ -24,7 +24,7 @@ import { Workshop } from './screens/robot/Workshop';
 import { ProfilesProvider, setActive, useProfiles } from './state/profiles';
 import { useProgress, type Progress } from './state/progress';
 import { GRACE_SECONDS, WARN_SECONDS, addPlay, isEveningRest, remainingSeconds, today } from './state/screenTime';
-import { currentWorld, type WorldId } from './state/worlds';
+import { WORLDS, currentWorld, type WorldId } from './state/worlds';
 
 /**
  * 'home' is the current world's home screen. The Kalandka map, the Kiskert, Robotépítő and the sticker album sit
@@ -80,6 +80,9 @@ function Game() {
   const csavarTalks = screen === 'path' || screen === 'workshop' || (screen === 'album' && albumFrom === 'workshop') || (screen === 'home' && world === 'robot');
   // A layout effect, so the voice is set before the new screen's own effects say their first line.
   useLayoutEffect(() => setSpeaker(csavarTalks ? 'robot' : 'csepi'), [csavarTalks]);
+  useEffect(() => {
+    document.title = `Kalandka – ${WORLDS.find((w) => w.id === world)!.name}`;
+  }, [world]);
   useEffect(() => {
     const id = window.setInterval(() => setClock(Date.now()), 60_000);
     return () => window.clearInterval(id);
