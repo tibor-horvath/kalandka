@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { CsepiIcon } from '../components/Csepi';
 import { Bee, PatternFlower, RoundFlower, Seed, Sprout } from '../components/art';
-import { GuideBubble, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { GuideBubble, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon, SpeakerOffIcon } from '../components/ui';
 import { DotFace } from '../components/seeds';
 import { useForm } from '../components/Stage';
 import { UNLOCK_ADD_AFTER, addLockedSpeech } from '../games/add/logic';
 import { UNLOCK_FLASH_AFTER, flashLockedSpeech } from '../games/learn/logic';
 import { PLANTS } from '../games/water/logic';
-import { speak } from '../lib/speech';
+import { setSpeechEnabled, speak } from '../lib/speech';
 import type { Mood } from '../lib/types';
 import { useProgress } from '../state/progress';
 
@@ -130,6 +130,14 @@ export function Home({ onOpen, onParents }: { onOpen: (game: GameId) => void; on
   const bubble = notice ?? { kicker: greeting, title: question, mood: 'cheer' as Mood };
   const replay = () => speak(notice ? `${notice.kicker} ${notice.title}` : `${greeting} ${question}`);
 
+  // Muting is one tap here; the parents' corner keeps the same switch next to the tempo setting.
+  const toggleVoice = () => {
+    const on = !progress.voice;
+    update((p) => ({ ...p, voice: on }));
+    setSpeechEnabled(on);
+    if (on) speak('Itt vagyok!');
+  };
+
   const garden = progress.garden
     .slice(-GARDEN_SLOTS)
     .map((id) => PLANTS.find((p) => p.id === id))
@@ -150,8 +158,20 @@ export function Home({ onOpen, onParents }: { onOpen: (game: GameId) => void; on
         <div className="topbar__right">
           <div className="pill" aria-label={`${progress.seeds} mag`}>
             <Seed />
-            <span>{progress.seeds} mag</span>
+            <span>
+              {progress.seeds}
+              <span className="pill__unit"> mag</span>
+            </span>
           </div>
+          <button
+            type="button"
+            className="voice-btn"
+            aria-pressed={!progress.voice}
+            aria-label={progress.voice ? 'Csepi hangjának némítása' : 'Csepi hangjának bekapcsolása'}
+            onClick={toggleVoice}
+          >
+            {progress.voice ? <SpeakerIcon size={26} /> : <SpeakerOffIcon size={26} />}
+          </button>
           <button type="button" className="parents-btn" onClick={onParents}>
             <LockIcon size={22} />
             <span className="parents-btn__label">Szülőknek</span>

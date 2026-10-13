@@ -79,6 +79,11 @@ h1, h2, p { margin: 0; }
 .parents-btn { height: 56px; padding: 0 22px; border: 3px solid var(--paper); background: transparent; border-radius: 28px; font-size: 20px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .parents-btn--night { color: #ffffff; border-color: #ffffff; }
 
+/* Narrator mute: one tap on the home screen, no parents' gate needed. */
+.voice-btn { width: 56px; height: 56px; border: 3px solid var(--paper); background: transparent; border-radius: 28px; color: var(--ink); display: grid; place-items: center; cursor: pointer; flex: none; }
+.voice-btn[aria-pressed="true"] { background: var(--paper); color: var(--oops-ink); }
+.voice-btn:active { transform: scale(0.94); }
+
 /* ---------- home ---------- */
 .hill { position: absolute; left: -400px; right: -400px; bottom: -1000px; height: 1600px; background: var(--grass); border-top-left-radius: 50% 70px; border-top-right-radius: 50% 70px; }
 .brand { display: flex; align-items: center; gap: 14px; }

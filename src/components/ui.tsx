@@ -19,6 +19,16 @@ export function SpeakerIcon({ size = 30 }: { size?: number }) {
   );
 }
 
+export function SpeakerOffIcon({ size = 30 }: { size?: number }) {
+  return (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" {...strokeProps} strokeWidth="2.4">
+      <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" />
+      <path d="M16.5 9.5l5 5" />
+      <path d="M21.5 9.5l-5 5" />
+    </svg>
+  );
+}
+
 export function BackIcon() {
   return (
     <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" {...strokeProps} strokeWidth="3">
