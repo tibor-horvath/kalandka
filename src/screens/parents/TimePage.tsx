@@ -26,7 +26,7 @@ export function TimePage() {
         <h2 id="t-limit" className="pa-h2">
           Napi játékidő
         </h2>
-        <div className="pa-seg pa-seg--7" role="radiogroup" aria-labelledby="t-limit">
+        <div className="pa-seg pa-seg--8" role="radiogroup" aria-labelledby="t-limit">
           {LIMIT_OPTIONS.map((m) => (
             <button
               key={m}

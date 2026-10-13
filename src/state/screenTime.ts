@@ -4,7 +4,7 @@ import type { Progress } from './progress';
 // Only active play counts (app visible, parents' area closed); the count starts again each day.
 
 /** Minutes per day; 0 means no limit. */
-export const LIMIT_OPTIONS = [0, 10, 15, 20, 30, 45, 60];
+export const LIMIT_OPTIONS = [0, 5, 10, 15, 20, 30, 45, 60];
 /** Evening rest can start at these hours; it lasts until MORNING_HOUR. */
 export const EVENING_OPTIONS = [18, 19, 20];
 export const MORNING_HOUR = 7;

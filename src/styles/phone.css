@@ -543,6 +543,7 @@
 .is-phone .pa-stepper { flex-basis: 100%; justify-content: space-between; }
 .is-phone .pa-stepper__value { width: auto; flex: 1; }
 .is-phone .pa-seg--pill .pa-seg__btn { min-width: 0; flex: 1; }
+.is-phone .pa-seg--8 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .is-phone .pa-inline-field { padding-left: 0; flex-wrap: wrap; }
 .is-phone .pa-confirm span { min-width: 0; }
 

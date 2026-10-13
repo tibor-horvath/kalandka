@@ -75,7 +75,7 @@
 .pa-check small { font-size: 14px; color: var(--pa-muted); }
 .pa-seg { display: grid; gap: 8px; }
 .pa-seg--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.pa-seg--7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.pa-seg--8 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
 .pa-seg__btn { height: 52px; border-radius: 12px; border: 2px solid var(--pa-line); background: #ffffff; color: var(--pa-ink); font-size: 16px; font-weight: 800; cursor: pointer; }
 .pa-seg__btn.is-on { border-color: var(--pa-accent); background: var(--pa-accent); color: #ffffff; }
 .pa-seg__btn:disabled { opacity: 0.5; cursor: default; }
