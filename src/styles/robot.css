@@ -24,7 +24,7 @@
 .is-phone .screen--robot-home .plot { grid-column: auto; }
 .screen--robot-home .plot--play > svg { margin-bottom: 8px; }
 
-.is-phone .screen--robot-home .plot { height: 150px; }
+.stage--landscape .screen--robot-home .plot { height: 150px; }
 .is-phone .screen--robot-home .plot > svg.path-art { width: 120px; height: auto; }
 .is-phone .screen--robot-home .plot--locked > svg { width: 40px; height: 40px; }
 
@@ -330,9 +330,13 @@
 .is-phone .workshop__friends { min-height: 0; }
 .is-phone .workshop__friend svg { width: 58px; height: auto; }
 .is-phone .workshop__platform { width: 170px; height: 20px; margin-top: -12px; }
-.stage--portrait .workshop { flex-direction: column; gap: 12px; padding: 8px 16px 16px; overflow-y: auto; }
-.stage--portrait .workshop__stage { flex: none; padding: 12px; gap: 8px; border-radius: 24px; }
+/* Portrait: the parts panel keeps its size; the robot's stage takes the height left and the robot steps down to fit it. */
+.stage--portrait .workshop { flex-direction: column; gap: 12px; padding: 8px 16px 16px; }
+.stage--portrait .workshop__stage { flex: 1 1 0; min-height: 0; padding: 12px; gap: 8px; border-radius: 24px; container: workshop-stage / size; }
 .stage--portrait .workshop__robot svg { width: 130px; height: auto; }
+@container workshop-stage (max-height: 290px) { .stage--portrait .workshop__robot svg { width: 110px; } }
+@container workshop-stage (max-height: 255px) { .stage--portrait .workshop__robot svg { width: 90px; } }
+@container workshop-stage (max-height: 220px) { .stage--portrait .workshop__robot svg { width: 74px; } .stage--portrait .workshop__friend svg { width: 48px; } }
 .stage--portrait .workshop__panel { width: auto; padding: 14px; gap: 10px; border-radius: 24px; }
 .stage--portrait .workshop__panel .kiskert__note { display: none; }
 .stage--portrait .kiskert__say .bubble { font-size: 17px; }

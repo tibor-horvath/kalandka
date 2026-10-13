@@ -97,17 +97,38 @@
 .is-phone .garden__flower svg { width: 54px; height: auto; }
 .is-phone .garden__empty { font-size: 18px; margin-bottom: 24px; text-align: center; }
 
-/* Portrait home: one scrolling column; the hill is painted on the scrolling background so it moves with the cards. */
+/*
+ * Portrait home: one column that always fits the screen without scrolling. The topbar, Csepi and the
+ * garden strip keep their size; the cards share the height that is left and their pictures shrink with them.
+ */
 .stage--portrait .screen--home {
-  --hill-y: calc(var(--safe-t) + 336px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
+  --hill-y: calc(var(--safe-t) + 300px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background:
-    radial-gradient(ellipse 130% 100px at 50% var(--hill-y), var(--grass) 99%, transparent 100%) local,
-    linear-gradient(to bottom, transparent var(--hill-y), var(--grass) 0) local,
+    radial-gradient(ellipse 130% 100px at 50% var(--hill-y), var(--grass) 99%, transparent 100%),
+    linear-gradient(to bottom, transparent var(--hill-y), var(--grass) 0),
     var(--sky);
 }
+.stage--portrait .screen--home > * { flex: none; }
+.stage--portrait .screen--home .plots { flex: 1 1 0; min-height: 0; grid-auto-rows: minmax(0, 1fr); align-content: center; }
+.stage--portrait .screen--home .plot,
+.stage--portrait .screen--home .plot--locked { height: auto; min-height: 0; max-height: 170px; container: plot / size; }
+/* The badge sits on the card's top edge, so the picture can use the whole card. */
+.stage--portrait .screen--home .plot__badge { top: -12px; }
+/* The pictures step down as the card gets shorter; the tall ones (sprout, honey trail, Kiskertem, robot path) first. */
+@container plot (max-height: 140px) { .plot > svg, .plot__trail, .plot--kiskert .plot__trio { zoom: 0.8; } }
+@container plot (max-height: 124px) { .plot > svg, .plot__trail, .plot--kiskert .plot__trio { zoom: 0.65; } }
+@container plot (max-height: 108px) {
+  .plot > svg, .plot__trail, .plot--kiskert .plot__trio { zoom: 0.55; }
+  .plot__learn, .plot__trio:not(.plot--kiskert *) { zoom: 0.85; }
+}
+@container plot (max-height: 96px) {
+  .plot > svg, .plot__trail, .plot--kiskert .plot__trio { zoom: 0.45; }
+  .plot__learn, .plot__trio:not(.plot--kiskert *) { zoom: 0.7; }
+}
+@container plot (max-height: 124px) { .stage--portrait .plot__name { margin-top: 4px; } .stage--portrait .plot__skill { font-size: 13px; line-height: 1.1; } }
 /*
  * Portrait home topbar: seeds, map, sound and parents fill the row, so the brand drops its icon.
  * With the child's figure as well the buttons get a row of their own under the title (and the hill moves down with them);
@@ -120,15 +141,16 @@
 .stage--portrait .screen--home .topbar__right { gap: 6px; margin-left: auto; }
 .stage--portrait .screen--home .topbar:has(.kid-chip) .topbar__right { width: 100%; }
 .stage--portrait .screen--home .topbar__right .kid-chip { margin-right: auto; }
-.stage--portrait .screen--home:has(.kid-chip) { --hill-y: calc(var(--safe-t) + 385px); }
+.stage--portrait .screen--home:has(.kid-chip) { --hill-y: calc(var(--safe-t) + 349px); }
 /* The bleed layers would add 1000 px of empty scrolling; the stage already fills the phone screen. */
 .stage--portrait .screen--home::before,
 .stage--portrait .screen--home .hill { display: none; }
 .stage--portrait .screen--home .topbar { padding-top: 18px; }
-.stage--portrait .home-guide { margin-top: 18px; }
-.stage--portrait .plots { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 0 16px; margin-top: 26px; }
-.stage--portrait .plot--locked { height: 128px; }
-.stage--portrait .garden { position: relative; height: auto; min-height: 104px; padding: 18px 16px 8px; gap: 4px; }
+.stage--portrait .home-guide { margin-top: 14px; }
+.stage--portrait .plots { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 14px; padding: 12px 16px 0; margin-top: 4px; }
+.stage--portrait .garden { position: relative; height: 76px; min-height: 0; padding: 6px 16px 6px; gap: 4px; }
+.stage--portrait .garden__flower svg { width: 44px; }
+.stage--portrait .garden__empty { margin-bottom: 14px; }
 
 /* Home topbar on a phone: the active child shows as their figure alone. */
 .is-phone .kid-chip { height: 44px; padding: 0; border-width: 3px; border-radius: 22px; }

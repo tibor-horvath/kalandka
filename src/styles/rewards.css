@@ -168,7 +168,7 @@
 
 .stage--portrait .kiskert { flex-direction: column; gap: 12px; padding: 8px 16px 16px; }
 .stage--portrait .kiskert__field { justify-content: center; }
-.stage--portrait .kbeds { flex: none; grid-template-rows: repeat(2, 150px); padding-top: 8px; gap: 10px 4px; }
+.stage--portrait .kbeds { flex: 1 1 0; grid-template-rows: repeat(2, minmax(0, 150px)); align-content: center; padding-top: 8px; gap: 10px 4px; }
 .stage--portrait .kbed { padding-bottom: 6px; border-radius: 16px; }
 .stage--portrait .kbed__soil { height: 18px; margin-top: -8px; }
 .stage--portrait .kbed__plus { width: 36px; height: 36px; margin-bottom: 8px; }
@@ -219,7 +219,16 @@
 .stage--landscape .visitor-pop .visitor-art { width: 150px; height: 125px; }
 .stage--landscape .visitor-pop__title { font-size: 34px; }
 
-.stage--portrait .album { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px 16px; overflow-y: auto; }
+/*
+ * Portrait album: the whole page fits without scrolling. The rows share the height (Mézút's five stickers
+ * get a full-width row); on short cards the captions go, since tapping a sticker says its name anyway.
+ */
+.stage--portrait .album { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); grid-auto-flow: row dense; gap: 10px; padding: 12px 16px; }
+.stage--portrait .album__game { min-height: 0; container: album-game / size; }
+.stage--portrait .album__game--more { grid-column: 1 / -1; }
+.stage--portrait .album__game--more .album__stickers { flex-wrap: nowrap; }
+@container album-game (max-height: 130px) { .album__label { display: none; } .album__stickers { align-items: center; } }
+@container album-game (max-height: 96px) { .stage--portrait .album .sticker, .stage--portrait .album .sticker-slot { width: 44px; height: 44px; } }
 .stage--landscape .album { grid-template-columns: repeat(var(--cols, 7), minmax(0, 1fr)); gap: 6px; padding: 8px 0; }
 .is-phone .album__worlds { padding: 4px 16px 0; gap: 8px; }
 .is-phone .album__world { height: 44px; padding: 0 8px 0 14px; font-size: 16px; }
@@ -227,7 +236,6 @@
 .is-phone .album__game { border-radius: 18px; padding: 10px 4px; gap: 6px; }
 .is-phone .album__name { font-size: 16px; min-height: 0; }
 .stage--portrait .album__stickers { flex-direction: row; justify-content: center; gap: 2px; }
-.stage--portrait .album__game--more .album__stickers { flex-wrap: wrap; }
 .is-phone .album .sticker, .is-phone .album .sticker-slot { width: 52px; height: 52px; border-width: 3px; }
 .is-phone .album .sticker__mark { font-size: 16px; }
 .is-phone .album__label { font-size: 11px; }
