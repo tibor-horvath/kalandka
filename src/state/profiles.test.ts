@@ -18,6 +18,16 @@ describe('profiles', () => {
     expect(p.screenLimitMin).toBe(20);
   });
 
+  it('moves saves without a limit to 15 minutes once, keeping a chosen limit and a later "no limit"', () => {
+    const { limitDefaulted: _, ...old } = DEFAULT_PROGRESS;
+    const save = (a: object, b: object) => JSON.stringify({ kids: [{ id: 'a', name: 'A', avatar: 'frog', age: null }, { id: 'b', name: 'B', avatar: 'bee', age: null }], activeId: 'a', progress: { a, b } });
+    const s = parseProfiles(save({ ...old, screenLimitMin: 0 }, { ...old, screenLimitMin: 30 }), null);
+    expect(progressOf(s, 'a').screenLimitMin).toBe(15);
+    expect(progressOf(s, 'b').screenLimitMin).toBe(30);
+    const off = applyUpdate(s, 'a', (p) => ({ ...p, screenLimitMin: 0 }));
+    expect(progressOf(parseProfiles(JSON.stringify(off), null), 'a').screenLimitMin).toBe(0);
+  });
+
   it('starts fresh with one profile when nothing is saved, and survives a broken save', () => {
     expect(parseProfiles(null, null).kids).toHaveLength(1);
     expect(parseProfiles('{oops', null).kids).toHaveLength(1);

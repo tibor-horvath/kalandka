@@ -53,6 +53,8 @@ export interface Progress {
   unlockAll: boolean;
   /** Daily play limit in minutes; 0 = no limit. */
   screenLimitMin: number;
+  /** The 15-minute default limit has been applied (saves from before it had no limit). */
+  limitDefaulted: boolean;
   /** Day the counters below belong to (local YYYY-MM-DD). */
   playDate: string;
   playSeconds: number;
@@ -122,6 +124,7 @@ export const DEFAULT_PROGRESS: Progress = {
   sounds: true,
   unlockAll: false,
   screenLimitMin: 15,
+  limitDefaulted: true,
   playDate: '',
   playSeconds: 0,
   bonusSeconds: 0,
@@ -154,7 +157,9 @@ export function migrate(p: Progress): Progress {
 /** One child's saved progress, filled up with defaults. Saves without a version predate the add levels. */
 export function readProgress(saved: unknown): Progress {
   const raw = saved && typeof saved === 'object' ? (saved as Partial<Progress>) : {};
-  const p = migrate({ ...DEFAULT_PROGRESS, addLevelsVersion: 1, ...raw });
+  let p = migrate({ ...DEFAULT_PROGRESS, addLevelsVersion: 1, ...raw });
+  // Saves from before the 15-minute default: switch "no limit" to it once; parents can turn it off again.
+  if (!raw.limitDefaulted) p = { ...p, screenLimitMin: p.screenLimitMin || DEFAULT_PROGRESS.screenLimitMin, limitDefaulted: true };
   // Saves from before the stickers: what was already earned goes into the album without a celebration each.
   return raw.stickersSeen ? p : markEarnedSeen(p);
 }
