@@ -85,6 +85,12 @@
 .pa-inline-field { display: flex; align-items: center; gap: 12px; padding-left: 40px; font-size: 16px; font-weight: 700; }
 .pa-inline-field select { height: 44px; min-width: 120px; border-radius: 12px; border: 2px solid var(--pa-line); padding: 0 10px; font-family: var(--body); font-size: 16px; font-weight: 700; color: var(--pa-ink); background: #ffffff; }
 .pa-inline-field select:disabled { opacity: 0.5; }
+.pa-more { border-top: 1px solid var(--pa-line); padding-top: 6px; }
+.pa-more summary { cursor: pointer; padding: 8px 0; font-size: 16px; font-weight: 800; color: var(--pa-accent); }
+.pa-more > :not(summary) { margin-top: 12px; }
+.pa-voice { padding-left: 0; flex-wrap: wrap; }
+.pa-voice label { min-width: 120px; }
+.pa-voice select { flex: 1; min-width: 0; max-width: 360px; }
 .pa-confirm { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--pa-warn-soft); border-radius: 14px; padding: 12px 14px; font-size: 16px; font-weight: 700; }
 .pa-confirm span { flex: 1; min-width: 220px; }
 

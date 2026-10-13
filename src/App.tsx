@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Stage } from './components/Stage';
 import { setSoundEnabled } from './lib/sound';
 import { applyUpdate, useUpdateWaiting } from './lib/update';
-import { setSpeaker, setSpeechEnabled, setSpeechRate, speak, stopSpeaking } from './lib/speech';
+import { setSpeaker, setSpeechEnabled, setSpeechRate, setVoiceChoice, speak, stopSpeaking } from './lib/speech';
 import { Add } from './screens/Add';
 import { Album } from './screens/Album';
 import { Flash } from './screens/Flash';
@@ -77,6 +77,7 @@ function Game() {
 
   useEffect(() => setSpeechEnabled(progress.voice), [progress.voice]);
   useEffect(() => setSpeechRate(progress.voiceRate), [progress.voiceRate]);
+  useEffect(() => setVoiceChoice(progress.csepiVoice, progress.robotVoice), [progress.csepiVoice, progress.robotVoice]);
   useEffect(() => setSoundEnabled(progress.sounds), [progress.sounds]);
   const world = currentWorld(progress);
   const csavarTalks = screen === 'path' || screen === 'sort' || screen === 'workshop' || (screen === 'album' && albumFrom === 'workshop') || (screen === 'home' && world === 'robot');

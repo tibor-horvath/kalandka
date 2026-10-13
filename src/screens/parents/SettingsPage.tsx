@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { promptInstall, useInstallState } from '../../lib/install';
+import { hungarianVoices, onVoicesChanged, speak, type Speaker } from '../../lib/speech';
 import { DEFAULT_PROGRESS, useProgress } from '../../state/progress';
 import { Check } from './controls';
 
@@ -14,6 +15,8 @@ export function SettingsPage() {
       voice: p.voice,
       sounds: p.sounds,
       voiceRate: p.voiceRate,
+      csepiVoice: p.csepiVoice,
+      robotVoice: p.robotVoice,
       unlockAll: p.unlockAll,
       screenLimitMin: p.screenLimitMin,
       playDate: p.playDate,
@@ -38,7 +41,7 @@ export function SettingsPage() {
 
       <section className="pa-card" aria-labelledby="s-voice">
         <h2 id="s-voice" className="pa-h2">
-          Csepi hangja
+          Hangok
         </h2>
         <Check
           id="s-voice-on"
@@ -80,6 +83,7 @@ export function SettingsPage() {
             ))}
           </div>
         </div>
+        <VoicePicker />
       </section>
 
       <InstallCard />
@@ -119,6 +123,60 @@ export function SettingsPage() {
         )}
       </section>
     </div>
+  );
+}
+
+const VOICE_ROWS: { who: Speaker; key: 'csepiVoice' | 'robotVoice'; label: string; sample: string }[] = [
+  { who: 'csepi', key: 'csepiVoice', label: 'Csepi hangja', sample: 'Szia! Én vagyok Csepi. Gyere, játsszunk!' },
+  { who: 'robot', key: 'robotVoice', label: 'Csavar hangja', sample: 'Csavar vagyok. Indulhat a munka!' }
+];
+
+/** Advanced: a Hungarian voice for each character; other languages would mangle the Hungarian text. */
+function VoicePicker() {
+  const { progress, update } = useProgress();
+  const voices = useSyncExternalStore(onVoicesChanged, hungarianVoices);
+
+  return (
+    <details className="pa-more">
+      <summary>Haladó beállítások</summary>
+      {voices.length === 0 ? (
+        <p className="pa-muted">
+          Ezen az eszközön nincs telepített magyar hang, ezért nem lehet választani. A Windows beállításaiban (Idő és nyelv → Beszéd) vagy a
+          telefon szövegfelolvasó beállításaiban adhatsz hozzá magyar hangot.
+        </p>
+      ) : (
+        <>
+          <p className="pa-muted">Csak a készüléken elérhető magyar hangok közül lehet választani. Az „Automatikus” a legjobban illőt keresi meg.</p>
+          {VOICE_ROWS.map(({ who, key, label, sample }) => {
+            const value = voices.some((v) => v.name === progress[key]) ? progress[key] : '';
+            return (
+              <div key={who} className="pa-inline-field pa-voice">
+                <label htmlFor={`s-voice-${who}`}>{label}</label>
+                <select
+                  id={`s-voice-${who}`}
+                  value={value}
+                  disabled={!progress.voice}
+                  onChange={(e) => update((p) => ({ ...p, [key]: e.target.value }))}
+                >
+                  <option value="">Automatikus</option>
+                  {voices.map((v) => (
+                    <option key={v.name} value={v.name}>
+                      {v.localService ? v.name : `${v.name} (internetes)`}
+                    </option>
+                  ))}
+                </select>
+                <button type="button" className="pa-btn pa-btn--quiet" disabled={!progress.voice} onClick={() => speak(sample, { as: who })}>
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5.5v13l11-6.5z" />
+                  </svg>
+                  Meghallgatom
+                </button>
+              </div>
+            );
+          })}
+        </>
+      )}
+    </details>
   );
 }
 

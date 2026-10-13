@@ -72,6 +72,9 @@ export interface Progress {
   /** A task in progress may be finished after the limit (up to 2 minutes). */
   graceToFinish: boolean;
   voiceRate: 'slow' | 'normal';
+  /** Voice names chosen in the advanced settings; '' picks one automatically. */
+  csepiVoice: string;
+  robotVoice: string;
   welcomed: boolean;
   /** The world the child last chose on the Kalandka map (see state/worlds.ts). */
   world: WorldId;
@@ -138,6 +141,8 @@ export const DEFAULT_PROGRESS: Progress = {
   warnBefore: true,
   graceToFinish: true,
   voiceRate: 'slow',
+  csepiVoice: '',
+  robotVoice: '',
   welcomed: false,
   world: 'garden',
   robotWelcomed: false,

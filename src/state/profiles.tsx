@@ -22,7 +22,7 @@ export interface Kid {
 }
 
 /** Settings that belong to the device, not to one child. */
-export const SHARED_KEYS = ['voice', 'sounds', 'voiceRate', 'eveningRest', 'eveningFrom'] as const satisfies readonly (keyof Progress)[];
+export const SHARED_KEYS = ['voice', 'sounds', 'voiceRate', 'csepiVoice', 'robotVoice', 'eveningRest', 'eveningFrom'] as const satisfies readonly (keyof Progress)[];
 type SharedKey = (typeof SHARED_KEYS)[number];
 export type Shared = Pick<Progress, SharedKey>;
 type KidProgress = Omit<Progress, SharedKey>;

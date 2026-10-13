@@ -10,6 +10,11 @@ let voice: SpeechSynthesisVoice | null = null;
 /** Csavar uses a man's voice when the device has one, so he sounds different even where pitch is ignored. */
 let robotVoice: SpeechSynthesisVoice | null = null;
 
+/** Voice names parents chose in the advanced settings; '' lets the app pick. */
+let chosen: Record<Speaker, string> = { csepi: '', robot: '' };
+const listeners = new Set<() => void>();
+let huVoices: SpeechSynthesisVoice[] = [];
+
 const MALE = /tam[aá]s|szabolcs|\bmale\b|férfi/i;
 
 function synth(): SpeechSynthesis | null {
@@ -19,18 +24,40 @@ function synth(): SpeechSynthesis | null {
 function pickVoice(): void {
   const s = synth();
   if (!s) return;
-  const voices = s.getVoices();
-  const hu = voices.filter((v) => v.lang.toLowerCase().startsWith('hu'));
-  voice = hu.find((v) => !MALE.test(v.name)) ?? hu[0] ?? null;
+  const hu = s.getVoices().filter((v) => v.lang.toLowerCase().startsWith('hu'));
+  huVoices = hu;
+  const byName = (name: string) => (name ? hu.find((v) => v.name === name) : undefined);
+  voice = byName(chosen.csepi) ?? hu.find((v) => !MALE.test(v.name)) ?? hu[0] ?? null;
   // Prefer a voice on the device: online voices (Edge's "Natural" ones) ignore pitch and lag on many short pieces.
   robotVoice =
-    hu.find((v) => v.localService && MALE.test(v.name)) ?? hu.find((v) => MALE.test(v.name)) ?? hu.find((v) => v.localService) ?? voice;
+    byName(chosen.robot) ??
+    hu.find((v) => v.localService && MALE.test(v.name)) ??
+    hu.find((v) => MALE.test(v.name)) ??
+    hu.find((v) => v.localService) ??
+    voice;
+  listeners.forEach((l) => l());
 }
 
 const s0 = synth();
 if (s0) {
   pickVoice();
   s0.addEventListener?.('voiceschanged', pickVoice);
+}
+
+/** The Hungarian voices on this device; some browsers fill the list a moment after start. */
+export function hungarianVoices(): SpeechSynthesisVoice[] {
+  return huVoices;
+}
+
+export function onVoicesChanged(fn: () => void): () => void {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+/** A chosen voice that is missing on this device (another browser, uninstalled) falls back to the automatic pick. */
+export function setVoiceChoice(csepi: string, robot: string): void {
+  chosen = { csepi, robot };
+  pickVoice();
 }
 
 export function setSpeechRate(speed: 'slow' | 'normal'): void {
@@ -66,14 +93,16 @@ export function setSpeechEnabled(on: boolean): void {
 interface SpeakOptions {
   /** Wait for the current sentence instead of interrupting it. */
   queue?: boolean;
+  /** Say it in this character's voice instead of the current speaker's (the parents' voice preview). */
+  as?: Speaker;
 }
 
-export function speak(text: string, { queue = false }: SpeakOptions = {}): void {
+export function speak(text: string, { queue = false, as = speaker }: SpeakOptions = {}): void {
   const s = synth();
   if (!s || !enabled || !text) return;
   try {
     if (!queue) s.cancel();
-    if (speaker === 'robot') {
+    if (as === 'robot') {
       if (!queue) robotChirp();
       if (robotVoice && !robotVoice.localService) {
         s.speak(utter(text, robotVoice, 0.3, 1.1));
