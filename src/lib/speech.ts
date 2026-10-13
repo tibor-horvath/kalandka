@@ -43,7 +43,7 @@ let speaker: Speaker = 'csepi';
 /**
  * Csepi speaks a little high. Csavar, the robot, says "bip-bup" and then speaks low and flat, one word at a time.
  * With an online voice (Edge without an installed Hungarian voice) pitch is ignored and word-by-word queues stall,
- * so there he speaks whole sentences, slower, in a man's voice.
+ * so there he speaks whole sentences in a man's voice.
  */
 export function setSpeaker(who: Speaker): void {
   speaker = who;
@@ -76,10 +76,11 @@ export function speak(text: string, { queue = false }: SpeakOptions = {}): void 
     if (speaker === 'robot') {
       if (!queue) robotChirp();
       if (robotVoice && !robotVoice.localService) {
-        s.speak(utter(text, robotVoice, 0.3, 0.85));
+        s.speak(utter(text, robotVoice, 0.3, 1.1));
       } else {
         // Separate utterances leave a small gap between words: the even, choppy beat of a robot.
-        for (const word of text.split(/\s+/).filter(Boolean)) s.speak(utter(word, robotVoice, 0.3, 1.05));
+        // The words themselves go a bit quicker so the gaps don't drag the whole sentence out.
+        for (const word of text.split(/\s+/).filter(Boolean)) s.speak(utter(word, robotVoice, 0.3, 1.3));
       }
     } else {
       s.speak(utter(text, voice, 1.15, 1));
