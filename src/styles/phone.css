@@ -619,3 +619,7 @@
 .is-phone .pa-kidform__preview { display: none; }
 .is-phone .pa-avatars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .stage--landscape .pa-avatars { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+/* The right-answer tick badge, sized for small phone tiles (the choice art rules above would stretch its svg). */
+.is-phone .choice .done-tick { width: 32px; height: 32px; top: -10px; right: -10px; box-shadow: 0 2px 0 var(--leaf-deep); }
+.is-phone .choice .done-tick svg { width: 20px !important; height: 20px !important; max-width: none !important; }

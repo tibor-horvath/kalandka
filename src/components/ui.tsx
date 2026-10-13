@@ -63,6 +63,17 @@ export function LockIcon({ size = 20 }: { size?: number }) {
   );
 }
 
+/** Green badge on a right answer: the circle grows in, then the tick draws itself once. */
+export function DoneTick() {
+  return (
+    <span className="done-tick" aria-hidden="true">
+      <svg width="30" height="30" viewBox="0 0 24 24" {...strokeProps} strokeWidth="3.6">
+        <path pathLength="1" d="M5.5 12.5l4.2 4.2 8.8-9.4" />
+      </svg>
+    </span>
+  );
+}
+
 export function RoundButton({ label, onClick, children, tint = 'white' }: { label: string; onClick: () => void; children: ReactNode; tint?: 'white' | 'blue' }) {
   return (
     <button type="button" className={`round-btn round-btn--${tint}`} aria-label={label} onClick={onClick}>

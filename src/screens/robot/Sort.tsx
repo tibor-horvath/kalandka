@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BinSign, Bolt, Crate, SortPart } from '../../components/robot';
-import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../../components/ui';
+import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../../components/ui';
 import {
   SHOW_BIN_AFTER,
   SHOW_ODD_AFTER,
@@ -211,11 +211,16 @@ function Belt({ round, solved, say, onWin }: PlayProps<SortRound>) {
               </span>
               <span className="sort-bin__inside" aria-hidden="true">
                 {inBin[b].map((p, i) => (
-                  <span key={i} className="sort-bin__part pop-in">
+                  <span key={i} className="sort-bin__part">
                     <PartPic part={p} size={72} />
                   </span>
                 ))}
               </span>
+              {inBin[b].length > 0 && (
+                <span key={`count-${inBin[b].length}`} className="sort-bin__count" aria-hidden="true">
+                  {inBin[b].length}
+                </span>
+              )}
             </button>
           );
         })}
@@ -280,6 +285,7 @@ function OddRows({ round, solved, say, onWin, later }: PlayProps<OddRound> & { l
               aria-label={`${describe(p)}${found && i === row.odd ? ': ez a kakukktojás' : ''}`}
             >
               <PartPic part={p} size={140} />
+              {state === ' is-right' && <DoneTick />}
             </button>
           );
         })}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { PatternFlower } from '../components/art';
-import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import { CHOICES, FLOWER_LABELS, buildRound, hintFeedback, isEndGap, screenTitle, solvedFeedback, startFeedback, type FlowerKind } from '../games/patterns/logic';
 import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
@@ -90,6 +90,7 @@ export function Patterns({ onBack }: { onBack: () => void }) {
             <button key={kind} type="button" className={`choice${state}`} onClick={() => pick(kind)} aria-label={`${FLOWER_LABELS[kind]} – ültesd el a kérdőjel helyére`}>
               <PatternFlower kind={kind} width={90} />
               <span>{FLOWER_LABELS[kind]}</span>
+              {state === ' is-right' && <DoneTick />}
             </button>
           );
         })}

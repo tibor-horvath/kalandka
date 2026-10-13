@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { RoundFlower, SmallPot } from '../components/art';
 import { FitBox } from '../components/FitBox';
 import { DotFace, MiniSprout } from '../components/seeds';
-import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import { askFeedback, boxSize, buildPotsRound, countedFeedback, potCells, revealFeedback, rightFeedback } from '../games/pots/logic';
 import { numberCount } from '../lib/numbers';
 import { fanfare, popBubble } from '../lib/sound';
@@ -141,6 +141,7 @@ export function Pots({ onBack }: { onBack: () => void }) {
             <button key={n} type="button" className={`choice choice--number${state}`} disabled={phase === 'solved' && n !== round.need} onClick={() => answer(n)} aria-label={`${n}`}>
               <span className="choice__numeral">{n}</span>
               {round.level.dotChoices && <DotFace n={n} size={n > 5 ? 46 : 56} />}
+              {state === ' is-right' && <DoneTick />}
             </button>
           );
         })}

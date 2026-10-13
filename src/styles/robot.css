@@ -302,30 +302,37 @@
 .sort-bin__sign svg { flex: none; display: block; }
 .sort-bin__name { font-size: 26px; font-weight: 800; line-height: 1.05; }
 .sort-bin__inside { flex: 1; min-height: 70px; display: flex; flex-wrap: wrap; align-content: flex-end; justify-content: center; gap: 4px; padding: 8px; border-radius: 18px; background: #a86e3c; box-shadow: inset 0 6px 0 rgba(0, 0, 0, 0.14); }
+.sort-bin__part { animation: bin-drop 0.5s cubic-bezier(.5, 0, .75, 0) both; }
 .sort-bin__part svg { display: block; }
+/* How many are in the box: ticks up with a small pop each time a part drops in. */
+.sort-bin__count { position: absolute; top: -16px; right: -16px; min-width: 48px; height: 48px; padding: 0 10px; border-radius: 24px; background: var(--paper); color: var(--ink); border: 4px solid #8a5a3b; font-size: 28px; font-weight: 800; line-height: 40px; text-align: center; font-variant-numeric: tabular-nums; animation: count-pop 0.36s cubic-bezier(.3, 1.4, .5, 1) 0.4s both; }
+@keyframes bin-drop { 0% { transform: translateY(-90px); opacity: 0; } 30% { opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes count-pop { 0% { transform: scale(0.4); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
 .sort-bin.is-wrong { border-color: var(--oops); box-shadow: 0 8px 0 var(--oops); }
-.sort-bin.is-wrong .sort-bin__sign { animation: wobble 0.4s; }
+.sort-bin.is-wrong .sort-bin__sign { animation: not-yet 0.48s ease-in-out, oops-tint 1.4s ease-out; }
 .sort-bin.is-glow { border-color: var(--bolt); box-shadow: 0 8px 0 #d9961e, 0 0 0 8px #ffe08a; }
 .sort-bin.is-glow .sort-bin__sign { background: #fff4d1; }
+/* The hint glows softly twice, then stays still. */
+.sort-bin.is-glow, .sort-odd__part.is-glow { animation: hint-glow 0.9s ease-in-out 2; }
+@keyframes hint-glow { 50% { transform: scale(1.04); } }
 
 /* Kakukktojás: four parts in a row, one is different. */
 .sort-odd { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; padding: 10px 40px 60px; }
 .sort-odd__dots { list-style: none; margin: 0; padding: 0; display: flex; gap: 14px; }
 .sort-odd__dot { width: 22px; height: 22px; border-radius: 50%; border: 4px solid #9fb3c8; background: var(--paper); }
 .sort-odd__dot.is-now { border-color: var(--leaf); }
-.sort-odd__dot.is-done { border-color: var(--leaf); background: var(--leaf); }
+.sort-odd__dot.is-done { border-color: var(--leaf); background: var(--leaf); animation: pop 0.38s cubic-bezier(.3, 1.4, .5, 1); }
 .sort-odd__row { display: flex; gap: 24px; animation: settle 0.35s ease-out both; }
 .sort-odd__part { width: 210px; height: 210px; }
 .sort-odd__part svg { display: block; }
 .sort-odd__part.is-glow { border-color: var(--bolt); box-shadow: 0 8px 0 #d9961e, 0 0 0 8px #ffe08a; }
 .sort-odd__part.is-dim { opacity: 0.45; }
-.sort-odd__part.is-right { animation: pop 0.35s cubic-bezier(.34, 1.56, .64, 1); }
 
 .sort-win { top: 46%; }
 .plot > svg.sort-art { margin-bottom: 8px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .sort-belt__part, .sort-odd__row, .sort-odd__part.is-right, .sort-bin__part.pop-in { animation: none; }
+  .sort-belt__part, .sort-odd__row, .sort-bin__part, .sort-bin__count, .sort-bin.is-glow, .sort-odd__part.is-glow { animation: none; }
 }
 
 /* Phones: Csavar, the belt and the boxes stacked (portrait); Csavar and the belt beside the boxes (landscape). */

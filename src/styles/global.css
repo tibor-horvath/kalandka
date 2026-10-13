@@ -59,6 +59,7 @@ h1, h2, p { margin: 0; }
 .pill { display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 22px 0 14px; background: var(--paper); border-radius: 28px; font-size: 26px; font-weight: 800; }
 
 .big-btn { height: 68px; padding: 0 34px; border: none; border-radius: 34px; background: var(--leaf); color: var(--paper); font-size: 26px; font-weight: 800; display: flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 6px 0 var(--leaf-deep); flex: none; }
+.big-btn { transition: transform 70ms ease-out, box-shadow 70ms ease-out; }
 .big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--leaf-deep); }
 
 .kalandka-mark { display: inline-flex; font-family: var(--display); font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: var(--ink); }
@@ -126,7 +127,7 @@ h1, h2, p { margin: 0; }
 .lawn { position: absolute; left: -1000px; right: -1000px; bottom: -1000px; height: 1190px; background: var(--grass); border-top: 18px solid var(--grass-deep); }
 .dots { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 22px; background: var(--paper); border-radius: 26px; }
 .dot { width: 18px; height: 18px; border-radius: 9px; background: #d5e3da; transition: width 0.3s; }
-.dot--done { background: var(--leaf); }
+.dot--done { background: var(--leaf); animation: pop 0.38s cubic-bezier(.3, 1.4, .5, 1); }
 .dot--now { background: var(--drop); width: 34px; }
 
 .water-body { position: relative; display: flex; gap: 40px; padding: 18px 56px 0; align-items: flex-start; }
@@ -174,9 +175,14 @@ h1, h2, p { margin: 0; }
 .patterns-guide { position: relative; display: flex; justify-content: center; margin-top: 10px; }
 .choices { position: relative; display: flex; justify-content: center; align-items: center; gap: 28px; margin-top: 26px; }
 .choice { width: 190px; height: 210px; border-radius: 32px; background: var(--paper); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; font-size: 24px; font-weight: 800; border: 5px solid var(--paper); box-shadow: 0 8px 0 var(--grass-deep); }
+.choice { position: relative; transition: transform 70ms ease-out, box-shadow 70ms ease-out; }
 .choice:active { transform: translateY(5px); box-shadow: 0 3px 0 var(--grass-deep); }
-.choice.is-right { border-color: var(--leaf); box-shadow: 0 8px 0 var(--leaf); }
-.choice.is-wrong { border-color: var(--oops); box-shadow: 0 8px 0 var(--oops); animation: wobble 0.4s; }
+/* Right: the tile grows a little, settles and stays green, with a tick badge that draws itself. */
+.choice.is-right { border-color: var(--leaf); background: var(--good-tint); box-shadow: 0 8px 0 var(--leaf); animation: answer-pop 0.6s cubic-bezier(.3, 1.4, .5, 1); }
+/* Not yet: one small shake and a warm tint that fades back; no red, no X. */
+.choice.is-wrong { border-color: var(--oops); box-shadow: 0 8px 0 var(--oops); animation: not-yet 0.48s ease-in-out, oops-tint 1.4s ease-out; }
+.done-tick { position: absolute; top: -14px; right: -14px; width: 46px; height: 46px; border-radius: 50%; background: var(--leaf); color: var(--paper); display: grid; place-items: center; box-shadow: 0 3px 0 var(--leaf-deep); animation: tick-grow 0.36s cubic-bezier(.3, 1.4, .5, 1) 0.2s both; pointer-events: none; }
+.done-tick path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: tick-draw 0.38s ease-out 0.48s forwards; }
 .pop-in { display: inline-block; animation: sprout 0.5s cubic-bezier(.34, 1.56, .64, 1) both; transform-origin: 50% 100%; }
 
 /* ---------- parents' corner ---------- */
@@ -202,10 +208,16 @@ h1, h2, p { margin: 0; }
 @keyframes pop { from { transform: scale(0.3); } to { transform: scale(1); } }
 @keyframes sprout { from { transform: scale(0); } to { transform: scale(1); } }
 @keyframes wobble { 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
+@keyframes answer-pop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 70% { transform: scale(0.97); } 100% { transform: scale(1); } }
+@keyframes not-yet { 0%, 100% { translate: 0; } 20% { translate: -9px; } 40% { translate: 8px; } 60% { translate: -5px; } 80% { translate: 3px; } }
+@keyframes oops-tint { 0% { background: var(--paper); } 15%, 70% { background: var(--oops-tint); } 100% { background: var(--paper); } }
+@keyframes tick-grow { 0% { transform: scale(0); } 70% { transform: scale(1.1); } 100% { transform: scale(1); } }
+@keyframes tick-draw { to { stroke-dashoffset: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   .falling-drop { display: none; }
+  .done-tick, .done-tick path { animation-delay: 0s !important; }
 }
 
 /* ---------- Magvillantás ---------- */
@@ -224,7 +236,7 @@ h1, h2, p { margin: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @keyframes settle { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: none; } }
 .seedbed__seed--tap { border: none; background: transparent; padding: 10px; cursor: pointer; line-height: 0; border-radius: 50%; }
-.seedbed__seed--tap:not(.is-sprouted) { animation: pop 0.25s cubic-bezier(.34, 1.56, .64, 1), nudge 2.4s ease-in-out 1s infinite; }
+.seedbed__seed--tap:not(.is-sprouted) { animation: pop 0.25s cubic-bezier(.34, 1.56, .64, 1), nudge 2.4s ease-in-out 1s 2; }
 .seedbed__seed--tap.is-sprouted { cursor: default; }
 .number-card { min-width: 300px; height: 190px; border-radius: 32px; background: var(--paper); display: flex; align-items: center; justify-content: center; gap: 22px; padding: 0 30px; box-shadow: 0 8px 0 var(--grass-deep); }
 .number-card.is-shown { border: 5px solid var(--leaf); box-shadow: 0 8px 0 var(--leaf); animation: sprout 0.45s cubic-bezier(.34, 1.56, .64, 1); }
@@ -241,7 +253,7 @@ h1, h2, p { margin: 0; }
 .potbox__pot { position: absolute; width: 128px; height: 150px; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 0 8px; line-height: 0; }
 .potbox__pot > svg:last-child { margin-top: -10px; }
 .potbox__pot--empty { border: none; background: transparent; border-radius: 24px; cursor: pointer; }
-.potbox__pot--empty:not(.is-counted) > svg:last-child { animation: pot-nudge 2.4s ease-in-out 1.2s infinite; }
+.potbox__pot--empty:not(.is-counted) > svg:last-child { animation: pot-nudge 2.4s ease-in-out 1.2s 2; }
 .potbox__pot--empty.is-counted { cursor: default; }
 .potbox__space { height: 66px; }
 .potbox__count { position: relative; display: block; animation: sprout 0.4s cubic-bezier(.34, 1.56, .64, 1) both; transform-origin: 50% 100%; }
@@ -428,7 +440,6 @@ h1, h2, p { margin: 0; }
 .add-flower.is-happy { animation: add-hop 0.5s cubic-bezier(.34, 1.56, .64, 1) var(--d, 0ms) 2 both; }
 .bee.is-cheering > svg { animation: bee-happy 0.7s ease-in-out 3; transform-box: fill-box; transform-origin: center; }
 .choices--add .choice { position: relative; }
-.choices--add .choice.is-right { animation: pop 0.35s cubic-bezier(.34, 1.56, .64, 1); }
 .cheer { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
 .cheer span { position: absolute; width: 16px; height: 16px; margin: -8px; border-radius: 50% 50% 50% 0; box-shadow: 0 0 0 2px #00000014; animation: cheer-petal 0.9s cubic-bezier(.2, .7, .3, 1) forwards; }
 .equation.is-reveal { animation: settle 0.45s cubic-bezier(.34, 1.56, .64, 1); }

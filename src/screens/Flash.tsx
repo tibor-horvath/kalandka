@@ -3,7 +3,7 @@ import { Seed } from '../components/art';
 import { FitBox } from '../components/FitBox';
 import { useForm } from '../components/Stage';
 import { DotFace, MiniSprout } from '../components/seeds';
-import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import { ASK, FIELD_H, FIELD_W, READY, foldSeeds, buildFlashRound, revealFeedback, rightFeedback } from '../games/flash/logic';
 import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
@@ -113,6 +113,7 @@ export function Flash({ onBack }: { onBack: () => void }) {
             <button key={n} type="button" className={`choice choice--number${state}`} disabled={!answering && phase !== 'solved'} onClick={() => answer(n)} aria-label={`${n}`}>
               <span className="choice__numeral">{n}</span>
               {round.level.dotChoices && <DotFace n={n} size={56} />}
+              {state === ' is-right' && <DoneTick />}
             </button>
           );
         })}

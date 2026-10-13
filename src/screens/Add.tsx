@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Basket, Bee, Bouquet, Hive, RoundFlower, Sprout, Tree } from '../components/art';
 import { FitBox } from '../components/FitBox';
 import { useForm } from '../components/Stage';
-import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import {
   ADD_LEVELS,
   LEVEL_UP_STREAK,
@@ -528,6 +528,7 @@ export function Add({ onBack }: { onBack: () => void }) {
             <button key={n} type="button" className={`choice choice--number choice--short${state}`} onClick={() => answer(n)} aria-label={`${n}`}>
               {answers !== 'digits' && <Dots n={n} />}
               {answers !== 'dots' && <span className={`choice__numeral${answers === 'both' ? ' choice__numeral--small' : ''}`}>{n}</span>}
+              {state === ' is-right' && <DoneTick />}
               {state === ' is-right' && (
                 <span className="cheer" aria-hidden="true">
                   {PETALS.map((p, i) => (
