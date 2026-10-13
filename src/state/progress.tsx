@@ -98,7 +98,7 @@ const KEY = 'kalandka.progress.v1';
 export function migrate(p: Progress): Progress {
   if (p.addLevelsVersion >= ADD_LEVELS_VERSION) return p;
   const played = p.addSolved > 0 || p.addLevel > 0;
-  return { ...p, addLevel: played ? migrateAddLevel(p.addLevel) : 0, addLevelsVersion: ADD_LEVELS_VERSION };
+  return { ...p, addLevel: played ? migrateAddLevel(p.addLevel, p.addLevelsVersion) : 0, addLevelsVersion: ADD_LEVELS_VERSION };
 }
 
 export function loadProgress(): Progress {

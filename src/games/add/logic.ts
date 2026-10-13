@@ -2,7 +2,7 @@ import { article, capitalize, numberAttr, numberCount } from '../../lib/numbers'
 import type { Mood, Tone } from '../../lib/types';
 import { rng } from '../flash/layout';
 
-// Méhecske: addition from "3 + 2" up to "38 + 25", plus taking away up to ten. Two groups, "a + b = ?", the child picks the total.
+// Méhecske: addition from "3 + 2" up to "38 + 25", and taking away from "5 − 2" up to "52 − 27". Two groups, "a + b = ?", the child picks the total.
 // The first levels are hands-on and digit-free: the child taps flowers so the bee carries them into one bed
 // (gather) or off to the hive (take), and answers with dot cards; the digit appears only after the right answer.
 // From 20 upward a bouquet (csokor) of ten flowers stands for a ten; loose flowers are the ones.
@@ -28,6 +28,7 @@ export interface AddLevel {
    * all: count everything. on: the first group is a basket with its number, count on from it.
    * gather: the child taps the second group over into the first bed before answering.
    * take: subtraction; the child taps b of the a flowers and the bee carries them to the hive.
+   *   A bouquet goes as a whole ten; when fewer than ten are needed, tapping it unties it into ten loose flowers.
    */
   strategy: 'all' | 'on' | 'gather' | 'take';
   /** Answer cards: dots only (no digits on screen until solved), dots with the digit, or the digit alone. */
@@ -118,6 +119,17 @@ export const ADD_LEVELS: AddLevel[] = [
     }
   },
   {
+    name: 'Elvétel 20-ig',
+    strategy: 'take',
+    answers: 'digits',
+    bundles: true,
+    distractors: 'small',
+    make: (pick) => {
+      const a = 10 + pick(1, 9);
+      return [a, pick(1, a - 10)];
+    }
+  },
+  {
     name: '20-ig, tízes átlépéssel',
     strategy: 'all',
     answers: 'digits',
@@ -129,6 +141,17 @@ export const ADD_LEVELS: AddLevel[] = [
     }
   },
   {
+    name: 'Elvétel 20-ig, tízes átlépéssel',
+    strategy: 'take',
+    answers: 'digits',
+    bundles: true,
+    distractors: 'small',
+    make: (pick) => {
+      const oa = pick(1, 8);
+      return [10 + oa, pick(oa + 1, 9)];
+    }
+  },
+  {
     name: 'Kerek tízesek 100-ig',
     strategy: 'all',
     answers: 'digits',
@@ -137,6 +160,17 @@ export const ADD_LEVELS: AddLevel[] = [
     make: (pick) => {
       const ta = pick(1, 5);
       return [ta * 10, pick(1, Math.min(5, 10 - ta)) * 10];
+    }
+  },
+  {
+    name: 'Kerek tízesek elvétele',
+    strategy: 'take',
+    answers: 'digits',
+    bundles: true,
+    distractors: 'tens',
+    make: (pick) => {
+      const ta = pick(2, 5);
+      return [ta * 10, pick(1, ta - 1) * 10];
     }
   },
   {
@@ -153,6 +187,18 @@ export const ADD_LEVELS: AddLevel[] = [
     }
   },
   {
+    name: 'Elvétel 100-ig',
+    strategy: 'take',
+    answers: 'digits',
+    bundles: true,
+    distractors: 'tens',
+    make: (pick) => {
+      const ta = pick(2, 5);
+      const oa = pick(1, 9);
+      return [ta * 10 + oa, pick(1, ta - 1) * 10 + pick(0, oa)];
+    }
+  },
+  {
     name: '100-ig, tízes átlépéssel',
     strategy: 'all',
     answers: 'digits',
@@ -164,16 +210,33 @@ export const ADD_LEVELS: AddLevel[] = [
       const tb = pick(1, Math.min(4, 8 - ta));
       return [ta * 10 + oa, tb * 10 + pick(10 - oa, 9)];
     }
+  },
+  {
+    name: 'Elvétel 100-ig, tízes átlépéssel',
+    strategy: 'take',
+    answers: 'digits',
+    bundles: true,
+    distractors: 'tens',
+    make: (pick) => {
+      const ta = pick(2, 5);
+      const oa = pick(0, 8);
+      return [ta * 10 + oa, pick(1, ta - 1) * 10 + pick(oa + 1, 9)];
+    }
   }
 ];
 
 /** Bumped when levels are inserted; saved progress from an older ladder is migrated with migrateAddLevel. */
-export const ADD_LEVELS_VERSION = 2;
+export const ADD_LEVELS_VERSION = 3;
 
-/** A level index saved before the gather and take levels existed, mapped onto today's ladder. */
-export function migrateAddLevel(oldLevel: number): number {
-  const l = Math.max(0, Math.floor(oldLevel));
-  return clampLevel(l < 2 ? l + 2 : l + 3);
+/**
+ * A level index saved on an older ladder, mapped onto today's.
+ * v1 → v2: the gather and take levels up to ten came in. v2 → v3: subtraction from 20 up came in.
+ */
+export function migrateAddLevel(oldLevel: number, fromVersion = 1): number {
+  let l = Math.max(0, Math.floor(oldLevel));
+  if (fromVersion < 2) l = l < 2 ? l + 2 : l + 3;
+  if (fromVersion < 3 && l > 6) l = [8, 10, 12, 14][l - 7] ?? l + 4;
+  return clampLevel(l);
 }
 
 export function clampLevel(level: number): number {
@@ -249,33 +312,93 @@ export interface Slot {
   y: number;
 }
 
-/** Bouquets in a row on top, loose flowers in rows of five below, centred in the group box. */
-export function groupSlots(n: number, boxX: number, bundles: boolean): Slot[] {
-  const tens = bundles ? Math.floor(n / 10) : 0;
-  const ones = n - tens * 10;
-  const oneRows = Math.ceil(ones / 5);
+/** Take levels with bouquets: a wide bed (loose flowers in rows of ten) and a narrow hive bed beside it. */
+export const TAKE_W = 640;
+const HIVE_GAP = 40;
+
+function wideTake(r: { level: AddLevel }): boolean {
+  return r.level.strategy === 'take' && r.level.bundles;
+}
+
+/** Width of the first bed. */
+export function bedWidth(r: AddRound): number {
+  return wideTake(r) ? TAKE_W : BOX_W;
+}
+
+/** Centre of the hive bed on take levels. */
+export function hiveX(r: AddRound): number {
+  return wideTake(r) ? (TAKE_W + HIVE_GAP + SCENE_W) / 2 : RIGHT_X + BOX_W / 2;
+}
+
+/** Bouquets in a row on top, loose flowers in rows of `perRow` below, centred in the box. */
+function layoutSlots(tens: number, ones: number, boxX: number, boxW = BOX_W, perRow = 5): Slot[] {
+  const step = perRow > 5 ? 58 : 72;
+  const oneRows = Math.ceil(ones / perRow);
   const rows = (tens > 0 ? 1 : 0) + oneRows;
   const rowGap = rows >= 3 ? 80 : 100;
   const top = SCENE_H / 2 - ((rows - 1) * rowGap) / 2;
-  const cx = boxX + BOX_W / 2;
+  const cx = boxX + boxW / 2;
   const slots: Slot[] = [];
 
   for (let i = 0; i < tens; i++) slots.push({ kind: 'ten', x: cx + (i - (tens - 1) / 2) * 72, y: top });
   const oneTop = top + (tens > 0 ? rowGap : 0);
   for (let i = 0; i < ones; i++) {
-    const row = Math.floor(i / 5);
-    const inRow = Math.min(5, ones - row * 5);
-    slots.push({ kind: 'one', x: cx + ((i % 5) - (inRow - 1) / 2) * 72, y: oneTop + row * rowGap });
+    const row = Math.floor(i / perRow);
+    const inRow = Math.min(perRow, ones - row * perRow);
+    slots.push({ kind: 'one', x: cx + ((i % perRow) - (inRow - 1) / 2) * step, y: oneTop + row * rowGap });
   }
   return slots;
 }
 
-function placeGroup(n: number, group: 'a' | 'b', boxX: number, bundles: boolean): AddItem[] {
+/** Bouquets in a row on top, loose flowers in rows of five below, centred in the group box. */
+export function groupSlots(n: number, boxX: number, bundles: boolean): Slot[] {
+  const tens = bundles ? Math.floor(n / 10) : 0;
+  return layoutSlots(tens, n - tens * 10, boxX);
+}
+
+function toItems(slots: Slot[], group: 'a' | 'b'): AddItem[] {
   let t = 0;
   let o = 0;
-  return groupSlots(n, boxX, bundles).map((s) =>
-    s.kind === 'ten' ? { id: `${group}t${t++}`, group, value: 10, ...s } : { id: `${group}o${o++}`, group, value: 1, ...s }
-  );
+  return slots.map((s) => (s.kind === 'ten' ? { id: `${group}t${t++}`, group, value: 10, ...s } : { id: `${group}o${o++}`, group, value: 1, ...s }));
+}
+
+function placeGroup(n: number, group: 'a' | 'b', boxX: number, bundles: boolean): AddItem[] {
+  return toItems(groupSlots(n, boxX, bundles), group);
+}
+
+/**
+ * Take levels: where every flower stands, carried-away ones included (they leave an empty spot).
+ * Recomputed after a bouquet is untied, so its ten loose flowers join the rows.
+ */
+export function takeLayout(r: AddRound, items: AddItem[]): Map<string, Slot> {
+  const wide = wideTake(r);
+  const tens = items.filter((i) => i.kind === 'ten');
+  const ones = items.filter((i) => i.kind === 'one');
+  const slots = layoutSlots(tens.length, ones.length, LEFT_X, bedWidth(r), wide ? 10 : 5);
+  const map = new Map<string, Slot>();
+  [...tens, ...ones].forEach((it, k) => map.set(it.id, slots[k]));
+  return map;
+}
+
+/** A bouquet untied: it leaves the bed and ten loose flowers join the end of the rows. */
+export function untie(items: AddItem[], id: string): AddItem[] {
+  const ten = items.find((i) => i.id === id);
+  if (!ten || ten.kind !== 'ten') return items;
+  const loose = Array.from({ length: 10 }, (_, k): AddItem => ({ id: `${id}.${k}`, group: ten.group, kind: 'one', value: 1, x: ten.x, y: ten.y }));
+  return [...items.filter((i) => i.id !== id), ...loose];
+}
+
+/** What a tap on a flower does on a take level, given how many are still to be carried away. */
+export function takeTap(items: AddItem[], gone: string[], item: AddItem, need: number): 'carry' | 'untie' | 'too-many' | 'count' {
+  if (need <= 0) return 'count';
+  if (item.kind === 'one' || need >= 10) return 'carry';
+  const looseLeft = items.filter((i) => i.kind === 'one' && !gone.includes(i.id)).length;
+  return looseLeft < need ? 'untie' : 'too-many';
+}
+
+/** Value already carried to the hive. */
+export function carriedValue(items: AddItem[], gone: string[]): number {
+  return items.filter((i) => gone.includes(i.id)).reduce((s, i) => s + i.value, 0);
 }
 
 /** Gather levels: where the flowers of the first bed stand once `moved` of the second group have joined it. */
@@ -294,7 +417,7 @@ export function buildAddRound(round: number, levelIndex: number): AddRound {
   const answer = take ? a - b : a + b;
 
   const items = take
-    ? placeGroup(a, 'a', LEFT_X, false)
+    ? toItems(layoutSlots(level.bundles ? Math.floor(a / 10) : 0, level.bundles ? a % 10 : a, LEFT_X, level.bundles ? TAKE_W : BOX_W, level.bundles ? 10 : 5), 'a')
     : [...(level.strategy === 'on' ? [] : placeGroup(a, 'a', LEFT_X, level.bundles)), ...placeGroup(b, 'b', RIGHT_X, level.bundles)];
 
   const near = level.distractors === 'tens' ? [answer - 10, answer + 10, answer - 1, answer + 1] : [answer - 2, answer - 1, answer + 1, answer + 2];
@@ -318,8 +441,8 @@ export function needsMoves(r: AddRound): boolean {
  * The order the bee tours after a wrong pick: tens first (tíz, húsz …), then the ones.
  * `gone` are flowers the bee already carried to the hive; they are not counted.
  */
-export function tourOrder(r: AddRound, gone: string[] = []): AddItem[] {
-  const left = r.items.filter((i) => !gone.includes(i.id));
+export function tourOrder(r: AddRound, gone: string[] = [], items: AddItem[] = r.items): AddItem[] {
+  const left = items.filter((i) => !gone.includes(i.id));
   return [...left.filter((i) => i.kind === 'ten'), ...left.filter((i) => i.kind === 'one')];
 }
 
@@ -338,6 +461,16 @@ export interface AddFeedback {
 
 /** "kettőt" in "elvisz kettőt", 1–10. */
 const ACCUSATIVE = ['', 'egyet', 'kettőt', 'hármat', 'négyet', 'ötöt', 'hatot', 'hetet', 'nyolcat', 'kilencet', 'tízet'];
+
+/** "kettőt" up to ten, then "tizenkét virágot": the attributive form keeps bigger numbers simple. */
+function taken(n: number): string {
+  return n <= 10 ? ACCUSATIVE[n] : `${numberAttr(n)} virágot`;
+}
+
+/** Spoken when a bouquet is untied. */
+export const UNTIE_SPEECH = 'Kibontjuk a csokrot: tíz szál virág lett belőle!';
+/** Spoken when a whole bouquet would be too many, and there are enough loose flowers. */
+export const TOO_MANY_SPEECH = 'Egy csokor tíz virág, az most túl sok. Vigyen a méhecske a szál virágokból!';
 
 /** Dot-card levels keep digits off the screen: the bubble shows the spoken words. */
 function words(r: AddRound, fb: AddFeedback): AddFeedback {
@@ -364,7 +497,7 @@ export function questionFeedback(r: AddRound, moved = 0): AddFeedback {
       return words(r, {
         ...plain,
         text: `${r.a} virág nyílik. A méhecske elvisz ${r.b} virágot a kaptárba. Koppints ${r.b} virágra!`,
-        speech: `${capitalize(numberAttr(r.a))} virág nyílik. A méhecske elvisz ${ACCUSATIVE[r.b]} a kaptárba. Koppints ${numberAttr(r.b)} virágra!`
+        speech: `${capitalize(numberAttr(r.a))} virág nyílik. A méhecske elvisz ${taken(r.b)} a kaptárba. Koppints ${numberAttr(r.b)} virágra!`
       });
     }
     if (moved < r.b) {
@@ -396,7 +529,7 @@ export function sumSentence(a: number, b: number): string {
 
 /** "Öt virágból kettőt elvitt a méhecske, maradt három." */
 export function takeSentence(a: number, b: number): string {
-  return `${capitalize(numberAttr(a))} virágból ${ACCUSATIVE[b]} elvitt a méhecske, maradt ${numberCount(a - b)}.`;
+  return `${capitalize(numberAttr(a))} virágból ${taken(b)} elvitt a méhecske, maradt ${numberCount(a - b)}.`;
 }
 
 export function rightFeedback(r: AddRound, offer: Offer = null): AddFeedback {
@@ -424,7 +557,10 @@ export function rightFeedback(r: AddRound, offer: Offer = null): AddFeedback {
 /** A wrong pick: the bee visits everything and counts out loud; never a "wrong" word. */
 export function tourFeedback(r: AddRound): AddFeedback {
   if (r.level.strategy === 'take') {
-    return { text: 'Hoppá! Számoljuk meg együtt, hány virág maradt!', speech: 'Hoppá! Számoljuk meg együtt, hány virág maradt!', mood: 'oops', tone: 'oops' };
+    const say = r.level.bundles
+      ? 'Hoppá! Számoljuk meg, mennyi maradt: előbb a csokrokat tízesével, aztán a többit.'
+      : 'Hoppá! Számoljuk meg együtt, hány virág maradt!';
+    return { text: say, speech: say, mood: 'oops', tone: 'oops' };
   }
   if (r.level.strategy === 'on') {
     return {

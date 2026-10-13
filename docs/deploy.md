@@ -154,3 +154,4 @@ This deletes the site and its custom domain bindings. DNS records at your provid
 | Deploy job fails with "deployment_token was not provided" | The secret is missing, or was added at repo level under another name. It must be called `AZURE_STATIC_WEB_APPS_API_TOKEN`, in the `production` environment or the repo. |
 | Custom domain stuck in "Validating" | DNS record not yet visible, or a CNAME used for an apex domain. |
 | Fonts or icons missing offline | Their file type is not in `workbox.globPatterns` in `vite.config.ts`. |
+| Home-screen icon wrong or blank | PNG icons are generated from `public/icon.svg` at build time by `pwa-assets.config.ts`; edit the SVG, not the PNGs. |

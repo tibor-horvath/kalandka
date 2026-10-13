@@ -6,6 +6,8 @@ import {
   SCENE_H,
   addLockedSpeech,
   afterTask,
+  bedWidth,
+  carriedValue,
   chooseOffer,
   buildAddRound,
   gatheredSlots,
@@ -15,12 +17,16 @@ import {
   rightFeedback,
   runningTotal,
   sumSentence,
+  takeLayout,
   takeSentence,
+  takeTap,
   tourFeedback,
-  tourOrder
+  tourOrder,
+  untie,
+  type AddItem
 } from './logic';
 
-const LIMITS = [5, 5, 5, 10, 10, 10, 19, 18, 100, 99, 98];
+const LIMITS = [5, 5, 5, 10, 10, 10, 19, 19, 18, 18, 100, 50, 99, 59, 98, 58];
 
 describe('Méhecske (addition)', () => {
   it('offers a harder level after five first-try answers, never at the top', () => {
@@ -67,7 +73,7 @@ describe('Méhecske (addition)', () => {
         expect(new Set(r.choices).size).toBe(3);
         expect(r.choices).toContain(r.answer);
         expect(r.choices.every((c) => c >= 1 && c <= 100)).toBe(true);
-        if (take) expect(r.items.length).toBe(r.a);
+        if (take) expect(r.items.reduce((s, i) => s + i.value, 0)).toBe(r.a);
         else if (level.strategy !== 'on') expect(r.items.reduce((s, i) => s + i.value, 0)).toBe(r.answer);
       }
     });
@@ -75,26 +81,27 @@ describe('Méhecske (addition)', () => {
 
   it('crosses the ten where the level says so, and never where it does not', () => {
     for (let round = 0; round < 120; round++) {
-      const crossing20 = buildAddRound(round, 7);
+      const crossing20 = buildAddRound(round, 8);
       expect(crossing20.answer).toBeGreaterThan(10);
       expect(crossing20.a).toBeLessThan(10);
-      const noCarry = buildAddRound(round, 9);
+      const noCarry = buildAddRound(round, 12);
       expect((noCarry.a % 10) + (noCarry.b % 10)).toBeLessThan(10);
-      const carry = buildAddRound(round, 10);
+      const carry = buildAddRound(round, 14);
       expect((carry.a % 10) + (carry.b % 10)).toBeGreaterThanOrEqual(10);
     }
   });
 
   it('draws tens as bouquets from 20 up, and keeps everything inside its box', () => {
-    const r = { ...buildAddRound(2, 9) };
+    const r = { ...buildAddRound(2, 12) };
     expect(r.items.filter((i) => i.kind === 'ten').length).toBe(Math.floor(r.a / 10) + Math.floor(r.b / 10));
     expect(buildAddRound(2, 1).items.every((i) => i.kind === 'one')).toBe(true);
     for (let li = 0; li < ADD_LEVELS.length; li++) {
       for (let round = 0; round < 40; round++) {
         for (const it of buildAddRound(round, li).items) {
+          const r = buildAddRound(round, li);
           const boxX = it.group === 'a' ? 0 : RIGHT_X;
           expect(it.x).toBeGreaterThan(boxX);
-          expect(it.x).toBeLessThan(boxX + BOX_W);
+          expect(it.x).toBeLessThan(boxX + (it.group === 'a' ? bedWidth(r) : BOX_W));
           expect(it.y).toBeGreaterThan(0);
           expect(it.y).toBeLessThan(SCENE_H);
         }
@@ -103,7 +110,7 @@ describe('Méhecske (addition)', () => {
   });
 
   it('counts tens first on the tour and reaches the sum', () => {
-    const r = buildAddRound(5, 10);
+    const r = buildAddRound(5, 14);
     const order = tourOrder(r);
     expect(order[0].kind).toBe('ten');
     expect(runningTotal(r, order)).toBe(r.answer);
@@ -145,7 +152,69 @@ describe('Méhecske (addition)', () => {
 
   it('keeps a saved child on the same sums after the new levels were added', () => {
     const names = ['5-ig', '10-ig, gyűjtéssel', '10-ig, továbbszámolással', '20-ig', '20-ig, tízes átlépéssel', 'Kerek tízesek 100-ig', '100-ig', '100-ig, tízes átlépéssel'];
-    names.forEach((name, old) => expect(ADD_LEVELS[migrateAddLevel(old)].name).toBe(name));
+    names.forEach((name, old) => expect(ADD_LEVELS[migrateAddLevel(old, 1)].name).toBe(name));
+    const v2 = ['Gyűjtés 5-ig', 'Elvétel 5-ig', '5-ig', '10-ig, gyűjtéssel', 'Elvétel 10-ig', '10-ig, továbbszámolással', '20-ig', '20-ig, tízes átlépéssel', 'Kerek tízesek 100-ig', '100-ig', '100-ig, tízes átlépéssel'];
+    v2.forEach((name, old) => expect(ADD_LEVELS[migrateAddLevel(old, 2)].name).toBe(name));
+  });
+
+  it('puts each subtraction level right after its addition twin, crossing the ten only where it says so', () => {
+    const takes = ADD_LEVELS.map((l, i) => [l, i] as const).filter(([l]) => l.strategy === 'take' && l.bundles);
+    expect(takes.map(([l]) => l.name)).toEqual(['Elvétel 20-ig', 'Elvétel 20-ig, tízes átlépéssel', 'Kerek tízesek elvétele', 'Elvétel 100-ig', 'Elvétel 100-ig, tízes átlépéssel']);
+    for (const [level, li] of takes) {
+      for (let round = 0; round < 120; round++) {
+        const r = buildAddRound(round, li);
+        expect(r.b).toBeLessThan(r.a);
+        const crosses = r.b % 10 > r.a % 10;
+        expect(crosses).toBe(level.name.includes('átlépéssel'));
+        if (level.name.startsWith('Kerek')) expect([r.a % 10, r.b % 10]).toEqual([0, 0]);
+      }
+    }
+  });
+
+  it('lets the child take away exactly b on every bouquet level, untying a bouquet only when it must', () => {
+    ADD_LEVELS.forEach((level, li) => {
+      if (level.strategy !== 'take') return;
+      for (let round = 0; round < 60; round++) {
+        const r = buildAddRound(round, li);
+        let items: AddItem[] = r.items;
+        const gone: string[] = [];
+        let unties = 0;
+        for (let guard = 0; carriedValue(items, gone) < r.b && guard < 200; guard++) {
+          const need = r.b - carriedValue(items, gone);
+          const left = items.filter((i) => !gone.includes(i.id));
+          // A child who prefers loose flowers, but takes whole bouquets while ten or more are needed.
+          const pick = (need >= 10 && left.find((i) => i.kind === 'ten')) || left.find((i) => i.kind === 'one') || left.find((i) => i.kind === 'ten')!;
+          const act = takeTap(items, gone, pick, need);
+          if (act === 'carry') gone.push(pick.id);
+          else if (act === 'untie') {
+            items = untie(items, pick.id);
+            unties++;
+          } else throw new Error(`unexpected ${act}`);
+          for (const [, slot] of takeLayout(r, items)) {
+            expect(slot.x).toBeGreaterThan(0);
+            expect(slot.x).toBeLessThan(bedWidth(r));
+            expect(slot.y).toBeGreaterThan(0);
+            expect(slot.y).toBeLessThan(SCENE_H);
+          }
+        }
+        expect(carriedValue(items, gone)).toBe(r.b);
+        expect(unties).toBe(level.bundles && r.b % 10 > r.a % 10 ? 1 : 0);
+        expect(runningTotal(r, tourOrder(r, gone, items))).toBe(r.answer);
+      }
+    });
+  });
+
+  it('keeps a whole bouquet when loose flowers are enough, and unties one when they are not', () => {
+    const r = buildAddRound(0, 9);
+    const ten = r.items.find((i) => i.kind === 'ten')!;
+    const loose = r.items.filter((i) => i.kind === 'one');
+    expect(takeTap(r.items, [], ten, loose.length)).toBe('too-many');
+    expect(takeTap(r.items, [], ten, loose.length + 1)).toBe('untie');
+    expect(takeTap(r.items, [], ten, 10)).toBe('carry');
+    expect(takeTap(r.items, [], loose[0], 0)).toBe('count');
+    const after = untie(r.items, ten.id);
+    expect(after.filter((i) => i.kind === 'one')).toHaveLength(loose.length + 10);
+    expect(after.reduce((s, i) => s + i.value, 0)).toBe(r.a);
   });
 
   it('speaks correct Hungarian', () => {
@@ -159,6 +228,7 @@ describe('Méhecske (addition)', () => {
     expect(rightFeedback(r, 'down').text).not.toMatch(/rossz|hiba/i);
     expect(tourFeedback(r).text).not.toMatch(/rossz|hiba/i);
     expect(takeSentence(5, 2)).toBe('Öt virágból kettőt elvitt a méhecske, maradt három.');
+    expect(takeSentence(23, 12)).toBe('Huszonhárom virágból tizenkét virágot elvitt a méhecske, maradt tizenegy.');
     const t = { ...buildAddRound(0, 1), a: 5, b: 2, answer: 3 };
     expect(questionFeedback(t).speech).toBe('Öt virág nyílik. A méhecske elvisz kettőt a kaptárba. Koppints két virágra!');
     expect(questionFeedback(t, 1).speech).toBe('Még egy virágot vigyen el!');

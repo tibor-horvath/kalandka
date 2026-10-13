@@ -61,7 +61,6 @@ src/
 ## Not done yet
 
 - Recorded Hungarian voice for Csepi (the browser voice is a stand-in).
-- PNG app icons for iOS home screens (the manifest has an SVG icon only).
 - Locked games: Cserépbarátok and Szüret (subtraction); tapping them makes Csepi say they open soon.
 
 ## Deploy

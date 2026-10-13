@@ -6,19 +6,26 @@ import {
   LEVEL_UP_STREAK,
   BOX_W,
   LEFT_X,
-  RIGHT_X,
   SCENE_H,
   SCENE_W,
+  TOO_MANY_SPEECH,
+  UNTIE_SPEECH,
   afterTask,
+  bedWidth,
+  carriedValue,
   chooseOffer,
   buildAddRound,
   gatheredSlots,
+  hiveX,
   needsMoves,
   questionFeedback,
   rightFeedback,
   runningTotal,
   tourFeedback,
+  takeLayout,
+  takeTap,
   tourOrder,
+  untie,
   type AddItem,
   type Offer
 } from '../games/add/logic';
@@ -39,7 +46,9 @@ function StarIcon({ on }: { on: boolean }) {
 
 const HOME = { x: SCENE_W / 2, y: 40 };
 const BASKET = { x: LEFT_X + BOX_W / 2, y: SCENE_H / 2 + 10 };
-const HIVE = { x: RIGHT_X + BOX_W / 2, y: 78 };
+const HIVE_Y = 78;
+/** Space between the two beds. */
+const BED_GAP = 40;
 const TOUR_STEP_MS = 850;
 /** The bee's flight to a flower; matches the .bee transition. */
 const PICKUP_MS = 550;
@@ -56,9 +65,9 @@ const PETALS = Array.from({ length: 12 }, (_, i) => {
   return { dx: Math.round(Math.cos(angle) * reach), dy: Math.round(Math.sin(angle) * reach), turn: (i % 3) * 120 + 90 };
 });
 
-/** Where the k-th of n carried-away flowers sits under the hive. */
-function hiveSpot(k: number, n: number) {
-  return { x: HIVE.x + (k - (n - 1) / 2) * 56, y: 196 };
+/** Where the k-th of n carried-away flowers sits under the hive (up to ten, without bouquets). */
+function hiveSpot(hx: number, k: number, n: number) {
+  return { x: hx + (k - (n - 1) / 2) * 56, y: 196 };
 }
 
 /** n dots in rows of five, like a ten-frame: the answer before the digit. */
@@ -76,6 +85,7 @@ function Dots({ n }: { n: number }) {
  * Méhecske: a + b = ? Tap flowers or bouquets and the bee counts them; pick the total.
  * Gather levels: tap the right-hand flowers first and the bee carries them into the left bed.
  * Take levels: tap b flowers and the bee carries them to the hive; then say how many are left.
+ * A bouquet goes as a whole ten; when fewer are needed, tapping it unties it into ten loose flowers.
  */
 export function Add({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
@@ -86,6 +96,10 @@ export function Add({ onBack }: { onBack: () => void }) {
   const [phase, setPhase] = useState<Phase>('ask');
   /** Ids of the flowers the bee has carried over (gather) or away to the hive (take), in order. */
   const [moved, setMoved] = useState<string[]>([]);
+  /** Take levels: the bed's flowers, changing when a bouquet is untied. */
+  const [items, setItems] = useState(round.items);
+  /** Loose flowers that just came out of an untied bouquet. */
+  const [fresh, setFresh] = useState<string[]>([]);
   const [visited, setVisited] = useState<AddItem[]>([]);
   const [bee, setBee] = useState(HOME);
   const [wrong, setWrong] = useState<number | null>(null);
@@ -107,15 +121,22 @@ export function Add({ onBack }: { onBack: () => void }) {
   /** The bee spins for joy after a right answer. */
   const [cheer, setCheer] = useState(false);
 
-  const ready = !needsMoves(round) || (moved.length >= round.b && flying === null);
+  /** Bouquet take levels: carried flowers go into the hive instead of lining up under it. */
+  const wide = taking && round.level.bundles;
+  const hive = { x: hiveX(round), y: HIVE_Y };
+  /** How much has been moved: flowers over (gather) or value carried away (take). */
+  const done = taking ? carriedValue(items, moved) : moved.length;
+  const ready = !needsMoves(round) || (done >= round.b && flying === null);
   /** The flowers that make up the answer, in counting order: the bee's victory lap and the hop wave follow it. */
-  const lap = tourOrder(round, taking ? moved : []);
-  const fb = phase === 'solved' ? rightFeedback(round, offer) : phase === 'tour' ? tourFeedback(round) : questionFeedback(round, moved.length);
+  const lap = tourOrder(round, taking ? moved : [], items);
+  const fb = phase === 'solved' ? rightFeedback(round, offer) : phase === 'tour' ? tourFeedback(round) : questionFeedback(round, done);
+  const layout = taking ? takeLayout(round, items) : null;
   const hasBouquets = round.items.some((i) => i.kind === 'ten');
   const showEquation = round.level.answers !== 'dots' || phase === 'solved';
 
   /** Where a flower stands: gathered flowers close ranks in the left bed. */
   const spot = (item: AddItem, carried: string[] = moved) => {
+    if (layout) return layout.get(item.id) ?? item;
     if (!gathering) return item;
     const slots = gatheredSlots(round, carried.length);
     if (item.group === 'a') return slots[round.items.indexOf(item)];
@@ -147,15 +168,17 @@ export function Add({ onBack }: { onBack: () => void }) {
    */
   const carry = (item: AddItem) => {
     const from = spot(item);
+    const above = item.kind === 'ten' ? 60 : 46;
     setFlying(item.id);
-    setBee({ x: from.x, y: from.y - 46 });
+    setBee({ x: from.x, y: from.y - above });
     later(PICKUP_MS, () => {
       const next = [...moved, item.id];
+      const doneNext = taking ? carriedValue(items, next) : next.length;
       popBubble(next.length);
       setMoved(next);
       const lift = () => {
-        const to = gathering ? spot(item, next) : hiveSpot(next.length - 1, next.length);
-        setBee({ x: to.x, y: to.y - 46 });
+        const to = gathering ? spot(item, next) : wide ? { x: hive.x, y: HIVE_Y + 20 } : hiveSpot(hive.x, next.length - 1, next.length);
+        setBee({ x: to.x, y: to.y - above });
       };
       if (gathering) lift();
       else {
@@ -168,17 +191,36 @@ export function Add({ onBack }: { onBack: () => void }) {
       }
       later(CARRY_MS, () => {
         setFlying(null);
-        speak(questionFeedback(round, next.length).speech);
+        speak(questionFeedback(round, doneNext).speech);
       });
     });
+  };
+
+  /** The bee unties a bouquet: ten loose flowers spring up and join the rows. */
+  const untieBouquet = (item: AddItem) => {
+    const next = untie(items, item.id);
+    setItems(next);
+    setFresh(next.filter((i) => i.id.startsWith(`${item.id}.`)).map((i) => i.id));
+    flyTo(item);
+    popBubble(10);
+    speak(UNTIE_SPEECH);
   };
 
   const tap = (item: AddItem) => {
     if (phase === 'solved' || flying) return;
     const isMoved = moved.includes(item.id);
     if (gathering && item.group === 'b' && !isMoved) return carry(item);
-    if (taking && isMoved) return;
-    if (taking && !ready) return carry(item);
+    if (taking) {
+      if (isMoved) return;
+      const act = takeTap(items, moved, item, round.b - done);
+      if (act === 'carry') return carry(item);
+      if (act === 'untie') return untieBouquet(item);
+      if (act === 'too-many') {
+        flyTo(item);
+        speak(TOO_MANY_SPEECH);
+        return;
+      }
+    }
     visit(item);
   };
 
@@ -205,7 +247,7 @@ export function Add({ onBack }: { onBack: () => void }) {
     setVisited([]);
     speak(tourFeedback(round).speech);
     if (countingOn) setBee({ x: BASKET.x, y: BASKET.y - 90 });
-    const order = tourOrder(round, taking ? moved : []);
+    const order = tourOrder(round, taking ? moved : [], items);
     let i = 0;
     tour.current = window.setInterval(() => {
       const item = order[i];
@@ -304,8 +346,8 @@ export function Add({ onBack }: { onBack: () => void }) {
       </header>
 
       <div className="add-scene" style={{ width: SCENE_W, height: SCENE_H }}>
-        <div className="add-scene__bed" style={{ left: LEFT_X, width: BOX_W }} />
-        <div className="add-scene__bed" style={{ right: 0, width: BOX_W }} />
+        <div className="add-scene__bed" style={{ left: LEFT_X, width: bedWidth(round) }} />
+        <div className="add-scene__bed" style={{ right: 0, width: wide ? SCENE_W - bedWidth(round) - BED_GAP : BOX_W }} />
         {!taking && (
           <div className="add-scene__plus" aria-hidden="true">
             +
@@ -314,16 +356,17 @@ export function Add({ onBack }: { onBack: () => void }) {
 
         {taking && (
           <>
-            <span className="add-hive" style={{ left: HIVE.x, top: HIVE.y }} aria-hidden="true">
+            <span className="add-hive" style={{ left: hive.x, top: hive.y }} aria-hidden="true">
               <Hive />
             </span>
             {moved.map((id, k) => {
-              const picked = round.items.find((i) => i.id === id);
-              const at = liftOff === id && picked ? picked : hiveSpot(k, moved.length);
-              const state = liftOff === id ? ' is-lifting' : flying === id ? ' is-flying' : '';
+              const picked = items.find((i) => i.id === id);
+              if (!picked) return null;
+              const at = liftOff === id ? spot(picked) : wide ? { x: hive.x, y: HIVE_Y + 20 } : hiveSpot(hive.x, k, moved.length);
+              const state = liftOff === id ? ' is-lifting' : flying === id ? ' is-flying' : wide ? ' is-stored' : '';
               return (
                 <span key={id} className={`add-carried${state}`} style={{ left: at.x, top: at.y }} aria-hidden="true">
-                  <RoundFlower petal={round.petalA} width={64} />
+                  {picked.kind === 'ten' ? <Bouquet petal={round.petalA} width={56} /> : <RoundFlower petal={round.petalA} width={round.level.bundles ? 54 : 64} />}
                 </span>
               );
             })}
@@ -337,7 +380,7 @@ export function Add({ onBack }: { onBack: () => void }) {
           </button>
         )}
 
-        {round.items.map((item) => {
+        {(taking ? items : round.items).map((item) => {
           const petal = item.group === 'a' ? round.petalA : round.petalB;
           const at = spot(item);
           const gone = taking && moved.includes(item.id);
@@ -357,7 +400,7 @@ export function Add({ onBack }: { onBack: () => void }) {
             <button
               key={item.id}
               type="button"
-              className={`add-flower add-flower--${item.kind}${isVisited(item.id) ? ' is-visited' : ''}${gone ? ' is-gone' : ''}${gathering && flying === item.id && moved.includes(item.id) ? ' is-flying' : ''}${phase === 'solved' && !gone ? ' is-happy' : ''}`}
+              className={`add-flower add-flower--${item.kind}${isVisited(item.id) ? ' is-visited' : ''}${gone ? ' is-gone' : ''}${fresh.includes(item.id) ? ' is-fresh' : ''}${gathering && flying === item.id && moved.includes(item.id) ? ' is-flying' : ''}${phase === 'solved' && !gone ? ' is-happy' : ''}`}
               style={{ left: at.x, top: at.y, '--d': `${Math.max(0, lap.indexOf(item)) * CHEER_STEP_MS}ms` } as CSSProperties}
               onClick={() => tap(item)}
               disabled={gone}

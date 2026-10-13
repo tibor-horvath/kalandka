@@ -7,8 +7,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      // PNG icons, favicon and <head> links are generated from public/icon.svg (see pwa-assets.config.ts).
+      pwaAssets: { config: true },
       manifest: {
+        id: '/',
         name: 'Kalandka – Számkertész',
         short_name: 'Kalandka',
         description: 'Számolós és logikai játékok 5–7 éveseknek.',
@@ -18,12 +20,10 @@ export default defineConfig({
         orientation: 'landscape',
         background_color: '#DDF0FA',
         theme_color: '#FFC93C',
-        icons: [
-          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }
-        ]
+        categories: ['education', 'games', 'kids']
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,woff2}']
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}']
       }
     })
   ],

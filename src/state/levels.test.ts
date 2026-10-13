@@ -28,7 +28,7 @@ describe('per-game level settings', () => {
     expect(buildRound(setting('patterns').apply(DEFAULT_PROGRESS, 1).patternRound).shape).toBe('ABC');
     const flash = setting('flash').apply(DEFAULT_PROGRESS, 3);
     expect(buildFlashRound(0, flash.flashSolved).count).toBeGreaterThanOrEqual(6);
-    const add = setting('add').apply({ ...DEFAULT_PROGRESS, addStreak: 3 }, 9);
+    const add = setting('add').apply({ ...DEFAULT_PROGRESS, addStreak: 3 }, 12);
     expect(add.addStreak).toBe(0);
     expect(buildAddRound(0, add.addLevel).answer).toBeGreaterThan(20);
   });
@@ -36,7 +36,8 @@ describe('per-game level settings', () => {
   it('moves an older Méhecske save onto the new ladder once, and leaves fresh profiles at the start', () => {
     const old = { ...DEFAULT_PROGRESS, addLevelsVersion: 1 };
     expect(migrate({ ...old, addLevel: 0, addSolved: 7 }).addLevel).toBe(2);
-    expect(migrate({ ...old, addLevel: 4, addSolved: 30 }).addLevel).toBe(7);
+    expect(migrate({ ...old, addLevel: 4, addSolved: 30 }).addLevel).toBe(8);
+    expect(migrate({ ...old, addLevelsVersion: 2, addLevel: 9, addSolved: 30 }).addLevel).toBe(12);
     expect(migrate({ ...old, addLevel: 0, addSolved: 0 }).addLevel).toBe(0);
     const once = migrate({ ...old, addLevel: 1, addSolved: 3 });
     expect(migrate(once)).toBe(once);

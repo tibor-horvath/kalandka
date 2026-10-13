@@ -384,6 +384,11 @@ h1, h2, p { margin: 0; }
 .add-carried.is-flying { transform: translate(-50%, -62%) rotate(-10deg) scale(0.85); }
 .add-carried.is-lifting { transform: translate(-50%, -50%) scale(1); transition: none; }
 
+/* Bouquet take levels: carried flowers disappear into the hive door; an untied bouquet's flowers spring up. */
+.add-carried.is-stored { transform: translate(-50%, -50%) scale(0.2); opacity: 0; transition: left 0.55s ease-in-out, top 0.55s ease-in-out, transform 0.35s ease-in, opacity 0.35s ease-in; }
+.add-flower.is-fresh { animation: add-fresh 0.45s cubic-bezier(.34, 1.56, .64, 1) both; }
+@keyframes add-fresh { from { transform: translate(-50%, -50%) scale(0); } to { transform: translate(-50%, -50%) scale(1); } }
+
 /* Right answer: a hop wave across the flowers (--d staggers it), the bee spins, petals burst from the card. */
 .add-flower.is-happy { animation: add-hop 0.5s cubic-bezier(.34, 1.56, .64, 1) var(--d, 0ms) 2 both; }
 .bee.is-cheering > svg { animation: bee-happy 0.7s ease-in-out 3; transform-box: fill-box; transform-origin: center; }
@@ -405,7 +410,7 @@ h1, h2, p { margin: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .add-flower, .add-carried, .bee { transition: none; }
-  .add-flower.is-happy, .bee.is-cheering > svg, .cheer span, .equation.is-reveal { animation: none; }
+  .add-flower.is-happy, .add-flower.is-fresh, .bee.is-cheering > svg, .cheer span, .equation.is-reveal { animation: none; }
   .cheer { display: none; }
 }
 .add-wait { height: 150px; }

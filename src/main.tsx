@@ -13,6 +13,12 @@ import '@fontsource/nunito/latin-700.css';
 import '@fontsource/nunito/latin-ext-700.css';
 import './styles/global.css';
 import App from './App';
+import { listenForInstall } from './lib/install';
+
+// Progress lives in localStorage; ask the browser not to evict it under storage pressure.
+// Best effort: browsers may decline (or grant silently once the app is installed).
+navigator.storage?.persist?.().catch(() => {});
+listenForInstall();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

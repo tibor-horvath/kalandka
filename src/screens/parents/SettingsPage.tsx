@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { promptInstall, useInstallState } from '../../lib/install';
 import { DEFAULT_PROGRESS, useProgress } from '../../state/progress';
 import { Check } from './controls';
 
@@ -81,6 +82,8 @@ export function SettingsPage() {
         </div>
       </section>
 
+      <InstallCard />
+
       <section className="pa-card" aria-labelledby="s-data">
         <h2 id="s-data" className="pa-h2">
           Adatok és biztonság
@@ -116,5 +119,64 @@ export function SettingsPage() {
         )}
       </section>
     </div>
+  );
+}
+
+function InstallCard() {
+  const state = useInstallState();
+
+  return (
+    <section className="pa-card" aria-labelledby="s-install">
+      <h2 id="s-install" className="pa-h2">
+        Telepítés a kezdőképernyőre
+      </h2>
+      {state === 'installed' ? (
+        <div className="pa-note pa-note--good" role="status">
+          <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12.5l4.5 4.5L19 7.5" />
+          </svg>
+          <p>
+            <b>A Kalandka telepítve van.</b> A kezdőképernyőn lévő ikonjával indítsd: teljes képernyőn, internet nélkül is működik.
+          </p>
+        </div>
+      ) : (
+        <>
+          <p className="pa-muted">
+            Telepítve saját ikonnal, teljes képernyőn indul, böngészősáv nélkül, és internet nélkül is működik. A haladás megmarad.
+          </p>
+          {state === 'ready' && (
+            <div>
+              <button type="button" className="pa-btn" onClick={() => void promptInstall()}>
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 4v11" />
+                  <path d="M7 10l5 5 5-5" />
+                  <path d="M5 20h14" />
+                </svg>
+                Kalandka telepítése
+              </button>
+            </div>
+          )}
+          {state === 'ios' && (
+            <ol className="pa-list">
+              <li>
+                Nyisd meg az oldalt a <b>Safariban</b>.
+              </li>
+              <li>
+                Koppints a <b>Megosztás</b> gombra (négyzet felfelé mutató nyíllal).
+              </li>
+              <li>
+                Válaszd a <b>Főképernyőhöz adás</b> lehetőséget, majd a <b>Hozzáadás</b> gombot.
+              </li>
+            </ol>
+          )}
+          {state === 'manual' && (
+            <p className="pa-muted">
+              Nyisd meg a böngésző menüjét (⋮), és válaszd az <b>Alkalmazás telepítése</b> vagy a <b>Hozzáadás a kezdőképernyőhöz</b> lehetőséget. Ha
+              nincs ilyen, nyisd meg az oldalt Chrome-ban vagy Edge-ben.
+            </p>
+          )}
+        </>
+      )}
+    </section>
   );
 }
