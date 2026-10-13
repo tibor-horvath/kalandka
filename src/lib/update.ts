@@ -7,7 +7,7 @@ import { registerSW } from 'virtual:pwa-register';
 
 /**
  * Everything the app needs is precached by the service worker, so once installed it never asks
- * the server for anything except this check: one small `sw.js` request, at most once an hour.
+ * the server for anything except this check: one small `sw.js` request, at most every five minutes.
  * A tablet can stay open for days, so it also runs while the app is left open, not only on launch.
  */
 const CHECK_EVERY_MS = 5 * 60 * 1000;
@@ -34,11 +34,11 @@ export function registerUpdates(): void {
         // update() rejects when the server is unreachable; the next check tries again.
         registration.update().catch(() => {});
       };
-      // Poll more often than the limit so a check is not up to two hours late; `check` throttles it.
+      // Poll more often than the limit so a check is never much more than five minutes late; `check` throttles it.
       window.setInterval(check, CHECK_EVERY_MS / 4);
       // Reopening an app left in the background does not reload the page, so the browser
       // would not look for a new version on its own: check when it comes back on screen
-      // (still at most once an hour, as tablets are woken many times a day).
+      // (still at most every five minutes, as tablets are woken many times a day).
       document.addEventListener('visibilitychange', check);
     }
   });
