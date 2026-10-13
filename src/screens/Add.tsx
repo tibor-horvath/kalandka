@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Basket, Bee, Bouquet, Hive, RoundFlower, Sprout, Tree } from '../components/art';
+import { FitBox } from '../components/FitBox';
 import { useForm } from '../components/Stage';
 import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import {
@@ -142,7 +143,6 @@ export function Add({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
   const [round] = useState(() => buildAddRound(progress.addRound, progress.addLevel));
   const form = useForm();
-  const phone = form !== 'tablet';
   const countingOn = round.level.strategy === 'on';
   const gathering = round.level.strategy === 'gather';
   const taking = round.level.strategy === 'take';
@@ -363,32 +363,10 @@ export function Add({ onBack }: { onBack: () => void }) {
 
   const isVisited = (id: string) => visited.some((v) => v.id === id);
 
-  // Phones: the scene fills the room left between the equation and the answers, folded on a portrait phone.
+  // Phones: the scene is folded on a portrait phone and scaled (FitBox) to the room between the equation and the answers.
   const geo = sceneGeometry(round, wide, form === 'portrait');
   const place = geo.place;
   const beeAt = bee === HOME ? geo.home : place(bee);
-  const sceneBox = useRef<HTMLDivElement>(null);
-  const [room, setRoom] = useState<{ w: number; h: number } | null>(null);
-  useLayoutEffect(() => {
-    const el = sceneBox.current;
-    if (!phone || !el) return;
-    const measure = () => setRoom({ w: el.clientWidth, h: el.clientHeight });
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [phone]);
-  const fitScale = phone && room ? Math.max(0.1, Math.min(room.w / geo.width, room.h / geo.height)) : 1;
-  const sceneFit = (scene: ReactNode) =>
-    phone ? (
-      <div className="add-scene-box" ref={sceneBox}>
-        <div className="add-scene-fit" style={{ width: geo.width * fitScale, height: geo.height * fitScale }}>
-          {scene}
-        </div>
-      </div>
-    ) : (
-      scene
-    );
 
   return (
     <div className="screen screen--add">
@@ -425,8 +403,8 @@ export function Add({ onBack }: { onBack: () => void }) {
         </div>
       </header>
 
-      {sceneFit(
-        <div className={`add-scene${form === 'portrait' ? ' is-folded' : ''}`} style={{ width: geo.width, height: geo.height, transform: phone ? `scale(${fitScale})` : undefined }}>
+      <FitBox className="add-scene-box" width={geo.width} height={geo.height}>
+        <div className={`add-scene${form === 'portrait' ? ' is-folded' : ''}`} style={{ width: geo.width, height: geo.height }}>
           {geo.beds.map((b, i) => (
             <div key={i} className="add-scene__bed" style={b} />
           ))}
@@ -497,7 +475,7 @@ export function Add({ onBack }: { onBack: () => void }) {
             <Bee width={70} />
           </span>
         </div>
-      )}
+      </FitBox>
 
       {hasBouquets && (
         <div className="legend" aria-label="Egy csokorban tíz virág van">

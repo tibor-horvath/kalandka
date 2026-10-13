@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Seed } from '../components/art';
+import { FitBox } from '../components/FitBox';
+import { useForm } from '../components/Stage';
 import { DotFace, MiniSprout } from '../components/seeds';
 import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { FIELD_H, FIELD_W } from '../games/flash/layout';
+import { FIELD_H, FIELD_W, foldSeeds } from '../games/flash/layout';
 import { LEARN_READY, buildLearnRound, learnedFeedback } from '../games/learn/logic';
 import { numberCount } from '../lib/numbers';
 import { speak } from '../lib/speech';
@@ -12,6 +14,9 @@ import { useProgress } from '../state/progress';
 export function Learn({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
   const [round] = useState(() => buildLearnRound(progress.learnRound));
+  // Portrait phones: the two groups stand one above the other, so the seeds can be bigger.
+  const folded = useForm() === 'portrait' ? foldSeeds(round.seeds) : null;
+  const field = folded ?? { width: FIELD_W, height: FIELD_H, seeds: round.seeds };
   const [tapped, setTapped] = useState<Set<number>>(() => new Set());
   const rewarded = useRef(false);
   const learned = tapped.size === round.count;
@@ -39,7 +44,7 @@ export function Learn({ onBack }: { onBack: () => void }) {
   const next = () => update((p) => ({ ...p, learnRound: p.learnRound + 1 }));
 
   return (
-    <div className="screen screen--flash">
+    <div className="screen screen--flash screen--learn">
       <div className="meadow" aria-hidden="true" />
 
       <header className="topbar">
@@ -52,23 +57,25 @@ export function Learn({ onBack }: { onBack: () => void }) {
         </RoundButton>
       </header>
 
-      <div className="seedbed" style={{ width: FIELD_W, height: FIELD_H }}>
-        {round.seeds.map((s, i) => {
-          const sprouted = tapped.has(i);
-          return (
-            <button
-              key={i}
-              type="button"
-              className={`seedbed__seed seedbed__seed--tap${sprouted ? ' is-sprouted' : ''}`}
-              style={{ left: s.x, top: s.y, transform: `translate(-50%, -50%) rotate(${sprouted ? 0 : s.rot}deg)` }}
-              onClick={() => tapSeed(i)}
-              aria-label={sprouted ? 'Megszámolt mag' : 'Mag – koppints rá a számoláshoz'}
-            >
-              {sprouted ? <MiniSprout big={round.count <= 10} /> : <Seed size={round.count > 10 ? 40 : round.count > 5 ? 52 : 64} />}
-            </button>
-          );
-        })}
-      </div>
+      <FitBox className="seedbed-box" width={field.width} height={field.height}>
+        <div className="seedbed" style={{ width: field.width, height: field.height }}>
+          {field.seeds.map((s, i) => {
+            const sprouted = tapped.has(i);
+            return (
+              <button
+                key={i}
+                type="button"
+                className={`seedbed__seed seedbed__seed--tap${sprouted ? ' is-sprouted' : ''}`}
+                style={{ left: s.x, top: s.y, transform: `translate(-50%, -50%) rotate(${sprouted ? 0 : s.rot}deg)` }}
+                onClick={() => tapSeed(i)}
+                aria-label={sprouted ? 'Megszámolt mag' : 'Mag – koppints rá a számoláshoz'}
+              >
+                {sprouted ? <MiniSprout big={round.count <= 10} /> : <Seed size={round.count > 10 ? 40 : round.count > 5 ? 52 : 64} />}
+              </button>
+            );
+          })}
+        </div>
+      </FitBox>
 
       <div className="flash-guide">
         <GuideBubble mood={fb.mood} tone={fb.tone}>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FIELD_H, FIELD_W, LEVELS, buildFlashRound, levelFor, revealFeedback, rightFeedback } from './logic';
+import { foldSeeds, layoutSeeds, rng } from './layout';
 
 describe('Magvillantás', () => {
   it('moves up a level every four solved rounds', () => {
@@ -53,5 +54,31 @@ describe('Magvillantás', () => {
   it('speaks correct Hungarian', () => {
     expect(rightFeedback(2).speech).toBe('Igen! két magot láttál. Kikeltek!');
     expect(revealFeedback(3).speech).toBe('Nézzük meg újra együtt! egy, kettő, három.');
+  });
+});
+
+describe('Seed field folded for a portrait phone', () => {
+  it('stacks a five or ten and the rest, keeping order, rows and the field', () => {
+    for (let count = 6; count <= 20; count++) {
+      const seeds = layoutSeeds(count, 'groups', rng(count));
+      const folded = foldSeeds(seeds);
+      expect(folded, `count ${count}`).not.toBeNull();
+      if (!folded) continue;
+      expect(folded.seeds).toHaveLength(count);
+      for (const s of folded.seeds) {
+        expect(s.x).toBeGreaterThanOrEqual(0);
+        expect(s.x).toBeLessThanOrEqual(folded.width);
+        expect(s.y).toBeGreaterThanOrEqual(0);
+        expect(s.y).toBeLessThanOrEqual(folded.height);
+      }
+      // The first group stays on top; the rest goes underneath.
+      const top = Math.min(count > 10 ? 10 : 5, count);
+      expect(folded.seeds.slice(0, top).every((s) => s.y < FIELD_H)).toBe(true);
+      expect(folded.seeds.slice(top).every((s) => s.y > FIELD_H)).toBe(true);
+    }
+  });
+
+  it('leaves a single dice face alone', () => {
+    for (let count = 1; count <= 5; count++) expect(foldSeeds(layoutSeeds(count, 'dice', rng(count)))).toBeNull();
   });
 });

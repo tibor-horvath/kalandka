@@ -19,12 +19,6 @@ import { GRACE_SECONDS, WARN_SECONDS, addPlay, isEveningRest, remainingSeconds, 
 type Screen = 'home' | GameId;
 type Parents = 'closed' | 'gate' | 'open';
 
-/**
- * Screens with a phone layout (with the parents' gate and area and the rest screen, which open over them).
- * The other games keep the tablet stage on phones until they get their own phone layout.
- */
-const PHONE_SCREENS: Screen[] = ['home', 'water', 'add'];
-
 /** The play clock ticks in steps of this many seconds. */
 const TICK_SECONDS = 5;
 /** Pause on the home screen before a waiting update reloads the app. */
@@ -131,7 +125,7 @@ function Game() {
   const closeParents = () => setParents('closed');
 
   return (
-    <Stage phone={PHONE_SCREENS.includes(screen)}>
+    <Stage>
       {screen === 'home' && <Home onOpen={go} onParents={openGate} />}
       {screen === 'learn' && <Learn key={progress.learnRound} onBack={() => go('home')} />}
       {screen === 'water' && <Water onBack={() => go('home')} />}

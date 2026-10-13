@@ -5,7 +5,7 @@ import { layoutSeeds, rng, type Layout, type SeedPos } from './layout';
 // Magvillantás: seeds show for a few seconds, then the child says how many (subitizing).
 // It opens once the child has met the numbers 1–5 in Számvetés.
 
-export { FIELD_H, FIELD_W, diceFace } from './layout';
+export { FIELD_H, FIELD_W, diceFace, foldSeeds } from './layout';
 
 export interface Level {
   /** Shown to parents. */

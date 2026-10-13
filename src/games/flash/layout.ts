@@ -81,3 +81,23 @@ export function layoutSeeds(count: number, layout: Layout, rand: () => number): 
   }
   return points.map((p) => ({ ...p, rot: Math.round(rand() * 80 - 40) }));
 }
+
+/** The groups stand at about 27.5 % and 72.5 % of the field; folded, both centre on the half field. */
+const FOLD_SHIFT = FIELD_W * 0.275 - FIELD_W / 4;
+
+/**
+ * Portrait phones: a five (or ten) and the rest, side by side, become one above the other in a
+ * field half as wide and twice as tall, so the seeds can be drawn bigger. Seeds keep their order,
+ * and both frames keep the same left edge so the rows still line up. Null for 1–5 seeds: one dice
+ * face or a scatter, drawn as it is.
+ */
+export function foldSeeds(seeds: SeedPos[]): { width: number; height: number; seeds: SeedPos[] } | null {
+  // Above five the seeds always come as two groups (layoutSeeds: groups or two ten-frames).
+  if (seeds.length <= 5) return null;
+  const mid = FIELD_W / 2;
+  return {
+    width: FIELD_W / 2,
+    height: FIELD_H * 2,
+    seeds: seeds.map((s) => (s.x < mid ? { ...s, x: s.x - FOLD_SHIFT } : { ...s, x: s.x - mid + FOLD_SHIFT, y: s.y + FIELD_H }))
+  };
+}

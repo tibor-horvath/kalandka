@@ -1,7 +1,8 @@
 /*
  * Phone layouts. The Stage switches to a 390 px-wide portrait or 390 px-tall landscape stage on phones
- * (.stage--portrait / .stage--landscape, both .is-phone) for the screens that have a phone layout:
- * home, Locsolás, Méhecske, the parents' gate and area, and the rest screen.
+ * (.stage--portrait / .stage--landscape, both .is-phone): every screen, the games, the parents'
+ * gate and area and the rest screen. Fixed-size drawings (seed beds, flower beds, the honey trail)
+ * scale into the room left for them through FitBox.
  * Touch targets stay at least 44 px; the game's main choices stay large.
  */
 
@@ -40,6 +41,15 @@
 .is-phone .parents-btn__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .is-phone .voice-btn { width: 44px; height: 44px; border-radius: 22px; }
 .is-phone .voice-btn svg { width: 22px; height: 22px; }
+
+/* FitBox: a fixed-size drawing scaled into whatever room the layout leaves it. */
+.is-phone .fit-box { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.is-phone .fit-box__frame { position: relative; flex: none; }
+.is-phone .fit-box__drawing { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+
+/* Game screens: a title between the back and replay buttons. */
+.is-phone .screen-title { font-size: 22px; line-height: 1.05; text-align: center; min-width: 0; }
+.stage--landscape .screen-title { font-size: 26px; }
 
 /* ---------- home ---------- */
 .is-phone .brand { gap: 10px; }
@@ -213,10 +223,8 @@
 .is-phone .level-pill { height: 40px; padding: 0 12px; gap: 6px; border-radius: 20px; }
 .is-phone .level-pill__num { font-size: 17px; }
 .is-phone .level-pill__stars svg { width: 16px; height: 16px; }
-/* The scene fills the room that is left; Add.tsx scales it to fit (and folds it on a portrait phone). */
-.is-phone .add-scene-box { flex: 1 1 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
-.is-phone .add-scene-fit { position: relative; flex: none; }
-.is-phone .add-scene { position: absolute; left: 0; top: 0; margin: 0; transform-origin: 0 0; }
+/* The scene fills the room that is left; FitBox scales it (Add.tsx folds it on a portrait phone). */
+.is-phone .add-scene { margin: 0; }
 .add-scene.is-folded .add-scene__plus { font-size: 80px; }
 .is-phone .legend { margin: 0 auto; font-size: 15px; padding: 2px 12px; }
 .is-phone .add-guide { margin-top: 0; padding: 0 16px; }
@@ -239,7 +247,7 @@
 
 .stage--portrait .screen--add .topbar { flex-wrap: wrap; row-gap: 10px; }
 .stage--portrait .screen--add .equation { order: 3; flex-basis: 100%; }
-/* A margin, not padding: Add.tsx fits the scene to the box's clientWidth, which counts padding. */
+/* A margin, not padding: FitBox fits the drawing to the box's clientWidth, which counts padding. */
 .stage--portrait .screen--add .add-scene-box { margin: 0 16px; }
 
 /* Landscape: the scene on the left, the answers stacked down the right edge. */
@@ -267,10 +275,177 @@
 .stage--landscape .offer__btn { height: auto; font-size: 15px; gap: 2px; }
 .stage--landscape .offer__btn svg { max-height: 48px; }
 
+/* ---------- Számvetés and Magvillantás (seed beds) ---------- */
+.is-phone .screen--flash,
+.is-phone .screen--patterns,
+.is-phone .screen--trace { display: flex; flex-direction: column; gap: 12px; }
+.is-phone .screen--flash .topbar,
+.is-phone .screen--patterns .topbar,
+.is-phone .screen--trace .topbar { flex: none; }
+.is-phone .meadow { left: -100px; right: -100px; height: calc(1000px + 70%); }
+.stage--landscape .meadow { height: calc(1000px + 80%); }
+.is-phone .seedbed { margin: 0; }
+.stage--portrait .seedbed-box { margin: 0 16px; }
+/* Buttons drawn on the bed keep their real size however small the bed is drawn. */
+.is-phone .seedbed__cover > button { transform: scale(calc(1 / var(--fit-k, 1))); }
+.is-phone .flash-guide { margin-top: 0; padding: 0 16px; }
+.is-phone .flash-guide .guide,
+.is-phone .patterns-guide .guide,
+.is-phone .trace-side .guide { flex: 1; min-width: 0; }
+.is-phone .flash-guide .bubble,
+.is-phone .patterns-guide .bubble,
+.is-phone .trace-side .bubble { flex: 1; min-width: 0; }
+.is-phone .screen--flash .choices { margin: 0; padding: 0 16px 16px; gap: 10px; flex-wrap: wrap; }
+.is-phone .screen--flash .choice { flex: 1 1 0; width: auto; height: 120px; border-radius: 24px; border-width: 4px; box-shadow: 0 6px 0 var(--grass-deep); gap: 4px; }
+.is-phone .screen--flash .choice.is-right { box-shadow: 0 6px 0 var(--leaf); }
+.is-phone .screen--flash .choice.is-wrong { box-shadow: 0 6px 0 var(--oops); }
+.is-phone .screen--flash .choice svg { width: auto; max-width: 90%; height: 34px; }
+.is-phone .screen--flash .choices .big-btn,
+.is-phone .screen--patterns .choices .big-btn { flex-basis: 100%; }
+.is-phone .peek-btn { height: 48px; padding: 0 22px; border-width: 3px; border-radius: 24px; font-size: 19px; }
+
+/* Számvetés's number card: the tally while counting, then the numeral, its dots and its word. */
+.is-phone .number-card { min-width: 0; flex: 1 1 100%; height: auto; min-height: 112px; padding: 12px 16px; gap: 12px; flex-wrap: wrap; border-radius: 24px; box-shadow: 0 6px 0 var(--grass-deep); }
+.is-phone .number-card.is-shown { border-width: 4px; box-shadow: 0 6px 0 var(--leaf); }
+.is-phone .number-card .choice__numeral { font-size: 60px; }
+.is-phone .number-card svg { width: auto; max-width: 100%; height: 48px; }
+.is-phone .number-card__word { font-size: 30px; }
+.is-phone .tally { gap: 8px; }
+.is-phone .tally__dot { width: 34px; height: 34px; border-width: 4px; }
+.is-phone .tally__dot:nth-child(5):not(:last-child) { margin-right: 14px; }
+/* 11–20: two rows of ten. */
+.is-phone .tally--small { flex-wrap: wrap; justify-content: center; max-width: 280px; gap: 8px 6px; }
+.is-phone .tally--small .tally__dot { width: 20px; height: 20px; border-width: 3px; }
+.is-phone .tally--small .tally__dot:nth-child(5):not(:last-child),
+.is-phone .tally--small .tally__dot:nth-child(15):not(:last-child) { margin-right: 10px; }
+.is-phone .tally--small .tally__dot:nth-child(10):not(:last-child) { margin-right: 0; }
+
+/* Landscape Számvetés: the bed on the left; Csepi, the card and "next" on the right. */
+.stage--landscape .screen--learn {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'top top' 'field guide' 'field choices';
+  column-gap: 16px;
+  row-gap: 10px;
+}
+.stage--landscape .screen--learn .topbar { grid-area: top; }
+.stage--landscape .screen--learn .seedbed-box { grid-area: field; }
+.stage--landscape .screen--learn .flash-guide { grid-area: guide; align-self: end; padding: 0; }
+.stage--landscape .screen--learn .guide__csepi { width: 44px; height: 68px; }
+.stage--landscape .screen--learn .bubble { font-size: 17px; padding: 8px 14px; }
+.stage--landscape .screen--learn .choices { grid-area: choices; padding: 0 0 6px; }
+.stage--landscape .number-card { min-height: 96px; padding: 10px 12px; gap: 8px; }
+.stage--landscape .number-card .choice__numeral { font-size: 48px; }
+.stage--landscape .number-card svg { height: 40px; }
+.stage--landscape .number-card__word { font-size: 24px; }
+.stage--landscape .tally { gap: 5px; }
+.stage--landscape .tally__dot { width: 24px; height: 24px; border-width: 3px; }
+.stage--landscape .tally__dot:nth-child(5):not(:last-child) { margin-right: 10px; }
+.stage--landscape .tally--small { max-width: 236px; gap: 6px 4px; }
+.stage--landscape .tally--small .tally__dot { width: 17px; height: 17px; }
+.stage--landscape .screen--learn .choices .big-btn { flex-basis: 100%; height: 52px; font-size: 19px; }
+
+/* Landscape Magvillantás: like Méhecske, the bed on the left and the answers down the right edge. */
+.stage--landscape .screen--flash:not(.screen--learn) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'top top' 'field choices' 'guide choices';
+  column-gap: 14px;
+  row-gap: 8px;
+}
+.stage--landscape .screen--flash:not(.screen--learn) .topbar { grid-area: top; }
+.stage--landscape .screen--flash:not(.screen--learn) .seedbed-box { grid-area: field; }
+.stage--landscape .screen--flash:not(.screen--learn) .flash-guide { grid-area: guide; padding: 0; }
+.stage--landscape .screen--flash:not(.screen--learn) .guide__csepi { width: 40px; height: 62px; }
+.stage--landscape .screen--flash:not(.screen--learn) .bubble { font-size: 17px; padding: 8px 14px; }
+.stage--landscape .screen--flash:not(.screen--learn) .choices { grid-area: choices; flex-direction: column; flex-wrap: nowrap; align-items: stretch; padding: 2px 0 6px; gap: 10px; }
+.stage--landscape .screen--flash:not(.screen--learn) .choices > * { flex: 1 1 0; min-height: 0; height: auto; }
+.stage--landscape .screen--flash:not(.screen--learn) .choice { flex-direction: row; gap: 8px; }
+.stage--landscape .screen--flash:not(.screen--learn) .choice__numeral { font-size: 42px; }
+.stage--landscape .screen--flash:not(.screen--learn) .choice svg { height: 26px; max-width: 50%; }
+.stage--landscape .screen--flash:not(.screen--learn) .choices .big-btn { min-height: 48px; padding: 0 8px; font-size: 18px; }
+
+/* ---------- Virágsor ---------- */
+.is-phone .bed { flex: 1 1 0; min-height: 0; margin: 0 16px; display: flex; flex-direction: column; justify-content: center; }
+.is-phone .bed__row { gap: 4px; padding: 0 6px; }
+.is-phone .bed__slot { height: 92px; }
+.is-phone .bed__slot svg { width: 100%; max-width: 54px; height: auto; }
+.is-phone .bed__question { width: 100%; max-width: 52px; height: 72px; border-radius: 16px; border-width: 4px; font-size: 44px; }
+.is-phone .bed__soil { height: 26px; border-radius: 13px; margin-top: -6px; }
+.is-phone .patterns-guide { margin-top: 0; padding: 0 16px; }
+.is-phone .screen--patterns .choices { margin: 0; padding: 0 16px 16px; gap: 10px; flex-wrap: wrap; }
+.is-phone .screen--patterns .choice { flex: 1 1 0; width: auto; height: 140px; border-radius: 24px; border-width: 4px; box-shadow: 0 6px 0 var(--grass-deep); font-size: 18px; }
+.is-phone .screen--patterns .choice.is-right { box-shadow: 0 6px 0 var(--leaf); }
+.is-phone .screen--patterns .choice.is-wrong { box-shadow: 0 6px 0 var(--oops); }
+.is-phone .screen--patterns .choice svg { width: 60px; height: auto; }
+
+/* Landscape: the row across the left, the three flowers to choose from down the right edge. */
+.stage--landscape .screen--patterns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 156px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'top top' 'bed choices' 'guide choices';
+  column-gap: 16px;
+  row-gap: 8px;
+}
+.stage--landscape .screen--patterns .topbar { grid-area: top; }
+.stage--landscape .bed { grid-area: bed; margin: 0; }
+.stage--landscape .bed__row { gap: 8px; padding: 0 12px; }
+.stage--landscape .bed__slot { height: 120px; }
+.stage--landscape .bed__slot svg { max-width: 80px; }
+.stage--landscape .bed__question { max-width: 76px; height: 100px; border-radius: 20px; font-size: 56px; }
+.stage--landscape .bed__soil { height: 32px; border-radius: 16px; margin-top: -8px; }
+.stage--landscape .patterns-guide { grid-area: guide; padding: 0; }
+.stage--landscape .patterns-guide .guide__csepi { width: 40px; height: 62px; }
+.stage--landscape .patterns-guide .bubble { font-size: 17px; padding: 8px 14px; }
+.stage--landscape .screen--patterns .choices { grid-area: choices; flex-direction: column; flex-wrap: nowrap; align-items: stretch; padding: 2px 0 6px; }
+.stage--landscape .screen--patterns .choices > * { flex: 1 1 0; min-height: 0; height: auto; }
+.stage--landscape .screen--patterns .choice { flex-direction: row; justify-content: flex-start; gap: 2px; padding: 0 8px; font-size: 16px; }
+.stage--landscape .screen--patterns .choice svg { width: 44px; }
+.stage--landscape .screen--patterns .choices .big-btn { min-height: 48px; padding: 0 8px; font-size: 17px; }
+
+/* ---------- Mézút ---------- */
+.is-phone .trace-board { box-shadow: 0 10px 0 #bfddee; }
+.is-phone .trace-side .guide__csepi { width: 48px; height: 74px; }
+.is-phone .trace-card { border-radius: 26px; }
+.is-phone .trace-card__steps { gap: 8px; flex-wrap: wrap; justify-content: center; }
+.is-phone .trace-step { height: 48px; padding: 0 16px; border-radius: 24px; font-size: 19px; }
+.is-phone .trace-actions { min-height: 0; }
+.is-phone .trace-actions .big-btn { flex: 1; }
+
+/* Portrait: Csepi on top, the board as big as the room allows, the steps and buttons below. */
+.stage--portrait .trace-body { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 0 16px 16px; }
+.stage--portrait .trace-side { display: contents; }
+.stage--portrait .trace-side .guide { order: -1; flex: none; }
+.stage--portrait .number-card.trace-card { flex: none; min-height: 68px; }
+
+/* Landscape: the board down the left at full height; the buttons, Csepi and the steps beside it. */
+.stage--landscape .screen--trace {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: 'board top' 'board side';
+  column-gap: 24px;
+  row-gap: 12px;
+}
+.stage--landscape .screen--trace .topbar { grid-area: top; }
+.stage--landscape .trace-body { display: contents; }
+.stage--landscape .trace-fit { grid-area: board; }
+.stage--landscape .trace-side { grid-area: side; padding: 0 0 6px; gap: 12px; justify-content: flex-end; }
+/* Csepi under the title; the steps and buttons at the foot, near the thumb. */
+.stage--landscape .trace-side .guide { flex: none; margin-bottom: auto; }
+.stage--landscape .number-card.trace-card { flex: none; min-height: 0; padding: 8px 12px; }
+.stage--landscape .trace-card .choice__numeral { font-size: 44px; }
+
 /* ---------- screen time ---------- */
-.is-phone .time-banner { top: calc(var(--safe-t) + 66px); height: 38px; padding: 0 14px; border-radius: 19px; font-size: 16px; white-space: nowrap; }
-.is-phone .time-banner svg { width: 20px; height: 20px; }
-.stage--landscape .time-banner { top: 66px; }
+.is-phone .time-banner { top: var(--safe-t); height: 30px; padding: 0 14px; border-radius: 0 0 15px 15px; font-size: 15px; }
+.is-phone .time-banner svg { width: 18px; height: 18px; }
+.stage--portrait:has(> .time-banner) .topbar { margin-top: 26px; }
+.stage--landscape .time-banner { top: 0; }
+.stage--landscape:has(> .time-banner) .topbar,
+.stage--landscape:has(> .time-banner) .screen--home .plots { margin-top: 26px; }
 .is-phone .rest { gap: 10px; padding-left: calc(1000px + 24px); padding-right: calc(1000px + 24px); }
 .is-phone .rest > svg:not(.rest__moon) { width: 90px; height: 140px; }
 .is-phone .rest__moon { top: calc(1000px + var(--safe-t) + 24px); right: 1020px; width: 80px; height: 80px; }

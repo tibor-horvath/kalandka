@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Seed } from '../components/art';
+import { FitBox } from '../components/FitBox';
+import { useForm } from '../components/Stage';
 import { DotFace, MiniSprout } from '../components/seeds';
 import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { ASK, FIELD_H, FIELD_W, READY, buildFlashRound, revealFeedback, rightFeedback } from '../games/flash/logic';
+import { ASK, FIELD_H, FIELD_W, READY, foldSeeds, buildFlashRound, revealFeedback, rightFeedback } from '../games/flash/logic';
 import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
 
@@ -12,6 +14,9 @@ type Phase = 'ready' | 'flash' | 'ask' | 'reveal' | 'solved';
 export function Flash({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
   const [round] = useState(() => buildFlashRound(progress.flashRound, progress.flashSolved));
+  // Portrait phones: the two groups stand one above the other, so the seeds can be bigger.
+  const folded = useForm() === 'portrait' ? foldSeeds(round.seeds) : null;
+  const field = folded ?? { width: FIELD_W, height: FIELD_H, seeds: round.seeds };
   const [phase, setPhase] = useState<Phase>('ready');
   const [wrong, setWrong] = useState<number | null>(null);
   const rewarded = useRef(false);
@@ -71,27 +76,29 @@ export function Flash({ onBack }: { onBack: () => void }) {
         </RoundButton>
       </header>
 
-      <div className="seedbed" style={{ width: FIELD_W, height: FIELD_H }}>
-        {seedsVisible &&
-          round.seeds.map((s, i) => (
-            <span key={i} className="seedbed__seed" style={{ left: s.x, top: s.y, transform: `translate(-50%, -50%) rotate(${s.rot}deg)` }}>
-              {phase === 'solved' ? <MiniSprout /> : <Seed size={44} />}
-            </span>
-          ))}
-        {(phase === 'ready' || phase === 'ask') && (
-          <div className="seedbed__cover">
-            {phase === 'ready' ? (
-              <button type="button" className="big-btn" onClick={show}>
-                Mutasd a magokat!
-              </button>
-            ) : (
-              <button type="button" className="peek-btn" onClick={show}>
-                Mutasd újra!
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+      <FitBox className="seedbed-box" width={field.width} height={field.height}>
+        <div className="seedbed" style={{ width: field.width, height: field.height }}>
+          {seedsVisible &&
+            field.seeds.map((s, i) => (
+              <span key={i} className="seedbed__seed" style={{ left: s.x, top: s.y, transform: `translate(-50%, -50%) rotate(${s.rot}deg)` }}>
+                {phase === 'solved' ? <MiniSprout /> : <Seed size={44} />}
+              </span>
+            ))}
+          {(phase === 'ready' || phase === 'ask') && (
+            <div className="seedbed__cover">
+              {phase === 'ready' ? (
+                <button type="button" className="big-btn" onClick={show}>
+                  Mutasd a magokat!
+                </button>
+              ) : (
+                <button type="button" className="peek-btn" onClick={show}>
+                  Mutasd újra!
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </FitBox>
 
       <div className="flash-guide">
         <GuideBubble mood={fb.mood} tone={fb.tone}>

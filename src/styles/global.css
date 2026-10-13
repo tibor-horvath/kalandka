@@ -307,7 +307,9 @@ h1, h2, p { margin: 0; }
 .parents .stats dd { font-size: 30px; }
 
 /* ---------- screen time ---------- */
-.time-banner { position: absolute; z-index: 8; left: 50%; top: 106px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 22px; background: var(--oops-tint); color: var(--oops-ink); font-size: 20px; font-weight: 800; box-shadow: 0 4px 0 #f1d2b0; animation: pop 0.4s cubic-bezier(.34, 1.56, .64, 1); }
+/* Hangs from the top edge above the top bar, which moves down while it shows, so it never covers a game. */
+.time-banner { position: absolute; z-index: 8; left: 50%; top: 0; translate: -50% 0; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 18px; border-radius: 0 0 18px 18px; background: var(--oops-tint); color: var(--oops-ink); font-size: 18px; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 0 #f1d2b0; animation: pop 0.4s cubic-bezier(.34, 1.56, .64, 1); }
+.stage:has(> .time-banner) .topbar { margin-top: 18px; }
 .rest { position: absolute; z-index: 9; inset: -1000px; padding: 1000px; background: #1d3557; color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; }
 .rest__moon { position: absolute; top: 1050px; right: 1110px; }
 .rest__title { font-size: 56px; font-weight: 800; line-height: 1; }

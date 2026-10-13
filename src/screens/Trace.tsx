@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { Bee } from '../components/art';
+import { FitBox } from '../components/FitBox';
 import { DotFace } from '../components/seeds';
 import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import {
@@ -31,6 +32,9 @@ const PAD_Y = 22;
 const VIEW = `${-PAD_X} ${-PAD_Y} ${BOX_W + 2 * PAD_X} ${BOX_H + 2 * PAD_Y}`;
 const BOARD_H = 628;
 const BOARD_W = Math.round((BOARD_H * (BOX_W + 2 * PAD_X)) / (BOX_H + 2 * PAD_Y));
+/** The white board around the trail, with its padding and shadow: what FitBox scales on phones. */
+const CARD_W = BOARD_W + 44;
+const CARD_H = BOARD_H + 32 + 10;
 /** Bee size in trail units, and the offset that puts its body on the trail point. */
 const BEE_W = 54;
 const BEE_C = { x: (42 * BEE_W) / 80, y: (36 * BEE_W) / 80 };
@@ -274,72 +278,74 @@ export function Trace({ onBack }: { onBack: () => void }) {
       </header>
 
       <div className="trace-body">
-        <div className={`trace-board${done ? ' is-done' : ''}`}>
-          <svg
-            ref={svg}
-            className="trace-svg"
-            width={BOARD_W}
-            height={BOARD_H}
-            viewBox={VIEW}
-            onPointerDown={onDown}
-            onPointerMove={onMove}
-            onPointerUp={onUp}
-            onPointerCancel={onUp}
-            role="img"
-            aria-label={`Írd le: ${shape.digit}`}
-          >
-            {shape.strokes.map((trail, s) => {
-              const d = pathData(trail);
-              const isDone = s < strokeNo;
-              const isNow = s === strokeNo;
-              const filled = isDone ? trail : isNow ? trail.slice(0, idx + 1) : [];
-              return (
-                <g key={s}>
-                  {!isDone && <path d={d} className="trail__lane" strokeWidth={TOLERANCE * 1.3} />}
-                  <path d={d} className={`trail__dots${isNow ? ' is-now' : ''}`} />
-                  {filled.length > 1 && (
-                    <>
-                      <path d={pathData(filled)} className="trail__honey" />
-                      <path d={pathData(filled)} className="trail__shine" />
-                    </>
-                  )}
-                  {!isDone &&
-                    drops[s]
-                      .filter((cp) => !isNow || cp > idx)
-                      .map((cp) => (
-                        <g key={cp} className="honey-drop" transform={`translate(${trail[cp].x} ${trail[cp].y})`}>
-                          <circle r="8" />
-                          <circle r="2.6" cx="-2.6" cy="-2.6" className="honey-drop__shine" />
-                        </g>
-                      ))}
-                  {multi && (isNow || s > strokeNo) && (
-                    <g className={`trail__start${isNow ? ' is-now' : ''}`} transform={`translate(${trail[0].x} ${trail[0].y})`}>
-                      <circle r="17" />
-                      <text y="6">{s + 1}</text>
-                    </g>
-                  )}
+        <FitBox className="trace-fit" width={CARD_W} height={CARD_H}>
+          <div className={`trace-board${done ? ' is-done' : ''}`}>
+            <svg
+              ref={svg}
+              className="trace-svg"
+              width={BOARD_W}
+              height={BOARD_H}
+              viewBox={VIEW}
+              onPointerDown={onDown}
+              onPointerMove={onMove}
+              onPointerUp={onUp}
+              onPointerCancel={onUp}
+              role="img"
+              aria-label={`Írd le: ${shape.digit}`}
+            >
+              {shape.strokes.map((trail, s) => {
+                const d = pathData(trail);
+                const isDone = s < strokeNo;
+                const isNow = s === strokeNo;
+                const filled = isDone ? trail : isNow ? trail.slice(0, idx + 1) : [];
+                return (
+                  <g key={s}>
+                    {!isDone && <path d={d} className="trail__lane" strokeWidth={TOLERANCE * 1.3} />}
+                    <path d={d} className={`trail__dots${isNow ? ' is-now' : ''}`} />
+                    {filled.length > 1 && (
+                      <>
+                        <path d={pathData(filled)} className="trail__honey" />
+                        <path d={pathData(filled)} className="trail__shine" />
+                      </>
+                    )}
+                    {!isDone &&
+                      drops[s]
+                        .filter((cp) => !isNow || cp > idx)
+                        .map((cp) => (
+                          <g key={cp} className="honey-drop" transform={`translate(${trail[cp].x} ${trail[cp].y})`}>
+                            <circle r="8" />
+                            <circle r="2.6" cx="-2.6" cy="-2.6" className="honey-drop__shine" />
+                          </g>
+                        ))}
+                    {multi && (isNow || s > strokeNo) && (
+                      <g className={`trail__start${isNow ? ' is-now' : ''}`} transform={`translate(${trail[0].x} ${trail[0].y})`}>
+                        <circle r="17" />
+                        <text y="6">{s + 1}</text>
+                      </g>
+                    )}
+                  </g>
+                );
+              })}
+  
+              {!done && idx === 0 && <circle cx={pts[0].x} cy={pts[0].y} r="26" className="trail__ring" />}
+  
+              {guide && guide.length > 1 && <path d={pathData(guide)} className="trail__guide" />}
+              {strayed && finger && !done && <line x1={finger.x} y1={finger.y} x2={beeAt.x} y2={beeAt.y} className="trail__tether" />}
+  
+              {bursts.map((b) => (
+                <g key={b.id} transform={`translate(${b.x} ${b.y})`}>
+                  <circle r="12" className="burst__ring" />
+                  {SPARKS.map((s, i) => (
+                    <circle key={i} r="3.5" className="burst__spark" style={{ '--dx': `${s.dx}px`, '--dy': `${s.dy}px` } as CSSProperties} />
+                  ))}
                 </g>
-              );
-            })}
-
-            {!done && idx === 0 && <circle cx={pts[0].x} cy={pts[0].y} r="26" className="trail__ring" />}
-
-            {guide && guide.length > 1 && <path d={pathData(guide)} className="trail__guide" />}
-            {strayed && finger && !done && <line x1={finger.x} y1={finger.y} x2={beeAt.x} y2={beeAt.y} className="trail__tether" />}
-
-            {bursts.map((b) => (
-              <g key={b.id} transform={`translate(${b.x} ${b.y})`}>
-                <circle r="12" className="burst__ring" />
-                {SPARKS.map((s, i) => (
-                  <circle key={i} r="3.5" className="burst__spark" style={{ '--dx': `${s.dx}px`, '--dy': `${s.dy}px` } as CSSProperties} />
-                ))}
-              </g>
-            ))}
-
-            {demo !== null && !done && <TrailBee at={pts[demo]} angle={heading(pts, demo)} className="is-ghost" />}
-            <TrailBee at={beeAt} angle={beeAngle} className={`${flying ? 'is-flying' : ''}${strayed ? ' is-waiting' : ''}${done ? ' is-happy' : ''}`} />
-          </svg>
-        </div>
+              ))}
+  
+              {demo !== null && !done && <TrailBee at={pts[demo]} angle={heading(pts, demo)} className="is-ghost" />}
+              <TrailBee at={beeAt} angle={beeAngle} className={`${flying ? 'is-flying' : ''}${strayed ? ' is-waiting' : ''}${done ? ' is-happy' : ''}`} />
+            </svg>
+          </div>
+        </FitBox>
 
         <div className="trace-side">
           <GuideBubble mood={fb.mood} tone={fb.tone}>
