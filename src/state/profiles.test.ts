@@ -38,7 +38,7 @@ describe('profiles', () => {
     expect(progressOf(s, 'a').seeds).toBe(3);
     expect(progressOf(s, 'b').seeds).toBe(0);
     expect(progressOf(s, 'b').voice).toBe(false);
-    expect(progressOf(s, 'b').screenLimitMin).toBe(0);
+    expect(progressOf(s, 'b').screenLimitMin).toBe(15);
   });
 
   it('sets starting levels from the age band', () => {

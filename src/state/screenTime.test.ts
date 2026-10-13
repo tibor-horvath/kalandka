@@ -10,8 +10,8 @@ describe('screen time', () => {
     expect(today(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
   });
 
-  it('has no limit by default', () => {
-    expect(remainingSeconds(DEFAULT_PROGRESS, DAY)).toBe(Infinity);
+  it('has a 15-minute limit by default', () => {
+    expect(remainingSeconds(DEFAULT_PROGRESS, DAY)).toBe(15 * 60);
   });
 
   it('counts down from the daily limit', () => {
@@ -53,7 +53,7 @@ describe('screen time', () => {
   });
 
   it('"Pihenő most" ends play for today, and extra time lifts it', () => {
-    let p = restNow({ ...DEFAULT_PROGRESS }, DAY);
+    let p = restNow({ ...DEFAULT_PROGRESS, screenLimitMin: 0 }, DAY);
     expect(remainingSeconds(p, DAY)).toBe(0);
     expect(remainingSeconds(p, NEXT)).toBe(Infinity);
     p = addBonus(p, DAY);

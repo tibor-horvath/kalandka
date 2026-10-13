@@ -121,7 +121,7 @@ export const DEFAULT_PROGRESS: Progress = {
   voice: true,
   sounds: true,
   unlockAll: false,
-  screenLimitMin: 0,
+  screenLimitMin: 15,
   playDate: '',
   playSeconds: 0,
   bonusSeconds: 0,
