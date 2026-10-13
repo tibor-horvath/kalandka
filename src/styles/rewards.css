@@ -83,7 +83,14 @@
 .screen--album .screen-title { flex: 1; color: var(--oops-ink); }
 .screen--album .topbar { gap: 20px; justify-content: flex-start; }
 .screen--album .round-btn--white, .screen--album .pill { box-shadow: 0 4px 0 #ead9a8; }
-.album { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 14px; padding: 18px 32px 12px; }
+.album { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--cols, 7), minmax(0, 1fr)); gap: 14px; padding: 12px 32px 12px; }
+/* One page per world. */
+.album__worlds { display: flex; justify-content: center; gap: 12px; padding: 4px 32px 0; }
+.album__world { height: 52px; padding: 0 12px 0 22px; border: 3px solid #ead9a8; border-radius: 26px; background: transparent; color: var(--ink); font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.album__world.is-on { background: var(--paper); border-color: var(--paper); box-shadow: 0 4px 0 #ead9a8; }
+.album__world-count { min-width: 32px; height: 32px; padding: 0 8px; border-radius: 16px; background: #fff4d1; color: var(--oops-ink); font-size: 18px; line-height: 32px; text-align: center; }
+.album__game--coming { background: transparent; border: 4px dashed #ead9a8; box-shadow: none; }
+.album__coming { margin: auto 0; font-family: var(--body); font-size: 16px; font-weight: 700; color: #6b5520; }
 .album__game { background: var(--paper); border-radius: 26px; padding: 16px 6px; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 5px 0 #ead9a8; min-width: 0; }
 .album__name { font-size: 20px; font-weight: 800; line-height: 1.1; text-align: center; min-height: 44px; display: flex; align-items: center; overflow-wrap: anywhere; hyphens: auto; }
 .album__stickers { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 8px; }
@@ -213,7 +220,10 @@
 .stage--landscape .visitor-pop__title { font-size: 34px; }
 
 .stage--portrait .album { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px 16px; overflow-y: auto; }
-.stage--landscape .album { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; padding: 8px 0; }
+.stage--landscape .album { grid-template-columns: repeat(var(--cols, 7), minmax(0, 1fr)); gap: 6px; padding: 8px 0; }
+.is-phone .album__worlds { padding: 4px 16px 0; gap: 8px; }
+.is-phone .album__world { height: 44px; padding: 0 8px 0 14px; font-size: 16px; }
+.is-phone .album__world-count { min-width: 26px; height: 26px; line-height: 26px; font-size: 14px; }
 .is-phone .album__game { border-radius: 18px; padding: 10px 4px; gap: 6px; }
 .is-phone .album__name { font-size: 16px; min-height: 0; }
 .stage--portrait .album__stickers { flex-direction: row; justify-content: center; gap: 2px; }

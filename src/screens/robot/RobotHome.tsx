@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { KidChip, MapButton, ParentsButton, VoiceButton } from '../../components/hub';
 import { Bolt, CsavarIcon, Gear, PathArt } from '../../components/robot';
+import { FriendArt, MyRobot } from '../../components/robotParts';
 import { useForm } from '../../components/Stage';
+import { StickerPop } from '../../components/StickerPop';
 import { GuideBubble, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../../components/ui';
-import { PATH_LEVELS, pathLevelIndex } from '../../games/robot/path';
+import { pathLevelIndex } from '../../games/robot/path';
 import { speak } from '../../lib/speech';
 import { kidName, useActiveKid, useProfiles } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
+import { markStickerSeen, newStickers } from '../../state/rewards';
+import { boltBalance, canBuyAnything, friendsOf, newFriend } from '../../state/robotParts';
 
 export type RobotGameId = 'path';
 
@@ -17,11 +21,22 @@ const COMING = [
   { name: 'Válogatógép', skill: 'Csoportosítás' }
 ];
 
-const SHELF_SLOTS = 14;
 const NOTICE_MS = 5000;
 
 /** Robotműhely: Csavar's workshop, the second Kalandka world, for the bigger ones. */
-export function RobotHome({ onOpen, onParents, onSwitch, onMap }: { onOpen: (game: RobotGameId) => void; onParents: () => void; onSwitch: () => void; onMap: () => void }) {
+export function RobotHome({
+  onOpen,
+  onWorkshop,
+  onParents,
+  onSwitch,
+  onMap
+}: {
+  onOpen: (game: RobotGameId) => void;
+  onWorkshop: () => void;
+  onParents: () => void;
+  onSwitch: () => void;
+  onMap: () => void;
+}) {
   const { progress, update } = useProgress();
   const { profiles } = useProfiles();
   const kid = useActiveKid();
@@ -29,6 +44,10 @@ export function RobotHome({ onOpen, onParents, onSwitch, onMap }: { onOpen: (gam
   const shared = profiles.kids.length > 1;
   const [notice, setNotice] = useState<string | null>(null);
   const noticeTimer = useRef<number | null>(null);
+  // A Robotút sticker earned in the game is celebrated here, one at a time.
+  const sticker = newStickers(progress, 'robot')[0] ?? null;
+  const balance = boltBalance(progress);
+  const friends = friendsOf(progress).slice(0, progress.robotFriendsSeen);
 
   const hello = shared ? `Szia, ${kidName(kid)}! Jó, hogy itt vagy a műhelyben!` : 'Szia! Jó, hogy itt vagy a műhelyben!';
   const greeting = progress.robotWelcomed ? hello : 'Szia, én Csavar vagyok!';
@@ -36,16 +55,23 @@ export function RobotHome({ onOpen, onParents, onSwitch, onMap }: { onOpen: (gam
   const intro = progress.robotWelcomed ? `${greeting} ${question}` : 'Szia, én Csavar vagyok, a műhely robotja! Itt robotokat programozunk. Kezdjük a Robotúttal!';
 
   useEffect(() => {
-    speak(intro);
+    if (!sticker) speak(intro);
     return () => {
       if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
     };
     // Runs once per visit.
   }, []);
 
-  const open = (game: RobotGameId) => {
+  const welcomeOnce = () => {
     if (!progress.robotWelcomed) update((p) => ({ ...p, robotWelcomed: true }));
+  };
+  const open = (game: RobotGameId) => {
+    welcomeOnce();
     onOpen(game);
+  };
+  const openWorkshop = () => {
+    welcomeOnce();
+    onWorkshop();
   };
 
   const tapComing = (name: string) => {
@@ -57,7 +83,7 @@ export function RobotHome({ onOpen, onParents, onSwitch, onMap }: { onOpen: (gam
   };
 
   const levelIdx = pathLevelIndex(progress.pathSolved);
-  const shelf = Math.min(progress.bolts, SHELF_SLOTS);
+  const workshopBadge = newFriend(progress) ? 'Barát jött!' : canBuyAnything(progress) ? 'Építhetsz!' : null;
 
   return (
     <div className="screen screen--home screen--robot-home world--robot">
@@ -73,10 +99,10 @@ export function RobotHome({ onOpen, onParents, onSwitch, onMap }: { onOpen: (gam
         </div>
         <div className="topbar__right">
           {shared && <KidChip onSwitch={onSwitch} />}
-          <div className="pill" aria-label={`${progress.bolts} csavar`}>
+          <div className="pill" aria-label={`${balance} csavar`}>
             <Bolt />
             <span>
-              {progress.bolts}
+              {balance}
               <span className="pill__unit"> csavar</span>
             </span>
           </div>
@@ -111,6 +137,18 @@ export function RobotHome({ onOpen, onParents, onSwitch, onMap }: { onOpen: (gam
           </span>
         </button>
 
+        <button type="button" className="plot plot--play plot--builder" onClick={openWorkshop} aria-label="Robotépítő – építsd meg a saját robotodat">
+          {workshopBadge && <span className="plot__badge">{workshopBadge}</span>}
+          <span className="plot__builder">
+            <MyRobot progress={progress} width={80} />
+          </span>
+          <span className="plot__soil plot__soil--floor" />
+          <span className="plot__name">Robotépítő</span>
+          <span className="plot__cta">
+            <Bolt size={22} /> Építés
+          </span>
+        </button>
+
         {COMING.map((m) => (
           <button key={m.name} type="button" className="plot plot--locked" onClick={() => tapComing(m.name)} aria-label={`${m.name}: még készül`}>
             <span className="plot__lock">
@@ -124,16 +162,18 @@ export function RobotHome({ onOpen, onParents, onSwitch, onMap }: { onOpen: (gam
         ))}
       </div>
 
-      <div className="garden shelf" aria-label={`A polcod: ${progress.bolts} csavar`}>
-        {shelf === 0 ? (
-          <p className="garden__empty">Ide gyűlnek a csavarjaid. {PATH_LEVELS.length} szint vár a Robotúton!</p>
-        ) : (
-          Array.from({ length: shelf }, (_, i) => (
-            <span key={i} className="garden__flower shelf__bolt">
-              <Bolt size={40} />
-            </span>
-          ))
-        )}
+      {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}
+
+      <div className="garden shelf" aria-label={`A polcod: a robotod${friends.length ? ` és ${friends.length} barátja` : ''}`}>
+        <span className="garden__flower shelf__robot">
+          <MyRobot progress={progress} width={70} />
+        </span>
+        {friends.map((f) => (
+          <span key={f.id} className="garden__flower shelf__friend">
+            <FriendArt id={f.id} width={76} />
+          </span>
+        ))}
+        {friends.length === 0 && <p className="garden__empty shelf__hint">Ő a te robotod. A csavarjaidból építhetsz rá!</p>}
       </div>
     </div>
   );

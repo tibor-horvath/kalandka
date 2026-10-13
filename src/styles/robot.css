@@ -17,9 +17,13 @@
 .world--robot .garden__empty { color: #2f4a63; }
 .world--robot .bubble__kicker { color: var(--leaf-deep); }
 .plot__soil--floor { background: var(--soil); height: 14px; border-radius: 8px; margin-top: 2px; }
-.screen--robot-home .plot { height: 250px; }
+.screen--robot-home .plots { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.screen--robot-home .plot--play { grid-column: span 3; height: 226px; }
+.screen--robot-home .plot--locked { grid-column: span 2; height: 150px; }
+.screen--robot-home .plot--locked > svg { width: 44px; height: 44px; margin-bottom: 4px; }
+.is-phone .screen--robot-home .plot { grid-column: auto; }
 .screen--robot-home .plot--play > svg { margin-bottom: 8px; }
-.screen--robot-home .plot--locked > svg { width: 64px; height: 64px; margin-bottom: 6px; }
+
 .is-phone .screen--robot-home .plot { height: 150px; }
 .is-phone .screen--robot-home .plot > svg.path-art { width: 120px; height: auto; }
 .is-phone .screen--robot-home .plot--locked > svg { width: 40px; height: 40px; }
@@ -268,3 +272,79 @@
 .stage--landscape .path-palette--relative .path-cmd { width: 70px; }
 .stage--landscape .path-actions .big-btn, .stage--landscape .path-actions .peek-btn { height: 44px; font-size: 17px; }
 .stage--landscape .path-energy { padding: 4px 10px; }
+
+/* ---------- Robotépítő ---------- */
+.plot--builder .plot__builder { display: block; margin-bottom: -4px; }
+.plot--builder .plot__builder svg { display: block; }
+.plot--builder .plot__cta svg { margin-left: -4px; }
+.shelf { gap: 18px; align-items: flex-end; }
+.shelf__robot svg, .shelf__friend svg { display: block; }
+.shelf__hint { margin-bottom: 30px; }
+
+.screen--workshop { display: flex; flex-direction: column; }
+.screen--workshop .screen-title { flex: 1; color: var(--leaf-deep); }
+.screen--workshop .topbar { gap: 20px; justify-content: flex-start; }
+.workshop { position: relative; flex: 1; min-height: 0; display: flex; gap: 24px; padding: 14px 40px 28px; }
+.workshop__stage { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px; padding: 20px; border-radius: 32px; background: #f4f7fb; box-shadow: 0 6px 0 var(--grass-deep); }
+.workshop__robot { position: relative; display: flex; flex-direction: column; align-items: center; margin-top: auto; }
+.workshop__robot svg { position: relative; z-index: 1; display: block; }
+.workshop__platform { width: 280px; height: 30px; margin-top: -18px; border-radius: 50%; background: #c9d6e4; box-shadow: inset 0 -6px 0 #9aafc6; }
+.workshop__friends { width: 100%; min-height: 96px; display: flex; align-items: flex-end; gap: 10px; }
+.workshop__friend { border: none; background: none; padding: 0; cursor: pointer; border-radius: 20px; }
+.workshop__hop { display: block; }
+.workshop__hop.is-poked { animation: friend-hop 0.45s cubic-bezier(.3, 1.6, .5, 1); }
+.workshop__friend svg { display: block; }
+@keyframes friend-hop { 40% { transform: translateY(-16px) rotate(-4deg); } }
+
+.workshop__panel { width: 470px; flex: none; background: var(--paper); border-radius: 32px; box-shadow: 0 6px 0 var(--grass-deep); padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.workshop__slots { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.workshop__slot { height: 72px; padding: 4px 0; border: 3px solid transparent; border-radius: 18px; background: #eef3f9; color: var(--leaf-deep); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-family: var(--body); font-size: 14px; font-weight: 700; cursor: pointer; }
+.workshop__slot.is-on { background: var(--good-tint); border-color: var(--leaf); }
+.workshop__parts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.workshop__part { position: relative; min-height: 112px; padding: 8px 10px; border: 3px solid #e3ebf4; border-radius: 22px; background: var(--paper); display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left; cursor: pointer; color: var(--ink); }
+.workshop__part > svg { grid-row: 1 / span 2; }
+.workshop__part:active { transform: scale(0.97); }
+.workshop__part.is-on { border-color: var(--leaf); background: var(--good-tint); }
+.workshop__part.is-later > svg { opacity: 0.55; }
+.workshop__part-name { font-size: 20px; font-weight: 800; line-height: 1.1; align-self: end; }
+.workshop__part .plant-option__cost { justify-self: start; align-self: start; }
+.workshop__tag { justify-self: start; align-self: start; padding: 2px 10px; border-radius: 999px; background: #e3ebf4; font-family: var(--body); font-size: 14px; font-weight: 700; color: #2f4a63; }
+.workshop__tag.is-on { background: var(--leaf); color: var(--paper); }
+.workshop__short { position: absolute; right: 10px; bottom: 8px; font-family: var(--body); font-size: 13px; font-weight: 700; color: #3e5872; }
+.workshop__panel .kiskert__note { font-size: 15px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .workshop__hop.is-poked { animation: none; }
+}
+
+/* Phones: the robot on top, the parts below (portrait); side by side (landscape). */
+.is-phone .workshop__slot { height: 52px; border-radius: 14px; font-size: 11px; }
+.is-phone .workshop__slot svg { width: 22px; height: 22px; }
+.is-phone .workshop__part { min-height: 76px; padding: 4px 6px; border-radius: 16px; }
+.is-phone .workshop__part > svg { width: 44px; height: auto; }
+.is-phone .workshop__part-name { font-size: 15px; }
+.is-phone .workshop__short { display: none; }
+.is-phone .workshop__part .plant-option__cost { font-size: 16px; }
+.is-phone .workshop__part .plant-option__cost svg { width: 16px; height: 16px; }
+.is-phone .workshop__tag { font-size: 12px; }
+.is-phone .workshop__friends { min-height: 0; }
+.is-phone .workshop__friend svg { width: 58px; height: auto; }
+.is-phone .workshop__platform { width: 170px; height: 20px; margin-top: -12px; }
+.stage--portrait .workshop { flex-direction: column; gap: 12px; padding: 8px 16px 16px; overflow-y: auto; }
+.stage--portrait .workshop__stage { flex: none; padding: 12px; gap: 8px; border-radius: 24px; }
+.stage--portrait .workshop__robot svg { width: 130px; height: auto; }
+.stage--portrait .workshop__panel { width: auto; padding: 14px; gap: 10px; border-radius: 24px; }
+.stage--portrait .workshop__panel .kiskert__note { display: none; }
+.stage--portrait .kiskert__say .bubble { font-size: 17px; }
+.stage--landscape .workshop { gap: 12px; padding: 8px 0 0; }
+.stage--landscape .workshop__stage { padding: 8px; gap: 4px; border-radius: 20px; }
+.stage--landscape .workshop__robot svg { width: 110px; height: auto; }
+.stage--landscape .workshop__panel { width: 400px; padding: 10px; gap: 6px; border-radius: 20px; overflow-y: auto; }
+.stage--landscape .workshop__panel .kiskert__note { display: none; }
+.stage--landscape .workshop__parts { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.stage--landscape .workshop__part { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; min-height: 0; }
+.stage--landscape .workshop__part > svg { grid-row: auto; width: 38px; }
+.stage--landscape .workshop__part-name { font-size: 13px; }
+.is-phone .shelf__robot svg { width: 48px; height: auto; }
+.is-phone .shelf__friend svg { width: 52px; height: auto; }
+.is-phone .plot--builder .plot__builder svg { width: 44px; height: auto; }

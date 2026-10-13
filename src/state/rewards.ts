@@ -5,8 +5,11 @@ import { SHAPE_ORDER } from '../games/patterns/logic';
 import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL } from '../games/pots/logic';
 import { TRACE_ORDER } from '../games/trace/logic';
 import { PLANTS } from '../games/water/logic';
+import { PATH_LEVELS, PATH_ROUNDS_PER_LEVEL } from '../games/robot/path';
 import type { GameId } from '../screens/Home';
+import type { RobotGameId } from '../screens/robot/RobotHome';
 import type { Progress } from './progress';
+import type { WorldId } from './worlds';
 
 // The reward loop: every solved task earns a seed; seeds are planted in the child's own garden
 // (Kiskert); plants grow as the child keeps playing; a grown garden brings visitors; and each new
@@ -113,7 +116,7 @@ export function newVisitor(p: Progress): Visitor | null {
 
 export interface Sticker {
   id: string;
-  game: GameId;
+  game: GameId | RobotGameId;
   /** Printed on the sticker. */
   mark: string;
   label: string;
@@ -125,22 +128,29 @@ export interface Sticker {
 }
 
 export interface StickerGame {
-  id: GameId;
+  id: GameId | RobotGameId;
   name: string;
   color: string;
   ink: string;
+  /** The world whose album page the game is on. */
+  world: WorldId;
 }
 
 /** Album order and each game's sticker colour (light ones carry dark ink). */
 export const STICKER_GAMES: StickerGame[] = [
-  { id: 'learn', name: 'Számvetés', color: '#2E86DE', ink: '#FFFFFF' },
-  { id: 'water', name: 'Locsolás', color: '#9FCDF3', ink: '#10233A' },
-  { id: 'patterns', name: 'Virágsor', color: '#F4A3C4', ink: '#10233A' },
-  { id: 'flash', name: 'Magvillantás', color: '#8A5A3B', ink: '#FFFFFF' },
-  { id: 'add', name: 'Méhecske', color: '#FFC93C', ink: '#10233A' },
-  { id: 'trace', name: 'Mézút', color: '#D9741A', ink: '#FFFFFF' },
-  { id: 'pots', name: 'Cserépbarátok', color: '#2F7D32', ink: '#FFFFFF' }
+  { id: 'learn', name: 'Számvetés', color: '#2E86DE', ink: '#FFFFFF', world: 'garden' },
+  { id: 'water', name: 'Locsolás', color: '#9FCDF3', ink: '#10233A', world: 'garden' },
+  { id: 'patterns', name: 'Virágsor', color: '#F4A3C4', ink: '#10233A', world: 'garden' },
+  { id: 'flash', name: 'Magvillantás', color: '#8A5A3B', ink: '#FFFFFF', world: 'garden' },
+  { id: 'add', name: 'Méhecske', color: '#FFC93C', ink: '#10233A', world: 'garden' },
+  { id: 'trace', name: 'Mézút', color: '#D9741A', ink: '#FFFFFF', world: 'garden' },
+  { id: 'pots', name: 'Cserépbarátok', color: '#2F7D32', ink: '#FFFFFF', world: 'garden' },
+  { id: 'path', name: 'Robotút', color: '#138A86', ink: '#FFFFFF', world: 'robot' }
 ];
+
+/** Robotút stickers: a course solved on a level (the first solved course of that level and on). */
+const pathLevel = (name: string) => PATH_LEVELS.findIndex((l) => l.name === name);
+const pathPassed = (name: string) => (p: Progress) => p.pathSolved > pathLevel(name) * PATH_ROUNDS_PER_LEVEL;
 
 /** Méhecske levels that close a number range: the last level up to 5, up to 10, and round tens. */
 const ADD_PAST_5 = ADD_LEVELS.findIndex((l) => l.name === '10-ig, gyűjtéssel');
@@ -171,6 +181,11 @@ export const STICKERS: Sticker[] = [
   { id: 'trace-memory', game: 'trace', mark: '0–9', label: 'Fejből írom', praise: 'Minden számot emlékezetből írsz!', earned: (p) => p.traceFadedSolved >= TRACE_ORDER.length, set: 1 },
   { id: 'pots-5', game: 'pots', mark: '5', label: 'Öt barátai', praise: 'Ismered az öt barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL },
   { id: 'pots-10', game: 'pots', mark: '10', label: 'Tíz barátai', praise: 'Ismered a tíz barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL * 2 },
+  { id: 'path-first', game: 'path', mark: '1', label: 'Első út', praise: 'Elvezetted a robotot az elemhez!', earned: (p) => p.pathSolved >= 1 },
+  { id: 'path-plan', game: 'path', mark: '▶', label: 'Tervező', praise: 'Előre megtervezted a robot útját!', earned: pathPassed('Tervezz előre') },
+  { id: 'path-turn', game: 'path', mark: '↻', label: 'Fordulós', praise: 'A robot arra megy, amerre néz, és te tudod, merre fordítsd!', earned: pathPassed('Fordulj!') },
+  { id: 'path-repeat', game: 'path', mark: '×3', label: 'Ismétlő', praise: 'Az ismétléssel rövid lett a programod!', earned: pathPassed('Ismételd és fordulj'), set: 1 },
+  { id: 'path-two', game: 'path', mark: '2', label: 'Két elem', praise: 'Egy programmal két elemet is összegyűjtöttél!', earned: pathPassed('Két elem'), set: 1 },
   { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL * POTS_LEVELS.length }
 ];
 
@@ -182,9 +197,9 @@ export function earnedStickers(p: Progress): Sticker[] {
   return STICKERS.filter((s) => s.earned(p));
 }
 
-/** Stickers earned but not celebrated yet, in album order. */
-export function newStickers(p: Progress): Sticker[] {
-  return earnedStickers(p).filter((s) => !p.stickersSeen.includes(s.id));
+/** Stickers earned but not celebrated yet, in album order; with a world, only that world's (each pops on its own home screen). */
+export function newStickers(p: Progress, world?: WorldId): Sticker[] {
+  return earnedStickers(p).filter((s) => !p.stickersSeen.includes(s.id) && (!world || gameOf(s).world === world));
 }
 
 export function markStickerSeen(p: Progress, id: string): Progress {

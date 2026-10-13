@@ -20,16 +20,17 @@ import { Water } from './screens/Water';
 import { WorldMap } from './screens/WorldMap';
 import { Path } from './screens/robot/Path';
 import { RobotHome, type RobotGameId } from './screens/robot/RobotHome';
+import { Workshop } from './screens/robot/Workshop';
 import { ProfilesProvider, setActive, useProfiles } from './state/profiles';
 import { useProgress, type Progress } from './state/progress';
 import { GRACE_SECONDS, WARN_SECONDS, addPlay, isEveningRest, remainingSeconds, today } from './state/screenTime';
 import { currentWorld, type WorldId } from './state/worlds';
 
 /**
- * 'home' is the current world's home screen. The Kalandka map, the Kiskert and the sticker album sit
+ * 'home' is the current world's home screen. The Kalandka map, the Kiskert, Robotépítő and the sticker album sit
  * beside it: no task runs there.
  */
-type Screen = 'home' | 'map' | 'garden' | 'album' | GameId | RobotGameId;
+type Screen = 'home' | 'map' | 'garden' | 'workshop' | 'album' | GameId | RobotGameId;
 type Parents = 'closed' | 'gate' | 'open';
 
 /** The play clock ticks in steps of this many seconds. */
@@ -62,6 +63,8 @@ function Game() {
   const { profiles, change } = useProfiles();
   const [screen, setScreen] = useState<Screen>('home');
   const [parents, setParents] = useState<Parents>('closed');
+  /** Where the sticker album was opened from, and so which world's page it opens on. */
+  const [albumFrom, setAlbumFrom] = useState<'garden' | 'workshop'>('garden');
   const [parentStart, setParentStart] = useState<ParentStart>('overview');
   // "Ki játszik?" comes first on a shared device, unless parents chose to continue with the last child.
   const [picking, setPicking] = useState(() => profiles.kids.length > 1 && profiles.askOnStart);
@@ -74,7 +77,7 @@ function Game() {
   useEffect(() => setSpeechRate(progress.voiceRate), [progress.voiceRate]);
   useEffect(() => setSoundEnabled(progress.sounds), [progress.sounds]);
   const world = currentWorld(progress);
-  const csavarTalks = screen === 'path' || (screen === 'home' && world === 'robot');
+  const csavarTalks = screen === 'path' || screen === 'workshop' || (screen === 'album' && albumFrom === 'workshop') || (screen === 'home' && world === 'robot');
   useEffect(() => setSpeechPitch(csavarTalks ? 0.9 : 1.15), [csavarTalks]);
   useEffect(() => {
     const id = window.setInterval(() => setClock(Date.now()), 60_000);
@@ -170,6 +173,10 @@ function Game() {
     setPicking(false);
     setScreen('home');
   };
+  const openAlbum = (from: 'garden' | 'workshop') => {
+    setAlbumFrom(from);
+    go('album');
+  };
   const pickWorld = (w: WorldId) => {
     update((p) => ({ ...p, world: w }));
     go('home');
@@ -181,10 +188,13 @@ function Game() {
       {screen === 'home' && !showPicker && world === 'garden' && (
         <Home key={profiles.activeId} onOpen={go} onGarden={() => go('garden')} onParents={() => openGate()} onSwitch={switchKid} onMap={() => go('map')} />
       )}
-      {screen === 'home' && !showPicker && world === 'robot' && <RobotHome key={profiles.activeId} onOpen={go} onParents={() => openGate()} onSwitch={switchKid} onMap={() => go('map')} />}
+      {screen === 'home' && !showPicker && world === 'robot' && (
+        <RobotHome key={profiles.activeId} onOpen={go} onWorkshop={() => go('workshop')} onParents={() => openGate()} onSwitch={switchKid} onMap={() => go('map')} />
+      )}
       {screen === 'map' && !showPicker && <WorldMap onPick={pickWorld} onParents={() => openGate()} />}
-      {screen === 'garden' && <Garden onBack={() => go('home')} onAlbum={() => go('album')} />}
-      {screen === 'album' && <Album onBack={() => go('garden')} />}
+      {screen === 'garden' && <Garden onBack={() => go('home')} onAlbum={() => openAlbum('garden')} />}
+      {screen === 'workshop' && <Workshop onBack={() => go('home')} onAlbum={() => openAlbum('workshop')} />}
+      {screen === 'album' && <Album key={albumFrom} world={albumFrom === 'workshop' ? 'robot' : 'garden'} onBack={() => go(albumFrom)} />}
       {screen === 'learn' && <Learn key={progress.learnRound} onBack={() => go('home')} />}
       {screen === 'water' && <Water onBack={() => go('home')} />}
       {screen === 'patterns' && <Patterns onBack={() => go('home')} />}

@@ -120,7 +120,7 @@ export function Home({
   const [notice, setNotice] = useState<Notice | null>(null);
   const noticeTimer = useRef<number | null>(null);
   // A sticker earned in a game is celebrated here, one at a time, the earliest first.
-  const sticker = newStickers(progress)[0] ?? null;
+  const sticker = newStickers(progress, 'garden')[0] ?? null;
   const balance = seedBalance(progress);
   const canPlantNow = balance >= Math.min(...PLANT_OPTIONS.map((o) => o.cost)) && Array.from({ length: BEDS }, (_, i) => bedAt(progress, i)).some((b) => !b);
   const visitorWaiting = newVisitor(progress) !== null;

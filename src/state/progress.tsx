@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../games/add/logic';
 import { markEarnedSeen, type Bed } from './rewards';
+import type { PartSlot } from './robotParts';
 import type { WorldId } from './worlds';
 
 export interface Progress {
@@ -79,6 +80,14 @@ export interface Progress {
   /** Robotút course: which one comes next, and how many were done (five per level). */
   pathRound: number;
   pathSolved: number;
+  /** Bolts spent in Robotépítő; the balance is bolts − boltsSpent. */
+  boltsSpent: number;
+  /** Robot parts bought (see state/robotParts.ts); the starting parts are always owned. */
+  robotOwned: string[];
+  /** The part worn in each slot. */
+  robotLook: Partial<Record<PartSlot, string>>;
+  /** Robot friends welcomed so far. */
+  robotFriendsSeen: number;
 }
 
 export const DEFAULT_PROGRESS: Progress = {
@@ -128,7 +137,11 @@ export const DEFAULT_PROGRESS: Progress = {
   robotWelcomed: false,
   bolts: 0,
   pathRound: 0,
-  pathSolved: 0
+  pathSolved: 0,
+  boltsSpent: 0,
+  robotOwned: [],
+  robotLook: {},
+  robotFriendsSeen: 0
 };
 
 /** Saves from before the gather and take levels: keep the child on the same sums. */

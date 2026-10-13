@@ -9,6 +9,7 @@ import { GuideBubble, KalandkaWordmark, RoundButton, SpeakerIcon } from '../comp
 import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
 import { seedBalance } from '../state/rewards';
+import { boltBalance } from '../state/robotParts';
 import { WORLDS, currentWorld, type WorldId } from '../state/worlds';
 
 const SPEECH = 'Hova megyünk ma? A kert szigetén Csepi vár, a műhely szigetén Csavar, a robot. Koppints az egyik szigetre!';
@@ -181,7 +182,7 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
   const spot = (at: Pt): CSSProperties => ({ left: at.x - 230, top: at.y - 165, width: 460, height: 330 });
   const counts: Record<WorldId, { icon: ReactNode; n: number }> = {
     garden: { icon: <Seed size={24} />, n: seedBalance(progress) },
-    robot: { icon: <Bolt size={24} />, n: progress.bolts }
+    robot: { icon: <Bolt size={24} />, n: boltBalance(progress) }
   };
 
   return (
