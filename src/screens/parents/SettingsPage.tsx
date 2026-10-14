@@ -4,7 +4,7 @@ import { hungarianVoices, onVoicesChanged, speak, type Speaker } from '../../lib
 import { DEFAULT_PROGRESS, useProgress } from '../../state/progress';
 import { Check } from './controls';
 
-export function SettingsPage() {
+export function SettingsPage({ onLegal }: { onLegal: () => void }) {
   const { progress, update } = useProgress();
   const [confirming, setConfirming] = useState(false);
 
@@ -97,6 +97,11 @@ export function SettingsPage() {
           <li>Nincs reklám, csevegés és alkalmazáson belüli vásárlás.</li>
           <li>Telepítés után internet nélkül is működik.</li>
         </ul>
+        <div>
+          <button type="button" className="pa-btn pa-btn--quiet" onClick={onLegal}>
+            Adatkezelési tájékoztató és impresszum
+          </button>
+        </div>
       </section>
 
       <section className="pa-card pa-card--warn" aria-labelledby="s-reset">

@@ -3,17 +3,19 @@ import { Avatar } from '../../components/avatars';
 import { KalandkaIcon } from '../../components/ui';
 import { KidScope, kidName, useProfiles } from '../../state/profiles';
 import { KidsPage } from './KidsPage';
+import { LegalPage } from './LegalPage';
 import { LevelsPage } from './LevelsPage';
 import { Overview } from './Overview';
 import { SettingsPage } from './SettingsPage';
 import { TimePage } from './TimePage';
 import '../../styles/parents.css';
 
-export type ParentPage = 'overview' | 'kids' | 'time' | 'levels' | 'settings';
+/** 'legal' has no menu item: it opens from Settings, so the phone tab bar keeps five items. */
+export type ParentPage = 'overview' | 'kids' | 'time' | 'levels' | 'settings' | 'legal';
 /** Where the area opens: a page, or straight into adding a child (from "Ki játszik?"). */
 export type ParentStart = ParentPage | 'add';
 
-const PAGES: { id: ParentPage; label: string; icon: ReactNode }[] = [
+const PAGES: { id: Exclude<ParentPage, 'legal'>; label: string; icon: ReactNode }[] = [
   {
     id: 'overview',
     label: 'Áttekintés',
@@ -139,7 +141,12 @@ export function ParentArea({ start = 'overview', onClose }: { start?: ParentStar
           </button>
         ))}
         <div className="pa-nav__spacer" />
-        <p className="pa-nav__note">Reklám, csevegés és vásárlás nélkül. Minden adat csak ezen az eszközön marad.</p>
+        <p className="pa-nav__note">
+          Reklám, csevegés és vásárlás nélkül. Minden adat csak ezen az eszközön marad.{' '}
+          <button type="button" className="pa-nav__link" onClick={() => setPage('legal')}>
+            Adatkezelés és impresszum
+          </button>
+        </p>
         <button type="button" className="pa-nav__back" onClick={onClose}>
           <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 5l-7 7 7 7" />
@@ -148,7 +155,9 @@ export function ParentArea({ start = 'overview', onClose }: { start?: ParentStar
         </button>
       </nav>
       <main className="pa-main">
-        {page === 'kids' ? (
+        {page === 'legal' ? (
+          <LegalPage />
+        ) : page === 'kids' ? (
           <KidsPage startAdding={start === 'add'} onView={(id, to) => {
               setViewId(id);
               setPage(to);
@@ -159,7 +168,7 @@ export function ParentArea({ start = 'overview', onClose }: { start?: ParentStar
             {page === 'overview' && <Overview onGo={setPage} />}
             {page === 'time' && <TimePage />}
             {page === 'levels' && <LevelsPage />}
-            {page === 'settings' && <SettingsPage />}
+            {page === 'settings' && <SettingsPage onLegal={() => setPage('legal')} />}
           </KidScope>
         )}
       </main>

@@ -25,6 +25,8 @@ const COMING = [
 ];
 
 const NOTICE_MS = 5000;
+/** The greeting without a name: one child on the device, or an online voice. */
+const HELLO = 'Szia! Jó, hogy itt vagy a műhelyben!';
 
 /** Robotműhely: Csavar's workshop, the second Kalandka world, for the bigger ones. */
 export function RobotHome({
@@ -52,13 +54,15 @@ export function RobotHome({
   const balance = boltBalance(progress);
   const friends = friendsOf(progress).slice(0, progress.robotFriendsSeen);
 
-  const hello = shared ? `Szia, ${kidName(kid)}! Jó, hogy itt vagy a műhelyben!` : 'Szia! Jó, hogy itt vagy a műhelyben!';
+  // Aloud with an online voice Csavar leaves the name out: it would leave the device.
+  const hello = shared ? `Szia, ${kidName(kid)}! Jó, hogy itt vagy a műhelyben!` : HELLO;
   const greeting = progress.robotWelcomed ? hello : 'Szia, én Csavar vagyok!';
   const question = progress.robotWelcomed ? 'Melyik gépet indítjuk?' : 'Itt robotokat programozunk!';
   const intro = progress.robotWelcomed ? `${greeting} ${question}` : 'Szia, én Csavar vagyok, a műhely robotja! Itt robotokat programozunk. Kezdjük a Robotúttal!';
+  const sayIntro = () => speak(intro, { online: progress.robotWelcomed ? `${HELLO} ${question}` : intro });
 
   useEffect(() => {
-    if (!sticker) speak(intro);
+    if (!sticker) sayIntro();
     return () => {
       if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
     };
@@ -117,7 +121,7 @@ export function RobotHome({
               <div className="bubble__kicker">{notice ? 'Hamarosan' : greeting}</div>
               <h1 className="bubble__title">{notice ?? question}</h1>
             </div>
-            <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(notice ?? intro)}>
+            <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => (notice ? speak(notice) : sayIntro())}>
               <SpeakerIcon />
             </RoundButton>
           </div>

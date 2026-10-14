@@ -57,6 +57,8 @@ function PotsArt() {
 
 const GARDEN_SLOTS = 12;
 const NOTICE_MS = 6000;
+/** The greeting without a name: one child on the device, or an online voice. */
+const HELLO = 'Szia, de jó, hogy itt vagy!';
 
 interface Notice {
   kicker: string;
@@ -128,10 +130,11 @@ export function Home({
   const flashOpen = progress.unlockAll || learned >= UNLOCK_FLASH_AFTER;
   const addOpen = progress.unlockAll || learned >= UNLOCK_ADD_AFTER;
   const potsOpen = progress.unlockAll || learned >= UNLOCK_POTS_AFTER;
-  // On a shared device Csepi greets each child by name.
-  const hello = shared ? `Szia, ${kidName(kid)}! De jó, hogy itt vagy!` : 'Szia, de jó, hogy itt vagy!';
+  // On a shared device Csepi greets each child by name, except aloud with an online voice (the name would leave the device).
+  const hello = shared ? `Szia, ${kidName(kid)}! De jó, hogy itt vagy!` : HELLO;
   const greeting = progress.welcomed ? hello : 'Szia, én Csepi vagyok!';
   const question = 'Melyik játékot választod?';
+  const sayGreeting = () => speak(`${greeting} ${question}`, { online: `${progress.welcomed ? HELLO : greeting} ${question}` });
 
   /** Sticky notices (an unlock) stay until the next tap; hints fade after a few seconds. */
   const showNotice = (n: Notice, speech: string, sticky = false) => {
@@ -153,7 +156,7 @@ export function Home({
       update((p) => ({ ...p, potsAnnounced: true }));
       showNotice({ kicker: 'Nézd, mi történt!', title: 'Kinyíltak a Cserépbarátok!', mood: 'cheer' }, 'Nézd! Kinyílt egy új kertrész: a Cserépbarátok. Töltsük meg a cserepeket virággal!', true);
     } else if (!sticker) {
-      speak(`${greeting} ${question}`);
+      sayGreeting();
     }
     return () => {
       if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
@@ -184,7 +187,7 @@ export function Home({
   };
 
   const bubble = notice ?? { kicker: greeting, title: question, mood: 'cheer' as Mood };
-  const replay = () => speak(notice ? `${notice.kicker} ${notice.title}` : `${greeting} ${question}`);
+  const replay = () => (notice ? speak(`${notice.kicker} ${notice.title}`) : sayGreeting());
 
   const garden = progress.garden
     .slice(-GARDEN_SLOTS)

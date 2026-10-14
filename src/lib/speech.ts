@@ -95,11 +95,23 @@ interface SpeakOptions {
   queue?: boolean;
   /** Say it in this character's voice instead of the current speaker's (the parents' voice preview). */
   as?: Speaker;
+  /**
+   * Said instead of `text` when the voice is not on the device. An online voice sends the text to the browser
+   * maker's server, so a line with a child's name gives one without it here.
+   */
+  online?: string;
 }
 
-export function speak(text: string, { queue = false, as = speaker }: SpeakOptions = {}): void {
+/** True unless the speaker's voice runs on this device. No Hungarian voice means the browser picks one we can't vouch for. */
+function isOnline(as: Speaker): boolean {
+  const v = as === 'robot' ? robotVoice : voice;
+  return !v?.localService;
+}
+
+export function speak(text: string, { queue = false, as = speaker, online }: SpeakOptions = {}): void {
   const s = synth();
   if (!s || !enabled || !text) return;
+  if (online !== undefined && isOnline(as)) text = online;
   try {
     if (!queue) s.cancel();
     if (as === 'robot') {

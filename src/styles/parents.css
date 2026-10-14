@@ -59,6 +59,13 @@
 .pa-spread { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .pa-stack { display: flex; flex-direction: column; font-size: 16px; }
 .pa-stack small { font-size: 14px; color: var(--pa-muted); }
+.pa-h3 { margin: 6px 0 0; font-size: 16px; font-weight: 800; }
+.pa-legal { margin: 0; font-size: 15px; line-height: 1.5; max-width: 72ch; }
+.pa-legal a, .pa-facts a { color: var(--pa-accent); overflow-wrap: anywhere; }
+.pa-facts { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; font-size: 15px; line-height: 1.4; }
+.pa-facts dt { font-weight: 800; }
+.pa-facts dd { margin: 0; min-width: 0; }
+.pa-nav__link { display: block; margin-top: 8px; padding: 0; border: none; background: none; color: #fff; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .pa-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 16px; line-height: 1.4; }
 
 /* buttons and inputs */

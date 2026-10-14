@@ -592,6 +592,8 @@
 .is-phone .pa-head { flex-direction: column; align-items: flex-start; gap: 4px; }
 .is-phone .pa-h1 { font-size: 30px; }
 .is-phone .pa-card { padding: 16px 18px; border-radius: 18px; }
+.is-phone .pa-facts { grid-template-columns: 1fr; gap: 2px; }
+.is-phone .pa-facts dd + dt { margin-top: 8px; }
 .is-phone .pa-today { gap: 16px; }
 .is-phone .pa-today svg { flex: none; width: 104px; height: 104px; }
 .is-phone .pa-bars { height: 100px; gap: 8px; }
