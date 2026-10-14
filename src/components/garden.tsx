@@ -7,6 +7,24 @@ import { gameOf } from '../state/rewards';
 
 const LEAF = '#3F8F3A';
 const LEAF_LIGHT = '#5BAA4A';
+/** A thirsty plant's leaves: paler and duller, never brown or dead. */
+const DRY = '#8FA857';
+const DRY_LIGHT = '#AFC273';
+
+const BERRIES = [
+  [58, 50],
+  [96, 40],
+  [112, 78],
+  [72, 88],
+  [40, 86]
+];
+const PEARS = [
+  [58, 60],
+  [108, 50],
+  [120, 100],
+  [80, 96],
+  [44, 108]
+];
 
 function Flower() {
   return (
@@ -26,37 +44,37 @@ function Flower() {
   );
 }
 
-function Bush() {
+/** A thirsty bush sags a little lower and paler; its berries stay on. */
+function Bush({ fruit = 5, dry = false }: { fruit?: number; dry?: boolean }) {
   return (
-    <g transform="translate(0 90)">
-      <circle cx="50" cy="80" r="42" fill={LEAF} />
-      <circle cx="110" cy="80" r="42" fill={LEAF} />
-      <circle cx="80" cy="52" r="46" fill={LEAF_LIGHT} />
+    <g transform={dry ? 'translate(0 98) scale(1 0.92)' : 'translate(0 90)'}>
+      <circle cx="50" cy="80" r="42" fill={dry ? DRY : LEAF} />
+      <circle cx="110" cy="80" r="42" fill={dry ? DRY : LEAF} />
+      <circle cx="80" cy="52" r="46" fill={dry ? DRY_LIGHT : LEAF_LIGHT} />
       <g fill="#2E86DE">
-        <circle cx="58" cy="50" r="8" />
-        <circle cx="96" cy="40" r="8" />
-        <circle cx="112" cy="78" r="8" />
-        <circle cx="72" cy="88" r="8" />
-        <circle cx="40" cy="86" r="8" />
+        {BERRIES.slice(0, fruit).map(([x, y]) => (
+          <circle key={`${x},${y}`} cx={x} cy={y} r="8" />
+        ))}
       </g>
     </g>
   );
 }
 
-function PearTree() {
+/** A thirsty tree's crown droops a little and pales; its pears stay on. */
+function PearTree({ fruit = 5, dry = false }: { fruit?: number; dry?: boolean }) {
   return (
     <g transform="translate(0 4) scale(0.94)">
       <path d="M74 228V130h22v98z" fill="#8A5A3B" />
       <path d="M85 150l-26-26M85 140l24-22" stroke="#8A5A3B" strokeWidth="9" strokeLinecap="round" />
-      <circle cx="85" cy="78" r="70" fill={LEAF_LIGHT} />
-      <circle cx="50" cy="110" r="36" fill={LEAF} />
-      <circle cx="122" cy="106" r="36" fill={LEAF} />
-      <g fill="#FFC93C" stroke="#B07A10" strokeWidth="2">
-        <circle cx="58" cy="60" r="11" />
-        <circle cx="108" cy="50" r="11" />
-        <circle cx="120" cy="100" r="11" />
-        <circle cx="80" cy="96" r="11" />
-        <circle cx="44" cy="108" r="11" />
+      <g transform={dry ? 'translate(0 10)' : undefined}>
+        <circle cx="85" cy="78" r="70" fill={dry ? DRY_LIGHT : LEAF_LIGHT} />
+        <circle cx="50" cy="110" r="36" fill={dry ? DRY : LEAF} />
+        <circle cx="122" cy="106" r="36" fill={dry ? DRY : LEAF} />
+        <g fill="#FFC93C" stroke="#B07A10" strokeWidth="2">
+          {PEARS.slice(0, fruit).map(([x, y]) => (
+            <circle key={`${x},${y}`} cx={x} cy={y} r="11" />
+          ))}
+        </g>
       </g>
     </g>
   );
@@ -72,11 +90,63 @@ function Seedling() {
   );
 }
 
-/** A planting in the Kiskert: a seedling until it has grown, then the plant itself. */
-export function GardenPlant({ kind, grown }: { kind: PlantKind; grown: boolean }) {
+/** A planting in the Kiskert: a seedling until it has grown, then the plant with its ripe fruit. */
+export function GardenPlant({ kind, grown, fruit = 0, thirsty = false }: { kind: PlantKind; grown: boolean; fruit?: number; thirsty?: boolean }) {
   return (
-    <svg aria-hidden="true" className={`gplant gplant--${grown ? kind : 'sprout'}`} viewBox="0 0 160 220">
-      {!grown ? <Seedling /> : kind === 'flower' ? <Flower /> : kind === 'bush' ? <Bush /> : <PearTree />}
+    <svg aria-hidden="true" className={`gplant gplant--${grown ? kind : 'sprout'}${thirsty ? ' gplant--thirsty' : ''}`} viewBox="0 0 160 220">
+      {!grown ? (
+        <Seedling />
+      ) : kind === 'flower' ? (
+        <Flower />
+      ) : kind === 'bush' ? (
+        <Bush fruit={fruit} dry={thirsty} />
+      ) : (
+        <PearTree fruit={fruit} dry={thirsty} />
+      )}
+    </svg>
+  );
+}
+
+/** A picked pear, for the basket. */
+export function PearIcon({ size = 28 }: { size?: number }) {
+  return (
+    <svg aria-hidden="true" width={size} height={Math.round(size * 1.15)} viewBox="0 0 36 42">
+      <path d="M18 2v6" stroke="#8A5A3B" strokeWidth="3" strokeLinecap="round" />
+      <path d="M18 8c-5 0-6 6-6 9-4 3-7 8-7 13a13 12 0 0 0 26 0c0-5-3-10-7-13 0-3-1-9-6-9z" fill="#FFC93C" stroke="#B07A10" strokeWidth="2" />
+    </svg>
+  );
+}
+
+/** A picked bunch of blueberries, for the basket. */
+export function BerryIcon({ size = 28 }: { size?: number }) {
+  return (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 36 36">
+      <path d="M18 4c2 4 6 5 10 4" stroke="#3F8F3A" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <g fill="#2E86DE" stroke="#1F5C9E" strokeWidth="2">
+        <circle cx="12" cy="16" r="7" />
+        <circle cx="24" cy="16" r="7" />
+        <circle cx="18" cy="27" r="7" />
+      </g>
+    </svg>
+  );
+}
+
+/** The watering can on the Kiskert's care button. */
+export function CanIcon({ size = 34 }: { size?: number }) {
+  return (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 18h22v20a3 3 0 0 1-3 3H13a3 3 0 0 1-3-3z" />
+      <path d="M32 22l10-8M40 12l4 4" />
+      <path d="M14 18c0-6 4-10 7-10s7 4 7 10" />
+    </svg>
+  );
+}
+
+/** The drop badge on a thirsty plant. */
+export function DropIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg aria-hidden="true" width={size} height={Math.round(size * 1.25)} viewBox="0 0 24 30">
+      <path d="M12 2C8 9 3 14 3 20a9 9 0 0 0 18 0c0-6-5-11-9-18z" fill="currentColor" />
     </svg>
   );
 }

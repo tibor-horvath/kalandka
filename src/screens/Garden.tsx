@@ -1,8 +1,9 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { Seed } from '../components/art';
-import { GardenPlant, PlantIcon, VisitorArt } from '../components/garden';
+import { BerryIcon, CanIcon, DropIcon, GardenPlant, PearIcon, PlantIcon, VisitorArt } from '../components/garden';
 import { BackIcon, GuideBubble, RoundButton, SpeakerIcon } from '../components/ui';
 import { chime, fanfare, popBubble } from '../lib/sound';
+import { capitalize, numberAttr, numberCount } from '../lib/numbers';
 import { speak } from '../lib/speech';
 import type { Mood, Tone } from '../lib/types';
 import { useProgress } from '../state/progress';
@@ -12,12 +13,21 @@ import {
   VISITORS,
   bedAt,
   canPlant,
+  fruitName,
   growAfter,
   growthOf,
+  isThirsty,
   newVisitor,
+  pickFruit,
+  pickedFruit,
   plant,
+  ripeFruit,
+  ripeTotal,
   seedBalance,
+  thirstyBeds,
   visitorsOf,
+  water,
+  waterAll,
   type PlantKind
 } from '../state/rewards';
 
@@ -39,6 +49,7 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
   const { progress, update } = useProgress();
   const balance = seedBalance(progress);
   const empty = Array.from({ length: BEDS }, (_, i) => i).filter((i) => !bedAt(progress, i));
+  const thirsty = thirstyBeds(progress);
   const [selected, setSelected] = useState<number | null>(() => (balance >= CHEAPEST ? (empty[0] ?? null) : null));
   const [say, setSay] = useState<Say>(() => opening());
   // The last plant or visitor the child tapped; the count restarts its little reaction on every tap.
@@ -50,6 +61,17 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
   const nextVisitor = VISITORS[welcomed.length];
 
   function opening(): Say {
+    if (thirsty.length > 0) {
+      return {
+        text: 'Szomjasak a növényeid! Koppints rájuk, vagy a kannára.',
+        speech: 'Szomjasak a növényeid! Koppints rájuk, vagy a locsolókannára, és megöntözzük őket.',
+        mood: 'smile',
+        tone: 'plain'
+      };
+    }
+    if (ripeTotal(progress) > 0) {
+      return { text: 'Érett a termés! Koppints rá, és szedd le.', speech: 'Érett a termés! Koppints a fára vagy a bokorra, és szedd le.', mood: 'cheer', tone: 'plain' };
+    }
     if (empty.length === 0) {
       return { text: 'Tele a kert! Nézd, milyen szép lett.', speech: 'Tele a kert! Nézd, milyen szép lett.', mood: 'cheer', tone: 'good' };
     }
@@ -91,6 +113,28 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
     }
     const left = growAfter(bed.kind) - growthOf(bed, progress.seeds);
     const name = PLANT_OPTIONS.find((o) => o.id === bed.kind)!.name.toLowerCase();
+    // Ripe fruit first, one per tap, counted aloud; then a thirsty plant gets its water.
+    const ripe = ripeFruit(bed, progress.seeds);
+    if (ripe > 0) {
+      const count = pickedFruit(bed) + 1;
+      const word = capitalize(numberCount(count));
+      popBubble(Math.min(count, 5));
+      update((p) => pickFruit(p, i));
+      if (ripe > 1) {
+        tell({ text: `${word}!`, speech: `${word}!`, mood: 'cheer', tone: 'plain' });
+      } else {
+        const all = `${word}! ${capitalize(numberAttr(count))} ${fruitName(bed.kind)} a kosárban.`;
+        const thirst = isThirsty(bed, progress.seeds) ? ' Most locsold meg, és újra terem!' : '';
+        tell({ text: all + thirst, speech: all + thirst, mood: 'cheer', tone: 'good' });
+      }
+      return;
+    }
+    if (isThirsty(bed, progress.seeds)) {
+      chime();
+      update((p) => water(p, i));
+      tell({ text: 'Köszöni! Megint teremni fog.', speech: `Megöntözted! A ${name} köszöni. Ha tovább játszol, megint terem.`, mood: 'cheer', tone: 'good' });
+      return;
+    }
     if (left > 0) tell({ text: tasksLeft(left), speech: `Ebből ${name} lesz. ${tasksLeft(left)}`, mood: 'smile', tone: 'plain' });
     else tell({ text: `Szép ${name}!`, speech: `Milyen szép ${name}!`, mood: 'cheer', tone: 'good' });
   };
@@ -107,6 +151,22 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
     tell({
       text: 'Elültettük!',
       speech: `Elültettük! Ebből ${name} lesz. Minden megoldott feladattal nő egy kicsit. ${tasksLeft(growAfter(kind))}`,
+      mood: 'cheer',
+      tone: 'good'
+    });
+  };
+
+  const waterThirsty = () => {
+    if (thirsty.length === 0) return;
+    const before = progress.pears + progress.berries;
+    const after = waterAll(progress);
+    const moved = after.pears + after.berries - before;
+    chime();
+    update(waterAll);
+    const fruit = moved > 0 ? ` A termést a kosárba tettük: ${numberAttr(moved)} darab.` : '';
+    tell({
+      text: 'Megöntöztük! Köszönik.',
+      speech: `Megöntöztük őket! Köszönik.${fruit} Ha tovább játszol, megint teremnek.`,
       mood: 'cheer',
       tone: 'good'
     });
@@ -132,6 +192,14 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
             <span className="album-btn__icon" aria-hidden="true" />
             <span className="album-btn__label">Matricáim</span>
           </button>
+          {progress.pears + progress.berries > 0 && (
+            <div className="pill pill--basket" aria-label={`A kosárban ${progress.pears} körte és ${progress.berries} áfonya`}>
+              <PearIcon size={26} />
+              <span>{progress.pears}</span>
+              <BerryIcon size={28} />
+              <span>{progress.berries}</span>
+            </div>
+          )}
           <div className="pill" aria-label={`${balance} mag`}>
             <Seed />
             <span>
@@ -150,17 +218,20 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
               const growth = bed ? growthOf(bed, progress.seeds) : 0;
               const needs = bed ? growAfter(bed.kind) : 0;
               const grown = !!bed && growth >= needs;
+              const dry = !!bed && isThirsty(bed, progress.seeds);
+              const ripe = bed ? ripeFruit(bed, progress.seeds) : 0;
               const name = bed ? PLANT_OPTIONS.find((o) => o.id === bed.kind)!.name : '';
+              const care = `${ripe > 0 ? `, ${ripe} érett ${fruitName(bed!.kind)}` : ''}${dry ? ', szomjas' : ''}`;
               const label = !bed
                 ? `Üres ágyás, ${i + 1}.${selected === i ? ', kiválasztva' : ''}`
                 : grown
-                  ? `${name}, ${i + 1}. ágyás`
+                  ? `${name}${care}, ${i + 1}. ágyás`
                   : `Palánta, ebből ${name.toLowerCase()} lesz. ${tasksLeft(needs - growth)}`;
               return (
                 <button
                   key={i}
                   type="button"
-                  className={`kbed${selected === i ? ' is-selected' : ''}${bed ? '' : ' kbed--empty'}`}
+                  className={`kbed${selected === i ? ' is-selected' : ''}${bed ? '' : ' kbed--empty'}${dry ? ' is-thirsty' : ''}`}
                   aria-label={label}
                   aria-pressed={bed ? undefined : selected === i}
                   onClick={() => tapBed(i)}
@@ -173,7 +244,7 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
                           className={`kbed__sway${poked(`bed${i}`) ? ' is-poked' : ''}`}
                           style={{ '--sway-delay': `${-((i * 0.7) % 4.5)}s` } as CSSProperties}
                         >
-                          <GardenPlant kind={bed.kind} grown={grown} />
+                          <GardenPlant kind={bed.kind} grown={grown} fruit={ripe} thirsty={dry} />
                         </span>
                       </span>
                     ) : (
@@ -185,6 +256,11 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
                     )}
                   </span>
                   <span className="kbed__soil" />
+                  {dry && (
+                    <span className="kbed__thirst" aria-hidden="true">
+                      <DropIcon />
+                    </span>
+                  )}
                   {bed && !grown && (
                     <span className="kbed__growth" aria-hidden="true">
                       {Array.from({ length: needs }, (_, k) => (
@@ -237,6 +313,15 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
               <SpeakerIcon />
             </RoundButton>
           </div>
+          {thirsty.length > 0 && (
+            <button type="button" className="water-btn" onClick={waterThirsty}>
+              <CanIcon />
+              <span>Locsolás</span>
+              <span className="water-btn__count" aria-label={`${thirsty.length} szomjas növény`}>
+                {thirsty.length}
+              </span>
+            </button>
+          )}
           <div className="plant-options">
             {PLANT_OPTIONS.map((o) => {
               const short = o.cost - balance;
@@ -264,7 +349,10 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
             })}
             {selected === null && empty.length > 0 && balance >= CHEAPEST && <p className="plant-options__pick">Koppints egy üres ágyásra!</p>}
           </div>
-          <p className="kiskert__note">A palánta minden megoldott feladattal nő egy kicsit. A virág 3, a bokor 5, a fa 8 feladat alatt nő ki.</p>
+          <p className="kiskert__note">
+            A palánta minden megoldott feladattal nő egy kicsit. A virág 3, a bokor 5, a fa 8 feladat alatt nő ki. A kinőtt bokor és fa
+            termést hoz; néhány feladat után megszomjazik, de sosem hervad el.
+          </p>
         </aside>
       </div>
 

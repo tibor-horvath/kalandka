@@ -15,8 +15,9 @@ import type { WorldId } from './worlds';
 
 // The reward loop: every solved task earns a seed; seeds are planted in the child's own garden
 // (Kiskert); plants grow as the child keeps playing; a grown garden brings visitors; and each new
-// skill earns a sticker for the album. Rewards are only ever added: nothing wilts, nothing is taken
-// away, nothing is random and nothing depends on time played.
+// skill earns a sticker for the album. Grown bushes and trees also ask for care (see below), but
+// rewards are only ever added: nothing wilts, nothing is taken away, nothing is random and nothing
+// depends on time played.
 
 export type PlantKind = 'flower' | 'bush' | 'tree';
 
@@ -41,6 +42,10 @@ export interface Bed {
   kind: PlantKind;
   /** Seeds earned in total when it was planted; growth counts the seeds earned since. */
   at: number;
+  /** Seeds earned in total when it was last watered; none yet: care counts from when it grew. */
+  watered?: number;
+  /** Fruit picked since it was last watered (or grew). */
+  picked?: number;
 }
 
 /** Seeds the child can still plant. `seeds` counts every seed ever earned. */
@@ -82,6 +87,89 @@ export function plant(p: Progress, i: number, kind: PlantKind): Progress {
   const beds = Array.from({ length: BEDS }, (_, k) => bedAt(p, k));
   beds[i] = { kind, at: p.seeds };
   return { ...p, beds, seedsSpent: p.seedsSpent + cost };
+}
+
+// ---------- care: thirst and fruit ----------
+// A grown bush or tree ripens one fruit per solved task, which the child picks into the basket. A few
+// tasks after it was last watered it gets thirsty and stops ripening until the child waters it, which
+// is free. Thirsty is the worst a plant ever gets: it never wilts, picked fruit is kept, and fruit
+// still on a plant goes into the basket when it is watered. Everything counts tasks, not time, so a
+// week away leaves the garden as the child left it. Flowers need no care.
+
+/** Solved tasks after watering (or growing) until a bush or tree is thirsty again. */
+export const THIRSTY_AFTER = 5;
+
+export type FruitKind = 'pear' | 'berry';
+
+/** Fruit a plant ripens between two waterings; a flower ripens none and needs no care. */
+export const FRUIT_MAX: Record<PlantKind, number> = { flower: 0, bush: 3, tree: 5 };
+
+export function fruitOf(kind: PlantKind): FruitKind | null {
+  return kind === 'tree' ? 'pear' : kind === 'bush' ? 'berry' : null;
+}
+
+/** "körte", "áfonya": what the child picks from this plant. */
+export function fruitName(kind: PlantKind): string {
+  return kind === 'tree' ? 'körte' : 'áfonya';
+}
+
+/** The seed count care is measured from: the last watering, or when it grew. */
+function caredAt(bed: Bed): number {
+  return bed.watered ?? bed.at + growAfter(bed.kind);
+}
+
+export function isThirsty(bed: Bed, seeds: number): boolean {
+  return FRUIT_MAX[bed.kind] > 0 && isGrown(bed, seeds) && seeds - caredAt(bed) >= THIRSTY_AFTER;
+}
+
+/** Fruit hanging on the plant, ready to pick. */
+export function ripeFruit(bed: Bed, seeds: number): number {
+  if (!isGrown(bed, seeds)) return 0;
+  const ripened = Math.min(FRUIT_MAX[bed.kind], THIRSTY_AFTER, Math.max(0, seeds - caredAt(bed)));
+  return Math.max(0, ripened - pickedFruit(bed));
+}
+
+/** Fruit picked from the plant since its last watering: the child counts these aloud. */
+export function pickedFruit(bed: Bed): number {
+  return bed.picked ?? 0;
+}
+
+export function thirstyBeds(p: Progress): number[] {
+  return p.beds.flatMap((b, i) => (b && isThirsty(b, p.seeds) ? [i] : []));
+}
+
+export function ripeTotal(p: Progress): number {
+  return p.beds.reduce((n, b) => n + (b ? ripeFruit(b, p.seeds) : 0), 0);
+}
+
+function withBed(p: Progress, i: number, bed: Bed): (Bed | null)[] {
+  const beds = Array.from({ length: BEDS }, (_, k) => bedAt(p, k));
+  beds[i] = bed;
+  return beds;
+}
+
+function addFruit(p: Progress, kind: PlantKind, n: number): Progress {
+  return fruitOf(kind) === 'pear' ? { ...p, pears: p.pears + n } : { ...p, berries: p.berries + n };
+}
+
+/** Picks one ripe fruit into the basket; unchanged when there is none. */
+export function pickFruit(p: Progress, i: number): Progress {
+  const bed = bedAt(p, i);
+  if (!bed || ripeFruit(bed, p.seeds) === 0) return p;
+  return addFruit({ ...p, beds: withBed(p, i, { ...bed, picked: pickedFruit(bed) + 1 }) }, bed.kind, 1);
+}
+
+/** Waters a thirsty plant; fruit still on it goes into the basket. Unchanged when it is not thirsty. */
+export function water(p: Progress, i: number): Progress {
+  const bed = bedAt(p, i);
+  if (!bed || !isThirsty(bed, p.seeds)) return p;
+  const left = ripeFruit(bed, p.seeds);
+  return addFruit({ ...p, beds: withBed(p, i, { ...bed, watered: p.seeds, picked: 0 }) }, bed.kind, left);
+}
+
+/** Waters every thirsty plant at once (the watering can). */
+export function waterAll(p: Progress): Progress {
+  return thirstyBeds(p).reduce(water, p);
 }
 
 // ---------- visitors ----------

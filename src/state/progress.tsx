@@ -11,6 +11,9 @@ export interface Progress {
   seedsSpent: number;
   /** The Kiskert's beds (see BEDS in rewards.ts); null is an empty bed. */
   beds: (Bed | null)[];
+  /** Fruit picked in the Kiskert, kept for good (see the care section in rewards.ts). */
+  pears: number;
+  berries: number;
   /** Kiskert visitors already welcomed (see VISITORS). */
   visitorsSeen: number;
   /** Stickers already celebrated; the rest of the earned ones get the sticker animation. */
@@ -99,12 +102,20 @@ export interface Progress {
   robotLook: Partial<Record<PartSlot, string>>;
   /** Robot friends welcomed so far. */
   robotFriendsSeen: number;
+  /** Bolt count the robot's battery is measured from (see the care section in robotParts.ts). */
+  robotChargedAt: number;
+  /** Bolt count when the robot was last oiled. */
+  robotOiledAt: number;
+  /** Full charges so far; they teach the robot its tricks. */
+  robotCharges: number;
 }
 
 export const DEFAULT_PROGRESS: Progress = {
   seeds: 0,
   seedsSpent: 0,
   beds: [],
+  pears: 0,
+  berries: 0,
   visitorsSeen: 0,
   stickersSeen: [],
   garden: [],
@@ -159,7 +170,10 @@ export const DEFAULT_PROGRESS: Progress = {
   boltsSpent: 0,
   robotOwned: [],
   robotLook: {},
-  robotFriendsSeen: 0
+  robotFriendsSeen: 0,
+  robotChargedAt: 0,
+  robotOiledAt: 0,
+  robotCharges: 0
 };
 
 /** Saves from before the gather and take levels: keep the child on the same sums. */

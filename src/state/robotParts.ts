@@ -1,9 +1,10 @@
 import type { Progress } from './progress';
 
 // Robotépítő, Robotműhely's reward: every solved Robotút course earns a bolt; bolts buy parts for
-// the child's own robot; a robot with more new parts brings robot friends who stay. As in the Kiskert,
-// rewards are only ever added: a bought part is the child's for good (swapping back is free),
-// nothing is random and nothing depends on time played.
+// the child's own robot; a robot with more new parts brings robot friends who stay. The robot also
+// asks for care (battery and oil, below). As in the Kiskert, rewards are only ever added: a bought
+// part is the child's for good (swapping back is free), nothing is random and nothing depends on
+// time played.
 
 export type PartSlot = 'antenna' | 'head' | 'body' | 'arms' | 'legs' | 'paint';
 
@@ -146,4 +147,60 @@ export function friendsOf(p: Progress): Friend[] {
 /** The next friend that arrived but has not been welcomed yet. */
 export function newFriend(p: Progress): Friend | null {
   return friendsOf(p)[p.robotFriendsSeen] ?? null;
+}
+
+// ---------- care: battery, oil and tricks ----------
+// Every solved task in the workshop uses one battery bar: the robot did the work. A flat battery only
+// makes the robot sleepy in the workshop; it never stops a game. The child charges it bar by bar, free,
+// counting along; every few full charges the robot learns a trick it keeps. After a while a joint
+// squeaks until it gets a drop of oil. Everything counts tasks, not time.
+
+export const BATTERY_BARS = 5;
+/** Solved tasks after oiling until a joint squeaks again. */
+export const SQUEAKY_AFTER = 8;
+
+export type TrickId = 'wobble' | 'spin' | 'jump';
+
+export interface Trick {
+  id: TrickId;
+  name: string;
+  /** Full charges that teach it. */
+  after: number;
+}
+
+export const TRICKS: Trick[] = [
+  { id: 'wobble', name: 'Billegés', after: 3 },
+  { id: 'spin', name: 'Pörgés', after: 6 },
+  { id: 'jump', name: 'Ugrás', after: 9 }
+];
+
+/** 0 … BATTERY_BARS. */
+export function batteryOf(p: Progress): number {
+  return Math.max(0, Math.min(BATTERY_BARS, BATTERY_BARS - (p.bolts - p.robotChargedAt)));
+}
+
+/** Charges one bar; filling the last bar counts as a full charge. Unchanged when it is full. */
+export function chargeOne(p: Progress): Progress {
+  const now = batteryOf(p);
+  if (now >= BATTERY_BARS) return p;
+  const from = Math.max(p.robotChargedAt, p.bolts - BATTERY_BARS);
+  return { ...p, robotChargedAt: from + 1, robotCharges: p.robotCharges + (now + 1 === BATTERY_BARS ? 1 : 0) };
+}
+
+export function isSqueaky(p: Progress): boolean {
+  return p.bolts - p.robotOiledAt >= SQUEAKY_AFTER;
+}
+
+export function oil(p: Progress): Progress {
+  return isSqueaky(p) ? { ...p, robotOiledAt: p.bolts } : p;
+}
+
+export function tricksOf(p: Progress): Trick[] {
+  return TRICKS.filter((t) => p.robotCharges >= t.after);
+}
+
+/** Full charges still needed for the next trick, or null once the robot knows them all. */
+export function chargesToNextTrick(p: Progress): number | null {
+  const next = TRICKS.find((t) => p.robotCharges < t.after);
+  return next ? next.after - p.robotCharges : null;
 }

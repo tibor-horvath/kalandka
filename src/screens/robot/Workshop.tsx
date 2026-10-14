@@ -2,14 +2,23 @@ import { useEffect, useState } from 'react';
 import { Bolt } from '../../components/robot';
 import { FriendArt, RobotFigure, SlotIcon } from '../../components/robotParts';
 import { BackIcon, GuideBubble, RoundButton, SpeakerIcon } from '../../components/ui';
-import { chime, fanfare, popBubble } from '../../lib/sound';
+import { chime, fanfare, popBubble, robotChirp } from '../../lib/sound';
+import { capitalize, numberCount } from '../../lib/numbers';
 import { speak } from '../../lib/speech';
 import type { Mood, Tone } from '../../lib/types';
 import { useProgress } from '../../state/progress';
 import {
+  BATTERY_BARS,
   FRIENDS,
   PART_SLOTS,
+  TRICKS,
+  batteryOf,
   boltBalance,
+  chargeOne,
+  chargesToNextTrick,
+  isSqueaky,
+  oil,
+  tricksOf,
   boughtCount,
   buy,
   canBuy,
@@ -22,7 +31,8 @@ import {
   partsIn,
   wear,
   type Part,
-  type PartSlot
+  type PartSlot,
+  type TrickId
 } from '../../state/robotParts';
 
 interface Say {
@@ -42,6 +52,8 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
   const { progress, update } = useProgress();
   const balance = boltBalance(progress);
   const look = lookOf(progress);
+  const battery = batteryOf(progress);
+  const squeaky = isSqueaky(progress);
   const [slot, setSlot] = useState<PartSlot>('head');
   const [say, setSay] = useState<Say>(() => opening());
   /** The friend the child tapped last; the count restarts its little hop on every tap. */
@@ -49,8 +61,17 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
   const friend = newFriend(progress);
   const welcomed = friendsOf(progress).slice(0, progress.robotFriendsSeen);
   const nextFriend = FRIENDS[welcomed.length];
+  const tricks = tricksOf(progress);
+  /** The trick playing now; the count restarts it on every tap. */
+  const [trick, setTrick] = useState<{ id: TrickId; n: number } | null>(null);
 
   function opening(): Say {
+    if (battery === 0) {
+      return { text: 'Elfáradtam. Feltöltesz?', speech: 'Sokat dolgoztam, elfáradtam. Feltöltesz? Koppints a töltésre!', mood: 'smile', tone: 'plain' };
+    }
+    if (squeaky) {
+      return { text: 'Nyikorog a karom. Kérek egy csepp olajat!', speech: 'Nyikorog a karom. Kérek egy csepp olajat! Koppints az olajozásra.', mood: 'think', tone: 'plain' };
+    }
     const next = cheapestLeft(progress);
     if (!next) return { text: 'Kész a robotod! Minden alkatrész a tiéd.', speech: 'Kész a robotod! Minden alkatrész a tiéd. Nézd, milyen szép lett!', mood: 'cheer', tone: 'good' };
     if (balance < next.cost) {
@@ -97,6 +118,65 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
     tell({ text: 'Felszereltük! Nézd, milyen menő lett!', speech: `Felszereltük: ${part.name.toLowerCase()}! Nézd, milyen menő lett a robotod!`, mood: 'cheer', tone: 'good' });
   };
 
+  const charge = () => {
+    if (battery >= BATTERY_BARS) {
+      tell({ text: 'Tele vagyok!', speech: 'Tele vagyok! Ha dolgozom, megint tölthetsz.', mood: 'cheer', tone: 'good' });
+      return;
+    }
+    const after = chargeOne(progress);
+    const now = batteryOf(after);
+    const word = `${capitalize(numberCount(now))}!`;
+    update(chargeOne);
+    if (now < BATTERY_BARS) {
+      popBubble(now);
+      tell({ text: word, speech: word, mood: 'smile', tone: 'plain' });
+      return;
+    }
+    const learned = TRICKS.find((t) => t.after === after.robotCharges);
+    if (learned) {
+      fanfare();
+      setTrick((t) => ({ id: learned.id, n: (t?.n ?? 0) + 1 }));
+      tell({
+        text: `${word} Új trükköt tanultam: ${learned.name.toLowerCase()}!`,
+        speech: `${word} Tele vagyok! Új trükköt tanultam: ${learned.name.toLowerCase()}! Koppints rám, és megmutatom.`,
+        mood: 'cheer',
+        tone: 'good'
+      });
+      return;
+    }
+    chime();
+    const left = chargesToNextTrick(after);
+    const hint = left ? ` Még ${left === 1 ? 'egy' : left} teljes töltés, és új trükköt tanulok.` : '';
+    tell({ text: `${word} Tele vagyok!`, speech: `${word} Tele vagyok, köszönöm!${hint}`, mood: 'cheer', tone: 'good' });
+  };
+
+  const oilUp = () => {
+    if (!squeaky) return;
+    chime();
+    update(oil);
+    tell({ text: 'Már nem nyikorgok!', speech: 'Köszönöm! Már nem nyikorog a karom.', mood: 'cheer', tone: 'good' });
+  };
+
+  const showTrick = () => {
+    if (tricks.length === 0) {
+      const left = chargesToNextTrick(progress)!;
+      popBubble(2);
+      tell({
+        text: `Még ${left} teljes töltés, és tanulok egy trükköt.`,
+        speech: `Ha még ${left === 1 ? 'egyszer' : `${left}-szor`} teljesen feltöltesz, megtanulok egy trükköt!`,
+        mood: 'smile',
+        tone: 'plain'
+      });
+      return;
+    }
+    // Each tap shows the next trick it knows, in turn.
+    const k = trick ? (tricks.findIndex((t) => t.id === trick.id) + 1) % tricks.length : 0;
+    const next = tricks[k];
+    robotChirp();
+    setTrick((t) => ({ id: next.id, n: (t?.n ?? 0) + 1 }));
+    tell({ text: `${next.name}!`, speech: `${next.name}!`, mood: 'cheer', tone: 'good' });
+  };
+
   const welcome = () => {
     if (!friend) return;
     fanfare();
@@ -131,10 +211,34 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
 
       <div className="workshop">
         <div className="workshop__stage">
-          <div className="workshop__robot" role="img" aria-label={`A robotod: ${PART_SLOTS.map((s) => partById(look[s.id])!.name.toLowerCase()).join(', ')}`}>
-            <RobotFigure key={Object.values(look).join()} look={look} width={230} className="pop-in" />
-            <span className="workshop__platform" aria-hidden="true" />
+          <div className="robot-care">
+            <div className="robot-care__battery" role="img" aria-label={`Elem: ${battery} csík az ötből`}>
+              {Array.from({ length: BATTERY_BARS }, (_, k) => (
+                <span key={k} className={k < battery ? 'is-full' : ''} />
+              ))}
+            </div>
+            <button type="button" className="robot-care__btn" onClick={charge}>
+              <PlugIcon />
+              <span>Töltés</span>
+            </button>
+            {squeaky && (
+              <button type="button" className="robot-care__btn robot-care__btn--oil" onClick={oilUp}>
+                <OilIcon />
+                <span>Olajozás</span>
+              </button>
+            )}
           </div>
+          <button
+            type="button"
+            className={`workshop__robot${battery === 0 ? ' is-tired' : ''}`}
+            onClick={showTrick}
+            aria-label={`A robotod: ${PART_SLOTS.map((s) => partById(look[s.id])!.name.toLowerCase()).join(', ')}. ${tricks.length ? 'Koppints, és trükköt mutat.' : ''}`}
+          >
+            <span key={trick?.n ?? 0} className={`workshop__trick${trick ? ` workshop__trick--${trick.id}` : ''}`}>
+              <RobotFigure key={Object.values(look).join()} look={look} width={230} className="pop-in" />
+            </span>
+            <span className="workshop__platform" aria-hidden="true" />
+          </button>
           <div className="workshop__friends" aria-label="A műhely lakói">
             {welcomed.map((f) => (
               <button
@@ -244,5 +348,23 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
         </div>
       )}
     </div>
+  );
+}
+
+function PlugIcon() {
+  return (
+    <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4" />
+    </svg>
+  );
+}
+
+function OilIcon() {
+  return (
+    <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 12h10l6-5v2l-4 5v5H4z" />
+      <path d="M7 12V9h4v3" />
+      <path d="M21 13v2" />
+    </svg>
   );
 }
