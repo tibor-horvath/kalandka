@@ -6,6 +6,7 @@ import { ADD_LEVELS, clampLevel, LEVEL_UP_STREAK } from '../../games/add/logic';
 import { LEARN_MAX } from '../../games/learn/logic';
 import { TRACE_ORDER, buildTraceRound } from '../../games/trace/logic';
 import { PATH_LEVELS, pathLevelIndex } from '../../games/robot/path';
+import { SCALE_LEVELS, scaleLevelIndex } from '../../games/robot/scale';
 import { SORT_LEVELS, sortLevelIndex } from '../../games/robot/sort';
 import { POTS_LEVELS, potsLevelFor } from '../../games/pots/logic';
 import { LEVELS as FLASH_LEVELS, levelFor } from '../../games/flash/logic';
@@ -99,6 +100,11 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
       name: 'Válogatógép',
       detail: `${progress.sortSolved} kör · ${sortLevelIndex(progress.sortSolved) + 1}. szint · ${SORT_LEVELS[sortLevelIndex(progress.sortSolved)].name}`,
       share: levelShare('sort')
+    },
+    {
+      name: 'Mérleg',
+      detail: `${progress.scaleSolved} kör · ${scaleLevelIndex(progress.scaleSolved) + 1}. szint · ${SCALE_LEVELS[scaleLevelIndex(progress.scaleSolved)].name}`,
+      share: levelShare('scale')
     }
   ];
 

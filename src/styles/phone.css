@@ -67,6 +67,24 @@
 .is-phone .plot--play { border-width: 4px; box-shadow: 0 6px 0 var(--leaf); }
 .is-phone .plot--play:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--leaf); }
 .is-phone .plot__cta { display: none; }
+/* The reward tile stands up on a phone: the window on top, then the name and the seeds or bolts. */
+.is-phone .plot--reward { flex-direction: column; align-items: stretch; gap: 2px; padding: 6px 6px 8px; text-align: center; }
+.is-phone .plot--reward .plot__badge { top: -12px; left: auto; right: 8px; height: 26px; border-width: 2px; }
+.is-phone .plot__window { flex: 1 1 0; min-height: 0; width: auto; border-width: 3px; border-radius: 18px; padding-bottom: 6px; }
+.is-phone .plot__window::before { height: 14px; }
+/* The window is short on a phone: its picture takes the window's height, never its own. */
+.is-phone .plot__window > * { height: 100%; }
+.is-phone .plot__window svg { height: 100%; width: auto; }
+.is-phone .plot__trio--kiskert { align-items: flex-end; }
+.is-phone .plot__trio--kiskert .gplant-icon { height: 60%; width: auto; }
+.is-phone .plot__trio--kiskert .gplant-icon + .gplant-icon { height: 100%; width: auto; margin-left: -4px; }
+.is-phone .plot__side { flex: none; align-items: center; gap: 0; }
+.is-phone .plot--reward .plot__name { font-size: 18px; }
+.is-phone .plot__balance { gap: 4px; }
+.is-phone .plot__balance svg { width: 20px; height: 20px; }
+.is-phone .plot__balance-text { flex-direction: row; align-items: baseline; gap: 4px; }
+.is-phone .plot__balance-num { font-size: 22px; }
+.is-phone .plot__balance-unit { font-size: 13px; }
 .is-phone .plot__name { font-size: 21px; margin-top: 8px; }
 .is-phone .plot__skill { font-size: 14px; margin-top: 2px; }
 .is-phone .plot__badge { top: 8px; left: 8px; height: 26px; padding: 0 10px; border-radius: 13px; font-size: 14px; }

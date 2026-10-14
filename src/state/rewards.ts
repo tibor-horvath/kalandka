@@ -6,6 +6,7 @@ import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL } from '../games/pots/logic';
 import { TRACE_ORDER } from '../games/trace/logic';
 import { PLANTS } from '../games/water/logic';
 import { PATH_LEVELS, PATH_ROUNDS_PER_LEVEL } from '../games/robot/path';
+import { SCALE_LEVELS, SCALE_ROUNDS_PER_LEVEL } from '../games/robot/scale';
 import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL } from '../games/robot/sort';
 import type { GameId } from '../screens/Home';
 import type { RobotGameId } from '../screens/robot/RobotHome';
@@ -147,7 +148,8 @@ export const STICKER_GAMES: StickerGame[] = [
   { id: 'trace', name: 'Mézút', color: '#D9741A', ink: '#FFFFFF', world: 'garden' },
   { id: 'pots', name: 'Cserépbarátok', color: '#2F7D32', ink: '#FFFFFF', world: 'garden' },
   { id: 'path', name: 'Robotút', color: '#138A86', ink: '#FFFFFF', world: 'robot' },
-  { id: 'sort', name: 'Válogatógép', color: '#5E7184', ink: '#FFFFFF', world: 'robot' }
+  { id: 'sort', name: 'Válogatógép', color: '#5E7184', ink: '#FFFFFF', world: 'robot' },
+  { id: 'scale', name: 'Mérleg', color: '#F2B33D', ink: '#10233A', world: 'robot' }
 ];
 
 /** Robotút stickers: a course solved on a level (the first solved course of that level and on). */
@@ -156,6 +158,9 @@ const pathPassed = (name: string) => (p: Progress) => p.pathSolved > pathLevel(n
 /** Válogatógép stickers: a round solved on a level. */
 const sortLevel = (name: string) => SORT_LEVELS.findIndex((l) => l.name === name);
 const sortPassed = (name: string) => (p: Progress) => p.sortSolved > sortLevel(name) * SORT_ROUNDS_PER_LEVEL;
+/** Mérleg stickers: a round solved on a level. */
+const scaleLevel = (name: string) => SCALE_LEVELS.findIndex((l) => l.name === name);
+const scalePassed = (name: string) => (p: Progress) => p.scaleSolved > scaleLevel(name) * SCALE_ROUNDS_PER_LEVEL;
 
 /** Méhecske levels that close a number range: the last level up to 5, up to 10, and round tens. */
 const ADD_PAST_5 = ADD_LEVELS.findIndex((l) => l.name === '10-ig, gyűjtéssel');
@@ -196,6 +201,11 @@ export const STICKERS: Sticker[] = [
   { id: 'sort-odd', game: 'sort', mark: '?', label: 'Kakukktojás', praise: 'Megtalálod, melyik nem illik a többihez!', earned: sortPassed('Kakukktojás') },
   { id: 'sort-two', game: 'sort', mark: '2+', label: 'Két szabály', praise: 'Egyszerre két dologra is figyelsz!', earned: sortPassed('Két szabály'), set: 1 },
   { id: 'sort-rule', game: 'sort', mark: '!', label: 'Szabálykereső', praise: 'Kitaláltad a gép titkos szabályát!', earned: sortPassed('Mi a szabály?'), set: 1 },
+  { id: 'scale-first', game: 'scale', mark: '↓', label: 'Első mérés', praise: 'Megmondtad, melyik oldal a nehezebb!', earned: (p) => p.scaleSolved >= 1 },
+  { id: 'scale-even', game: 'scale', mark: '=', label: 'Egyensúly', praise: 'Egyensúlyba hoztad a mérleget!', earned: scalePassed('Tedd egyensúlyba!') },
+  { id: 'scale-two', game: 'scale', mark: '2', label: 'Kettes súly', praise: 'Már a kettes súlyokkal is kiméred!', earned: scalePassed('Kettes súlyok') },
+  { id: 'scale-missing', game: 'scale', mark: '?', label: 'Hiányzó súly', praise: 'Kitaláltad, melyik súly hiányzik!', earned: scalePassed('Hiányzó súly'), set: 1 },
+  { id: 'scale-secret', game: 'scale', mark: 'x', label: 'Titkos doboz', praise: 'Kitaláltad, mennyit nyom a titkos doboz!', earned: scalePassed('Titkos doboz'), set: 1 },
   { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL * POTS_LEVELS.length }
 ];
 

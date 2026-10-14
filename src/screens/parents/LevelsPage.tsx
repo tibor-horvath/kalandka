@@ -12,7 +12,8 @@ const ABOUT: Record<string, { skill: string; mode: string; glyph: string; tile: 
   add: { skill: 'összeadás és kivonás', mode: 'Csepi ajánl, a gyerek dönt', glyph: '+', tile: 'pa-tile--sun' },
   pots: { skill: 'tízes barátok', mode: '5 jó válasz után magától lép', glyph: '3+7', tile: 'pa-tile--pink' },
   path: { skill: 'programozás', mode: '5 pálya után magától lép', glyph: '↑→', tile: 'pa-tile--sky' },
-  sort: { skill: 'csoportosítás, szabályok', mode: '5 kör után magától lép', glyph: '●▲', tile: 'pa-tile--sand' }
+  sort: { skill: 'csoportosítás, szabályok', mode: '5 kör után magától lép', glyph: '●▲', tile: 'pa-tile--sand' },
+  scale: { skill: 'több, kevesebb, egyenlő', mode: '5 kör után magától lép', glyph: '=', tile: 'pa-tile--sun' }
 };
 
 export function LevelsPage() {

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { KidChip, MapButton, ParentsButton, VoiceButton } from '../../components/hub';
-import { Bolt, Gear, PathArt, SortArt } from '../../components/robot';
+import { KidChip, MapButton, ParentsButton, RewardPlot, VoiceButton } from '../../components/hub';
+import { Bolt, Gear, PathArt, ScaleArt, SortArt } from '../../components/robot';
 import { FriendArt, MyRobot } from '../../components/robotParts';
 import { useForm } from '../../components/Stage';
 import { StickerPop } from '../../components/StickerPop';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../../components/ui';
 import { pathLevelIndex } from '../../games/robot/path';
+import { scaleLevelIndex } from '../../games/robot/scale';
 import { sortLevelIndex } from '../../games/robot/sort';
 import { speak } from '../../lib/speech';
 import { kidName, useActiveKid, useProfiles } from '../../state/profiles';
@@ -13,12 +14,14 @@ import { useProgress } from '../../state/progress';
 import { markStickerSeen, newStickers } from '../../state/rewards';
 import { boltBalance, canBuyAnything, friendsOf, newFriend } from '../../state/robotParts';
 
-export type RobotGameId = 'path' | 'sort';
+export type RobotGameId = 'path' | 'sort' | 'scale';
 
-/** Machines Csavar is still building: shown asleep, each with what it will teach. */
+/** Machines Csavar is still building: shown asleep, each with what it will teach. With the games they fill seven places, so Robotépítő is the eighth. */
 const COMING = [
-  { name: 'Mérleg', skill: 'Egyenlőség, mérés' },
-  { name: 'Mintagép', skill: 'Nehezebb minták' }
+  { name: 'Mintagép', skill: 'Nehezebb minták' },
+  { name: 'Tükörgép', skill: 'Tükrözés, szimmetria' },
+  { name: 'Kódzár', skill: 'Jelek és kódok' },
+  { name: 'Hibakereső', skill: 'Hiba a programban' }
 ];
 
 const NOTICE_MS = 5000;
@@ -84,6 +87,7 @@ export function RobotHome({
 
   const levelIdx = pathLevelIndex(progress.pathSolved);
   const sortIdx = sortLevelIndex(progress.sortSolved);
+  const scaleIdx = scaleLevelIndex(progress.scaleSolved);
   const workshopBadge = newFriend(progress) ? 'Barát jött!' : canBuyAnything(progress) ? 'Építhetsz!' : null;
 
   return (
@@ -100,13 +104,6 @@ export function RobotHome({
         </div>
         <div className="topbar__right">
           {shared && <KidChip onSwitch={onSwitch} />}
-          <div className="pill" aria-label={`${balance} csavar`}>
-            <Bolt />
-            <span>
-              {balance}
-              <span className="pill__unit"> csavar</span>
-            </span>
-          </div>
           <MapButton onClick={onMap} />
           <VoiceButton guide="Csavar" />
           <ParentsButton onClick={onParents} />
@@ -148,15 +145,13 @@ export function RobotHome({
           </span>
         </button>
 
-        <button type="button" className="plot plot--play plot--builder" onClick={openWorkshop} aria-label="Robotépítő – építsd meg a saját robotodat">
-          {workshopBadge && <span className="plot__badge">{workshopBadge}</span>}
-          <span className="plot__builder">
-            <MyRobot progress={progress} width={80} />
-          </span>
+        <button type="button" className="plot plot--play" onClick={() => open('scale')} aria-label="Mérleg – melyik a nehezebb?">
+          {progress.scaleSolved === 0 ? <span className="plot__badge">Új gép!</span> : <span className="plot__badge">{scaleIdx + 1}. szint</span>}
+          <ScaleArt />
           <span className="plot__soil plot__soil--floor" />
-          <span className="plot__name">Robotépítő</span>
+          <span className="plot__name">Mérleg</span>
           <span className="plot__cta">
-            <Bolt size={22} /> Építés
+            <PlayIcon /> Játék
           </span>
         </button>
 
@@ -171,6 +166,20 @@ export function RobotHome({
             <span className="plot__skill">{m.skill} · hamarosan</span>
           </button>
         ))}
+
+        {/* The reward tile always closes the row of eight, as Kiskertem does in Számkertész. */}
+        <RewardPlot
+          className="plot--builder"
+          label="Robotépítő – építsd meg a saját robotodat"
+          name="Robotépítő"
+          art={<MyRobot progress={progress} width={92} />}
+          icon={<Bolt size={30} />}
+          count={balance}
+          unit="csavar"
+          cta="Építés"
+          badge={workshopBadge}
+          onClick={openWorkshop}
+        />
       </div>
 
       {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}

@@ -17,15 +17,15 @@
 .world--robot .garden__empty { color: #2f4a63; }
 .world--robot .bubble__kicker { color: var(--leaf-deep); }
 .plot__soil--floor { background: var(--soil); height: 14px; border-radius: 8px; margin-top: 2px; }
-.screen--robot-home .plots { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-.screen--robot-home .plot--play { grid-column: span 2; height: 226px; }
-.screen--robot-home .plot--locked { grid-column: span 3; height: 150px; }
+.screen--robot-home .plots { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* Two rows of four like Számkertész: three machines, the ones still being built, and Robotépítő last. */
+/* The machines' pictures fill the tile, so their badges sit on the top edge, as the reward tile's does. */
+.screen--robot-home .plot__badge { top: -17px; height: 30px; border: 3px solid var(--paper); }
 .screen--robot-home .plot--locked > svg { width: 44px; height: 44px; margin-bottom: 4px; }
-.is-phone .screen--robot-home .plot { grid-column: auto; }
 .screen--robot-home .plot--play > svg { margin-bottom: 8px; }
 
 .stage--landscape .screen--robot-home .plot { height: 150px; }
-.is-phone .screen--robot-home .plot > svg.path-art, .is-phone .screen--robot-home .plot > svg.sort-art { width: 120px; height: auto; }
+.is-phone .screen--robot-home .plot > svg.path-art, .is-phone .screen--robot-home .plot > svg.sort-art, .is-phone .screen--robot-home .plot > svg.scale-art { width: 120px; height: auto; }
 .is-phone .screen--robot-home .plot--locked > svg { width: 40px; height: 40px; }
 
 /* Térkép button on every world's home screen. */
@@ -329,7 +329,7 @@
 .sort-odd__part.is-dim { opacity: 0.45; }
 
 .sort-win { top: 46%; }
-.plot > svg.sort-art { margin-bottom: 8px; }
+.plot > svg.sort-art, .plot > svg.scale-art { margin-bottom: 8px; }
 
 @media (prefers-reduced-motion: reduce) {
   .sort-belt__part, .sort-odd__row, .sort-bin__part, .sort-bin__count, .sort-bin.is-glow, .sort-odd__part.is-glow { animation: none; }
@@ -385,10 +385,121 @@
 .stage--landscape .sort-odd__part { width: 112px; height: 112px; }
 .stage--landscape .sort-odd__part svg { width: 80px; height: 80px; }
 
+/* ---------- Mérleg ---------- */
+.screen--scale { display: flex; flex-direction: column; }
+.screen--scale .topbar { flex: none; }
+.screen--scale .screen-title { color: var(--leaf-deep); }
+.scale-guide { position: relative; flex: none; padding: 4px 40px 0; display: flex; align-items: center; justify-content: center; gap: 24px; }
+.scale-guide .bubble { font-size: 26px; max-width: 760px; }
+.scale-task { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 6px 40px 24px; animation: settle 0.35s ease-out both; }
+.scale-board svg { display: block; overflow: visible; }
+
+/* The beam tips and the pans follow it, together, with a small settle at the end. */
+.scale-beam, .scale-pan { transition: transform 0.8s cubic-bezier(.34, 1.25, .64, 1); }
+.scale-pan { cursor: default; }
+.scale-pan:has(> rect[fill="transparent"]) { cursor: pointer; }
+.scale-weight { cursor: pointer; }
+.scale-prop { fill: #f2b33d; stroke: #c98a1a; stroke-width: 4; transition: transform 0.4s ease-in, opacity 0.4s ease-in; }
+.scale-prop.is-off { transform: translateY(60px); opacity: 0; }
+.scale-gap { fill: #fff4d1; stroke: #c98a1a; stroke-width: 4; stroke-dasharray: 9 7; }
+.scale-gap__mark, .scale-block__mark { font-family: var(--display); font-size: 34px; font-weight: 800; fill: #7a5300; }
+.scale-crate__mark { font-family: var(--display); font-size: 32px; font-weight: 800; fill: #8a5a3b; }
+.scale-drop { animation: scale-drop 0.35s cubic-bezier(.34, 1.4, .64, 1) both; }
+.scale-count { transform-box: fill-box; transform-origin: center; animation: pop 0.3s cubic-bezier(.34, 1.56, .64, 1) both; }
+.scale-count__num { font-family: var(--display); font-size: 32px; font-weight: 800; fill: var(--ink); }
+@keyframes scale-drop { from { transform: translateY(-50px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* The answer stamped over the scale, between the pans: green and staying when right, orange and fading for "Hoppá". */
+.scale-board { position: relative; }
+.scale-beam__bar { fill: #5e7184; transition: fill 0.3s; }
+.scale-plate { fill: #3e5872; transition: fill 0.3s; }
+.scale-board.is-right .scale-beam__bar, .scale-board.is-right .scale-plate { fill: var(--leaf); }
+.scale-stamp { position: absolute; left: 50%; top: 40px; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; transform: translateX(-50%); }
+.scale-stamp__icon { display: grid; place-items: center; width: 110px; height: 110px; border-radius: 50%; border: 8px solid var(--paper); font-family: var(--display); font-size: 72px; font-weight: 800; line-height: 1; }
+.scale-stamp__word { padding: 4px 18px; border-radius: 20px; background: var(--paper); font-size: 30px; font-weight: 800; white-space: nowrap; }
+.is-phone .scale-stamp { top: 20px; }
+.is-phone .scale-stamp__icon { width: 90px; height: 90px; font-size: 60px; }
+.scale-stamp--right .scale-stamp__icon { background: var(--leaf); color: var(--paper); box-shadow: 0 6px 0 var(--leaf-deep); }
+.scale-stamp--right .scale-stamp__word { color: var(--leaf-deep); box-shadow: 0 4px 0 var(--leaf); }
+.scale-stamp--right { animation: stamp-in 0.45s cubic-bezier(.34, 1.56, .64, 1) both; }
+.scale-stamp--oops .scale-stamp__icon { background: var(--oops); color: var(--paper); box-shadow: 0 6px 0 var(--oops-ink); }
+.scale-stamp--oops .scale-stamp__word { color: var(--oops-ink); box-shadow: 0 4px 0 var(--oops); }
+.scale-stamp--oops { animation: stamp-in 0.35s cubic-bezier(.34, 1.56, .64, 1) both, stamp-out 0.4s ease-in 1.6s forwards; }
+@keyframes stamp-in { from { opacity: 0; transform: translateX(-50%) scale(0.4); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
+@keyframes stamp-out { to { opacity: 0; transform: translateX(-50%) scale(0.9); } }
+
+/* Compare: which side is heavier (or the same). */
+.scale-answers { display: grid; grid-template-columns: 1fr 1fr; gap: 200px; width: 900px; }
+.scale-answers--3 { grid-template-columns: 1fr auto 1fr; gap: 40px; }
+.scale-answer { height: 84px; padding: 0 22px; border-radius: 28px; border: 5px solid var(--paper); background: var(--paper); box-shadow: 0 7px 0 var(--grass-deep); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 26px; font-weight: 800; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.scale-answer:active { transform: translateY(5px); box-shadow: 0 2px 0 var(--grass-deep); }
+.scale-answer:disabled { cursor: default; transform: none; }
+.scale-answer__icon { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: var(--good-tint); color: var(--leaf-deep); font-size: 30px; }
+.scale-answer.is-wrong { border-color: var(--oops); box-shadow: 0 7px 0 var(--oops); animation: wobble 0.4s; }
+.scale-answer.is-right { border-color: var(--leaf); box-shadow: 0 7px 0 var(--leaf); }
+.scale-answer.is-glow { border-color: var(--bolt); box-shadow: 0 7px 0 #d9961e, 0 0 0 8px #ffe08a; }
+
+/* Balance: the tray of weights. */
+.scale-tray { display: flex; gap: 18px; justify-content: center; }
+.scale-tray__btn { height: 88px; min-width: 120px; padding: 0 22px; border-radius: 28px; border: 5px solid var(--paper); background: var(--paper); box-shadow: 0 7px 0 var(--grass-deep); display: flex; align-items: center; gap: 10px; font-size: 28px; font-weight: 800; color: var(--ink); cursor: pointer; }
+.scale-tray__btn:active { transform: translateY(5px); box-shadow: 0 2px 0 var(--grass-deep); }
+.scale-tray__btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+.scale-tray__btn svg { display: block; }
+.scale-tray__btn--off { background: #e3ebf4; border-color: #e3ebf4; font-size: 22px; }
+.scale-tray__sign { font-size: 40px; line-height: 1; }
+
+/* Choose: the missing or hidden weight. */
+.scale-choices { display: flex; gap: 22px; justify-content: center; }
+.scale-choice { gap: 6px; height: 124px; }
+.scale-choice__num { font-size: 52px; line-height: 1; }
+.scale-choice__dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 90px; }
+.scale-choice__dots span { width: 14px; height: 14px; border-radius: 50%; background: #7e93ab; }
+.scale-choice.is-glow { border-color: var(--bolt); box-shadow: 0 8px 0 #d9961e, 0 0 0 8px #ffe08a; }
+
+@media (prefers-reduced-motion: reduce) {
+  .scale-beam, .scale-pan, .scale-prop { transition-duration: 1ms; }
+  .scale-task, .scale-drop, .scale-count, .scale-stamp--right { animation: none; }
+  .scale-stamp--oops { animation: stamp-out 1ms linear 2s forwards; }
+}
+
+/* Phones: Csavar on top, the scale as big as the room allows, the buttons below. */
+.is-phone .scale-guide { padding: 0 16px; gap: 10px; flex-wrap: wrap; }
+.is-phone .scale-guide .guide { flex: 1; min-width: 0; gap: 12px; }
+.is-phone .scale-guide .guide__csepi { width: 40px; height: 62px; }
+.is-phone .scale-guide .bubble { font-size: 17px; padding: 10px 14px; }
+.is-phone .scale-task { padding: 8px 16px 16px; gap: 10px; }
+.is-phone .scale-fit { flex: 1 1 0; min-height: 0; width: 100%; }
+.is-phone .scale-answers, .is-phone .scale-answers--3 { width: 100%; gap: 10px; }
+.is-phone .scale-answers--3 { grid-template-columns: 1fr 1fr; }
+.is-phone .scale-answers--3 .scale-answer--equal { grid-column: 1 / -1; grid-row: 2; }
+.is-phone .scale-answer { height: 60px; padding: 0 10px; border-radius: 20px; border-width: 4px; font-size: 17px; box-shadow: 0 5px 0 var(--grass-deep); }
+.is-phone .scale-answer__icon { width: 32px; height: 32px; font-size: 22px; }
+.is-phone .scale-tray { gap: 10px; }
+.is-phone .scale-tray__btn { height: 64px; min-width: 0; padding: 0 14px; border-radius: 20px; border-width: 4px; font-size: 20px; box-shadow: 0 5px 0 var(--grass-deep); }
+.is-phone .scale-tray__btn svg { height: 32px; width: auto; }
+.is-phone .scale-tray__btn--off { font-size: 17px; }
+.is-phone .scale-choices { gap: 10px; }
+.is-phone .scale-choice { flex: 1 1 0; width: auto; min-width: 0; height: 92px; }
+.is-phone .scale-choices { width: 100%; }
+.is-phone .scale-choice__num { font-size: 36px; }
+.is-phone .scale-choice__dots span { width: 9px; height: 9px; }
+.is-phone .sort-odd__dots { gap: 8px; }
+
+.stage--landscape .screen--scale {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: 'top task' 'guide task';
+  column-gap: 10px;
+}
+.stage--landscape .screen--scale .topbar { grid-area: top; }
+.stage--landscape .scale-guide { grid-area: guide; align-content: start; padding: 0 0 0 12px; }
+.stage--landscape .scale-guide .guide__csepi { display: none; }
+.stage--landscape .scale-guide .bubble { font-size: 15px; padding: 6px 10px; }
+.stage--landscape .scale-task { grid-area: task; padding: 8px 12px 10px 0; gap: 6px; }
+.stage--landscape .scale-answer, .stage--landscape .scale-tray__btn { height: 48px; }
+
 /* ---------- Robotépítő ---------- */
-.plot--builder .plot__builder { display: block; margin-bottom: -4px; }
-.plot--builder .plot__builder svg { display: block; }
-.plot--builder .plot__cta svg { margin-left: -4px; }
 .shelf { gap: 18px; align-items: flex-end; }
 .shelf__robot svg, .shelf__friend svg { display: block; }
 .shelf__hint { margin-bottom: 30px; }
@@ -463,4 +574,3 @@
 .stage--landscape .workshop__part-name { font-size: 13px; }
 .is-phone .shelf__robot svg { width: 48px; height: auto; }
 .is-phone .shelf__friend svg { width: 52px; height: auto; }
-.is-phone .plot--builder .plot__builder svg { width: 44px; height: auto; }

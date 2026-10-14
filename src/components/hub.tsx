@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { setSpeechEnabled, speak } from '../lib/speech';
 import { kidName, useActiveKid } from '../state/profiles';
 import { useProgress } from '../state/progress';
@@ -78,6 +78,54 @@ export function MapButton({ onClick }: { onClick: () => void }) {
     <button type="button" className="map-btn" onClick={onClick} aria-label="Térkép: másik világ választása">
       <MapIcon />
       <span className="map-btn__label">Térkép</span>
+    </button>
+  );
+}
+
+/**
+ * A world's reward tile (Kiskertem, Robotépítő) beside the game tiles: wide and cream, the child's own
+ * place in a round window and, in big numbers, what they can spend there, so the topbar needs no counter.
+ */
+export function RewardPlot({
+  className,
+  label,
+  name,
+  art,
+  icon,
+  count,
+  unit,
+  cta,
+  badge,
+  onClick
+}: {
+  className: string;
+  label: string;
+  name: string;
+  art: ReactNode;
+  icon: ReactNode;
+  count: number;
+  unit: string;
+  cta: ReactNode;
+  badge: string | null;
+  onClick: () => void;
+}) {
+  return (
+    <button type="button" className={`plot plot--play plot--reward ${className}`} onClick={onClick} aria-label={`${label} · ${count} ${unit}`}>
+      {badge && <span className="plot__badge">{badge}</span>}
+      <span className="plot__window" aria-hidden="true">
+        {art}
+      </span>
+      <span className="plot__side">
+        <span className="plot__name">{name}</span>
+        <span className="plot__balance" aria-hidden="true">
+          {icon}
+          <span className="plot__balance-text">
+            <span className="plot__balance-num">{count}</span>
+            <span className="plot__balance-unit">{unit}</span>
+          </span>
+        </span>
+        <span className="plot__cta">{cta}</span>
+      </span>
     </button>
   );
 }

@@ -4,10 +4,10 @@
  */
 
 /* ---------- home: the Kiskert plot ---------- */
+/* A flower and the pear tree, sized to stand in the reward tile's round window. */
 .plot--kiskert .plot__trio--kiskert { align-items: flex-end; gap: 0; }
-.plot__trio--kiskert .gplant-icon { width: 56px; height: 77px; }
-.plot__trio--kiskert .gplant-icon + .gplant-icon { width: 84px; height: 116px; margin-left: -10px; }
-.plot--kiskert .plot__cta svg { margin-left: -6px; }
+.plot__trio--kiskert .gplant-icon { width: 34px; height: 47px; }
+.plot__trio--kiskert .gplant-icon + .gplant-icon { width: 62px; height: 86px; margin-left: -6px; }
 
 /* ---------- Kiskert ---------- */
 .screen--garden { display: flex; flex-direction: column; }
@@ -89,21 +89,34 @@
 .album__world { height: 52px; padding: 0 12px 0 22px; border: 3px solid #ead9a8; border-radius: 26px; background: transparent; color: var(--ink); font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .album__world.is-on { background: var(--paper); border-color: var(--paper); box-shadow: 0 4px 0 #ead9a8; }
 .album__world-count { min-width: 32px; height: 32px; padding: 0 8px; border-radius: 16px; background: #fff4d1; color: var(--oops-ink); font-size: 18px; line-height: 32px; text-align: center; }
-.album__game--coming { background: transparent; border: 4px dashed #ead9a8; box-shadow: none; }
+.album__game--coming { background: transparent; border: 4px dashed #ead9a8; box-shadow: none; padding: 16px 6px; gap: 10px; }
+.album__game--coming .album__name { background: none; color: var(--ink); }
 .album__coming { margin: auto 0; font-family: var(--body); font-size: 16px; font-weight: 700; color: #6b5520; }
-.album__game { background: var(--paper); border-radius: 26px; padding: 16px 6px; display: flex; flex-direction: column; align-items: center; gap: 10px; box-shadow: 0 5px 0 #ead9a8; min-width: 0; }
-.album__name { font-size: 20px; font-weight: 800; line-height: 1.1; text-align: center; min-height: 44px; display: flex; align-items: center; overflow-wrap: anywhere; hyphens: auto; }
-.album__stickers { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 8px; }
-.album__sticker { border: none; background: none; padding: 4px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; color: var(--ink); }
+/* Each game is a card in its own colour (--game, --game-ink from Album): a solid band with its name, a pale ground below. */
+.album__game {
+  --tint: color-mix(in srgb, var(--game, #ead9a8) 16%, #ffffff);
+  --shade: color-mix(in srgb, var(--game, #ead9a8) 45%, #ffffff);
+  --deep: color-mix(in srgb, var(--game, #ead9a8) 55%, var(--ink));
+  background: var(--tint); border-radius: 26px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 5px 0 var(--shade); min-width: 0; overflow: hidden;
+}
+.album__name { align-self: stretch; box-sizing: border-box; min-height: 56px; padding: 6px 8px; background: var(--game); color: var(--game-ink); font-size: 19px; font-weight: 800; line-height: 1.05; text-align: center; display: flex; align-items: center; justify-content: center; overflow-wrap: anywhere; hyphens: auto; }
+/* The ladder: stickers top to bottom, joined by a line that is solid up to an earned sticker and dashed on to a waiting one. */
+.album__stickers { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 14px 4px 12px; }
+.album__link { flex: 1; min-height: 6px; width: 0; border-left: 6px dashed var(--deep); opacity: 0.45; }
+.album__link.is-on { border-left-style: solid; opacity: 1; }
+.album__sticker { border: none; background: none; padding: 2px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; color: var(--ink); }
+.album .sticker { width: 80px; height: 80px; box-shadow: 0 0 0 2px var(--shade), 0 4px 0 var(--shade); }
+.album .sticker-slot { width: 80px; height: 80px; box-sizing: border-box; background: var(--paper); border-color: var(--deep); color: var(--deep); }
+.album .sticker-slot .sticker__mark { opacity: 0.75; }
+.album .sticker__mark { font-size: 27px; }
 .album__sticker:active .sticker { transform: rotate(var(--tilt)) scale(1.1); }
-.album__label { font-family: var(--body); font-size: 15px; font-weight: 700; line-height: 1.15; text-align: center; }
+.album__label { font-family: var(--body); font-size: 15px; font-weight: 800; line-height: 1.1; text-align: center; }
 .album__sticker.is-open .album__label { color: #6b5520; }
-/* A game with a second skill step (Mézút's faded trail) fits five stickers in its column. */
-.album__game--more .album__stickers { gap: 2px; }
-.album__game--more .sticker, .album__game--more .sticker-slot { width: 70px; height: 70px; border-width: 4px; }
-.album__game--more .sticker__mark { font-size: 22px; }
+/* A game with a second skill step (Mézút's faded trail) fits five stickers on its ladder. */
+.album__game--more .sticker, .album__game--more .sticker-slot { width: 60px; height: 60px; border-width: 4px; }
+.album__game--more .sticker__mark { font-size: 20px; }
 .album__game--more .album__label { font-size: 13px; }
-.album__game--more .album__sticker { gap: 3px; padding: 2px; }
+.album__game--more .album__sticker { gap: 2px; padding: 1px; }
 .album__guide { display: flex; align-items: center; gap: 12px; padding: 0 32px 24px; }
 .album__guide .bubble { font-size: 22px; padding: 12px 20px; box-shadow: 0 4px 0 #ead9a8; }
 
@@ -158,8 +171,6 @@
 @keyframes sticker-ring { from { transform: scale(0.8); opacity: 0.9; } to { transform: scale(1.5); opacity: 0; } }
 
 /* ---------- phones ---------- */
-.is-phone .plot__trio--kiskert .gplant-icon { width: 38px; height: 52px; }
-.is-phone .plot__trio--kiskert .gplant-icon + .gplant-icon { width: 56px; height: 77px; }
 
 .is-phone .screen--garden .topbar, .is-phone .screen--album .topbar { gap: 8px; flex: none; }
 .is-phone .album-btn { height: 44px; width: 44px; padding: 0; justify-content: center; }
@@ -233,9 +244,14 @@
 .is-phone .album__worlds { padding: 4px 16px 0; gap: 8px; }
 .is-phone .album__world { height: 44px; padding: 0 8px 0 14px; font-size: 16px; }
 .is-phone .album__world-count { min-width: 26px; height: 26px; line-height: 26px; font-size: 14px; }
-.is-phone .album__game { border-radius: 18px; padding: 10px 4px; gap: 6px; }
-.is-phone .album__name { font-size: 16px; min-height: 0; }
-.stage--portrait .album__stickers { flex-direction: row; justify-content: center; gap: 2px; }
+.is-phone .album__game { border-radius: 18px; }
+.is-phone .album__name { font-size: 16px; min-height: 0; padding: 6px 4px; }
+.is-phone .album__stickers { padding: 6px 4px; }
+.is-phone .album__link { border-left-width: 4px; }
+.stage--portrait .album__stickers { flex-direction: row; justify-content: center; align-items: flex-start; gap: 2px; }
+/* Portrait ladders run sideways: the line joins the stickers' middles. */
+.stage--portrait .album__link { width: auto; height: 0; min-width: 6px; max-width: 24px; margin-top: 26px; border-left: none; border-top: 4px dashed var(--deep); }
+.stage--portrait .album__link.is-on { border-top-style: solid; }
 .is-phone .album .sticker, .is-phone .album .sticker-slot { width: 52px; height: 52px; border-width: 3px; }
 .is-phone .album .sticker__mark { font-size: 16px; }
 .is-phone .album__label { font-size: 11px; }

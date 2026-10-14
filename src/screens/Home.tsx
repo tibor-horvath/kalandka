@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../components/art';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { KidChip, MapButton, ParentsButton, VoiceButton } from '../components/hub';
+import { KidChip, MapButton, ParentsButton, RewardPlot, VoiceButton } from '../components/hub';
 import { DotFace } from '../components/seeds';
 import { PlantIcon } from '../components/garden';
 import { StickerPop } from '../components/StickerPop';
@@ -205,13 +205,6 @@ export function Home({
         </div>
         <div className="topbar__right">
           {shared && <KidChip onSwitch={onSwitch} />}
-          <div className="pill" aria-label={`${balance} mag`}>
-            <Seed />
-            <span>
-              {balance}
-              <span className="pill__unit"> mag</span>
-            </span>
-          </div>
           <MapButton onClick={onMap} />
           <VoiceButton />
           <ParentsButton onClick={onParents} />
@@ -327,15 +320,18 @@ export function Home({
           <LockedPlot name="Cserépbarátok" skill={`Tízes barátok · még ${UNLOCK_POTS_AFTER - learned} szám`} art={<PotsArt />} onTap={tapPotsLocked} />
         )}
 
-        <button type="button" className="plot plot--play plot--kiskert" onClick={openGarden} aria-label="Kiskertem – ültess a magjaidból">
-          {visitorWaiting ? <span className="plot__badge">Vendég jött!</span> : canPlantNow && <span className="plot__badge">Ültethetsz!</span>}
-          <KiskertArt />
-          <span className="plot__soil" />
-          <span className="plot__name">Kiskertem</span>
-          <span className="plot__cta">
-            <Seed size={22} /> Ültetés
-          </span>
-        </button>
+        <RewardPlot
+          className="plot--kiskert"
+          label="Kiskertem – ültess a magjaidból"
+          name="Kiskertem"
+          art={<KiskertArt />}
+          icon={<Seed size={30} />}
+          count={balance}
+          unit="mag"
+          cta="Ültetés"
+          badge={visitorWaiting ? 'Vendég jött!' : canPlantNow ? 'Ültethetsz!' : null}
+          onClick={openGarden}
+        />
       </div>
 
       {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}

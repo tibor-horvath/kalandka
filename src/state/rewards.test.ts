@@ -74,11 +74,11 @@ describe('stickers', () => {
   it('belong to known games, three per skill step, with unique ids', () => {
     expect(new Set(STICKERS.map((s) => s.id)).size).toBe(STICKERS.length);
     for (const g of STICKER_GAMES) expect(STICKERS.filter((s) => s.game === g.id && !s.set)).toHaveLength(3);
-    expect(STICKERS.filter((s) => s.set).map((s) => s.id)).toEqual(['trace-fade', 'trace-memory', 'path-repeat', 'path-two', 'sort-two', 'sort-rule']);
+    expect(STICKERS.filter((s) => s.set).map((s) => s.id)).toEqual(['trace-fade', 'trace-memory', 'path-repeat', 'path-two', 'sort-two', 'sort-rule', 'scale-missing', 'scale-secret']);
   });
 
   it('keeps each world’s stickers to its own album page and home screen', () => {
-    expect(STICKER_GAMES.filter((g) => g.world === 'robot').map((g) => g.id)).toEqual(['path', 'sort']);
+    expect(STICKER_GAMES.filter((g) => g.world === 'robot').map((g) => g.id)).toEqual(['path', 'sort', 'scale']);
     const p = { ...DEFAULT_PROGRESS, learnSolved: 5, pathSolved: 1 };
     expect(newStickers(p, 'garden').map((s) => s.id)).toEqual(['learn-5']);
     expect(newStickers(p, 'robot').map((s) => s.id)).toEqual(['path-first']);
@@ -99,6 +99,14 @@ describe('stickers', () => {
     expect(ids(10)).toEqual(['sort-first']);
     expect(ids(11)).toEqual(['sort-first', 'sort-shape']);
     expect(ids(999)).toEqual(['sort-first', 'sort-shape', 'sort-odd', 'sort-two', 'sort-rule']);
+  });
+
+  it('gives a Mérleg sticker for the first round solved on its level', () => {
+    const ids = (scaleSolved: number) => earnedStickers({ ...DEFAULT_PROGRESS, scaleSolved }).map((s) => s.id);
+    expect(ids(0)).toEqual([]);
+    expect(ids(1)).toEqual(['scale-first']);
+    expect(ids(11)).toEqual(['scale-first', 'scale-even']);
+    expect(ids(999)).toEqual(['scale-first', 'scale-even', 'scale-two', 'scale-missing', 'scale-secret']);
   });
 
   it('gives the faded-trail stickers only for digits written on a faded trail', () => {

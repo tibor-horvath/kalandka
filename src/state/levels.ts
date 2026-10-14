@@ -4,6 +4,7 @@ import { LEARN_MAX } from '../games/learn/logic';
 import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL, potsLevelFor } from '../games/pots/logic';
 import { SHAPE_ORDER } from '../games/patterns/logic';
 import { PATH_LEVELS, PATH_ROUNDS_PER_LEVEL, pathLevelIndex } from '../games/robot/path';
+import { SCALE_LEVELS, SCALE_ROUNDS_PER_LEVEL, scaleLevelIndex } from '../games/robot/scale';
 import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL, sortLevelIndex } from '../games/robot/sort';
 import { PLANTS } from '../games/water/logic';
 import type { Progress } from './progress';
@@ -18,7 +19,7 @@ export interface LevelOption {
 }
 
 export interface LevelSetting {
-  id: 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'pots' | 'path' | 'sort';
+  id: 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale';
   game: string;
   hint: string;
   options: LevelOption[];
@@ -110,5 +111,13 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
     options: SORT_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
     current: (p) => sortLevelIndex(p.sortSolved),
     apply: (p, v) => ({ ...p, sortSolved: v * SORT_ROUNDS_PER_LEVEL })
+  },
+  {
+    id: 'scale',
+    game: 'Mérleg',
+    hint: 'Robotműhely. 5 kör után magától lép tovább.',
+    options: SCALE_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
+    current: (p) => scaleLevelIndex(p.scaleSolved),
+    apply: (p, v) => ({ ...p, scaleSolved: v * SCALE_ROUNDS_PER_LEVEL })
   }
 ];
