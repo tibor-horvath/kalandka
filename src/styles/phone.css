@@ -135,6 +135,8 @@
 .stage--portrait .screen--home .plot--locked { height: auto; min-height: 0; max-height: 170px; container: plot / size; }
 /* The badge sits on the card's top edge, so the picture can use the whole card. */
 .stage--portrait .screen--home .plot__badge { top: -12px; }
+/* So does the lock: a short card's name would otherwise run under it. */
+.stage--portrait .screen--home .plot__lock { top: -12px; }
 /* The pictures step down as the card gets shorter; the tall ones (sprout, honey trail, Kiskertem, robot path) first. */
 @container plot (max-height: 140px) { .plot > svg, .plot__trail, .plot--kiskert .plot__trio { zoom: 0.8; } }
 @container plot (max-height: 124px) { .plot > svg, .plot__trail, .plot--kiskert .plot__trio { zoom: 0.65; } }

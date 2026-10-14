@@ -27,6 +27,9 @@
 .stage--landscape .screen--robot-home .plot { height: 150px; }
 .is-phone .screen--robot-home .plot > svg.path-art, .is-phone .screen--robot-home .plot > svg.sort-art, .is-phone .screen--robot-home .plot > svg.scale-art { width: 120px; height: auto; }
 .is-phone .screen--robot-home .plot--locked > svg { width: 40px; height: 40px; }
+/* A short portrait card keeps the skill to one line: the lock already says the machine is coming. */
+@container plot (max-height: 124px) { .screen--robot-home .plot__soon { display: none; } }
+@container plot (max-height: 96px) { .screen--robot-home .plot--locked > svg { display: none; } }
 
 /* Térkép button on every world's home screen. */
 .map-btn { height: 56px; padding: 0 18px; border: 3px solid var(--paper); background: transparent; border-radius: 28px; color: var(--ink); font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; flex: none; }
@@ -36,34 +39,31 @@
 .is-phone .map-btn__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* ---------- Kalandka map ---------- */
-.screen--map { background: #9fd3f0; }
-.screen--map::before { background: #9fd3f0; }
+.screen--map { background: #8ccbec; }
+.screen--map::before { background: #8ccbec; }
 .map-guide { margin-top: 0; }
-.map-guide .bubble { box-shadow: 0 6px 0 #6fb6de; }
+.map-guide .bubble { box-shadow: 0 6px 0 #5fa9d3; }
 .map-fit { position: relative; }
 .map { position: relative; margin: 14px auto 0; }
 .map__art { position: absolute; inset: 0; }
-.map-waves path { fill: none; stroke: #c9e8f8; stroke-width: 4; stroke-linecap: round; }
-.map-trail { fill: none; stroke: #ffffff; stroke-width: 9; stroke-linecap: round; stroke-dasharray: 0 22; }
-.map-fog { opacity: 0.95; }
-.map-fog__mark { font-family: var(--display); font-size: 40px; font-weight: 800; fill: #9fb3c8; }
-.map-gear { transform-box: fill-box; transform-origin: center; }
-.map-gear > svg { animation: gear-turn 6s linear infinite; transform-box: fill-box; transform-origin: center; }
-.map-spot { position: absolute; border: none; background: transparent; border-radius: 48%; cursor: pointer; padding: 0; display: flex; align-items: flex-end; justify-content: center; }
+.map-waves path { fill: none; stroke: #c4e6f7; stroke-width: 4; stroke-linecap: round; }
+.map-route { fill: none; stroke: #ffffff; stroke-width: 9; stroke-linecap: round; stroke-dasharray: 0 22; }
+.map-route--far { stroke-opacity: 0.6; stroke-width: 8; }
+.map-far { opacity: 0.75; }
+.map-boat__ripple { fill: none; stroke: #ffffff; stroke-width: 4; stroke-linecap: round; opacity: 0.8; }
+.map-spot { position: absolute; border: none; background: transparent; border-radius: 48%; cursor: pointer; padding: 0; display: flex; justify-content: center; }
+.map-spot--sign-top { align-items: flex-start; }
+.map-spot--sign-top .map-spot__sign { margin-top: -40px; }
+.map-spot--sign-bottom { align-items: flex-end; }
+.map-spot--sign-bottom .map-spot__sign { margin-bottom: -26px; }
 .map-spot:active .map-spot__sign { transform: translateY(4px); box-shadow: 0 2px 0 var(--edge); }
 .map-spot:focus-visible { outline-offset: -10px; }
-.map-spot--garden { --edge: #2f7d32; }
-.map-spot--robot { --edge: #138a86; }
-.map-spot__sign { display: grid; grid-template-columns: auto auto; column-gap: 14px; align-items: center; margin-bottom: -26px; padding: 8px 20px 10px; border-radius: 22px; background: var(--paper); border: 4px solid var(--edge); box-shadow: 0 6px 0 var(--edge); text-align: left; }
+.map-spot--garden { --edge: #2f7d32; --face: #e3f1fc; }
+.map-spot--robot { --edge: #138a86; --face: #ddf3f2; }
+.map-spot__sign { display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 8px; border-radius: 30px; background: var(--paper); border: 4px solid var(--edge); box-shadow: 0 6px 0 var(--edge); }
+.map-spot__face { width: 60px; height: 60px; border-radius: 30px; background: var(--face); display: flex; align-items: center; justify-content: center; overflow: hidden; flex: none; }
 .map-spot__name { font-size: 30px; font-weight: 800; line-height: 1.05; }
-.map-spot__about { grid-column: 1; font-family: var(--body); font-size: 15px; font-weight: 700; color: var(--ink-soft); }
-.map-spot__count { grid-column: 2; grid-row: 1 / span 2; display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px 0 10px; border-radius: 22px; background: var(--edge); color: var(--paper); font-size: 22px; font-weight: 800; }
-.map-fogspot { position: absolute; border: none; background: transparent; border-radius: 50%; cursor: pointer; }
-
-@keyframes gear-turn { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) {
-  .map-gear > svg { animation: none; }
-}
+.map-spot__count { display: flex; align-items: center; gap: 6px; height: 46px; padding: 0 14px 0 10px; border-radius: 23px; background: var(--edge); color: var(--paper); font-size: 24px; font-weight: 800; }
 
 /* ---------- Robotút ---------- */
 .screen--path .screen-title { color: var(--leaf-deep); }
@@ -574,3 +574,5 @@
 .stage--landscape .workshop__part-name { font-size: 13px; }
 .is-phone .shelf__robot svg { width: 48px; height: auto; }
 .is-phone .shelf__friend svg { width: 52px; height: auto; }
+/* Portrait: the hint stands beside the robot in two tight lines, clear of the cards above. */
+.stage--portrait .shelf .shelf__hint { font-size: 16px; line-height: 1.2; text-align: left; text-wrap: balance; margin-bottom: 12px; }

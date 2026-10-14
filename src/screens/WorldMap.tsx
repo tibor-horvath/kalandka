@@ -1,9 +1,9 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import { RoundFlower, Seed, Sprout, Tree } from '../components/art';
 import { Csepi } from '../components/Csepi';
 import { FitBox } from '../components/FitBox';
 import { ParentsButton } from '../components/hub';
-import { Bolt, Csavar, Gear } from '../components/robot';
+import { Bolt, Csavar } from '../components/robot';
 import { useForm } from '../components/Stage';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from '../components/ui';
 import { speak } from '../lib/speech';
@@ -12,36 +12,50 @@ import { seedBalance } from '../state/rewards';
 import { boltBalance } from '../state/robotParts';
 import { WORLDS, currentWorld, type WorldId } from '../state/worlds';
 
-const SPEECH = 'Hova megyünk ma? A kert szigetén Csepi vár, a műhely szigetén Csavar, a robot. Koppints az egyik szigetre!';
-const FOG_SPEECH = 'Ez a sziget még ködös. Egyszer majd új világ lesz itt!';
+/** Where the child's boat waits, said the way the guide says it. */
+const DOCKED: Record<WorldId, string> = { garden: 'a kertnél', robot: 'a műhelynél' };
+
+const speech = (last: WorldId) =>
+  `Hova evezünk ma? A hajód ${DOCKED[last]} vár. A kert szigetén Csepi, a műhely szigetén Csavar, a robot. Koppints az egyik szigetre!`;
 
 interface Pt {
   x: number;
   y: number;
 }
 
-/** The map drawn wide (tablet, landscape phone) or tall (portrait phone): where the islands, trail and fog sit. */
+/** The map drawn wide (tablet, landscape phone) or tall (portrait phone): where the islands, the boat and its routes sit. */
 interface MapLayout {
   w: number;
   h: number;
   garden: Pt;
   robot: Pt;
-  trail: string;
-  bridge: Pt & { angle: number };
-  fog: Pt[];
+  /** Signs float above the islands, or sit on their bottom shore where there is no room above. */
+  signs: 'top' | 'bottom';
+  /** The boat at each island's dock; `flip` turns it to face the other island. */
+  boat: Record<WorldId, Pt & { flip: boolean }>;
+  /** The dotted route from the boat at each island to the other island. */
+  route: Record<WorldId, string>;
+  /** A far-off island in the haze: a hint that more worlds may come, not something to tap. */
+  far: Pt;
+  farRoute: string;
 }
 
 const WIDE: MapLayout = {
   w: 1100,
   h: 560,
-  garden: { x: 275, y: 285 },
-  robot: { x: 825, y: 285 },
-  trail: 'M470 330 C520 360 580 360 640 330',
-  bridge: { x: 555, y: 352, angle: 0 },
-  fog: [
-    { x: 555, y: 95 },
-    { x: 1030, y: 505 }
-  ]
+  garden: { x: 275, y: 320 },
+  robot: { x: 825, y: 320 },
+  signs: 'top',
+  boat: {
+    garden: { x: 520, y: 466, flip: false },
+    robot: { x: 582, y: 466, flip: true }
+  },
+  route: {
+    garden: 'M566 494 C610 545 680 545 690 486',
+    robot: 'M536 494 C492 545 420 545 410 486'
+  },
+  far: { x: 1030, y: 82 },
+  farRoute: 'M955 175 C975 150 990 132 1005 118'
 };
 
 const TALL: MapLayout = {
@@ -49,12 +63,17 @@ const TALL: MapLayout = {
   h: 1040,
   garden: { x: 300, y: 260 },
   robot: { x: 300, y: 770 },
-  trail: 'M330 420 C380 470 380 560 330 610',
-  bridge: { x: 368, y: 515, angle: 90 },
-  fog: [
-    { x: 520, y: 520 },
-    { x: 80, y: 980 }
-  ]
+  signs: 'bottom',
+  boat: {
+    garden: { x: 480, y: 500, flip: false },
+    robot: { x: 110, y: 560, flip: true }
+  },
+  route: {
+    garden: 'M478 528 C520 570 525 620 505 668',
+    robot: 'M68 560 C40 510 60 450 112 398'
+  },
+  far: { x: 90, y: 985 },
+  farRoute: 'M150 905 C135 925 125 940 118 952'
 };
 
 /** An island's outline around its centre: soft and a little uneven, about 440 × 300. */
@@ -115,8 +134,8 @@ function GardenScene({ at }: { at: Pt }) {
   );
 }
 
-/** Csavar's island: the workshop with its gear and a crane. */
-function RobotScene({ at, spin }: { at: Pt; spin: boolean }) {
+/** Csavar's island: the workshop and a crane. */
+function RobotScene({ at }: { at: Pt }) {
   return (
     <g transform={`translate(${at.x} ${at.y})`}>
       {/* workshop: walls, saw-tooth roof, door and window */}
@@ -125,9 +144,6 @@ function RobotScene({ at, spin }: { at: Pt; spin: boolean }) {
       <rect x="-110" y="-30" width="52" height="70" rx="6" fill="#7E93AB" />
       <rect x="-160" y="-55" width="36" height="30" rx="5" fill="#BFE6E3" stroke="#5E7184" strokeWidth="3" />
       <rect x="-40" y="-55" width="36" height="30" rx="5" fill="#BFE6E3" stroke="#5E7184" strokeWidth="3" />
-      <g className={spin ? 'map-gear' : undefined} transform="translate(-36 -178)">
-        <Gear size={70} color="#F2B33D" />
-      </g>
       {/* crane */}
       <path d="M150 50 V-130 H60" fill="none" stroke="#F2B33D" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M150 -100 L120 -130" stroke="#F2B33D" strokeWidth="6" strokeLinecap="round" />
@@ -140,49 +156,55 @@ function RobotScene({ at, spin }: { at: Pt; spin: boolean }) {
   );
 }
 
-function Fog({ at }: { at: Pt }) {
+/** The child's own boat, moored at the island they chose last. */
+function Boat({ at }: { at: Pt & { flip: boolean } }) {
   return (
-    <g transform={`translate(${at.x} ${at.y})`} className="map-fog">
-      <ellipse cx="0" cy="8" rx="78" ry="40" fill="#E9F4FB" />
-      <ellipse cx="-34" cy="-8" rx="40" ry="30" fill="#F4FAFD" />
-      <ellipse cx="30" cy="-12" rx="44" ry="32" fill="#F4FAFD" />
-      <text x="0" y="16" textAnchor="middle" className="map-fog__mark">?</text>
+    <g transform={`translate(${at.x} ${at.y})${at.flip ? ' scale(-1 1)' : ''}`} className="map-boat">
+      <path d="M-54 30 q12 -8 24 0 q12 8 24 0 q12 -8 24 0 q12 8 24 0 q12 -8 24 0" className="map-boat__ripple" />
+      <path d="M-48 0 H48 L32 22 H-32 Z" fill="#C98B50" stroke="#8A5A3B" strokeWidth="4" strokeLinejoin="round" />
+      <path d="M-2 0 V-86" stroke="#8A5A3B" strokeWidth="5" strokeLinecap="round" />
+      <path d="M4 -82 L52 -12 H4 Z" fill="#B4335A" stroke="#FFFFFF" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M-8 -76 L-42 -14 H-8 Z" fill="#FFFFFF" />
+      <path d="M22 -48 l3.5 7 7.5 1 -5.5 5 1.5 7.5 -7 -3.6 -7 3.6 1.5 -7.5 -5.5 -5 7.5 -1 z" fill="#FFC93C" />
     </g>
   );
 }
 
-/** "Itt jártál": a pin over the island the child was on last. */
-function Pin({ at }: { at: Pt }) {
+/** A small island far off in the haze, with a faint route towards it. */
+function FarIsland({ at, route }: { at: Pt; route: string }) {
   return (
-    <g transform={`translate(${at.x} ${at.y - 190})`} className="map-pin">
-      <path d="M0 0 C-22 -26 -26 -44 -26 -54 a26 26 0 0 1 52 0 C26 -44 22 -26 0 0 Z" fill="#E8577D" stroke="#FFFFFF" strokeWidth="5" />
-      <circle cx="0" cy="-54" r="10" fill="#FFFFFF" />
+    <g className="map-far">
+      <path d={route} className="map-route map-route--far" />
+      <g transform={`translate(${at.x} ${at.y})`}>
+        <ellipse cx="0" cy="14" rx="74" ry="40" fill="#B4DCF0" />
+        <ellipse cx="-24" cy="-12" rx="40" ry="26" fill="#EEF7FC" />
+        <ellipse cx="22" cy="-18" rx="46" ry="30" fill="#F7FBFE" />
+      </g>
     </g>
   );
 }
 
-/** The Kalandka map: every world is open to every child; the app returns to the one chosen last. */
+/** The Kalandka map: every world is open to every child; the boat waits where they played last. */
 export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => void; onParents: () => void }) {
   const { progress } = useProgress();
   const form = useForm();
   const phone = form !== 'tablet';
   const map = form === 'portrait' ? TALL : WIDE;
   const last = currentWorld(progress);
-  const [fogTapped, setFogTapped] = useState(false);
 
   useEffect(() => {
-    speak(SPEECH);
+    speak(speech(last));
+    // Said once when the map opens; the speaker button repeats it.
   }, []);
-
-  const tapFog = () => {
-    setFogTapped(true);
-    speak(FOG_SPEECH);
-  };
 
   const spot = (at: Pt): CSSProperties => ({ left: at.x - 230, top: at.y - 165, width: 460, height: 330 });
   const counts: Record<WorldId, { icon: ReactNode; n: number }> = {
     garden: { icon: <Seed size={24} />, n: seedBalance(progress) },
     robot: { icon: <Bolt size={24} />, n: boltBalance(progress) }
+  };
+  const faces: Record<WorldId, ReactNode> = {
+    garden: <Csepi mood="cheer" width={34} />,
+    robot: <Csavar mood="cheer" width={34} />
   };
 
   return (
@@ -198,13 +220,13 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
       </header>
 
       <div className="home-guide map-guide">
-        <GuideBubble mood={fogTapped ? 'think' : 'cheer'} csepiWidth={60}>
+        <GuideBubble mood="cheer" csepiWidth={60}>
           <div className="bubble__row">
             <div>
-              <div className="bubble__kicker">Kalandka térkép</div>
-              <h1 className="bubble__title">{fogTapped ? 'Ez még ködös sziget.' : 'Hova megyünk ma?'}</h1>
+              <div className="bubble__kicker">A hajód {DOCKED[last]} vár</div>
+              <h1 className="bubble__title">Hova evezünk ma?</h1>
             </div>
-            <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(fogTapped ? FOG_SPEECH : SPEECH)}>
+            <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(speech(last))}>
               <SpeakerIcon />
             </RoundButton>
           </div>
@@ -212,25 +234,17 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
       </div>
 
       <FitBox className="map-fit" width={map.w} height={map.h}>
-        <nav className="map" aria-label="Kalandka térkép: válassz világot" style={{ width: map.w, height: map.h }}>
+        <nav className="map" aria-label="Kalandka térkép: válassz szigetet" style={{ width: map.w, height: map.h }}>
           <svg className="map__art" width={map.w} height={map.h} viewBox={`0 0 ${map.w} ${map.h}`} aria-hidden="true">
-            <rect width={map.w} height={map.h} rx="40" fill="#9FD3F0" />
+            <rect width={map.w} height={map.h} rx="40" fill="#8CCBEC" />
             <Waves w={map.w} h={map.h} />
-            {map.fog.map((f, i) => (
-              <Fog key={i} at={f} />
-            ))}
+            <FarIsland at={map.far} route={map.farRoute} />
             <Island at={map.garden} ground="#A6D676" edge="#8CC45E" sand="#F3DFA8" />
             <Island at={map.robot} ground="#C9D6E4" edge="#9AAFC6" sand="#F3DFA8" />
-            <path d={map.trail} className="map-trail" />
-            <g transform={`translate(${map.bridge.x} ${map.bridge.y}) rotate(${map.bridge.angle})`}>
-              <rect x="-46" y="-16" width="92" height="32" rx="6" fill="#C98B50" stroke="#8A5A3B" strokeWidth="4" />
-              {[-28, -10, 8, 26].map((x) => (
-                <path key={x} d={`M${x} -14 V14`} stroke="#8A5A3B" strokeWidth="3" />
-              ))}
-            </g>
             <GardenScene at={map.garden} />
-            <RobotScene at={map.robot} spin={last === 'robot'} />
-            <Pin at={last === 'robot' ? map.robot : map.garden} />
+            <RobotScene at={map.robot} />
+            <path d={map.route[last]} className="map-route" />
+            <Boat at={map.boat[last]} />
           </svg>
 
           {WORLDS.map((w) => {
@@ -239,14 +253,14 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
               <button
                 key={w.id}
                 type="button"
-                className={`map-spot map-spot--${w.id}${last === w.id ? ' is-last' : ''}`}
+                className={`map-spot map-spot--${w.id} map-spot--sign-${map.signs}${last === w.id ? ' is-last' : ''}`}
                 style={spot(at)}
                 onClick={() => onPick(w.id)}
-                aria-label={`${w.name}: ${w.about}. ${w.guide} vár.${last === w.id ? ' Itt jártál legutóbb.' : ''}`}
+                aria-label={`${w.name}: ${w.about}. ${w.guide} vár.${last === w.id ? ' A hajód itt van.' : ''}`}
               >
                 <span className="map-spot__sign">
+                  <span className="map-spot__face">{faces[w.id]}</span>
                   <span className="map-spot__name">{w.name}</span>
-                  <span className="map-spot__about">{w.about}</span>
                   <span className="map-spot__count">
                     {counts[w.id].icon}
                     {counts[w.id].n}
@@ -255,9 +269,6 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
               </button>
             );
           })}
-          {map.fog.map((f, i) => (
-            <button key={i} type="button" className="map-fogspot" style={{ left: f.x - 80, top: f.y - 50, width: 160, height: 100 }} onClick={tapFog} aria-label="Ködös sziget: még nem lehet ide menni" />
-          ))}
         </nav>
       </FitBox>
     </div>

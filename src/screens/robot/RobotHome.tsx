@@ -163,7 +163,10 @@ export function RobotHome({
             <Gear />
             <span className="plot__soil plot__soil--floor" />
             <span className="plot__name">{m.name}</span>
-            <span className="plot__skill">{m.skill} · hamarosan</span>
+            <span className="plot__skill">
+              {m.skill}
+              <span className="plot__soon"> · hamarosan</span>
+            </span>
           </button>
         ))}
 
