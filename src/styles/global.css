@@ -480,8 +480,41 @@ h1, h2, p { margin: 0; }
 .dot-card span { width: 20px; height: 20px; border-radius: 50%; background: var(--drop-deep); }
 .choice__numeral--small { font-size: 44px; }
 
-/* ---------- "Ki játszik?" ---------- */
-.screen--picker .hill { height: 1220px; }
+/* ---------- "Ki játszik?": Kalandka's harbour ---------- */
+.screen--picker .home-guide, .screen--picker .kids { z-index: 1; }
+.screen--picker .home-guide .bubble { box-shadow: 0 6px 0 var(--sun); }
+.picker-k { display: block; flex: none; line-height: 0; }
+/* The sea bleeds past the stage on wide or tall screens; the wave art covers the stage itself. */
+.harbour { position: absolute; left: 0; right: 0; bottom: 0; height: 340px; pointer-events: none; }
+.harbour::before, .harbour::after { content: ""; position: absolute; left: -1000px; right: -1000px; bottom: -1000px; z-index: -1; }
+.harbour::before { top: 60px; background: #9fd1f2; }
+.harbour::after { top: 140px; background: #7dbdeb; }
+.harbour__art { display: block; overflow: visible; }
+/* Five or more cards fill two rows down to the water: no dock under them then. */
+.screen--picker:has(.kid-card:nth-child(5)) .harbour__dock { display: none; }
+.kid-card__treasure { display: flex; gap: 8px; }
+.kid-card__seeds--bolts { background: #eaeff4; }
+
+/* Motion plays once on arrival, and once more for the chosen card; nothing loops. */
+@keyframes picker-rise { from { opacity: 0; transform: translateY(48px) scale(0.94); } }
+@keyframes picker-pop { 0% { opacity: 0; transform: scale(0.8); } 65% { opacity: 1; transform: scale(1.04); } }
+@keyframes picker-hello { 0% { opacity: 0; transform: translateY(20px); } 40% { opacity: 1; transform: rotate(-10deg); } 60% { transform: rotate(8deg); } 80% { transform: rotate(-4deg); } }
+@keyframes picker-sail { from { opacity: 0; transform: translateX(180px); } 20% { opacity: 1; } }
+@keyframes picker-fade { from { opacity: 0; } }
+@keyframes picker-chosen { 45% { transform: translateY(-22px) scale(1.07); } to { transform: translateY(-12px) scale(1.04); box-shadow: 0 8px 0 var(--ring), 0 0 0 8px var(--sun); } }
+.picker-k { transform-origin: 50% 90%; animation: picker-hello 1s 0.1s ease-out backwards; }
+.screen--picker .home-guide .bubble { transform-origin: 0 50%; animation: picker-pop 0.5s 0.25s ease-out backwards; }
+.harbour__islands { animation: picker-fade 1.2s ease-out backwards; }
+.harbour__boat { animation: picker-sail 1.8s 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+.screen--picker .kid-card { animation: picker-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) calc(0.45s + var(--i, 0) * 0.12s) backwards; transition: transform 0.18s ease, opacity 0.3s ease; }
+@media (hover: hover) { .screen--picker .kid-card:hover { transform: translateY(-6px); } }
+.screen--picker .kid-card:active { transform: translateY(4px) scale(0.97); }
+.screen--picker .kid-card.is-picked { animation: picker-chosen 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) forwards; }
+.screen--picker .kid-card.is-dimmed { opacity: 0.35; }
+@media (prefers-reduced-motion: reduce) {
+  .picker-k, .screen--picker .home-guide .bubble, .harbour__islands, .harbour__boat, .screen--picker .kid-card { animation: none; }
+  .screen--picker .kid-card.is-picked { animation: none; box-shadow: 0 8px 0 var(--ring), 0 0 0 8px var(--sun); }
+}
 .kids { position: relative; display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; gap: 28px; padding: 34px 40px 0; }
 .kid-card { --ring: var(--leaf); position: relative; width: 232px; height: 312px; border: 5px solid var(--ring); border-radius: 32px; background: var(--paper); box-shadow: 0 8px 0 var(--ring); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; cursor: pointer; padding: 0 10px; }
 .kid-card:active { transform: translateY(4px); box-shadow: 0 4px 0 var(--ring); }

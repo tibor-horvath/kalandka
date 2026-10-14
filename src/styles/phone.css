@@ -180,10 +180,16 @@
 /* The chip needs the room of the brand icon. */
 .is-phone .topbar:has(.kid-chip) .brand > svg { display: none; }
 
-/* "Ki játszik?" on a phone: two columns of cards that scroll if there are many. */
-.is-phone .screen--picker { overflow-y: auto; overscroll-behavior: contain; }
-.is-phone .screen--picker::before,
-.is-phone .screen--picker .hill { display: none; }
+/* "Ki játszik?" on a phone: two columns of cards that scroll if there are many, the harbour below them. */
+.is-phone .screen--picker { display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; }
+.is-phone .screen--picker::before { display: none; }
+.is-phone .screen--picker .home-guide .bubble { box-shadow: 0 5px 0 var(--sun); }
+.is-phone .harbour { position: relative; height: auto; margin-top: auto; flex: none; }
+.is-phone .harbour::before, .is-phone .harbour::after { display: none; }
+.is-phone .harbour__art { width: 100%; height: auto; }
+.stage--landscape .harbour { display: none; }
+.is-phone .kid-card__treasure { gap: 5px; }
+.is-phone .kid-card__seeds--bolts svg { width: 18px; height: 18px; }
 .is-phone .kids { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 26px 16px 24px; }
 .stage--landscape .kids { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 14px 0 12px; }
 .is-phone .kid-card,
@@ -195,8 +201,8 @@
 .is-phone .kid-card__name,
 .is-phone .kids:has(> .kid-card:nth-child(5)) .kid-card__name { font-size: 26px; }
 .is-phone .kid-card--add .kid-card__name { font-size: 22px; }
-.is-phone .kid-card__seeds { height: 30px; padding: 0 12px 0 8px; font-size: 16px; }
-.is-phone .kid-card__seeds svg { width: 20px; height: 20px; }
+.is-phone .kid-card__seeds { height: 30px; padding: 0 8px 0 5px; gap: 3px; font-size: 15px; }
+.is-phone .kid-card__seeds svg { width: 18px; height: 18px; }
 .is-phone .kid-card__plus,
 .is-phone .kids:has(> .kid-card:nth-child(5)) .kid-card__plus { width: 64px; height: 64px; }
 .is-phone .kid-card__badge { top: 8px; right: 8px; height: 26px; font-size: 14px; }
