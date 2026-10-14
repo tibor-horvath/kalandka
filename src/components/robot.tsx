@@ -304,3 +304,51 @@ export function SortArt() {
     </svg>
   );
 }
+
+// ---------- Mérleg ----------
+
+const WEIGHT_FILL = '#7E93AB';
+const WEIGHT_EDGE = '#3E5872';
+
+/** A weight for Mérleg: a one is 48 × 48 with one dot, a two is twice as wide with two dots, drawn from (0, 0). */
+export function WeightBlock({ w }: { w: 1 | 2 }) {
+  const width = w === 2 ? 100 : 48;
+  return (
+    <g>
+      <rect x="2" y="2" width={width - 4} height="44" rx="9" fill={WEIGHT_FILL} stroke={WEIGHT_EDGE} strokeWidth="4" />
+      <rect x="8" y="7" width={width - 16} height="7" rx="3.5" fill="#B7C4D2" />
+      {(w === 2 ? [27, 73] : [24]).map((cx) => (
+        <circle key={cx} cx={cx} cy="28" r="7" fill="#FFFFFF" stroke={WEIGHT_EDGE} strokeWidth="3" />
+      ))}
+    </g>
+  );
+}
+
+/** Mérleg's tile on the Robotműhely home screen: a balance tipped towards three weights. */
+export function ScaleArt() {
+  return (
+    <svg aria-hidden="true" className="scale-art" width="200" height="83" viewBox="0 0 300 124">
+      <g transform="translate(0 14)">
+        <path d="M150 64 L132 108 H168 Z" fill="#5E7184" />
+        <g transform="rotate(-8 150 64)">
+          <rect x="40" y="58" width="220" height="12" rx="6" fill="#5E7184" />
+          <rect x="30" y="44" width="80" height="10" rx="5" fill={WEIGHT_EDGE} />
+          <rect x="190" y="44" width="80" height="10" rx="5" fill={WEIGHT_EDGE} />
+          <g transform="translate(34 14) scale(0.6)">
+            <WeightBlock w={1} />
+          </g>
+          <g transform="translate(66 14) scale(0.6)">
+            <WeightBlock w={1} />
+          </g>
+          <g transform="translate(50 -14) scale(0.6)">
+            <WeightBlock w={1} />
+          </g>
+          <g transform="translate(216 14) scale(0.6)">
+            <WeightBlock w={1} />
+          </g>
+        </g>
+        <circle cx="150" cy="64" r="9" fill="#F2B33D" stroke="#7A5300" strokeWidth="3" />
+      </g>
+    </svg>
+  );
+}
