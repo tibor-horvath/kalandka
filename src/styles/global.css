@@ -44,6 +44,7 @@ h1, h2, p { margin: 0; }
 .stage-outer { position: fixed; inset: 0; overflow: clip; background: var(--sky); }
 .stage { position: absolute; left: 50%; top: 50%; width: 1180px; height: 820px; transform-origin: center; }
 .screen { position: absolute; inset: 0; background: var(--sky); }
+.page { position: absolute; inset: 0; }
 /* Ground layers bleed past the stage so wide or tall screens show sky and grass, not a box. */
 .screen::before { content: ""; position: absolute; inset: -1000px; background: var(--sky); z-index: -1; }
 

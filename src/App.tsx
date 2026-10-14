@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { PageMotion } from './components/PageMotion';
 import { Stage } from './components/Stage';
 import { setSoundEnabled } from './lib/sound';
 import { applyUpdate, useUpdateWaiting } from './lib/update';
@@ -60,6 +61,14 @@ function isHub(s: Screen): boolean {
 
 function isGame(s: Screen): s is GameId | RobotGameId {
   return s in ROUND_KEY;
+}
+
+/** How deep a screen sits, so moving deeper slides the new page in from the right and going back from the left. */
+function depthOf(s: Screen): number {
+  if (s === 'map') return 0;
+  if (s === 'home') return 1;
+  if (s === 'album') return 3;
+  return 2;
 }
 
 function Game() {
@@ -193,27 +202,29 @@ function Game() {
 
   return (
     <Stage>
-      {screen === 'home' && showPicker && <Picker onPick={pick} onAdd={() => openGate('add')} onParents={() => openGate()} />}
-      {screen === 'home' && !showPicker && world === 'garden' && (
-        <Home key={profiles.activeId} onOpen={go} onGarden={() => go('garden')} onParents={() => openGate()} onSwitch={switchKid} onMap={() => go('map')} />
-      )}
-      {screen === 'home' && !showPicker && world === 'robot' && (
-        <RobotHome key={profiles.activeId} onOpen={go} onWorkshop={() => go('workshop')} onParents={() => openGate()} onSwitch={switchKid} onMap={() => go('map')} />
-      )}
-      {screen === 'map' && !showPicker && <WorldMap onPick={pickWorld} onParents={() => openGate()} />}
-      {screen === 'garden' && <Garden onBack={() => go('home')} onAlbum={() => openAlbum('garden')} />}
-      {screen === 'workshop' && <Workshop onBack={() => go('home')} onAlbum={() => openAlbum('workshop')} />}
-      {screen === 'album' && <Album key={albumFrom} world={albumFrom === 'workshop' ? 'robot' : 'garden'} onBack={() => go(albumFrom)} />}
-      {screen === 'learn' && <Learn key={progress.learnRound} onBack={() => go('home')} />}
-      {screen === 'water' && <Water onBack={() => go('home')} />}
-      {screen === 'patterns' && <Patterns onBack={() => go('home')} />}
-      {screen === 'flash' && <Flash key={progress.flashRound} onBack={() => go('home')} />}
-      {screen === 'add' && <Add key={progress.addRound} onBack={() => go('home')} />}
-      {screen === 'trace' && <Trace key={progress.traceRound} onBack={() => go('home')} />}
-      {screen === 'pots' && <Pots key={progress.potsRound} onBack={() => go('home')} />}
-      {screen === 'path' && <Path key={progress.pathRound} onBack={() => go('home')} />}
-      {screen === 'sort' && <Sort key={progress.sortRound} onBack={() => go('home')} />}
-      {screen === 'scale' && <Scale key={progress.scaleRound} onBack={() => go('home')} />}
+      <PageMotion page={screen === 'home' ? (showPicker ? 'picker' : `home-${world}`) : screen} depth={showPicker ? 0 : depthOf(screen)}>
+        {screen === 'home' && showPicker && <Picker onPick={pick} onAdd={() => openGate('add')} onParents={() => openGate()} />}
+        {screen === 'home' && !showPicker && world === 'garden' && (
+          <Home key={profiles.activeId} onOpen={go} onGarden={() => go('garden')} onParents={() => openGate()} onSwitch={switchKid} onMap={() => go('map')} />
+        )}
+        {screen === 'home' && !showPicker && world === 'robot' && (
+          <RobotHome key={profiles.activeId} onOpen={go} onWorkshop={() => go('workshop')} onParents={() => openGate()} onSwitch={switchKid} onMap={() => go('map')} />
+        )}
+        {screen === 'map' && !showPicker && <WorldMap onPick={pickWorld} onParents={() => openGate()} />}
+        {screen === 'garden' && <Garden onBack={() => go('home')} onAlbum={() => openAlbum('garden')} />}
+        {screen === 'workshop' && <Workshop onBack={() => go('home')} onAlbum={() => openAlbum('workshop')} />}
+        {screen === 'album' && <Album key={albumFrom} world={albumFrom === 'workshop' ? 'robot' : 'garden'} onBack={() => go(albumFrom)} />}
+        {screen === 'learn' && <Learn key={progress.learnRound} onBack={() => go('home')} />}
+        {screen === 'water' && <Water onBack={() => go('home')} />}
+        {screen === 'patterns' && <Patterns onBack={() => go('home')} />}
+        {screen === 'flash' && <Flash key={progress.flashRound} onBack={() => go('home')} />}
+        {screen === 'add' && <Add key={progress.addRound} onBack={() => go('home')} />}
+        {screen === 'trace' && <Trace key={progress.traceRound} onBack={() => go('home')} />}
+        {screen === 'pots' && <Pots key={progress.potsRound} onBack={() => go('home')} />}
+        {screen === 'path' && <Path key={progress.pathRound} onBack={() => go('home')} />}
+        {screen === 'sort' && <Sort key={progress.sortRound} onBack={() => go('home')} />}
+        {screen === 'scale' && <Scale key={progress.scaleRound} onBack={() => go('home')} />}
+      </PageMotion>
       {!resting && !inParents && progress.warnBefore && remaining <= WARN_SECONDS && <TimeBanner remaining={remaining} />}
       {!resting && !inParents && timeUp && !progress.warnBefore && <TimeBanner remaining={0} />}
       {resting && !inParents && (
