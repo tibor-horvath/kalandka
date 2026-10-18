@@ -7,6 +7,7 @@ import { TRACE_ORDER } from '../games/trace/logic';
 import { PLANTS } from '../games/water/logic';
 import { PATH_LEVELS, PATH_ROUNDS_PER_LEVEL } from '../games/robot/path';
 import { SCALE_LEVELS, SCALE_ROUNDS_PER_LEVEL } from '../games/robot/scale';
+import { SEQ_LEVELS, SEQ_ROUNDS_PER_LEVEL } from '../games/robot/seq';
 import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL } from '../games/robot/sort';
 import type { GameId } from '../screens/Home';
 import type { RobotGameId } from '../screens/robot/RobotHome';
@@ -237,7 +238,8 @@ export const STICKER_GAMES: StickerGame[] = [
   { id: 'pots', name: 'Cserépbarátok', color: '#2F7D32', ink: '#FFFFFF', world: 'garden' },
   { id: 'path', name: 'Robotút', color: '#138A86', ink: '#FFFFFF', world: 'robot' },
   { id: 'sort', name: 'Válogatógép', color: '#5E7184', ink: '#FFFFFF', world: 'robot' },
-  { id: 'scale', name: 'Mérleg', color: '#F2B33D', ink: '#10233A', world: 'robot' }
+  { id: 'scale', name: 'Mérleg', color: '#F2B33D', ink: '#10233A', world: 'robot' },
+  { id: 'seq', name: 'Mintagép', color: '#2E5FA8', ink: '#FFFFFF', world: 'robot' }
 ];
 
 /** Robotút stickers: a course solved on a level (the first solved course of that level and on). */
@@ -249,6 +251,10 @@ const sortPassed = (name: string) => (p: Progress) => p.sortSolved > sortLevel(n
 /** Mérleg stickers: a round solved on a level. */
 const scaleLevel = (name: string) => SCALE_LEVELS.findIndex((l) => l.name === name);
 const scalePassed = (name: string) => (p: Progress) => p.scaleSolved > scaleLevel(name) * SCALE_ROUNDS_PER_LEVEL;
+
+/** Mintagép stickers: a round solved on a level. */
+const seqLevel = (name: string) => SEQ_LEVELS.findIndex((l) => l.name === name);
+const seqPassed = (name: string) => (p: Progress) => p.seqSolved > seqLevel(name) * SEQ_ROUNDS_PER_LEVEL;
 
 /** Méhecske levels that close a number range: the last level up to 5, up to 10, and round tens. */
 const ADD_PAST_5 = ADD_LEVELS.findIndex((l) => l.name === '10-ig, gyűjtéssel');
@@ -294,6 +300,11 @@ export const STICKERS: Sticker[] = [
   { id: 'scale-two', game: 'scale', mark: '2', label: 'Kettes súly', praise: 'Már a kettes súlyokkal is kiméred!', earned: scalePassed('Kettes súlyok') },
   { id: 'scale-missing', game: 'scale', mark: '?', label: 'Hiányzó súly', praise: 'Kitaláltad, melyik súly hiányzik!', earned: scalePassed('Hiányzó súly'), set: 1 },
   { id: 'scale-secret', game: 'scale', mark: 'x', label: 'Titkos doboz', praise: 'Kitaláltad, mennyit nyom a titkos doboz!', earned: scalePassed('Titkos doboz'), set: 1 },
+  { id: 'seq-first', game: 'seq', mark: 'AB', label: 'Első minta', praise: 'Folytattad a gép első mintáját!', earned: (p) => p.seqSolved >= 1 },
+  { id: 'seq-both', game: 'seq', mark: '●■', label: 'Szín és forma', praise: 'Egyszerre figyeled a színt és a formát!', earned: seqPassed('Szín és forma') },
+  { id: 'seq-turn', game: 'seq', mark: '↻', label: 'Forgató', praise: 'Tudod, merre fordul a nyíl!', earned: seqPassed('Forgó sor') },
+  { id: 'seq-fix', game: 'seq', mark: '!', label: 'Hibavadász', praise: 'Megtalálod, hol csúszott el a gép!', earned: seqPassed('Hibavadász'), set: 1 },
+  { id: 'seq-translate', game: 'seq', mark: '⇄', label: 'Mintafordító', praise: 'Ugyanazt a mintát nyilakkal is felismered!', earned: seqPassed('Mintafordító'), set: 1 },
   { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL * POTS_LEVELS.length }
 ];
 

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { KidChip, MapButton, ParentsButton, RewardPlot, VoiceButton } from '../../components/hub';
-import { Bolt, Gear, PathArt, ScaleArt, SortArt } from '../../components/robot';
+import { Bolt, Gear, PathArt, ScaleArt, SeqArt, SortArt } from '../../components/robot';
 import { FriendArt, MyRobot } from '../../components/robotParts';
 import { useForm } from '../../components/Stage';
 import { StickerPop } from '../../components/StickerPop';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../../components/ui';
 import { pathLevelIndex } from '../../games/robot/path';
 import { scaleLevelIndex } from '../../games/robot/scale';
+import { seqLevelIndex } from '../../games/robot/seq';
 import { sortLevelIndex } from '../../games/robot/sort';
 import { speak } from '../../lib/speech';
 import { kidName, useActiveKid, useProfiles } from '../../state/profiles';
@@ -14,11 +15,10 @@ import { useProgress } from '../../state/progress';
 import { markStickerSeen, newStickers } from '../../state/rewards';
 import { boltBalance, canBuyAnything, friendsOf, newFriend } from '../../state/robotParts';
 
-export type RobotGameId = 'path' | 'sort' | 'scale';
+export type RobotGameId = 'path' | 'sort' | 'scale' | 'seq';
 
 /** Machines Csavar is still building: shown asleep, each with what it will teach. With the games they fill seven places, so Robotépítő is the eighth. */
 const COMING = [
-  { name: 'Mintagép', skill: 'Nehezebb minták' },
   { name: 'Tükörgép', skill: 'Tükrözés, szimmetria' },
   { name: 'Kódzár', skill: 'Jelek és kódok' },
   { name: 'Hibakereső', skill: 'Hiba a programban' }
@@ -92,6 +92,7 @@ export function RobotHome({
   const levelIdx = pathLevelIndex(progress.pathSolved);
   const sortIdx = sortLevelIndex(progress.sortSolved);
   const scaleIdx = scaleLevelIndex(progress.scaleSolved);
+  const seqIdx = seqLevelIndex(progress.seqSolved);
   const workshopBadge = newFriend(progress) ? 'Barát jött!' : canBuyAnything(progress) ? 'Építhetsz!' : null;
 
   return (
@@ -154,6 +155,16 @@ export function RobotHome({
           <ScaleArt />
           <span className="plot__soil plot__soil--floor" />
           <span className="plot__name">Mérleg</span>
+          <span className="plot__cta">
+            <PlayIcon /> Játék
+          </span>
+        </button>
+
+        <button type="button" className="plot plot--play" onClick={() => open('seq')} aria-label="Mintagép – mi jön a sorban?">
+          {progress.seqSolved === 0 ? <span className="plot__badge">Új gép!</span> : <span className="plot__badge">{seqIdx + 1}. szint</span>}
+          <SeqArt />
+          <span className="plot__soil plot__soil--floor" />
+          <span className="plot__name">Mintagép</span>
           <span className="plot__cta">
             <PlayIcon /> Játék
           </span>

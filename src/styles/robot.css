@@ -25,7 +25,7 @@
 .screen--robot-home .plot--play > svg { margin-bottom: 8px; }
 
 .stage--landscape .screen--robot-home .plot { height: 150px; }
-.is-phone .screen--robot-home .plot > svg.path-art, .is-phone .screen--robot-home .plot > svg.sort-art, .is-phone .screen--robot-home .plot > svg.scale-art { width: 120px; height: auto; }
+.is-phone .screen--robot-home .plot > svg.path-art, .is-phone .screen--robot-home .plot > svg.sort-art, .is-phone .screen--robot-home .plot > svg.scale-art, .is-phone .screen--robot-home .plot > svg.seq-art { width: 120px; height: auto; }
 .is-phone .screen--robot-home .plot--locked > svg { width: 40px; height: 40px; }
 /* A short portrait card keeps the skill to one line: the lock already says the machine is coming. */
 @container plot (max-height: 124px) { .screen--robot-home .plot__soon { display: none; } }
@@ -384,6 +384,80 @@
 .stage--landscape .sort-bins, .stage--landscape .sort-odd { grid-area: bins; padding: 10px 12px 14px 0; }
 .stage--landscape .sort-odd__part { width: 112px; height: 112px; }
 .stage--landscape .sort-odd__part svg { width: 80px; height: 80px; }
+
+/* ---------- Mintagép ---------- */
+.screen--seq { display: flex; flex-direction: column; }
+.screen--seq .topbar { flex: none; }
+.screen--seq .screen-title { color: var(--leaf-deep); }
+.seq-guide { position: relative; flex: none; padding: 4px 40px 0; display: flex; justify-content: center; }
+.seq-guide .bubble { font-size: 26px; max-width: 820px; }
+.seq-dots { flex: none; justify-content: center; margin-top: 10px; }
+
+/* The belt: the row stands on the rail, the gap at its end (or where the part out of place was). */
+.seq-machine { position: relative; flex: 1 1 auto; min-height: 0; display: flex; justify-content: center; align-items: center; padding: 6px 40px 0; }
+.seq-belt { position: relative; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 46px; box-sizing: border-box; animation: settle 0.35s ease-out both; }
+.seq-rail { position: absolute; left: 0; right: 0; bottom: 30px; height: 34px; border-radius: 17px; background: #5e7184; box-shadow: inset 0 -6px 0 #3e5872; }
+.seq-rail::after { content: ""; position: absolute; inset: 11px 20px; border-radius: 6px; background: repeating-linear-gradient(90deg, #b7c4d2 0 12px, transparent 12px 52px); }
+.seq-rows { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; margin-bottom: 4px; }
+.seq-row { position: relative; display: flex; align-items: flex-end; gap: 14px; }
+/* Mintafordító: the colours above, drawn a little lighter, so the arrows below are the task. */
+.seq-row--ref { padding: 8px 0; opacity: 0.9; }
+.seq-item { flex: none; display: grid; place-items: end center; padding: 0; border: none; background: transparent; border-radius: 22px; cursor: pointer; }
+.seq-item svg { display: block; filter: drop-shadow(0 6px 0 rgba(16, 35, 58, 0.18)); }
+.seq-item:active { transform: scale(0.95); }
+.seq-item:disabled { cursor: default; transform: none; }
+.seq-item.is-glow { background: #fff4d1; box-shadow: 0 0 0 6px #ffe08a; animation: hint-glow 0.9s ease-in-out 2; }
+
+.seq-gap { position: relative; flex: none; box-sizing: border-box; display: grid; place-items: center; border-radius: 26px; border: 5px dashed var(--leaf); background: rgba(255, 255, 255, 0.75); }
+.seq-gap__mark { font-family: var(--display); font-size: 64px; font-weight: 800; line-height: 1; color: var(--leaf); }
+.seq-gap svg { display: block; }
+.seq-gap.is-wrong { border-style: solid; border-color: var(--oops); background: var(--oops-tint); animation: not-yet 0.48s ease-in-out; }
+/* The right part lands in the gap and stays there, ringed in teal. */
+.seq-gap.is-right { border-style: solid; background: var(--good-tint); box-shadow: 0 0 0 6px var(--paper); }
+.seq-gap.is-right > svg { animation: answer-pop 0.6s cubic-bezier(.3, 1.4, .5, 1); }
+/* Right and wrong are stamped on the gap and on the card: a green tick that stays, an orange cross while the wrong part sits there. */
+.seq-miss { position: absolute; top: -14px; right: -14px; width: 46px; height: 46px; border-radius: 50%; background: var(--oops); color: var(--paper); display: grid; place-items: center; box-shadow: 0 3px 0 var(--oops-ink); animation: tick-grow 0.3s cubic-bezier(.3, 1.4, .5, 1) both; pointer-events: none; }
+.seq-gap .done-tick svg, .seq-miss svg { display: block; }
+.seq-choice.is-right, .seq-choice.is-right:disabled { opacity: 1; border-color: var(--leaf); background: var(--good-tint); box-shadow: 0 8px 0 var(--leaf); }
+.seq-choice.is-tried { opacity: 0.45; }
+/* Hibavadász: the part taken off the belt waits, tilted, above its place. */
+.seq-lifted { position: absolute; left: 50%; bottom: calc(100% + 10px); display: grid; place-items: center; padding: 6px; border-radius: 18px; background: var(--oops-tint); border: 4px solid var(--oops); transform: translateX(-50%) rotate(-12deg); }
+.seq-lifted svg { display: block; }
+
+/* The repeats, bracketed under the row after a wrong pick; the one the gap is in is dashed. */
+.seq-bracket { position: absolute; top: calc(100% + 40px); height: 18px; box-sizing: border-box; border: 5px solid var(--leaf); border-top: none; border-radius: 0 0 14px 14px; }
+.seq-bracket.is-open { border-color: var(--oops); border-style: dashed; border-top: none; }
+
+.seq-choices { flex: none; min-height: 230px; margin-top: 0; padding: 14px 40px 34px; }
+.seq-choice { width: 210px; height: 184px; }
+.seq-choice svg { display: block; }
+.seq-choices--tower .seq-choice { height: 196px; justify-content: flex-end; padding-bottom: 10px; }
+.seq-choice.is-glow { border-color: var(--bolt); box-shadow: 0 8px 0 #d9961e, 0 0 0 8px #ffe08a; animation: hint-glow 0.9s ease-in-out 2; }
+.plot > svg.seq-art { margin-bottom: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .seq-belt, .seq-gap.is-wrong, .seq-gap.is-right > svg, .seq-miss, .seq-item.is-glow, .seq-choice.is-glow { animation: none; }
+}
+
+.is-phone .seq-guide { padding: 0 16px; }
+.is-phone .seq-guide .guide { flex: 1; min-width: 0; gap: 12px; }
+.is-phone .seq-guide .guide__csepi { width: 40px; height: 62px; }
+.is-phone .seq-guide .bubble { font-size: 17px; padding: 10px 14px; }
+.is-phone .seq-dots { margin-top: 6px; }
+.is-phone .seq-dots .sort-odd__dot { width: 16px; height: 16px; border-width: 3px; }
+.is-phone .seq-machine { padding: 4px 16px 0; }
+.is-phone .seq-fit { width: 100%; height: 100%; }
+.is-phone .seq-choices { min-height: 0; gap: 12px; padding: 8px 16px 18px; }
+.is-phone .seq-choice { width: 104px; height: 104px; border-radius: 22px; }
+.is-phone .seq-choice > svg { width: 72px; height: 72px; }
+.is-phone .seq-miss { width: 32px; height: 32px; top: -10px; right: -10px; }
+.is-phone .seq-miss svg { width: 18px; height: 18px; }
+.is-phone .seq-choices--tower .seq-choice > svg { width: 40px; height: 80px; }
+.stage--landscape .seq-guide .guide__csepi { display: none; }
+.stage--landscape .seq-guide .bubble { font-size: 15px; padding: 6px 10px; }
+.stage--landscape .seq-choice { width: 92px; height: 84px; }
+.stage--landscape .seq-choice > svg { width: 60px; height: 60px; }
+.stage--landscape .seq-choices--tower .seq-choice > svg { width: 32px; height: 64px; }
 
 /* ---------- Mérleg ---------- */
 .screen--scale { display: flex; flex-direction: column; }

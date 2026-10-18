@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Cmd } from '../games/robot/path';
+import type { Dir } from '../games/robot/seq';
 import type { Color, Part, Shape } from '../games/robot/sort';
 import type { Mood } from '../lib/types';
 
@@ -299,6 +300,56 @@ export function SortArt() {
       <path d="M244 64 H296 L288 118 H252 Z" fill="#C98B50" stroke="#8A5A3B" strokeWidth="5" strokeLinejoin="round" />
       <rect x="10" y="80" width="200" height="22" rx="11" fill="#5E7184" />
       {[30, 70, 110, 150, 190].map((x) => (
+        <circle key={x} cx={x} cy="91" r="5" fill="#B7C4D2" />
+      ))}
+    </svg>
+  );
+}
+
+// ---------- Mintagép ----------
+
+const ARROW_TEAL: [string, string] = ['#138A86', '#0C5F5C'];
+
+/** A Mintagép arrow on a white tile, in a 100 × 100 box: 0 points up, each step a quarter turn clockwise. */
+export function ArrowTile({ dir, color }: { dir: Dir; color: Color | null }) {
+  const [fill, edge] = color ? PART_FILL[color] : ARROW_TEAL;
+  return (
+    <g>
+      <rect x="6" y="6" width="88" height="88" rx="20" fill="#FFFFFF" stroke="#CFDBE8" strokeWidth="5" />
+      <path d="M50 14 L80 50 H61 V86 H39 V50 H20 Z" fill={fill} stroke={edge} strokeWidth="4" strokeLinejoin="round" transform={`rotate(${dir * 90} 50 50)`} />
+    </g>
+  );
+}
+
+/** Height of one block in a Mintagép tower, in the tower's 100 × 200 box; eight fit. */
+const BLOCK_H = 24;
+
+/** A tower of n blocks standing on the bottom edge of a 100 × 200 box. */
+export function BlockStack({ n }: { n: number }) {
+  return (
+    <g>
+      {Array.from({ length: n }, (_, i) => (
+        <rect key={i} x="18" y={200 - (i + 1) * BLOCK_H} width="64" height={BLOCK_H - 4} rx="6" fill="#F2B33D" stroke="#B07A12" strokeWidth="4" />
+      ))}
+    </g>
+  );
+}
+
+/** Mintagép's tile on the Robotműhely home screen: red, blue, red, blue and a gap on the belt. */
+export function SeqArt() {
+  return (
+    <svg aria-hidden="true" className="seq-art" width="200" height="83" viewBox="0 0 300 124">
+      {(['red', 'blue', 'red', 'blue'] as Color[]).map((c, i) => (
+        <g key={i} transform={`translate(${12 + i * 56} 18) scale(0.56)`}>
+          <SortPart part={{ color: c, shape: 'round', size: 'big' }} />
+        </g>
+      ))}
+      <rect x="240" y="22" width="50" height="50" rx="12" fill="#FFFFFF" stroke="#138A86" strokeWidth="5" strokeDasharray="9 6" />
+      <text x="265" y="62" textAnchor="middle" fontSize="38" fontWeight="800" fill="#138A86">
+        ?
+      </text>
+      <rect x="6" y="80" width="288" height="22" rx="11" fill="#5E7184" />
+      {[30, 80, 130, 180, 230, 270].map((x) => (
         <circle key={x} cx={x} cy="91" r="5" fill="#B7C4D2" />
       ))}
     </svg>

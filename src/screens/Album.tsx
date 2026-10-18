@@ -7,9 +7,6 @@ import { useProgress } from '../state/progress';
 import { STICKERS, STICKER_GAMES, earnedStickers, type Sticker } from '../state/rewards';
 import { WORLDS, type WorldId } from '../state/worlds';
 
-/** Robotműhely machines still being built: an empty page column each, so the robot page is not one lonely column. */
-const ROBOT_COMING = ['Mintagép'];
-
 /** A little tilt per sticker, so the album looks stuck in by hand (always the same for a sticker). */
 const TILTS = [-6, 4, -2, 5, -4, 3, -5];
 
@@ -26,7 +23,6 @@ export function Album({ onBack, world: startWorld = 'garden' }: { onBack: () => 
   const [world, setWorld] = useState<WorldId>(startWorld);
   const earned = earnedStickers(progress);
   const games = STICKER_GAMES.filter((g) => g.world === world);
-  const coming = world === 'robot' ? ROBOT_COMING : [];
   const intro = earned.length === 0 ? 'Itt gyűlnek a matricáid. Játssz, és jön az első!' : 'Koppints egy matricára!';
   const [line, setLine] = useState(intro);
 
@@ -76,7 +72,7 @@ export function Album({ onBack, world: startWorld = 'garden' }: { onBack: () => 
         ))}
       </div>
 
-      <div className="album" style={{ '--cols': games.length + coming.length } as CSSProperties}>
+      <div className="album" style={{ '--cols': games.length } as CSSProperties}>
         {games.map((g) => {
           const own = STICKERS.filter((s) => s.game === g.id);
           return (
@@ -109,12 +105,6 @@ export function Album({ onBack, world: startWorld = 'garden' }: { onBack: () => 
           </section>
           );
         })}
-        {coming.map((name) => (
-          <section key={name} className="album__game album__game--coming" aria-label={`${name}: még készül`}>
-            <h2 className="album__name">{name}</h2>
-            <p className="album__coming">Hamarosan</p>
-          </section>
-        ))}
       </div>
 
       <div className="album__guide">
