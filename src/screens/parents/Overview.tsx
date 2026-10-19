@@ -14,7 +14,9 @@ import { POTS_LEVELS, potsLevelFor } from '../../games/pots/logic';
 import { LEVELS as FLASH_LEVELS, levelFor } from '../../games/flash/logic';
 import { SHAPE_ORDER } from '../../games/patterns/logic';
 import { PLANTS } from '../../games/water/logic';
+import { WORLDS, type WorldId } from '../../state/worlds';
 import type { ParentPage } from './ParentArea';
+import { WorldGroup } from './controls';
 
 const DATE_FMT = new Intl.DateTimeFormat('hu-HU', { month: 'long', day: 'numeric', weekday: 'long' });
 
@@ -72,48 +74,61 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
   const flashIdx = FLASH_LEVELS.indexOf(levelFor(progress.flashSolved));
   const learned = Math.min(LEARN_MAX, progress.learnSolved);
   const potsIdx = POTS_LEVELS.indexOf(potsLevelFor(progress.potsSolved));
-  const games = [
-    { name: 'Számvetés', detail: `${learned} / ${LEARN_MAX} szám`, share: learned / LEARN_MAX },
+  const games: { world: WorldId; name: string; detail: string; share: number }[] = [
+    { world: 'garden', name: 'Számvetés', detail: `${learned} / ${LEARN_MAX} szám`, share: learned / LEARN_MAX },
     {
+      world: 'garden',
       name: 'Locsolás',
       detail: `${progress.garden.length} virág · ${progress.waterRound >= PLANTS.length ? '11–20' : '2–10'} csepp`,
       share: levelShare('water')
     },
-    { name: 'Virágsor', detail: `${progress.patternsSolved} sor · ${SHAPE_ORDER[progress.patternRound % SHAPE_ORDER.length]} minta`, share: levelShare('patterns') },
-    { name: 'Magvillantás', detail: `${flashIdx + 1}. szint · ${FLASH_LEVELS[flashIdx].name}`, share: levelShare('flash') },
     {
+      world: 'garden',
+      name: 'Virágsor',
+      detail: `${progress.patternsSolved} sor · ${SHAPE_ORDER[progress.patternRound % SHAPE_ORDER.length]} minta`,
+      share: levelShare('patterns')
+    },
+    { world: 'garden', name: 'Magvillantás', detail: `${flashIdx + 1}. szint · ${FLASH_LEVELS[flashIdx].name}`, share: levelShare('flash') },
+    {
+      world: 'garden',
       name: 'Mézút',
       detail: `${progress.traceSolved} leírt szám${progress.traceFadedSolved ? ` (${progress.traceFadedSolved} halvány úton)` : ''} · következő: ${buildTraceRound(progress.traceRound).digit}`,
       // First lap on the full trail, then the faded lap.
       share: Math.min(1, (Math.min(progress.traceSolved - progress.traceFadedSolved, TRACE_ORDER.length) + progress.traceFadedSolved) / (2 * TRACE_ORDER.length))
     },
     {
+      world: 'garden',
       name: 'Méhecske',
       detail: `${clampLevel(progress.addLevel) + 1}. szint · ${addLevel.name} · ${progress.addStreak}/${LEVEL_UP_STREAK} csillag`,
       share: levelShare('add')
     },
-    { name: 'Cserépbarátok', detail: `${potsIdx + 1}. szint · ${POTS_LEVELS[potsIdx].name}`, share: levelShare('pots') },
+    { world: 'garden', name: 'Cserépbarátok', detail: `${potsIdx + 1}. szint · ${POTS_LEVELS[potsIdx].name}`, share: levelShare('pots') },
     {
+      world: 'robot',
       name: 'Robotút',
       detail: `${progress.pathSolved} pálya · ${pathLevelIndex(progress.pathSolved) + 1}. szint · ${PATH_LEVELS[pathLevelIndex(progress.pathSolved)].name}`,
       share: levelShare('path')
     },
     {
+      world: 'robot',
       name: 'Válogatógép',
       detail: `${progress.sortSolved} kör · ${sortLevelIndex(progress.sortSolved) + 1}. szint · ${SORT_LEVELS[sortLevelIndex(progress.sortSolved)].name}`,
       share: levelShare('sort')
     },
     {
+      world: 'robot',
       name: 'Mérleg',
       detail: `${progress.scaleSolved} kör · ${scaleLevelIndex(progress.scaleSolved) + 1}. szint · ${SCALE_LEVELS[scaleLevelIndex(progress.scaleSolved)].name}`,
       share: levelShare('scale')
     },
     {
+      world: 'robot',
       name: 'Mintagép',
       detail: `${progress.seqSolved} kör · ${seqLevelIndex(progress.seqSolved) + 1}. szint · ${SEQ_LEVELS[seqLevelIndex(progress.seqSolved)].name}`,
       share: levelShare('seq')
     },
     {
+      world: 'robot',
       name: 'Tükörgép',
       detail: `${progress.mirrorSolved} kör · ${mirrorLevelIndex(progress.mirrorSolved) + 1}. szint · ${MIRROR_LEVELS[mirrorLevelIndex(progress.mirrorSolved)].name}`,
       share: levelShare('mirror')
@@ -223,17 +238,24 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
             Szintek módosítása
           </button>
         </div>
-        <div className="pa-games__grid">
-          {games.map((g) => (
-            <div key={g.name} className="pa-game">
-              <div className="pa-game__name">{g.name}</div>
-              <div className="pa-game__detail">{g.detail}</div>
-              <div className="pa-meter" aria-hidden="true">
-                <div style={{ width: `${Math.round(g.share * 100)}%` }} />
+        {WORLDS.map((w) => {
+          const own = games.filter((g) => g.world === w.id);
+          return (
+            <WorldGroup key={w.id} world={w} heading="h3" aside={`${own.length} játék`}>
+              <div className="pa-games__grid">
+                {own.map((g) => (
+                  <div key={g.name} className="pa-game">
+                    <div className="pa-game__name">{g.name}</div>
+                    <div className="pa-game__detail">{g.detail}</div>
+                    <div className="pa-meter" aria-hidden="true">
+                      <div style={{ width: `${Math.round(g.share * 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
-        </div>
+            </WorldGroup>
+          );
+        })}
       </section>
     </div>
   );

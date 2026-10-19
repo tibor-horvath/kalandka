@@ -629,6 +629,7 @@
 .is-phone .pa-today svg { flex: none; width: 104px; height: 104px; }
 .is-phone .pa-bars { height: 100px; gap: 8px; }
 .is-phone .pa-games__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.is-phone .pa-world { padding: 12px; border-radius: 18px; }
 .is-phone .pa-level { flex-wrap: wrap; gap: 12px; padding: 14px 16px; }
 .is-phone .pa-stepper { flex-basis: 100%; justify-content: space-between; }
 .is-phone .pa-stepper__value { width: auto; flex: 1; }

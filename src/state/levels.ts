@@ -10,6 +10,7 @@ import { SEQ_LEVELS, SEQ_ROUNDS_PER_LEVEL, seqLevelIndex } from '../games/robot/
 import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL, sortLevelIndex } from '../games/robot/sort';
 import { PLANTS } from '../games/water/logic';
 import type { Progress } from './progress';
+import type { WorldId } from './worlds';
 
 // Per-game level settings for the parents' corner.
 // Each setting reads the game's current level from progress and writes a new starting point;
@@ -22,6 +23,7 @@ export interface LevelOption {
 
 export interface LevelSetting {
   id: 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror';
+  world: WorldId;
   game: string;
   hint: string;
   options: LevelOption[];
@@ -46,6 +48,7 @@ const PATTERN_LABELS: Record<string, string> = {
 export const LEVEL_SETTINGS: LevelSetting[] = [
   {
     id: 'learn',
+    world: 'garden',
     game: 'Számvetés',
     hint: 'Innen tanulja sorban a számokat, 20-ig.',
     options: LEARN_STARTS,
@@ -57,6 +60,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   },
   {
     id: 'water',
+    world: 'garden',
     game: 'Locsolás',
     hint: 'Hány cseppet kér egy virág.',
     options: [
@@ -68,6 +72,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   },
   {
     id: 'patterns',
+    world: 'garden',
     game: 'Virágsor',
     hint: 'Ezzel a mintával indul, aztán körbejárnak.',
     options: SHAPE_ORDER.map((shape, i) => ({ value: i, label: PATTERN_LABELS[shape] })),
@@ -76,6 +81,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   },
   {
     id: 'flash',
+    world: 'garden',
     game: 'Magvillantás',
     hint: '4 jó válasz után magától lép tovább.',
     options: FLASH_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
@@ -84,6 +90,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   },
   {
     id: 'add',
+    world: 'garden',
     game: 'Méhecske',
     hint: '5 jó válasz után Csepi nehezebbet ajánl, 3 nehéz feladat után könnyebbet. A gyerek dönt.',
     options: ADD_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
@@ -92,6 +99,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   },
   {
     id: 'pots',
+    world: 'garden',
     game: 'Cserépbarátok',
     hint: '5 jó válasz után magától lép tovább.',
     options: POTS_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
@@ -100,6 +108,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   },
   {
     id: 'path',
+    world: 'robot',
     game: 'Robotút',
     hint: 'Robotműhely. 5 pálya után magától lép tovább.',
     options: PATH_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
@@ -108,6 +117,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   },
   {
     id: 'sort',
+    world: 'robot',
     game: 'Válogatógép',
     hint: 'Robotműhely. 5 kör után magától lép tovább.',
     options: SORT_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
@@ -116,6 +126,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   },
   {
     id: 'scale',
+    world: 'robot',
     game: 'Mérleg',
     hint: 'Robotműhely. 5 kör után magától lép tovább.',
     options: SCALE_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
@@ -124,6 +135,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   },
   {
     id: 'seq',
+    world: 'robot',
     game: 'Mintagép',
     hint: 'Robotműhely. 5 kör után magától lép tovább.',
     options: SEQ_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
@@ -132,6 +144,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   },
   {
     id: 'mirror',
+    world: 'robot',
     game: 'Tükörgép',
     hint: 'Robotműhely. 5 kör után magától lép tovább.',
     options: MIRROR_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),

@@ -137,6 +137,20 @@
 .pa-game__name { font-family: var(--display); font-size: 19px; font-weight: 800; line-height: 1; }
 .pa-game__detail { font-size: 14px; color: var(--pa-muted); line-height: 1.3; min-height: 36px; }
 
+/* games grouped by world (overview and levels) */
+.pa-world { border-radius: 22px; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.pa-world--garden { background: #e4f4da; --pa-world-ink: #1e5520; --pa-world-sub: #3e5a47; --pa-world-fill: var(--pa-good); }
+.pa-world--robot { background: #ddf3f1; --pa-world-ink: #0c5f5c; --pa-world-sub: #2f5654; --pa-world-fill: #138a86; }
+.pa-world__head { display: flex; align-items: center; gap: 14px; padding: 2px 4px 0; }
+.pa-world__badge { width: 44px; height: 44px; border-radius: 14px; flex: none; display: flex; align-items: center; justify-content: center; background: #ffffff; color: var(--pa-world-fill); }
+.pa-world__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pa-world__name { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 800; line-height: 1.1; color: var(--pa-world-ink); }
+.pa-world__about { font-size: 14px; font-weight: 700; color: var(--pa-world-sub); }
+.pa-world__aside { font-size: 14px; font-weight: 800; color: var(--pa-world-ink); white-space: nowrap; }
+.pa-world .pa-meter > div, .pa-world .pa-dots i.is-done, .pa-world .pa-dots i.is-now { background: var(--pa-world-fill); }
+.pa-world .pa-level__mode { color: var(--pa-world-ink); }
+.pa-games .pa-world + .pa-world { margin-top: 4px; }
+
 /* levels */
 .pa-levels { display: flex; flex-direction: column; gap: 10px; }
 .pa-level { background: var(--pa-card); border-radius: 18px; padding: 14px 18px; display: flex; align-items: center; gap: 18px; }
@@ -148,7 +162,7 @@
 .pa-tile--sun { background: #fff3c4; color: #7a5a00; }
 .pa-level__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .pa-level__title { display: flex; align-items: baseline; gap: 10px; }
-.pa-level__title h2 { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 800; line-height: 1.1; }
+.pa-level__title h3 { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 800; line-height: 1.1; }
 .pa-level__title span { font-size: 14px; color: var(--pa-muted); }
 .pa-level__mode { font-size: 14px; color: #2f6b3a; font-weight: 700; }
 .pa-stepper { display: flex; align-items: center; gap: 10px; }
