@@ -7,6 +7,7 @@ import { LEARN_MAX } from '../../games/learn/logic';
 import { TRACE_ORDER, buildTraceRound } from '../../games/trace/logic';
 import { PATH_LEVELS, pathLevelIndex } from '../../games/robot/path';
 import { SCALE_LEVELS, scaleLevelIndex } from '../../games/robot/scale';
+import { MIRROR_LEVELS, mirrorLevelIndex } from '../../games/robot/mirror';
 import { SEQ_LEVELS, seqLevelIndex } from '../../games/robot/seq';
 import { SORT_LEVELS, sortLevelIndex } from '../../games/robot/sort';
 import { POTS_LEVELS, potsLevelFor } from '../../games/pots/logic';
@@ -111,6 +112,11 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
       name: 'Mintagép',
       detail: `${progress.seqSolved} kör · ${seqLevelIndex(progress.seqSolved) + 1}. szint · ${SEQ_LEVELS[seqLevelIndex(progress.seqSolved)].name}`,
       share: levelShare('seq')
+    },
+    {
+      name: 'Tükörgép',
+      detail: `${progress.mirrorSolved} kör · ${mirrorLevelIndex(progress.mirrorSolved) + 1}. szint · ${MIRROR_LEVELS[mirrorLevelIndex(progress.mirrorSolved)].name}`,
+      share: levelShare('mirror')
     }
   ];
 

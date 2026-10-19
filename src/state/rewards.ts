@@ -7,6 +7,7 @@ import { TRACE_ORDER } from '../games/trace/logic';
 import { PLANTS } from '../games/water/logic';
 import { PATH_LEVELS, PATH_ROUNDS_PER_LEVEL } from '../games/robot/path';
 import { SCALE_LEVELS, SCALE_ROUNDS_PER_LEVEL } from '../games/robot/scale';
+import { MIRROR_LEVELS, MIRROR_ROUNDS_PER_LEVEL } from '../games/robot/mirror';
 import { SEQ_LEVELS, SEQ_ROUNDS_PER_LEVEL } from '../games/robot/seq';
 import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL } from '../games/robot/sort';
 import type { GameId } from '../screens/Home';
@@ -333,7 +334,8 @@ export const STICKER_GAMES: StickerGame[] = [
   { id: 'path', name: 'Robotút', color: '#138A86', ink: '#FFFFFF', world: 'robot' },
   { id: 'sort', name: 'Válogatógép', color: '#5E7184', ink: '#FFFFFF', world: 'robot' },
   { id: 'scale', name: 'Mérleg', color: '#F2B33D', ink: '#10233A', world: 'robot' },
-  { id: 'seq', name: 'Mintagép', color: '#2E5FA8', ink: '#FFFFFF', world: 'robot' }
+  { id: 'seq', name: 'Mintagép', color: '#2E5FA8', ink: '#FFFFFF', world: 'robot' },
+  { id: 'mirror', name: 'Tükörgép', color: '#7FE9F0', ink: '#10233A', world: 'robot' }
 ];
 
 /** Robotút stickers: a course solved on a level (the first solved course of that level and on). */
@@ -349,6 +351,10 @@ const scalePassed = (name: string) => (p: Progress) => p.scaleSolved > scaleLeve
 /** Mintagép stickers: a round solved on a level. */
 const seqLevel = (name: string) => SEQ_LEVELS.findIndex((l) => l.name === name);
 const seqPassed = (name: string) => (p: Progress) => p.seqSolved > seqLevel(name) * SEQ_ROUNDS_PER_LEVEL;
+
+/** Tükörgép stickers: a round solved on a level. */
+const mirrorLevel = (name: string) => MIRROR_LEVELS.findIndex((l) => l.name === name);
+const mirrorPassed = (name: string) => (p: Progress) => p.mirrorSolved > mirrorLevel(name) * MIRROR_ROUNDS_PER_LEVEL;
 
 /** Méhecske levels that close a number range: the last level up to 5, up to 10, and round tens. */
 const ADD_PAST_5 = ADD_LEVELS.findIndex((l) => l.name === '10-ig, gyűjtéssel');
@@ -399,6 +405,11 @@ export const STICKERS: Sticker[] = [
   { id: 'seq-turn', game: 'seq', mark: '↻', label: 'Forgató', praise: 'Tudod, merre fordul a nyíl!', earned: seqPassed('Forgó sor') },
   { id: 'seq-fix', game: 'seq', mark: '!', label: 'Hibavadász', praise: 'Megtalálod, hol csúszott el a gép!', earned: seqPassed('Hibavadász'), set: 1 },
   { id: 'seq-translate', game: 'seq', mark: '⇄', label: 'Mintafordító', praise: 'Ugyanazt a mintát nyilakkal is felismered!', earned: seqPassed('Mintafordító'), set: 1 },
+  { id: 'mirror-first', game: 'mirror', mark: '•|•', label: 'Első tükör', praise: 'Megtaláltad az első tükörképet!', earned: (p) => p.mirrorSolved >= 1 },
+  { id: 'mirror-picture', game: 'mirror', mark: '♥', label: 'Fél kép', praise: 'A tükörrel egész képet rajzolsz!', earned: mirrorPassed('Fél kép') },
+  { id: 'mirror-flat', game: 'mirror', mark: '⇅', label: 'Fel-le tükör', praise: 'A fekvő tükörrel is boldogulsz!', earned: mirrorPassed('Fel-le tükör') },
+  { id: 'mirror-pick', game: 'mirror', mark: 'b|d', label: 'Tükörkép', praise: 'Már nem téveszted össze a tükörképet a másolattal!', earned: mirrorPassed('Tükör vagy másolat?'), set: 1 },
+  { id: 'mirror-fix', game: 'mirror', mark: '!', label: 'Tükörjavító', praise: 'Megtalálod, hol tévedett a tükörgép!', earned: mirrorPassed('Hibás tükör'), set: 1 },
   { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL * POTS_LEVELS.length }
 ];
 

@@ -102,6 +102,9 @@ export interface Progress {
   /** Mintagép round: which one comes next, and how many were done (five per level, see SEQ_LEVELS). */
   seqRound: number;
   seqSolved: number;
+  /** Tükörgép round: which one comes next, and how many were done (five per level, see MIRROR_LEVELS). */
+  mirrorRound: number;
+  mirrorSolved: number;
   /** Bolts spent in Robotépítő; the balance is bolts − boltsSpent. */
   boltsSpent: number;
   /** Robot parts bought (see state/robotParts.ts); the starting parts are always owned. */
@@ -187,6 +190,8 @@ export const DEFAULT_PROGRESS: Progress = {
   scaleSolved: 0,
   seqRound: 0,
   seqSolved: 0,
+  mirrorRound: 0,
+  mirrorSolved: 0,
   boltsSpent: 0,
   robotOwned: [],
   robotLook: {},

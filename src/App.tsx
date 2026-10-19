@@ -22,6 +22,7 @@ import { WorldMap } from './screens/WorldMap';
 import { Path } from './screens/robot/Path';
 import { RobotHome, type RobotGameId } from './screens/robot/RobotHome';
 import { Scale } from './screens/robot/Scale';
+import { Mirror } from './screens/robot/Mirror';
 import { Seq } from './screens/robot/Seq';
 import { Sort } from './screens/robot/Sort';
 import { Workshop } from './screens/robot/Workshop';
@@ -53,7 +54,8 @@ const ROUND_KEY = {
   path: 'pathRound',
   sort: 'sortRound',
   scale: 'scaleRound',
-  seq: 'seqRound'
+  seq: 'seqRound',
+  mirror: 'mirrorRound'
 } as const satisfies Record<GameId | RobotGameId, keyof Progress>;
 
 /** Screens a child rests on when time is up, and where an update may reload the app. */
@@ -93,7 +95,7 @@ function Game() {
   useEffect(() => setVoiceChoice(progress.csepiVoice, progress.robotVoice), [progress.csepiVoice, progress.robotVoice]);
   useEffect(() => setSoundEnabled(progress.sounds), [progress.sounds]);
   const world = currentWorld(progress);
-  const csavarTalks = screen === 'path' || screen === 'sort' || screen === 'scale' || screen === 'seq' || screen === 'workshop' || (screen === 'album' && albumFrom === 'workshop') || (screen === 'home' && world === 'robot');
+  const csavarTalks = screen === 'path' || screen === 'sort' || screen === 'scale' || screen === 'seq' || screen === 'mirror' || screen === 'workshop' || (screen === 'album' && albumFrom === 'workshop') || (screen === 'home' && world === 'robot');
   // A layout effect, so the voice is set before the new screen's own effects say their first line.
   useLayoutEffect(() => setSpeaker(csavarTalks ? 'robot' : 'csepi'), [csavarTalks]);
   useEffect(() => {
@@ -227,6 +229,7 @@ function Game() {
         {screen === 'sort' && <Sort key={progress.sortRound} onBack={() => go('home')} />}
         {screen === 'scale' && <Scale key={progress.scaleRound} onBack={() => go('home')} />}
         {screen === 'seq' && <Seq key={progress.seqRound} onBack={() => go('home')} />}
+        {screen === 'mirror' && <Mirror key={progress.mirrorRound} onBack={() => go('home')} />}
       </PageMotion>
       {!resting && !inParents && progress.warnBefore && remaining <= WARN_SECONDS && <TimeBanner remaining={remaining} />}
       {!resting && !inParents && timeUp && !progress.warnBefore && <TimeBanner remaining={0} />}

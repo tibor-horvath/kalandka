@@ -403,3 +403,62 @@ export function ScaleArt() {
     </svg>
   );
 }
+
+// ---------- Tükörgép ----------
+
+const SOCKET = '#DCE3EA';
+const SOCKET_EDGE = '#A9B7C6';
+export const MIRROR_GLASS = '#BFE6F2';
+
+/** A lamp on the Tükörgép board, in a 100 × 100 box: a dark socket, or a bulb in a part colour with a soft halo. */
+export function Lamp({ color }: { color: Color | null }) {
+  if (!color) return <circle cx="50" cy="50" r="24" fill={SOCKET} stroke={SOCKET_EDGE} strokeWidth="5" />;
+  const [fill, edge] = PART_FILL[color];
+  return (
+    <g>
+      <circle cx="50" cy="50" r="46" fill={fill} opacity="0.22" />
+      <circle cx="50" cy="50" r="34" fill={fill} stroke={edge} strokeWidth="6" />
+      <ellipse cx="39" cy="38" rx="10" ry="7" fill="#FFFFFF" opacity="0.6" />
+    </g>
+  );
+}
+
+/** A shape of lamps in a size × size frame, for the Tükörgép cards. */
+export function LampGrid({ cells, size, color, px }: { cells: { r: number; c: number }[]; size: number; color: Color; px: number }) {
+  return (
+    <svg aria-hidden="true" width={px} height={px} viewBox={`0 0 ${size * 100} ${size * 100}`}>
+      {Array.from({ length: size * size }, (_, i) => {
+        const r = Math.floor(i / size);
+        const c = i % size;
+        const on = cells.some((p) => p.r === r && p.c === c);
+        return (
+          <g key={i} transform={`translate(${c * 100} ${r * 100})`}>
+            <Lamp color={on ? color : null} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/** Tükörgép's tile on the Robotműhely home screen: three lamps, a mirror, and their reflections. */
+export function MirrorArt() {
+  const lamps: [number, number, Color][] = [
+    [0, 1, 'red'],
+    [1, 0, 'blue'],
+    [2, 1, 'yellow']
+  ];
+  return (
+    <svg aria-hidden="true" className="mirror-art" width="200" height="83" viewBox="0 0 300 124">
+      <rect x="20" y="4" width="260" height="116" rx="16" fill="#F4F7FB" stroke="#5E7184" strokeWidth="5" />
+      <rect x="143" y="10" width="14" height="104" rx="7" fill={MIRROR_GLASS} stroke={ROBOT_TEAL} strokeWidth="4" />
+      {lamps.flatMap(([r, c, color]) =>
+        [56 + c * 40, 244 - c * 40].map((x) => (
+          <g key={`${r}-${x}`} transform={`translate(${x - 17} ${12 + r * 34}) scale(0.34)`}>
+            <Lamp color={color} />
+          </g>
+        ))
+      )}
+    </svg>
+  );
+}

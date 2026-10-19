@@ -5,6 +5,7 @@ import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL, potsLevelFor } from '../games/pots/
 import { SHAPE_ORDER } from '../games/patterns/logic';
 import { PATH_LEVELS, PATH_ROUNDS_PER_LEVEL, pathLevelIndex } from '../games/robot/path';
 import { SCALE_LEVELS, SCALE_ROUNDS_PER_LEVEL, scaleLevelIndex } from '../games/robot/scale';
+import { MIRROR_LEVELS, MIRROR_ROUNDS_PER_LEVEL, mirrorLevelIndex } from '../games/robot/mirror';
 import { SEQ_LEVELS, SEQ_ROUNDS_PER_LEVEL, seqLevelIndex } from '../games/robot/seq';
 import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL, sortLevelIndex } from '../games/robot/sort';
 import { PLANTS } from '../games/water/logic';
@@ -20,7 +21,7 @@ export interface LevelOption {
 }
 
 export interface LevelSetting {
-  id: 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq';
+  id: 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror';
   game: string;
   hint: string;
   options: LevelOption[];
@@ -128,5 +129,13 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
     options: SEQ_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
     current: (p) => seqLevelIndex(p.seqSolved),
     apply: (p, v) => ({ ...p, seqSolved: v * SEQ_ROUNDS_PER_LEVEL })
+  },
+  {
+    id: 'mirror',
+    game: 'Tükörgép',
+    hint: 'Robotműhely. 5 kör után magától lép tovább.',
+    options: MIRROR_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
+    current: (p) => mirrorLevelIndex(p.mirrorSolved),
+    apply: (p, v) => ({ ...p, mirrorSolved: v * MIRROR_ROUNDS_PER_LEVEL })
   }
 ];

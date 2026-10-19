@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { KidChip, MapButton, ParentsButton, RewardPlot, VoiceButton } from '../../components/hub';
-import { Bolt, Gear, PathArt, ScaleArt, SeqArt, SortArt } from '../../components/robot';
+import { Bolt, Gear, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../../components/robot';
 import { FriendArt, MyRobot } from '../../components/robotParts';
 import { useForm } from '../../components/Stage';
 import { StickerPop } from '../../components/StickerPop';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../../components/ui';
+import { mirrorLevelIndex } from '../../games/robot/mirror';
 import { pathLevelIndex } from '../../games/robot/path';
 import { scaleLevelIndex } from '../../games/robot/scale';
 import { seqLevelIndex } from '../../games/robot/seq';
@@ -15,11 +16,10 @@ import { useProgress } from '../../state/progress';
 import { markStickerSeen, newStickers } from '../../state/rewards';
 import { boltBalance, canBuyAnything, friendsOf, newFriend, secondRobotNew } from '../../state/robotParts';
 
-export type RobotGameId = 'path' | 'sort' | 'scale' | 'seq';
+export type RobotGameId = 'path' | 'sort' | 'scale' | 'seq' | 'mirror';
 
 /** Machines Csavar is still building: shown asleep, each with what it will teach. With the games they fill seven places, so Robotépítő is the eighth. */
 const COMING = [
-  { name: 'Tükörgép', skill: 'Tükrözés, szimmetria' },
   { name: 'Kódzár', skill: 'Jelek és kódok' },
   { name: 'Hibakereső', skill: 'Hiba a programban' }
 ];
@@ -93,6 +93,7 @@ export function RobotHome({
   const sortIdx = sortLevelIndex(progress.sortSolved);
   const scaleIdx = scaleLevelIndex(progress.scaleSolved);
   const seqIdx = seqLevelIndex(progress.seqSolved);
+  const mirrorIdx = mirrorLevelIndex(progress.mirrorSolved);
   const workshopBadge = newFriend(progress) ? 'Barát jött!' : secondRobotNew(progress) ? 'Új robot!' : canBuyAnything(progress) ? 'Építhetsz!' : null;
 
   return (
@@ -165,6 +166,16 @@ export function RobotHome({
           <SeqArt />
           <span className="plot__soil plot__soil--floor" />
           <span className="plot__name">Mintagép</span>
+          <span className="plot__cta">
+            <PlayIcon /> Játék
+          </span>
+        </button>
+
+        <button type="button" className="plot plot--play" onClick={() => open('mirror')} aria-label="Tükörgép – hol a tükörkép?">
+          {progress.mirrorSolved === 0 ? <span className="plot__badge">Új gép!</span> : <span className="plot__badge">{mirrorIdx + 1}. szint</span>}
+          <MirrorArt />
+          <span className="plot__soil plot__soil--floor" />
+          <span className="plot__name">Tükörgép</span>
           <span className="plot__cta">
             <PlayIcon /> Játék
           </span>
