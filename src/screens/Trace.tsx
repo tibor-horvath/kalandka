@@ -30,6 +30,7 @@ import { speak } from '../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../lib/sound';
 import { evenLevels, levelMeter } from '../state/levelMeter';
 import { useProgress } from '../state/progress';
+import { logTask } from '../state/taskLog';
 
 const PAD_X = 30;
 const PAD_Y = 22;
@@ -114,6 +115,9 @@ export function Trace({ onBack }: { onBack: () => void }) {
   const demoFrame = useRef<number | null>(null);
   const idleTimer = useRef<number | null>(null);
   const lastStrayTalk = useRef(0);
+  /** For the parents' notes: times Csepi called the bee back, and whether the child asked for the way. */
+  const strayTalks = useRef(0);
+  const askedWay = useRef(false);
 
   const pts = shape.strokes[Math.min(strokeNo, shape.strokes.length - 1)];
   const beeAt = done ? shape.strokes[shape.strokes.length - 1].at(-1)! : pts[idx];
@@ -206,7 +210,10 @@ export function Trace({ onBack }: { onBack: () => void }) {
     if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
     if (!rewarded.current) {
       rewarded.current = true;
-      update((p) => ({ ...p, seeds: p.seeds + 1, traceSolved: p.traceSolved + 1, traceFadedSolved: p.traceFadedSolved + (shape.faded ? 1 : 0) }));
+      const helped = askedWay.current || strayTalks.current >= 2;
+      update((p) =>
+        logTask({ ...p, seeds: p.seeds + 1, traceSolved: p.traceSolved + 1, traceFadedSolved: p.traceFadedSolved + (shape.faded ? 1 : 0) }, 'trace', helped)
+      );
     }
   };
 
@@ -221,6 +228,7 @@ export function Trace({ onBack }: { onBack: () => void }) {
       const now = Date.now();
       if (now - lastStrayTalk.current > STRAY_TALK_MS) {
         lastStrayTalk.current = now;
+        strayTalks.current += 1;
         setFb(STRAYED);
         speak(STRAYED.speech);
       }
@@ -400,7 +408,14 @@ export function Trace({ onBack }: { onBack: () => void }) {
 
           <div className="trace-actions">
             {!done && (
-              <button type="button" className="peek-btn peek-btn--light" onClick={runDemo}>
+              <button
+                type="button"
+                className="peek-btn peek-btn--light"
+                onClick={() => {
+                  askedWay.current = true;
+                  runDemo();
+                }}
+              >
                 Mutasd az utat!
               </button>
             )}

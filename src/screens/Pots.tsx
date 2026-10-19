@@ -10,6 +10,7 @@ import { fanfare, popBubble } from '../lib/sound';
 import { speak } from '../lib/speech';
 import { evenLevels, levelMeter } from '../state/levelMeter';
 import { useProgress } from '../state/progress';
+import { logTask } from '../state/taskLog';
 
 type Phase = 'ask' | 'reveal' | 'solved';
 
@@ -61,7 +62,7 @@ export function Pots({ onBack }: { onBack: () => void }) {
       speak(rightFeedback(round).speech);
       if (!rewarded.current) {
         rewarded.current = true;
-        update((p) => ({ ...p, seeds: p.seeds + 1, potsSolved: p.potsSolved + 1 }));
+        update((p) => logTask({ ...p, seeds: p.seeds + 1, potsSolved: p.potsSolved + 1 }, 'pots', wrong !== null));
       }
     } else {
       setWrong(n);

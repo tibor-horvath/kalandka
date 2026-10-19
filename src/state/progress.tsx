@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../games/add/logic';
 import { markEarnedSeen, type Bed, type TreatId } from './rewards';
 import type { PartSlot } from './robotParts';
+import type { TaskLog } from './taskLog';
 import type { WorldId } from './worlds';
 
 export interface Progress {
@@ -126,6 +127,8 @@ export interface Progress {
   robotOiledAt: number;
   /** Full charges so far; they teach the robot its tricks. */
   robotCharges: number;
+  /** Recent solved tasks per game and whether they needed help, for the parents' notes (see taskLog.ts). */
+  taskLog: TaskLog;
 }
 
 export const DEFAULT_PROGRESS: Progress = {
@@ -202,7 +205,8 @@ export const DEFAULT_PROGRESS: Progress = {
   robotFriendsSeen: 0,
   robotChargedAt: 0,
   robotOiledAt: 0,
-  robotCharges: 0
+  robotCharges: 0,
+  taskLog: {}
 };
 
 /** Saves from before the gather and take levels: keep the child on the same sums. */

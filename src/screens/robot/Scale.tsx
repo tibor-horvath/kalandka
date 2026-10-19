@@ -35,6 +35,7 @@ import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble, thud } from '../../lib/sound';
 import { evenLevels, levelMeter } from '../../state/levelMeter';
 import { useProgress } from '../../state/progress';
+import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
 
 // The scale, in board units.
 const BOARD_H = 440;
@@ -478,7 +479,10 @@ export function Scale({ onBack }: { onBack: () => void }) {
   const rewarded = useRef(false);
   const timers = useRef<number[]>([]);
 
+  /** Corrections Csavar gave this round; enough of them and the round needed help (parents' notes). */
+  const oops = useRef(0);
   const say = (f: ScaleFeedback) => {
+    if (f.tone === 'oops') oops.current += 1;
     setFb(f);
     speak(f.speech);
   };
@@ -505,7 +509,8 @@ export function Scale({ onBack }: { onBack: () => void }) {
       }, NEXT_TASK_MS);
       if (!rewarded.current) {
         rewarded.current = true;
-        update((p) => ({ ...p, bolts: p.bolts + 1, scaleSolved: p.scaleSolved + 1 }));
+        const helped = oops.current >= ROUND_HELP_AFTER;
+      update((p) => logTask({ ...p, bolts: p.bolts + 1, scaleSolved: p.scaleSolved + 1 }, 'scale', helped));
       }
       return;
     }

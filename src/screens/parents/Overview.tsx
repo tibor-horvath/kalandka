@@ -1,4 +1,4 @@
-import { insights } from '../../state/insights';
+import { gameNotes, insights, type Insight } from '../../state/insights';
 import { LEVEL_SETTINGS } from '../../state/levels';
 import { useProgress } from '../../state/progress';
 import { BONUS_OPTIONS, addBonus, lastSevenDays, playedToday, remainingSeconds, today } from '../../state/screenTime';
@@ -63,6 +63,8 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
   const avg = Math.round(week.reduce((s, d) => s + d.minutes, 0) / 7);
   const scaleMax = Math.max(limit, ...week.map((d) => d.minutes), 10);
   const notes = insights(progress, day);
+  const noteFor = new Map(gameNotes(progress, day).map((n) => [n.game, n]));
+  const worldName = (id: WorldId) => WORLDS.find((w) => w.id === id)!.name;
 
   const setting = (id: string) => LEVEL_SETTINGS.find((s) => s.id === id)!;
   const levelShare = (id: string) => {
@@ -200,31 +202,35 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
         </section>
       </div>
 
-      <section className="pa-card" aria-labelledby="ov-notes">
-        <h2 id="ov-notes" className="pa-eyebrow">
-          Mit érdemes tudni
-        </h2>
-        <div className="pa-grid2 pa-notes">
+      <section className="pa-notes" aria-labelledby="ov-notes">
+        <div>
+          <h2 id="ov-notes" className="pa-h2">
+            Mi megy jól, hol segíthetsz
+          </h2>
+          <p className="pa-lead">Az elmúlt hét játékai alapján, mindkét világból, egy-egy otthoni ötlettel, képernyő nélkül.</p>
+        </div>
+        <div className="pa-notes__grid">
           {notes.map((n) => (
-            <div key={n.title} className={`pa-note pa-note--${n.tone}`}>
-              <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                {n.tone === 'tip' ? (
-                  <>
-                    <path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z" />
-                    <path d="M9.5 21h5" />
-                  </>
-                ) : (
-                  <>
-                    <path d="M12 21V11" />
-                    <path d="M12 13c0-4-3-6-7-6 0 4 3 6 7 6z" />
-                    <path d="M12 11c0-4 3-6 7-6 0 4-3 6-7 6z" />
-                  </>
+            <article key={n.title} className={`pa-note pa-note--${n.tone}`}>
+              <div className="pa-note__top">
+                <span className="pa-note__tone">
+                  <ToneIcon tone={n.tone} />
+                  {n.tone === 'tip' ? 'Itt segíthetsz' : 'Jól megy'}
+                </span>
+                {n.game && n.world && (
+                  <span className="pa-note__game">
+                    {worldName(n.world)} · {n.game}
+                  </span>
                 )}
-              </svg>
-              <p>
-                <b>{n.title}</b> {n.text}
-              </p>
-            </div>
+              </div>
+              <h3 className="pa-note__title">{n.title}</h3>
+              <p className="pa-note__text">{n.text}</p>
+              {n.home && (
+                <p className="pa-note__home">
+                  <b>Otthon:</b> {n.home}
+                </p>
+              )}
+            </article>
           ))}
         </div>
       </section>
@@ -247,6 +253,7 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
                   <div key={g.name} className="pa-game">
                     <div className="pa-game__name">{g.name}</div>
                     <div className="pa-game__detail">{g.detail}</div>
+                    {noteFor.get(g.name) && <GameStatus note={noteFor.get(g.name)!} />}
                     <div className="pa-meter" aria-hidden="true">
                       <div style={{ width: `${Math.round(g.share * 100)}%` }} />
                     </div>
@@ -257,6 +264,33 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
           );
         })}
       </section>
+    </div>
+  );
+}
+
+const TONE_LABEL: Record<Insight['tone'], string> = { good: 'Jól megy', tip: 'Itt segíthetsz', none: 'Kevés adat' };
+
+function ToneIcon({ tone }: { tone: Insight['tone'] }) {
+  return (
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      {tone === 'tip' ? (
+        <>
+          <path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z" />
+          <path d="M9.5 21h5" />
+        </>
+      ) : (
+        <path d="M5 12.5l4.5 4.5L19 7" />
+      )}
+    </svg>
+  );
+}
+
+/** One line under a game: how it goes this week, with a dot that differs in fill as well as colour. */
+function GameStatus({ note }: { note: Insight }) {
+  return (
+    <div className={`pa-game__status pa-game__status--${note.tone}`}>
+      <span className="pa-game__dot" role="img" aria-label={TONE_LABEL[note.tone]} />
+      <span>{note.short}</span>
     </div>
   );
 }

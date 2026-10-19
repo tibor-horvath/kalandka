@@ -37,6 +37,7 @@ import { numberCount } from '../lib/numbers';
 import { fanfare, popBubble } from '../lib/sound';
 import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
+import { logTask } from '../state/taskLog';
 
 type Phase = 'ask' | 'tour' | 'solved';
 
@@ -331,7 +332,8 @@ export function Add({ onBack }: { onBack: () => void }) {
       speak(rightFeedback(round, step.offer).speech);
       if (!rewarded.current) {
         rewarded.current = true;
-        update((p) => ({ ...p, seeds: p.seeds + 1, addSolved: p.addSolved + 1, addStreak: step.streak, addMisses: step.misses }));
+        const helped = missed.current;
+        update((p) => logTask({ ...p, seeds: p.seeds + 1, addSolved: p.addSolved + 1, addStreak: step.streak, addMisses: step.misses }, 'add', helped));
       }
     } else {
       setWrong(n);

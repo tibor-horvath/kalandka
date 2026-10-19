@@ -9,6 +9,7 @@ import { ASK, FIELD_H, FIELD_W, FLASH_ROUNDS_PER_LEVEL, LEVELS, READY, foldSeeds
 import { speak } from '../lib/speech';
 import { evenLevels, levelMeter } from '../state/levelMeter';
 import { useProgress } from '../state/progress';
+import { logTask } from '../state/taskLog';
 
 type Phase = 'ready' | 'flash' | 'ask' | 'reveal' | 'solved';
 
@@ -23,6 +24,8 @@ export function Flash({ onBack }: { onBack: () => void }) {
   const [phase, setPhase] = useState<Phase>('ready');
   const [wrong, setWrong] = useState<number | null>(null);
   const rewarded = useRef(false);
+  /** A wrong pick or "Mutasd újra!" before the answer: the task needed help. */
+  const helped = useRef(false);
   const timer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -50,9 +53,10 @@ export function Flash({ onBack }: { onBack: () => void }) {
       speak(rightFeedback(n).speech);
       if (!rewarded.current) {
         rewarded.current = true;
-        update((p) => ({ ...p, seeds: p.seeds + 1, flashSolved: p.flashSolved + 1 }));
+        update((p) => logTask({ ...p, seeds: p.seeds + 1, flashSolved: p.flashSolved + 1 }, 'flash', helped.current));
       }
     } else {
+      helped.current = true;
       setWrong(n);
       setPhase('reveal');
       speak(revealFeedback(round.count).speech);
@@ -99,7 +103,14 @@ export function Flash({ onBack }: { onBack: () => void }) {
                   Mutasd a magokat!
                 </button>
               ) : (
-                <button type="button" className="peek-btn" onClick={show}>
+                <button
+                  type="button"
+                  className="peek-btn"
+                  onClick={() => {
+                    helped.current = true;
+                    show();
+                  }}
+                >
                   Mutasd újra!
                 </button>
               )}

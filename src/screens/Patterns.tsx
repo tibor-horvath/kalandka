@@ -6,6 +6,7 @@ import { CHOICES, FLOWER_LABELS, SHAPE_ORDER, buildRound, hintFeedback, isEndGap
 import { speak } from '../lib/speech';
 import { evenLevels, levelMeter } from '../state/levelMeter';
 import { useProgress } from '../state/progress';
+import { logTask } from '../state/taskLog';
 
 export function Patterns({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
@@ -34,7 +35,7 @@ export function Patterns({ onBack }: { onBack: () => void }) {
       speak(solvedFeedback().speech);
       if (rewarded.current !== roundNo) {
         rewarded.current = roundNo;
-        update((p) => ({ ...p, seeds: p.seeds + 1, patternsSolved: p.patternsSolved + 1 }));
+        update((p) => logTask({ ...p, seeds: p.seeds + 1, patternsSolved: p.patternsSolved + 1 }, 'patterns', misses > 0));
       }
     } else {
       const m = misses + 1;

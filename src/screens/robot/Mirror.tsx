@@ -43,6 +43,7 @@ import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../../lib/sound';
 import { evenLevels, levelMeter } from '../../state/levelMeter';
 import { useProgress } from '../../state/progress';
+import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
 
 /** After a board is finished, it stays a moment so the child sees the whole picture, then the next task comes. */
 const NEXT_TASK_MS = 3000;
@@ -88,7 +89,10 @@ export function Mirror({ onBack }: { onBack: () => void }) {
   const timers = useRef<number[]>([]);
   const later = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms));
 
+  /** Corrections Csavar gave this round; enough of them and the round needed help (parents' notes). */
+  const oops = useRef(0);
   const say: Say = (f) => {
+    if (f.tone === 'oops') oops.current += 1;
     setFb(f);
     speak(f.speech);
   };
@@ -117,7 +121,8 @@ export function Mirror({ onBack }: { onBack: () => void }) {
     say({ ...win, speech: `${right.speech} ${win.speech}` });
     if (!rewarded.current) {
       rewarded.current = true;
-      update((p) => ({ ...p, bolts: p.bolts + 1, mirrorSolved: p.mirrorSolved + 1 }));
+      const helped = oops.current >= ROUND_HELP_AFTER;
+      update((p) => logTask({ ...p, bolts: p.bolts + 1, mirrorSolved: p.mirrorSolved + 1 }, 'mirror', helped));
     }
   };
 

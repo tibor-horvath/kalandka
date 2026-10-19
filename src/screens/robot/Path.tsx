@@ -41,6 +41,7 @@ import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble, powerDown, thud } from '../../lib/sound';
 import { evenLevels, levelMeter } from '../../state/levelMeter';
 import { useProgress } from '../../state/progress';
+import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
 
 /** One floor tile, in board units. */
 const CELL = 100;
@@ -133,6 +134,8 @@ export function Path({ onBack }: { onBack: () => void }) {
   const live = useRef({ pose: puzzle.start, tries: 0, collected: [] as number[] });
   const timers = useRef<number[]>([]);
   const rewarded = useRef(false);
+  /** The child asked for the way (parents' notes). */
+  const askedWay = useRef(false);
 
   const later = (fn: () => void, ms: number) => {
     timers.current.push(window.setTimeout(fn, ms));
@@ -175,7 +178,8 @@ export function Path({ onBack }: { onBack: () => void }) {
     say(solvedFeedback(level));
     if (!rewarded.current) {
       rewarded.current = true;
-      update((p) => ({ ...p, bolts: p.bolts + 1, pathSolved: p.pathSolved + 1 }));
+      const helped = askedWay.current || live.current.tries >= ROUND_HELP_AFTER;
+      update((p) => logTask({ ...p, bolts: p.bolts + 1, pathSolved: p.pathSolved + 1 }, 'path', helped));
     }
   };
 
@@ -570,7 +574,12 @@ export function Path({ onBack }: { onBack: () => void }) {
 
           <div className="path-actions">
             {!solved && (
-              <button type="button" className="peek-btn peek-btn--robot" onClick={showRoute} disabled={running}>
+              <button type="button" className="peek-btn peek-btn--robot" onClick={() => {
+                  askedWay.current = true;
+                  showRoute();
+                }}
+                disabled={running}
+              >
                 Mutasd az utat!
               </button>
             )}

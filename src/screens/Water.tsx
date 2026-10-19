@@ -8,6 +8,7 @@ import { numberCount } from '../lib/numbers';
 import { speak } from '../lib/speech';
 import { levelMeter } from '../state/levelMeter';
 import { useProgress } from '../state/progress';
+import { logTask } from '../state/taskLog';
 
 export function Water({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
@@ -25,6 +26,8 @@ export function Water({ onBack }: { onBack: () => void }) {
   /** Mirrors `pouring` for rendering: tilts the can while it pours. */
   const [isPouring, setIsPouring] = useState(false);
   const rewarded = useRef<number | null>(null);
+  /** This plant got too much water at some point ("Hoppá"): the task needed help. */
+  const overflowed = useRef(false);
 
   const fb = feedback(count, plant);
   const done = fb.status === 'done';
@@ -40,6 +43,7 @@ export function Water({ onBack }: { onBack: () => void }) {
     stopPouring();
     setCount(0);
     setFalling([]);
+    overflowed.current = false;
     speak(introSpeech(plant));
     return stopPouring;
   }, [round, plant]);
@@ -48,7 +52,8 @@ export function Water({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     if (done && rewarded.current !== round) {
       rewarded.current = round;
-      update((p) => ({ ...p, seeds: p.seeds + 1, garden: [...p.garden, plant.id] }));
+      const helped = overflowed.current;
+      update((p) => logTask({ ...p, seeds: p.seeds + 1, garden: [...p.garden, plant.id] }, 'water', helped));
     }
   }, [done, round, plant.id, update]);
 
@@ -56,6 +61,7 @@ export function Water({ onBack }: { onBack: () => void }) {
     if (next === count) return;
     setCount(next);
     const nextFb = feedback(next, plant);
+    if (nextFb.status === 'over') overflowed.current = true;
     if (next > 0) speak(numberCount(next));
     if (nextFb.status !== 'under' || next === 0) speak(nextFb.speech, { queue: next > 0 });
   };

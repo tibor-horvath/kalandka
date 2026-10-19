@@ -29,6 +29,7 @@ import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../../lib/sound';
 import { evenLevels, levelMeter } from '../../state/levelMeter';
 import { useProgress } from '../../state/progress';
+import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
 
 /** After the odd part is found, the row stays a moment so the child sees why, then the next row comes. */
 const NEXT_ROW_MS = 2200;
@@ -55,7 +56,10 @@ export function Sort({ onBack }: { onBack: () => void }) {
   const rewarded = useRef(false);
   const timers = useRef<number[]>([]);
 
+  /** Corrections Csavar gave this round; enough of them and the round needed help (parents' notes). */
+  const oops = useRef(0);
   const say = (f: SortFeedback) => {
+    if (f.tone === 'oops') oops.current += 1;
     setFb(f);
     speak(f.speech);
   };
@@ -73,7 +77,8 @@ export function Sort({ onBack }: { onBack: () => void }) {
     say(f);
     if (!rewarded.current) {
       rewarded.current = true;
-      update((p) => ({ ...p, bolts: p.bolts + 1, sortSolved: p.sortSolved + 1 }));
+      const helped = oops.current >= ROUND_HELP_AFTER;
+      update((p) => logTask({ ...p, bolts: p.bolts + 1, sortSolved: p.sortSolved + 1 }, 'sort', helped));
     }
   };
 
