@@ -1,15 +1,15 @@
 import qrcode from 'qrcode-generator';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar } from '../../components/avatars';
-import { kidName, useProfiles, type Profiles } from '../../state/profiles';
-import { collect, isComplete, packPieces, unpack, type Collected } from '../../state/transfer';
+import { MAX_KIDS, kidName, useProfiles, type Kid, type Profiles } from '../../state/profiles';
+import { collect, isComplete, merge, packPieces, unpack, type Collected } from '../../state/transfer';
 
 type Mode = 'idle' | 'send' | 'receive' | 'done';
 
 /** Moves every profile to a new device with QR codes: nothing goes through the internet. */
 export function TransferCard() {
   const [mode, setMode] = useState<Mode>('idle');
-  const [moved, setMoved] = useState(0);
+  const [moved, setMoved] = useState({ added: 0, updated: 0 });
 
   return (
     <section className="pa-card" aria-labelledby="s-transfer">
@@ -21,8 +21,8 @@ export function TransferCard() {
       ) : mode === 'receive' ? (
         <ReceivePanel
           onCancel={() => setMode('idle')}
-          onDone={(n) => {
-            setMoved(n);
+          onDone={(counts) => {
+            setMoved(counts);
             setMode('done');
           }}
         />
@@ -34,8 +34,8 @@ export function TransferCard() {
                 <path d="M5 12.5l4.5 4.5L19 7.5" />
               </svg>
               <p>
-                <b>Megérkezett!</b> {moved === 1 ? 'A gyerek profilja' : `${moved} gyerek profilja`} a kerttel, a matricákkal és a szintekkel együtt
-                ezen az eszközön van.
+                <b>Megérkezett!</b> {[moved.added && `${moved.added} új gyerek`, moved.updated && `${moved.updated} frissített profil`].filter(Boolean).join(', ')} a
+                kerttel, a matricákkal és a szintekkel együtt ezen az eszközön van.
               </p>
             </div>
           )}
@@ -102,7 +102,7 @@ function SendPanel({ onClose }: { onClose: () => void }) {
               </button>
             </div>
           )}
-          <KidList s={snapshot} />
+          <KidList kids={snapshot.kids} />
         </>
       ) : (
         <p className="pa-muted">A kód készül…</p>
@@ -137,21 +137,22 @@ function QrCode({ bytes, label }: { bytes: Uint8Array; label: string }) {
   );
 }
 
-function KidList({ s }: { s: Profiles }) {
+function KidList({ kids, tag }: { kids: Kid[]; tag?: (kid: Kid) => string }) {
   return (
     <ul className="pa-transfer__kids" aria-label="Ezek a profilok kerülnek át">
-      {s.kids.map((k) => (
+      {kids.map((k) => (
         <li key={k.id}>
           <Avatar id={k.avatar} size={36} />
           {kidName(k)}
+          {tag && <small>{tag(k)}</small>}
         </li>
       ))}
     </ul>
   );
 }
 
-function ReceivePanel({ onCancel, onDone }: { onCancel: () => void; onDone: (kids: number) => void }) {
-  const { change } = useProfiles();
+function ReceivePanel({ onCancel, onDone }: { onCancel: () => void; onDone: (counts: { added: number; updated: number }) => void }) {
+  const { profiles, change } = useProfiles();
   const [collected, setCollected] = useState<Collected | null>(null);
   const [incoming, setIncoming] = useState<Profiles | null>(null);
   const [broken, setBroken] = useState(false);
@@ -175,26 +176,51 @@ function ReceivePanel({ onCancel, onDone }: { onCancel: () => void; onDone: (kid
     };
   }, [collected]);
 
-  const accept = () => {
-    if (!incoming) return;
-    change(() => incoming);
-    onDone(incoming.kids.length);
-  };
-
   if (incoming) {
+    const plan = merge(profiles, incoming);
+    const isNew = new Set(plan.added.map((k) => k.id));
+    const accept = () => {
+      change((s) => merge(s, incoming).result);
+      onDone({ added: plan.added.length, updated: plan.updated.length });
+    };
     return (
       <div className="pa-transfer">
         <p className="pa-muted">Ezek a profilok érkeztek, a kerttel, a matricákkal, a szintekkel és a beállításokkal együtt:</p>
-        <KidList s={incoming} />
-        <div className="pa-confirm" role="alert">
-          <span>Az ezen az eszközön lévő profilok és haladás helyére ezek kerülnek. Ez nem vonható vissza.</span>
-          <button type="button" className="pa-btn pa-btn--quiet" onClick={onCancel}>
-            Mégse
-          </button>
-          <button type="button" className="pa-btn pa-btn--go" onClick={accept}>
-            Igen, átveszem
-          </button>
-        </div>
+        <KidList kids={incoming.kids} tag={(k) => (isNew.has(k.id) ? 'új' : 'frissül')} />
+        {plan.tooMany ? (
+          <>
+            <p className="pa-muted">
+              Így több mint {MAX_KIDS} gyerek lenne ezen az eszközön, ennyi nem fér el. Előbb törölj egy profilt a <b>Gyerekek</b> oldalon, majd
+              olvasd be újra a kódot.
+            </p>
+            <div>
+              <button type="button" className="pa-btn pa-btn--quiet" onClick={onCancel}>
+                Rendben
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {plan.refigured.length > 0 && (
+              <p className="pa-muted">
+                Új figurát kap, mert a figuráját egy érkező gyerek használja: {plan.refigured.map((k) => kidName(k)).join(', ')}.
+              </p>
+            )}
+            <div className="pa-confirm" role="alert">
+              <span>
+                {plan.updated.length > 0
+                  ? 'A „frissül” jelű gyerekek itteni haladását felülírja az érkező, a többi gyerek megmarad. Ez nem vonható vissza.'
+                  : 'Az érkező profilok a mostaniak mellé kerülnek, senki haladása nem vész el.'}
+              </span>
+              <button type="button" className="pa-btn pa-btn--quiet" onClick={onCancel}>
+                Mégse
+              </button>
+              <button type="button" className="pa-btn pa-btn--go" onClick={accept}>
+                Igen, átveszem
+              </button>
+            </div>
+          </>
+        )}
       </div>
     );
   }

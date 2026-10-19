@@ -1,4 +1,4 @@
-import { parseProfiles, type Profiles } from './profiles';
+import { AVATAR_IDS, MAX_KIDS, parseProfiles, progressOf, type AvatarId, type Kid, type Profiles } from './profiles';
 
 // Moving every profile to a new device without a server: the old device shows its whole save as QR
 // codes and the new one reads them with its camera. The save is packed, then cut into numbered pieces
@@ -78,3 +78,61 @@ export async function unpack(c: Collected): Promise<Profiles | null> {
   }
 }
 
+
+/** What an import does to this device's children, shown to the parent before anything changes. */
+export interface Merge {
+  result: Profiles;
+  /** Children new to this device. */
+  added: Kid[];
+  /** Children already here (same id), now carrying the sent progress. */
+  updated: Kid[];
+  /** Children only on this device who had to take another figure, because a sent child has theirs. */
+  refigured: Kid[];
+  /** More children than one device holds: nothing is imported. */
+  tooMany: boolean;
+}
+
+/** The unnamed profile a new device starts with, never played: it makes way for the sent children. */
+function isBlank(s: Profiles, kid: Kid): boolean {
+  const p = progressOf(s, kid.id);
+  return !kid.name.trim() && p.seeds === 0 && p.bolts === 0 && !Object.keys(p.playHistory).length;
+}
+
+/**
+ * Adds the sent children to this device. A child with the same id is the same child, and the sent
+ * copy wins: it comes from the device they played on. Children only here stay; the sent device's
+ * settings replace this one's.
+ */
+export function merge(local: Profiles, incoming: Profiles): Merge {
+  const sentIds = new Set(incoming.kids.map((k) => k.id));
+  const localIds = new Set(local.kids.map((k) => k.id));
+  const stay = local.kids.filter((k) => !sentIds.has(k.id) && !isBlank(local, k));
+  const added = incoming.kids.filter((k) => !localIds.has(k.id));
+  const updated = incoming.kids.filter((k) => localIds.has(k.id));
+  const tooMany = stay.length + incoming.kids.length > MAX_KIDS;
+
+  // Every child keeps a figure of their own; the sent children keep theirs, as they know them.
+  const taken = new Set<AvatarId>(incoming.kids.map((k) => k.avatar));
+  const refigured: Kid[] = [];
+  const kept = stay.map((k) => {
+    if (!taken.has(k.avatar)) return taken.add(k.avatar), k;
+    const avatar = AVATAR_IDS.find((a) => !taken.has(a)) ?? k.avatar;
+    taken.add(avatar);
+    const moved = { ...k, avatar };
+    refigured.push(moved);
+    return moved;
+  });
+
+  // This device's order first, the new children after it.
+  const sent = new Map(incoming.kids.map((k) => [k.id, k]));
+  const kids = [...local.kids.flatMap((k) => sent.get(k.id) ?? kept.find((s) => s.id === k.id) ?? []), ...added];
+  const progress = Object.fromEntries(kids.map((k) => [k.id, incoming.progress[k.id] ?? local.progress[k.id]]));
+  const activeId = kids.some((k) => k.id === local.activeId) ? local.activeId : incoming.activeId;
+  return {
+    result: { ...incoming, kids, progress, activeId },
+    added,
+    updated,
+    refigured,
+    tooMany
+  };
+}
