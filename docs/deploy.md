@@ -125,6 +125,8 @@ az staticwebapp hostname show -n kalandka --hostname kalandka.hu --query validat
 
 Put the token in a TXT record at `kalandka.hu`, then point the apex at the site with an ALIAS/ANAME record (or an A record to the IP shown in the portal under Custom domains).
 
+**Link previews:** the Open Graph tags in `index.html` need the public origin to give crawlers absolute URLs. Set `SITE_URL` (e.g. `https://www.kalandka.hu`) in the environment of the build step; without it the tags use root-relative paths, which some sites (Facebook) ignore.
+
 ## Rolling back
 
 Quickest: revert the bad commit on `main`; the pipeline deploys the result.

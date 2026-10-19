@@ -13,6 +13,7 @@ const NOT_PRECACHED = [
   [/^sw\.js$/, 'the service worker itself'],
   [/^workbox-[\w-]+\.js$/, 'loaded by the service worker, cached by the browser with it'],
   [/^staticwebapp\.config\.json$/, 'Azure Static Web Apps server config, never fetched by the app'],
+  [/^og\.png$/, 'link-preview image, fetched only by social media crawlers'],
   // Every browser that runs the app picks the .woff2; the .woff must still have that twin (checked below).
   [/\.woff$/, 'fallback font; its .woff2 twin is precached']
 ];
