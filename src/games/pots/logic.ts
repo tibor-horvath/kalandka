@@ -77,8 +77,9 @@ export interface PotsRound {
   friendPetal: string;
 }
 
-export function buildPotsRound(round: number, solved: number): PotsRound {
-  const level = potsLevelFor(solved);
+/** A round on this level (0-based; the level comes from the game's ladder, see state/ladder.ts). */
+export function buildPotsRound(round: number, levelIndex: number): PotsRound {
+  const level = POTS_LEVELS[Math.max(0, Math.min(POTS_LEVELS.length - 1, levelIndex))];
   const total = level.total;
   const rand = rng(round + 101);
   const have = 1 + Math.floor(rand() * (total - 1));

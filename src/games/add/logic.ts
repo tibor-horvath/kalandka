@@ -11,7 +11,6 @@ import { rng } from '../flash/layout';
 /** Méhecske opens once the child has met all ten numbers in Számvetés (or a parent opens everything). */
 export const UNLOCK_ADD_AFTER = 10;
 /** Correct answers in a row needed to move up a level. */
-export const LEVEL_UP_STREAK = 5;
 
 export const SCENE_W = 1000;
 export const SCENE_H = 250;
@@ -241,40 +240,6 @@ export function migrateAddLevel(oldLevel: number, fromVersion = 1): number {
 
 export function clampLevel(level: number): number {
   return Math.min(ADD_LEVELS.length - 1, Math.max(0, Math.floor(level)));
-}
-
-// Adaptive levels. The game never moves the child on its own: it offers one step and the child chooses.
-
-/** Tasks in a row that needed help (any wrong pick) before an easier level is offered. */
-export const STEP_DOWN_MISSES = 3;
-
-export type Offer = 'up' | 'down' | null;
-
-export interface AdaptState {
-  level: number;
-  streak: number;
-  misses: number;
-}
-
-/**
- * A task is finished. `firstTry` = solved without a wrong pick.
- * First try: the streak grows (up to five) and "harder?" is offered at five.
- * Needed help: the streak is already gone; the help count grows and "easier?" is offered at three.
- */
-export function afterTask(s: AdaptState, firstTry: boolean): AdaptState & { offer: Offer } {
-  const top = ADD_LEVELS.length - 1;
-  if (firstTry) {
-    const streak = Math.min(LEVEL_UP_STREAK, s.streak + 1);
-    return { level: s.level, streak, misses: 0, offer: streak >= LEVEL_UP_STREAK && s.level < top ? 'up' : null };
-  }
-  const misses = s.misses + 1;
-  return { level: s.level, streak: 0, misses, offer: misses >= STEP_DOWN_MISSES && s.level > 0 ? 'down' : null };
-}
-
-/** The child's answer to an offer: take the step, or stay. Either way the counters start again. */
-export function chooseOffer(s: AdaptState, offer: Exclude<Offer, null>, accept: boolean): AdaptState {
-  const step = accept ? (offer === 'up' ? 1 : -1) : 0;
-  return { level: clampLevel(s.level + step), streak: 0, misses: 0 };
 }
 
 export interface AddItem {
@@ -532,23 +497,21 @@ export function takeSentence(a: number, b: number): string {
   return `${capitalize(numberAttr(a))} virágból ${taken(b)} elvitt a méhecske, maradt ${numberCount(a - b)}.`;
 }
 
-export function rightFeedback(r: AddRound, offer: Offer = null): AddFeedback {
+/** A right answer; `change` is what the difficulty ladder did with it (see state/ladder.ts). */
+export function rightFeedback(r: AddRound, change: 'up' | 'down' | 'mastered' | null = null): AddFeedback {
   const base = { mood: 'cheer' as const, tone: 'good' as const };
   const eq = `${r.a} ${r.level.strategy === 'take' ? '−' : '+'} ${r.b} = ${r.answer}`;
   const said = r.level.strategy === 'take' ? takeSentence(r.a, r.b) : sumSentence(r.a, r.b);
-  if (offer === 'up') {
-    return words(r, {
-      ...base,
-      text: `Igen! ${eq}. Öt jó válasz egymás után! Jöhet a nehezebb, vagy maradunk még?`,
-      speech: `Igen! ${said} Öt jó válasz egymás után! Jöhet a nehezebb, vagy maradunk még?`
-    });
+  if (change === 'up') {
+    return words(r, { ...base, text: `Igen! ${eq}. Öt jó válasz egymás után! Jöhet a nehezebb!`, speech: `Igen! ${said} Öt jó válasz egymás után! Jöhet a nehezebb!` });
   }
-  if (offer === 'down') {
+  if (change === 'down') {
+    // No "too hard": the next sum is simply a little easier.
     return words(r, {
       ...base,
       mood: 'smile',
-      text: `Igen! ${eq}. Ez most nehéz volt. Próbáljunk egy kicsit könnyebbet?`,
-      speech: `Igen! ${said} Ez most nehéz volt. Próbáljunk egy kicsit könnyebbet?`
+      text: `Igen! ${eq}. Ügyes vagy! A következőt egy kicsit könnyebben gyakoroljuk.`,
+      speech: `Igen! ${said} Ügyes vagy! A következőt egy kicsit könnyebben gyakoroljuk.`
     });
   }
   return words(r, { ...base, text: `Igen! ${eq}. Ügyes vagy!`, speech: `Igen! ${said} Ügyes vagy!` });

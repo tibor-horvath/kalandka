@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildAddRound } from '../games/add/logic';
+import { ladderOf } from './ladder';
 import { buildFlashRound } from '../games/flash/logic';
 import { buildLearnRound } from '../games/learn/logic';
 import { buildRound } from '../games/patterns/logic';
@@ -27,10 +28,10 @@ describe('per-game level settings', () => {
     expect(plantForRound(setting('water').apply(DEFAULT_PROGRESS, 9).waterRound).target).toBeGreaterThan(10);
     expect(buildRound(setting('patterns').apply(DEFAULT_PROGRESS, 1).patternRound).shape).toBe('ABC');
     const flash = setting('flash').apply(DEFAULT_PROGRESS, 3);
-    expect(buildFlashRound(0, flash.flashSolved).count).toBeGreaterThanOrEqual(6);
+    expect(buildFlashRound(0, ladderOf(flash, 'flash').level).count).toBeGreaterThanOrEqual(6);
     const add = setting('add').apply({ ...DEFAULT_PROGRESS, addStreak: 3 }, 12);
-    expect(add.addStreak).toBe(0);
-    expect(buildAddRound(0, add.addLevel).answer).toBeGreaterThan(20);
+    expect(ladderOf(add, 'add')).toMatchObject({ level: 12, floor: 12, streak: 0 });
+    expect(buildAddRound(0, ladderOf(add, 'add').level).answer).toBeGreaterThan(20);
   });
 
   it('moves an older Méhecske save onto the new ladder once, and leaves fresh profiles at the start', () => {

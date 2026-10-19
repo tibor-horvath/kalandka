@@ -13,7 +13,6 @@ import {
   label,
   rightFeedback,
   sameItem,
-  seqLevelIndex,
   solvedFeedback,
   startFeedback,
   wrongFeedback,
@@ -21,12 +20,10 @@ import {
   type SeqFeedback,
   type SeqLevel,
   type SeqTask,
-  SEQ_LEVELS,
-  SEQ_ROUNDS_PER_LEVEL
 } from '../../games/robot/seq';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../../lib/sound';
-import { evenLevels, levelMeter } from '../../state/levelMeter';
+import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
 import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
 
@@ -75,9 +72,11 @@ function MissMark() {
 /** Mintagép: carry on the pattern on the belt, or find the part that does not fit. */
 export function Seq({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  // The solved count when this round started: the round keeps its level even after its win levels up.
-  const [startSolved] = useState(() => progress.seqSolved);
-  const levelIndex = seqLevelIndex(startSolved);
+  // The ladder when this round started: the round keeps its level even after its win steps up or down.
+  const [startLadder] = useState(() => ladderOf(progress, 'seq'));
+  const levelIndex = startLadder.level;
+  /** This round's win on the ladder: the meter shows it, and it may step up or down. */
+  const [step, setStep] = useState<LadderStep | null>(null);
   const round = useMemo(() => buildSeqRound(levelIndex, progress.seqRound), [levelIndex, progress.seqRound]);
   const first = progress.seqSolved === 0;
   const [taskIdx, setTaskIdx] = useState(0);
@@ -122,12 +121,15 @@ export function Seq({ onBack }: { onBack: () => void }) {
     if (!rewarded.current) {
       rewarded.current = true;
       const helped = oops.current >= ROUND_HELP_AFTER;
-      update((p) => logTask({ ...p, bolts: p.bolts + 1, seqSolved: p.seqSolved + 1 }, 'seq', helped));
+      const s = afterSolve(startLadder, LADDER_RULES.seq, helped);
+      setStep(s);
+      if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
+      update((p) => withLadder(logTask({ ...p, bolts: p.bolts + 1, seqSolved: p.seqSolved + 1 }, 'seq', helped), 'seq', s.ladder));
     }
   };
 
   const next = () => update((p) => ({ ...p, seqRound: p.seqRound + 1 }));
-  const meter = levelMeter(startSolved, evenLevels(SEQ_LEVELS.length, SEQ_ROUNDS_PER_LEVEL), solved);
+  const meter = ladderMeter(startLadder, LADDER_RULES.seq, step);
   const levelUp = useLevelUp(meter, next);
 
   return (

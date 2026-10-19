@@ -1,15 +1,16 @@
-import { ADD_LEVELS, clampLevel } from '../games/add/logic';
-import { levelFor as flashLevelFor } from '../games/flash/logic';
+import { ADD_LEVELS } from '../games/add/logic';
+import { LEVELS as FLASH_LEVELS } from '../games/flash/logic';
 import { LEARN_MAX } from '../games/learn/logic';
 import { SHAPE_ORDER } from '../games/patterns/logic';
-import { potsLevelFor } from '../games/pots/logic';
-import { MIRROR_LEVELS, mirrorLevelIndex } from '../games/robot/mirror';
-import { PATH_LEVELS, pathLevelIndex } from '../games/robot/path';
-import { SCALE_LEVELS, scaleLevelIndex } from '../games/robot/scale';
-import { SEQ_LEVELS, seqLevelIndex } from '../games/robot/seq';
-import { SORT_LEVELS, sortLevelIndex } from '../games/robot/sort';
+import { POTS_LEVELS } from '../games/pots/logic';
+import { MIRROR_LEVELS } from '../games/robot/mirror';
+import { PATH_LEVELS } from '../games/robot/path';
+import { SCALE_LEVELS } from '../games/robot/scale';
+import { SEQ_LEVELS } from '../games/robot/seq';
+import { SORT_LEVELS } from '../games/robot/sort';
 import { TRACE_ORDER } from '../games/trace/logic';
 import { PLANTS } from '../games/water/logic';
+import { LADDER_RULES, ladderOf, type LadderGame } from './ladder';
 import type { Progress } from './progress';
 import { recentMarks, type LoggedGame } from './taskLog';
 import type { WorldId } from './worlds';
@@ -74,7 +75,7 @@ const GAMES: GameText[] = [
   },
   {
     id: 'flash', world: 'garden', name: 'Magvillantás', where: 'A Magvillantásban', unit: 'feladat',
-    level: (p) => flashLevelFor(p.flashSolved).name,
+    level: (p) => levelName(FLASH_LEVELS, ladderOf(p, 'flash').level),
     hard: 'Gyakran kéri újra a magokat, vagy egyenként számolja meg őket.',
     home: 'Dobókockával: mondja meg, hány pötty van, számolás nélkül.'
   },
@@ -86,43 +87,43 @@ const GAMES: GameText[] = [
   },
   {
     id: 'add', world: 'garden', name: 'Méhecske', where: 'A Méhecskében', unit: 'feladat',
-    level: (p) => ADD_LEVELS[clampLevel(p.addLevel)].name,
+    level: (p) => levelName(ADD_LEVELS, ladderOf(p, 'add').level),
     hard: 'Az utolsó feladatoknál többször kért segítséget.',
     home: 'Közös számolás az ujjakon vagy kanalakkal sokat segít.'
   },
   {
     id: 'pots', world: 'garden', name: 'Cserépbarátok', where: 'A Cserépbarátokban', unit: 'kör',
-    level: (p) => potsLevelFor(p.potsSolved).name,
+    level: (p) => levelName(POTS_LEVELS, ladderOf(p, 'pots').level),
     hard: 'Gyakran kellett, hogy Csepi együtt számolja vele az üres cserepeket.',
     home: 'Két kéz, tíz ujj: mutass fel néhányat, hány hiányzik a tízhez?'
   },
   {
     id: 'path', world: 'robot', name: 'Robotút', where: 'A Robotútban', unit: 'pálya',
-    level: (p) => levelName(PATH_LEVELS, pathLevelIndex(p.pathSolved)),
+    level: (p) => levelName(PATH_LEVELS, ladderOf(p, 'path').level),
     hard: 'A legutóbbi pályákon többször nekiment valaminek, vagy megnézte az utat.',
     home: 'Legyél te a robot: ő mondja el lépésenként, hogyan jutsz el az ajtótól a konyháig.'
   },
   {
     id: 'sort', world: 'robot', name: 'Válogatógép', where: 'A Válogatógépben', unit: 'kör',
-    level: (p) => levelName(SORT_LEVELS, sortLevelIndex(p.sortSolved)),
+    level: (p) => levelName(SORT_LEVELS, ladderOf(p, 'sort').level),
     hard: 'A legutóbbi körökben többször is rossz dobozba tette az alkatrészt.',
     home: 'Válogassátok szét a zoknikat előbb szín, aztán méret szerint.'
   },
   {
     id: 'scale', world: 'robot', name: 'Mérleg', where: 'A Mérlegnél', unit: 'kör',
-    level: (p) => levelName(SCALE_LEVELS, scaleLevelIndex(p.scaleSolved)),
+    level: (p) => levelName(SCALE_LEVELS, ladderOf(p, 'scale').level),
     hard: 'Többször is Csavar segített megszámolni a két oldalt.',
     home: 'Egy vállfa két végére akasszatok zacskót, és tegyetek bele ugyanannyi kupakot.'
   },
   {
     id: 'seq', world: 'robot', name: 'Mintagép', where: 'A Mintagépben', unit: 'kör',
-    level: (p) => levelName(SEQ_LEVELS, seqLevelIndex(p.seqSolved)),
+    level: (p) => levelName(SEQ_LEVELS, ladderOf(p, 'seq').level),
     hard: 'A legutóbbi körökben többször is rossz kártyát választott a hézagba.',
     home: 'Tapsoljatok mintát: taps, taps, dobbantás – és ő folytatja.'
   },
   {
     id: 'mirror', world: 'robot', name: 'Tükörgép', where: 'A Tükörgépben', unit: 'kör',
-    level: (p) => levelName(MIRROR_LEVELS, mirrorLevelIndex(p.mirrorSolved)),
+    level: (p) => levelName(MIRROR_LEVELS, ladderOf(p, 'mirror').level),
     hard: 'A legutóbbi körökben többször is rossz helyre tette a lámpát.',
     home: 'Tegyetek egy kézitükröt a rajz mellé: mi kerül a másik oldalra?'
   }
@@ -148,17 +149,28 @@ function gameNote(p: Progress, g: GameText, day: string): Insight {
   const marks = recentMarks(p, g.id, day);
   const base = { game: g.name, world: g.world };
   const level = g.level(p);
-  // Méhecske counted its misses before the log existed; that count still says enough on its own.
-  const addStruggle = g.id === 'add' && p.addMisses >= 2;
+  const ladder = g.id in LADDER_RULES ? ladderOf(p, g.id as LadderGame) : null;
 
-  if (marks.length < MIN_TASKS && !addStruggle) {
+  // The game stepped back on its own a little while ago: say so, and that it climbs again by itself.
+  if (ladder?.lastChange === 'down' && ladder.sinceChange < 2 * LADDER_RULES[g.id as LadderGame].up) {
+    return {
+      ...base,
+      tone: 'tip',
+      title: `A ${g.name} visszalépett ${article(level)} „${level}” szintre.`,
+      short: 'Visszalépett gyakorolni.',
+      text: 'Néhány nehezebb feladat után a játék magától könnyebbet ad. Ha újra megy, magától lép vissza.',
+      home: g.home
+    };
+  }
+
+  if (marks.length < MIN_TASKS) {
     const ever = (p.taskLog[g.id] ?? []).length > 0;
     return { ...base, tone: 'none', title: ever ? 'Ezen a héten kevés játék.' : 'Még nincs elég játék.', short: ever ? 'Kevés játék a héten.' : 'Még kevés játék.', text: `Pár ${g.unit} után lesz mit mondani róla.` };
   }
 
   const helped = marks.filter((m) => m.h).length;
   const lastRun = marks.slice(-HARD_RUN);
-  const hard = addStruggle || (lastRun.length === HARD_RUN && lastRun.every((m) => m.h)) || helped * 2 > marks.length;
+  const hard = (lastRun.length === HARD_RUN && lastRun.every((m) => m.h)) || helped * 2 > marks.length;
   const art = article(level);
   if (hard) return { ...base, tone: 'tip', title: `${g.where} ${art} „${level}” még nehéz.`, short: 'Még nehéz, itt segíthetsz.', text: g.hard, home: g.home };
 

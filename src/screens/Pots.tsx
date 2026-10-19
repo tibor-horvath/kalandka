@@ -4,11 +4,11 @@ import { FitBox } from '../components/FitBox';
 import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
 import { DotFace, MiniSprout } from '../components/seeds';
 import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL, askFeedback, boxSize, buildPotsRound, countedFeedback, potCells, revealFeedback, rightFeedback } from '../games/pots/logic';
+import { askFeedback, boxSize, buildPotsRound, countedFeedback, potCells, revealFeedback, rightFeedback } from '../games/pots/logic';
 import { numberCount } from '../lib/numbers';
 import { fanfare, popBubble } from '../lib/sound';
 import { speak } from '../lib/speech';
-import { evenLevels, levelMeter } from '../state/levelMeter';
+import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../state/ladder';
 import { useProgress } from '../state/progress';
 import { logTask } from '../state/taskLog';
 
@@ -20,8 +20,10 @@ const REVEAL_STEP_S = 0.55;
 /** Cserépbarátok: some pots flower; how many more fill the box? Tapping an empty pot counts it. */
 export function Pots({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  const [startSolved] = useState(() => progress.potsSolved);
-  const [round] = useState(() => buildPotsRound(progress.potsRound, startSolved));
+  // The ladder when this round started: the round keeps its level even after its win steps up or down.
+  const [startLadder] = useState(() => ladderOf(progress, 'pots'));
+  const [round] = useState(() => buildPotsRound(progress.potsRound, startLadder.level));
+  const [step, setStep] = useState<LadderStep | null>(null);
   const box = boxSize(round.total);
   const cells = potCells(round.total);
   const [phase, setPhase] = useState<Phase>('ask');
@@ -62,7 +64,10 @@ export function Pots({ onBack }: { onBack: () => void }) {
       speak(rightFeedback(round).speech);
       if (!rewarded.current) {
         rewarded.current = true;
-        update((p) => logTask({ ...p, seeds: p.seeds + 1, potsSolved: p.potsSolved + 1 }, 'pots', wrong !== null));
+        const s = afterSolve(startLadder, LADDER_RULES.pots, wrong !== null);
+        setStep(s);
+        if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
+        update((p) => withLadder(logTask({ ...p, seeds: p.seeds + 1, potsSolved: p.potsSolved + 1 }, 'pots', s.helped), 'pots', s.ladder));
       }
     } else {
       setWrong(n);
@@ -75,7 +80,7 @@ export function Pots({ onBack }: { onBack: () => void }) {
 
   // App keys this screen by round, so the next round remounts with fresh state.
   const next = () => update((p) => ({ ...p, potsRound: p.potsRound + 1 }));
-  const meter = levelMeter(startSolved, evenLevels(POTS_LEVELS.length, POTS_ROUNDS_PER_LEVEL), phase === 'solved');
+  const meter = ladderMeter(startLadder, LADDER_RULES.pots, step);
   const levelUp = useLevelUp(meter, next);
 
   return (

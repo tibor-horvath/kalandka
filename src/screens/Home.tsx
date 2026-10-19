@@ -15,6 +15,7 @@ import type { Mood } from '../lib/types';
 import { kidName, useActiveKid, useProfiles } from '../state/profiles';
 import { useProgress } from '../state/progress';
 import { PLANT_OPTIONS, canMakeAnything, emptyBeds, markStickerSeen, newStickers, newVisitor, seedBalance } from '../state/rewards';
+import { ladderOf } from '../state/ladder';
 
 export type GameId = 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'trace' | 'pots';
 
@@ -287,7 +288,7 @@ export function Home({
 
         {addOpen ? (
           <button type="button" className="plot plot--play" onClick={() => open('add')} aria-label="Méhecske – összeadós játék">
-            {progress.addSolved === 0 ? <span className="plot__badge">Új!</span> : <span className="plot__badge">{progress.addLevel + 1}. szint</span>}
+            {progress.addSolved === 0 ? <span className="plot__badge">Új!</span> : <span className="plot__badge">{ladderOf(progress, 'add').level + 1}. szint</span>}
             <BeeArt />
             <span className="plot__soil" />
             <span className="plot__name">Méhecske</span>

@@ -1,19 +1,20 @@
 import { ADD_LEVELS } from '../games/add/logic';
-import { FLASH_ROUNDS_PER_LEVEL, LEVELS as FLASH_LEVELS } from '../games/flash/logic';
+import { LEVELS as FLASH_LEVELS } from '../games/flash/logic';
 import { LEARN_MAX } from '../games/learn/logic';
 import { SHAPE_ORDER } from '../games/patterns/logic';
-import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL } from '../games/pots/logic';
+import { POTS_LEVELS } from '../games/pots/logic';
 import { TRACE_ORDER } from '../games/trace/logic';
 import { PLANTS } from '../games/water/logic';
-import { PATH_LEVELS, PATH_ROUNDS_PER_LEVEL } from '../games/robot/path';
-import { SCALE_LEVELS, SCALE_ROUNDS_PER_LEVEL } from '../games/robot/scale';
-import { MIRROR_LEVELS, MIRROR_ROUNDS_PER_LEVEL } from '../games/robot/mirror';
-import { SEQ_LEVELS, SEQ_ROUNDS_PER_LEVEL } from '../games/robot/seq';
-import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL } from '../games/robot/sort';
+import { PATH_LEVELS } from '../games/robot/path';
+import { SCALE_LEVELS } from '../games/robot/scale';
+import { MIRROR_LEVELS } from '../games/robot/mirror';
+import { SEQ_LEVELS } from '../games/robot/seq';
+import { SORT_LEVELS } from '../games/robot/sort';
 import type { GameId } from '../screens/Home';
 import type { RobotGameId } from '../screens/robot/RobotHome';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';
+import { ladderOf } from './ladder';
 
 // The reward loop: every solved task earns a seed; seeds are planted in the child's own garden
 // (Kiskert); plants grow as the child keeps playing; a grown garden brings visitors; picked fruit
@@ -340,27 +341,27 @@ export const STICKER_GAMES: StickerGame[] = [
 
 /** Robotút stickers: a course solved on a level (the first solved course of that level and on). */
 const pathLevel = (name: string) => PATH_LEVELS.findIndex((l) => l.name === name);
-const pathPassed = (name: string) => (p: Progress) => p.pathSolved > pathLevel(name) * PATH_ROUNDS_PER_LEVEL;
+const pathPassed = (name: string) => (p: Progress) => ladderOf(p, 'path').solvedTop >= pathLevel(name);
 /** Válogatógép stickers: a round solved on a level. */
 const sortLevel = (name: string) => SORT_LEVELS.findIndex((l) => l.name === name);
-const sortPassed = (name: string) => (p: Progress) => p.sortSolved > sortLevel(name) * SORT_ROUNDS_PER_LEVEL;
+const sortPassed = (name: string) => (p: Progress) => ladderOf(p, 'sort').solvedTop >= sortLevel(name);
 /** Mérleg stickers: a round solved on a level. */
 const scaleLevel = (name: string) => SCALE_LEVELS.findIndex((l) => l.name === name);
-const scalePassed = (name: string) => (p: Progress) => p.scaleSolved > scaleLevel(name) * SCALE_ROUNDS_PER_LEVEL;
+const scalePassed = (name: string) => (p: Progress) => ladderOf(p, 'scale').solvedTop >= scaleLevel(name);
 
 /** Mintagép stickers: a round solved on a level. */
 const seqLevel = (name: string) => SEQ_LEVELS.findIndex((l) => l.name === name);
-const seqPassed = (name: string) => (p: Progress) => p.seqSolved > seqLevel(name) * SEQ_ROUNDS_PER_LEVEL;
+const seqPassed = (name: string) => (p: Progress) => ladderOf(p, 'seq').solvedTop >= seqLevel(name);
 
 /** Tükörgép stickers: a round solved on a level. */
 const mirrorLevel = (name: string) => MIRROR_LEVELS.findIndex((l) => l.name === name);
-const mirrorPassed = (name: string) => (p: Progress) => p.mirrorSolved > mirrorLevel(name) * MIRROR_ROUNDS_PER_LEVEL;
+const mirrorPassed = (name: string) => (p: Progress) => ladderOf(p, 'mirror').solvedTop >= mirrorLevel(name);
 
 /** Méhecske levels that close a number range: the last level up to 5, up to 10, and round tens. */
 const ADD_PAST_5 = ADD_LEVELS.findIndex((l) => l.name === '10-ig, gyűjtéssel');
 const ADD_PAST_10 = ADD_LEVELS.findIndex((l) => l.name === '20-ig');
 const ADD_HUNDRED = ADD_LEVELS.findIndex((l) => l.name === 'Kerek tízesek 100-ig');
-const addReached = (level: number) => (p: Progress) => p.addSolved > 0 && p.addLevel >= level;
+const addReached = (level: number) => (p: Progress) => ladderOf(p, 'add').solvedTop >= level;
 
 export const STICKERS: Sticker[] = [
   { id: 'learn-5', game: 'learn', mark: '1–5', label: 'Ismerem 5-ig', praise: 'Már ötig ismered a számokat!', earned: (p) => p.learnSolved >= 5 },
@@ -372,9 +373,9 @@ export const STICKERS: Sticker[] = [
   { id: 'patterns-ab', game: 'patterns', mark: 'AB', label: 'Kettes sor', praise: 'Folytattad az első virágsort!', earned: (p) => p.patternsSolved >= 1 },
   { id: 'patterns-abc', game: 'patterns', mark: 'ABC', label: 'Hármas sor', praise: 'Már a hármas sort is folytatod!', earned: (p) => p.patternsSolved >= 2 },
   { id: 'patterns-all', game: 'patterns', mark: 'AAB', label: 'Minden minta', praise: 'Mind a négy virágmintát kitaláltad!', earned: (p) => p.patternsSolved >= SHAPE_ORDER.length },
-  { id: 'flash-3', game: 'flash', mark: '3', label: 'Egy pillantás', praise: 'Egy pillantásra látod, hány mag van!', earned: (p) => p.flashSolved >= FLASH_ROUNDS_PER_LEVEL },
-  { id: 'flash-5', game: 'flash', mark: '5', label: 'Öt mag', praise: 'Már öt magot is egy pillantásra látsz!', earned: (p) => p.flashSolved >= FLASH_ROUNDS_PER_LEVEL * (FLASH_LEVELS.length - 1) },
-  { id: 'flash-10', game: 'flash', mark: '10', label: 'Tíz mag', praise: 'Már tíz magot is egy pillantásra látsz!', earned: (p) => p.flashSolved >= FLASH_ROUNDS_PER_LEVEL * FLASH_LEVELS.length },
+  { id: 'flash-3', game: 'flash', mark: '3', label: 'Egy pillantás', praise: 'Egy pillantásra látod, hány mag van!', earned: (p) => ladderOf(p, 'flash').reached >= 1 },
+  { id: 'flash-5', game: 'flash', mark: '5', label: 'Öt mag', praise: 'Már öt magot is egy pillantásra látsz!', earned: (p) => ladderOf(p, 'flash').reached >= FLASH_LEVELS.length - 1 },
+  { id: 'flash-10', game: 'flash', mark: '10', label: 'Tíz mag', praise: 'Már tíz magot is egy pillantásra látsz!', earned: (p) => ladderOf(p, 'flash').reached >= FLASH_LEVELS.length },
   { id: 'add-5', game: 'add', mark: '+5', label: 'Adok 5-ig', praise: 'Már ötig adsz össze és veszel el!', earned: addReached(ADD_PAST_5) },
   { id: 'add-10', game: 'add', mark: '+10', label: 'Adok 10-ig', praise: 'Már tízig adsz össze és veszel el!', earned: addReached(ADD_PAST_10) },
   { id: 'add-100', game: 'add', mark: '100', label: 'Százig', praise: 'Már a százas számokkal is számolsz!', earned: addReached(ADD_HUNDRED) },
@@ -383,8 +384,8 @@ export const STICKERS: Sticker[] = [
   { id: 'trace-0', game: 'trace', mark: '0', label: 'Minden szám', praise: 'Minden számot meg tudsz írni!', earned: (p) => p.traceSolved >= TRACE_ORDER.length },
   { id: 'trace-fade', game: 'trace', mark: '5', label: 'Halvány út', praise: 'Már halvány úton is írod a számokat!', earned: (p) => p.traceFadedSolved >= 5, set: 1 },
   { id: 'trace-memory', game: 'trace', mark: '0–9', label: 'Fejből írom', praise: 'Minden számot emlékezetből írsz!', earned: (p) => p.traceFadedSolved >= TRACE_ORDER.length, set: 1 },
-  { id: 'pots-5', game: 'pots', mark: '5', label: 'Öt barátai', praise: 'Ismered az öt barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL },
-  { id: 'pots-10', game: 'pots', mark: '10', label: 'Tíz barátai', praise: 'Ismered a tíz barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL * 2 },
+  { id: 'pots-5', game: 'pots', mark: '5', label: 'Öt barátai', praise: 'Ismered az öt barátait!', earned: (p) => ladderOf(p, 'pots').reached >= 1 },
+  { id: 'pots-10', game: 'pots', mark: '10', label: 'Tíz barátai', praise: 'Ismered a tíz barátait!', earned: (p) => ladderOf(p, 'pots').reached >= 2 },
   { id: 'path-first', game: 'path', mark: '1', label: 'Első út', praise: 'Elvezetted a robotot az elemhez!', earned: (p) => p.pathSolved >= 1 },
   { id: 'path-plan', game: 'path', mark: '▶', label: 'Tervező', praise: 'Előre megtervezted a robot útját!', earned: pathPassed('Tervezz előre') },
   { id: 'path-turn', game: 'path', mark: '↻', label: 'Fordulós', praise: 'A robot arra megy, amerre néz, és te tudod, merre fordítsd!', earned: pathPassed('Fordulj!') },
@@ -410,7 +411,7 @@ export const STICKERS: Sticker[] = [
   { id: 'mirror-flat', game: 'mirror', mark: '⇅', label: 'Fel-le tükör', praise: 'A fekvő tükörrel is boldogulsz!', earned: mirrorPassed('Fel-le tükör') },
   { id: 'mirror-pick', game: 'mirror', mark: 'b|d', label: 'Tükörkép', praise: 'Már nem téveszted össze a tükörképet a másolattal!', earned: mirrorPassed('Tükör vagy másolat?'), set: 1 },
   { id: 'mirror-fix', game: 'mirror', mark: '!', label: 'Tükörjavító', praise: 'Megtalálod, hol tévedett a tükörgép!', earned: mirrorPassed('Hibás tükör'), set: 1 },
-  { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => p.potsSolved >= POTS_ROUNDS_PER_LEVEL * POTS_LEVELS.length }
+  { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => ladderOf(p, 'pots').reached >= POTS_LEVELS.length }
 ];
 
 export function gameOf(s: Sticker): StickerGame {

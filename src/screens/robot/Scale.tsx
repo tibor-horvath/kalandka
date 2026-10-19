@@ -16,7 +16,6 @@ import {
   compareMissFeedback,
   compareRightFeedback,
   panSlots,
-  scaleLevelIndex,
   solvedFeedback,
   startFeedback,
   tilt,
@@ -28,12 +27,10 @@ import {
   type ScaleLevel,
   type Side,
   type Weight,
-  SCALE_LEVELS,
-  SCALE_ROUNDS_PER_LEVEL
 } from '../../games/robot/scale';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble, thud } from '../../lib/sound';
-import { evenLevels, levelMeter } from '../../state/levelMeter';
+import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
 import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
 
@@ -467,9 +464,11 @@ function ChooseTaskView({ task, say, onDone, later }: TaskProps<ChooseTask>) {
 /** Mérleg: weigh, compare and balance on Csavar's scale. */
 export function Scale({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  // The solved count when this round started: the round keeps its level even after its win levels up.
-  const [startSolved] = useState(() => progress.scaleSolved);
-  const levelIndex = scaleLevelIndex(startSolved);
+  // The ladder when this round started: the round keeps its level even after its win steps up or down.
+  const [startLadder] = useState(() => ladderOf(progress, 'scale'));
+  const levelIndex = startLadder.level;
+  /** This round's win on the ladder: the meter shows it, and it may step up or down. */
+  const [step, setStep] = useState<LadderStep | null>(null);
   const round = useMemo(() => buildScaleRound(levelIndex, progress.scaleRound), [levelIndex, progress.scaleRound]);
   const { level, tasks } = round;
   const [at, setAt] = useState(0);
@@ -510,7 +509,10 @@ export function Scale({ onBack }: { onBack: () => void }) {
       if (!rewarded.current) {
         rewarded.current = true;
         const helped = oops.current >= ROUND_HELP_AFTER;
-      update((p) => logTask({ ...p, bolts: p.bolts + 1, scaleSolved: p.scaleSolved + 1 }, 'scale', helped));
+        const s = afterSolve(startLadder, LADDER_RULES.scale, helped);
+        setStep(s);
+        if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
+        update((p) => withLadder(logTask({ ...p, bolts: p.bolts + 1, scaleSolved: p.scaleSolved + 1 }, 'scale', helped), 'scale', s.ladder));
       }
       return;
     }
@@ -526,7 +528,7 @@ export function Scale({ onBack }: { onBack: () => void }) {
   const task = tasks[at];
   const props = { level, say, onDone: done, later };
   const next = () => update((p) => ({ ...p, scaleRound: p.scaleRound + 1 }));
-  const meter = levelMeter(startSolved, evenLevels(SCALE_LEVELS.length, SCALE_ROUNDS_PER_LEVEL), solved);
+  const meter = ladderMeter(startLadder, LADDER_RULES.scale, solved ? step : null);
   const levelUp = useLevelUp(meter, next);
 
   return (

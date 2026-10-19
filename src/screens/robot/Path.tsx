@@ -19,7 +19,6 @@ import {
   bumpFeedback,
   collect,
   emptyChargeFeedback,
-  pathLevelIndex,
   routeCells,
   run,
   shortest,
@@ -34,12 +33,10 @@ import {
   type Dir,
   type PathFeedback,
   type Pose,
-  PATH_LEVELS,
-  PATH_ROUNDS_PER_LEVEL
 } from '../../games/robot/path';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble, powerDown, thud } from '../../lib/sound';
-import { evenLevels, levelMeter } from '../../state/levelMeter';
+import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
 import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
 
@@ -102,9 +99,11 @@ function turnBy(from: Dir, to: Dir): number {
 /** Robotút: lead the robot to its battery, first one arrow at a time, then with a whole program. */
 export function Path({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  // The solved count when this round started: the round keeps its level even after its win levels up.
-  const [startSolved] = useState(() => progress.pathSolved);
-  const levelIndex = pathLevelIndex(startSolved);
+  // The ladder when this round started: the round keeps its level even after its win steps up or down.
+  const [startLadder] = useState(() => ladderOf(progress, 'path'));
+  const levelIndex = startLadder.level;
+  /** This round's win on the ladder: the meter shows it, and it may step up or down. */
+  const [ladderStep, setLadderStep] = useState<LadderStep | null>(null);
   const puzzle = useMemo(() => buildPuzzle(levelIndex, progress.pathRound), [levelIndex, progress.pathRound]);
   const { level } = puzzle;
   const plan = level.mode === 'plan';
@@ -179,7 +178,10 @@ export function Path({ onBack }: { onBack: () => void }) {
     if (!rewarded.current) {
       rewarded.current = true;
       const helped = askedWay.current || live.current.tries >= ROUND_HELP_AFTER;
-      update((p) => logTask({ ...p, bolts: p.bolts + 1, pathSolved: p.pathSolved + 1 }, 'path', helped));
+      const s = afterSolve(startLadder, LADDER_RULES.path, helped);
+      setLadderStep(s);
+      if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
+      update((p) => withLadder(logTask({ ...p, bolts: p.bolts + 1, pathSolved: p.pathSolved + 1 }, 'path', helped), 'path', s.ladder));
     }
   };
 
@@ -349,7 +351,7 @@ export function Path({ onBack }: { onBack: () => void }) {
   };
 
   const next = () => update((p) => ({ ...p, pathRound: p.pathRound + 1 }));
-  const meter = levelMeter(startSolved, evenLevels(PATH_LEVELS.length, PATH_ROUNDS_PER_LEVEL), solved);
+  const meter = ladderMeter(startLadder, LADDER_RULES.path, ladderStep);
   const levelUp = useLevelUp(meter, next);
 
   const boardW = puzzle.cols * CELL;

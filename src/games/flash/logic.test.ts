@@ -19,10 +19,10 @@ describe('Magvillantás', () => {
   });
 
   it('keeps counts, seeds and answers consistent across many rounds and levels', () => {
-    for (const solved of [0, 4, 8, 12]) {
-      const level = levelFor(solved);
+    for (let i = 0; i < LEVELS.length; i++) {
+      const level = LEVELS[i];
       for (let round = 0; round < 60; round++) {
-        const r = buildFlashRound(round, solved);
+        const r = buildFlashRound(round, i);
         expect(r.count).toBeGreaterThanOrEqual(level.min);
         expect(r.count).toBeLessThanOrEqual(level.max);
         expect(r.seeds).toHaveLength(r.count);
@@ -42,7 +42,7 @@ describe('Magvillantás', () => {
 
   it('never lets scattered seeds overlap', () => {
     for (let round = 0; round < 60; round++) {
-      const { seeds } = buildFlashRound(round, 8);
+      const { seeds } = buildFlashRound(round, 2);
       for (let i = 0; i < seeds.length; i++) {
         for (let j = i + 1; j < seeds.length; j++) {
           expect(Math.hypot(seeds[i].x - seeds[j].x, seeds[i].y - seeds[j].y)).toBeGreaterThanOrEqual(70);

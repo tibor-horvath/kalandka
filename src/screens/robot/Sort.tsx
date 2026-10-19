@@ -14,7 +14,6 @@ import {
   oddWrongFeedback,
   partFeedback,
   rightFeedback,
-  sortLevelIndex,
   sortSolvedFeedback,
   startFeedback,
   wrongFeedback,
@@ -22,12 +21,10 @@ import {
   type Part,
   type SortFeedback,
   type SortRound,
-  SORT_LEVELS,
-  SORT_ROUNDS_PER_LEVEL
 } from '../../games/robot/sort';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../../lib/sound';
-import { evenLevels, levelMeter } from '../../state/levelMeter';
+import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
 import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
 
@@ -47,9 +44,11 @@ function PartPic({ part, size }: { part: Part; size: number }) {
 /** Válogatógép: sort the parts coming down the belt into the right boxes, or find the odd one out. */
 export function Sort({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  // The solved count when this round started: the round keeps its level even after its win levels up.
-  const [startSolved] = useState(() => progress.sortSolved);
-  const levelIndex = sortLevelIndex(startSolved);
+  // The ladder when this round started: the round keeps its level even after its win steps up or down.
+  const [startLadder] = useState(() => ladderOf(progress, 'sort'));
+  const levelIndex = startLadder.level;
+  /** This round's win on the ladder: the meter shows it, and it may step up or down. */
+  const [step, setStep] = useState<LadderStep | null>(null);
   const round = useMemo(() => buildRound(levelIndex, progress.sortRound), [levelIndex, progress.sortRound]);
   const [fb, setFb] = useState<SortFeedback>(() => startFeedback(round));
   const [solved, setSolved] = useState(false);
@@ -78,12 +77,15 @@ export function Sort({ onBack }: { onBack: () => void }) {
     if (!rewarded.current) {
       rewarded.current = true;
       const helped = oops.current >= ROUND_HELP_AFTER;
-      update((p) => logTask({ ...p, bolts: p.bolts + 1, sortSolved: p.sortSolved + 1 }, 'sort', helped));
+      const s = afterSolve(startLadder, LADDER_RULES.sort, helped);
+      setStep(s);
+      if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
+      update((p) => withLadder(logTask({ ...p, bolts: p.bolts + 1, sortSolved: p.sortSolved + 1 }, 'sort', helped), 'sort', s.ladder));
     }
   };
 
   const next = () => update((p) => ({ ...p, sortRound: p.sortRound + 1 }));
-  const meter = levelMeter(startSolved, evenLevels(SORT_LEVELS.length, SORT_ROUNDS_PER_LEVEL), solved);
+  const meter = ladderMeter(startLadder, LADDER_RULES.sort, step);
   const levelUp = useLevelUp(meter, next);
 
   return (

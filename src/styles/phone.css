@@ -363,10 +363,6 @@
 .is-phone .dot-card span { width: 12px; height: 12px; }
 .is-phone .choices--add .big-btn { flex-basis: 100%; }
 .is-phone .add-wait { height: 84px; }
-.is-phone .offer { gap: 12px; }
-.is-phone .offer__btn { flex: 1 1 0; width: auto; height: 130px; border-radius: 24px; font-size: 18px; box-shadow: 0 6px 0 var(--grass-deep); }
-.is-phone .offer__btn--go { box-shadow: 0 6px 0 var(--leaf); }
-.is-phone .offer__btn svg { max-height: 64px; }
 
 .stage--portrait .screen--add .topbar { flex-wrap: wrap; row-gap: 10px; }
 .stage--portrait .screen--add .equation { order: 3; flex-basis: 100%; }
@@ -395,8 +391,6 @@
 .stage--landscape .choice__numeral { font-size: 40px; }
 .stage--landscape .choices--add .big-btn { flex-basis: 0; height: auto; min-height: 48px; padding: 0 8px; gap: 4px; font-size: 18px; }
 .stage--landscape .add-wait { height: auto; }
-.stage--landscape .offer__btn { height: auto; font-size: 15px; gap: 2px; }
-.stage--landscape .offer__btn svg { max-height: 48px; }
 
 /* ---------- Számvetés and Magvillantás (seed beds) ---------- */
 .is-phone .screen--flash,

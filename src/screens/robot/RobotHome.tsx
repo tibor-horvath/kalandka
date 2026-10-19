@@ -5,13 +5,9 @@ import { FriendArt, MyRobot } from '../../components/robotParts';
 import { useForm } from '../../components/Stage';
 import { StickerPop } from '../../components/StickerPop';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../../components/ui';
-import { mirrorLevelIndex } from '../../games/robot/mirror';
-import { pathLevelIndex } from '../../games/robot/path';
-import { scaleLevelIndex } from '../../games/robot/scale';
-import { seqLevelIndex } from '../../games/robot/seq';
-import { sortLevelIndex } from '../../games/robot/sort';
 import { speak } from '../../lib/speech';
 import { kidName, useActiveKid, useProfiles } from '../../state/profiles';
+import { ladderOf } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
 import { markStickerSeen, newStickers } from '../../state/rewards';
 import { boltBalance, canBuyAnything, friendsOf, newFriend, secondRobotNew } from '../../state/robotParts';
@@ -89,11 +85,11 @@ export function RobotHome({
     noticeTimer.current = window.setTimeout(() => setNotice(null), NOTICE_MS);
   };
 
-  const levelIdx = pathLevelIndex(progress.pathSolved);
-  const sortIdx = sortLevelIndex(progress.sortSolved);
-  const scaleIdx = scaleLevelIndex(progress.scaleSolved);
-  const seqIdx = seqLevelIndex(progress.seqSolved);
-  const mirrorIdx = mirrorLevelIndex(progress.mirrorSolved);
+  const levelIdx = ladderOf(progress, 'path').level;
+  const sortIdx = ladderOf(progress, 'sort').level;
+  const scaleIdx = ladderOf(progress, 'scale').level;
+  const seqIdx = ladderOf(progress, 'seq').level;
+  const mirrorIdx = ladderOf(progress, 'mirror').level;
   const workshopBadge = newFriend(progress) ? 'Barát jött!' : secondRobotNew(progress) ? 'Új robot!' : canBuyAnything(progress) ? 'Építhetsz!' : null;
 
   return (

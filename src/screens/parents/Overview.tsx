@@ -1,17 +1,18 @@
 import { gameNotes, insights, type Insight } from '../../state/insights';
+import { LADDER_RULES, ladderOf, upNeed, type LadderGame } from '../../state/ladder';
 import { LEVEL_SETTINGS } from '../../state/levels';
 import { useProgress } from '../../state/progress';
 import { BONUS_OPTIONS, addBonus, lastSevenDays, playedToday, remainingSeconds, today } from '../../state/screenTime';
-import { ADD_LEVELS, clampLevel, LEVEL_UP_STREAK } from '../../games/add/logic';
+import { ADD_LEVELS } from '../../games/add/logic';
 import { LEARN_MAX } from '../../games/learn/logic';
 import { TRACE_ORDER, buildTraceRound } from '../../games/trace/logic';
-import { PATH_LEVELS, pathLevelIndex } from '../../games/robot/path';
-import { SCALE_LEVELS, scaleLevelIndex } from '../../games/robot/scale';
-import { MIRROR_LEVELS, mirrorLevelIndex } from '../../games/robot/mirror';
-import { SEQ_LEVELS, seqLevelIndex } from '../../games/robot/seq';
-import { SORT_LEVELS, sortLevelIndex } from '../../games/robot/sort';
-import { POTS_LEVELS, potsLevelFor } from '../../games/pots/logic';
-import { LEVELS as FLASH_LEVELS, levelFor } from '../../games/flash/logic';
+import { PATH_LEVELS } from '../../games/robot/path';
+import { SCALE_LEVELS } from '../../games/robot/scale';
+import { MIRROR_LEVELS } from '../../games/robot/mirror';
+import { SEQ_LEVELS } from '../../games/robot/seq';
+import { SORT_LEVELS } from '../../games/robot/sort';
+import { POTS_LEVELS } from '../../games/pots/logic';
+import { LEVELS as FLASH_LEVELS } from '../../games/flash/logic';
 import { SHAPE_ORDER } from '../../games/patterns/logic';
 import { PLANTS } from '../../games/water/logic';
 import { WORLDS, type WorldId } from '../../state/worlds';
@@ -72,10 +73,13 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
     const idx = s.options.findIndex((o) => o.value === s.current(progress));
     return (idx + 1) / s.options.length;
   };
-  const addLevel = ADD_LEVELS[clampLevel(progress.addLevel)];
-  const flashIdx = FLASH_LEVELS.indexOf(levelFor(progress.flashSolved));
   const learned = Math.min(LEARN_MAX, progress.learnSolved);
-  const potsIdx = POTS_LEVELS.indexOf(potsLevelFor(progress.potsSolved));
+  /** "3. szint · Name", from the game's ladder. */
+  const at = (game: LadderGame, levels: { name: string }[]) => {
+    const i = ladderOf(progress, game).level;
+    return `${i + 1}. szint · ${levels[i].name}`;
+  };
+  const add = ladderOf(progress, 'add');
   const games: { world: WorldId; name: string; detail: string; share: number }[] = [
     { world: 'garden', name: 'Számvetés', detail: `${learned} / ${LEARN_MAX} szám`, share: learned / LEARN_MAX },
     {
@@ -90,7 +94,7 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
       detail: `${progress.patternsSolved} sor · ${SHAPE_ORDER[progress.patternRound % SHAPE_ORDER.length]} minta`,
       share: levelShare('patterns')
     },
-    { world: 'garden', name: 'Magvillantás', detail: `${flashIdx + 1}. szint · ${FLASH_LEVELS[flashIdx].name}`, share: levelShare('flash') },
+    { world: 'garden', name: 'Magvillantás', detail: at('flash', FLASH_LEVELS), share: levelShare('flash') },
     {
       world: 'garden',
       name: 'Mézút',
@@ -101,38 +105,38 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
     {
       world: 'garden',
       name: 'Méhecske',
-      detail: `${clampLevel(progress.addLevel) + 1}. szint · ${addLevel.name} · ${progress.addStreak}/${LEVEL_UP_STREAK} csillag`,
+      detail: `${at('add', ADD_LEVELS)} · ${add.streak}/${upNeed(add, LADDER_RULES.add)} csillag`,
       share: levelShare('add')
     },
-    { world: 'garden', name: 'Cserépbarátok', detail: `${potsIdx + 1}. szint · ${POTS_LEVELS[potsIdx].name}`, share: levelShare('pots') },
+    { world: 'garden', name: 'Cserépbarátok', detail: at('pots', POTS_LEVELS), share: levelShare('pots') },
     {
       world: 'robot',
       name: 'Robotút',
-      detail: `${progress.pathSolved} pálya · ${pathLevelIndex(progress.pathSolved) + 1}. szint · ${PATH_LEVELS[pathLevelIndex(progress.pathSolved)].name}`,
+      detail: `${progress.pathSolved} pálya · ${at('path', PATH_LEVELS)}`,
       share: levelShare('path')
     },
     {
       world: 'robot',
       name: 'Válogatógép',
-      detail: `${progress.sortSolved} kör · ${sortLevelIndex(progress.sortSolved) + 1}. szint · ${SORT_LEVELS[sortLevelIndex(progress.sortSolved)].name}`,
+      detail: `${progress.sortSolved} kör · ${at('sort', SORT_LEVELS)}`,
       share: levelShare('sort')
     },
     {
       world: 'robot',
       name: 'Mérleg',
-      detail: `${progress.scaleSolved} kör · ${scaleLevelIndex(progress.scaleSolved) + 1}. szint · ${SCALE_LEVELS[scaleLevelIndex(progress.scaleSolved)].name}`,
+      detail: `${progress.scaleSolved} kör · ${at('scale', SCALE_LEVELS)}`,
       share: levelShare('scale')
     },
     {
       world: 'robot',
       name: 'Mintagép',
-      detail: `${progress.seqSolved} kör · ${seqLevelIndex(progress.seqSolved) + 1}. szint · ${SEQ_LEVELS[seqLevelIndex(progress.seqSolved)].name}`,
+      detail: `${progress.seqSolved} kör · ${at('seq', SEQ_LEVELS)}`,
       share: levelShare('seq')
     },
     {
       world: 'robot',
       name: 'Tükörgép',
-      detail: `${progress.mirrorSolved} kör · ${mirrorLevelIndex(progress.mirrorSolved) + 1}. szint · ${MIRROR_LEVELS[mirrorLevelIndex(progress.mirrorSolved)].name}`,
+      detail: `${progress.mirrorSolved} kör · ${at('mirror', MIRROR_LEVELS)}`,
       share: levelShare('mirror')
     }
   ];

@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../games/add/logic';
 import { markEarnedSeen, type Bed, type TreatId } from './rewards';
 import type { PartSlot } from './robotParts';
+import type { Ladder, LadderGame } from './ladder';
 import type { TaskLog } from './taskLog';
 import type { WorldId } from './worlds';
 
@@ -35,10 +36,9 @@ export interface Progress {
   flashRound: number;
   addRound: number;
   addSolved: number;
-  /** Méhecske level index (see ADD_LEVELS); parents can set it. */
+  /** Méhecske's level and counters from before the ladders; read once into ladders.add (see ladder.ts). */
   addLevel: number;
   addStreak: number;
-  /** Méhecske tasks in a row that needed help; three offer an easier level. */
   addMisses: number;
   /** Which Méhecske ladder addLevel indexes into; older saves are migrated on load. */
   addLevelsVersion: number;
@@ -129,6 +129,8 @@ export interface Progress {
   robotCharges: number;
   /** Recent solved tasks per game and whether they needed help, for the parents' notes (see taskLog.ts). */
   taskLog: TaskLog;
+  /** Each levelled game's difficulty ladder; a game missing here starts from its older save fields (see ladder.ts). */
+  ladders: Partial<Record<LadderGame, Ladder>>;
 }
 
 export const DEFAULT_PROGRESS: Progress = {
@@ -206,7 +208,8 @@ export const DEFAULT_PROGRESS: Progress = {
   robotChargedAt: 0,
   robotOiledAt: 0,
   robotCharges: 0,
-  taskLog: {}
+  taskLog: {},
+  ladders: {}
 };
 
 /** Saves from before the gather and take levels: keep the child on the same sums. */

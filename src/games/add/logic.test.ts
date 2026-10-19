@@ -5,10 +5,8 @@ import {
   RIGHT_X,
   SCENE_H,
   addLockedSpeech,
-  afterTask,
   bedWidth,
   carriedValue,
-  chooseOffer,
   buildAddRound,
   gatheredSlots,
   migrateAddLevel,
@@ -29,36 +27,6 @@ import {
 const LIMITS = [5, 5, 5, 10, 10, 10, 19, 19, 18, 18, 100, 50, 99, 59, 98, 58];
 
 describe('Méhecske (addition)', () => {
-  it('offers a harder level after five first-try answers, never at the top', () => {
-    let s = { level: 0, streak: 0, misses: 0 };
-    for (let i = 0; i < 4; i++) {
-      const r = afterTask(s, true);
-      expect(r.offer).toBeNull();
-      s = r;
-    }
-    const fifth = afterTask(s, true);
-    expect(fifth).toMatchObject({ level: 0, streak: 5, offer: 'up' });
-    expect(afterTask({ level: ADD_LEVELS.length - 1, streak: 4, misses: 0 }, true).offer).toBeNull();
-  });
-
-  it('offers an easier level after three tasks in a row that needed help, never below level one', () => {
-    let s = { level: 3, streak: 4, misses: 0 };
-    s = afterTask(s, false);
-    expect(s.streak).toBe(0);
-    s = afterTask(s, false);
-    const third = afterTask(s, false);
-    expect(third.offer).toBe('down');
-    expect(afterTask({ level: 0, streak: 0, misses: 2 }, false).offer).toBeNull();
-    expect(afterTask({ level: 3, streak: 0, misses: 2 }, true)).toMatchObject({ misses: 0, offer: null });
-  });
-
-  it('moves exactly one step when the child accepts, and stays otherwise', () => {
-    expect(chooseOffer({ level: 3, streak: 5, misses: 0 }, 'up', true)).toEqual({ level: 4, streak: 0, misses: 0 });
-    expect(chooseOffer({ level: 3, streak: 5, misses: 0 }, 'up', false)).toEqual({ level: 3, streak: 0, misses: 0 });
-    expect(chooseOffer({ level: 3, streak: 0, misses: 3 }, 'down', true)).toEqual({ level: 2, streak: 0, misses: 0 });
-    expect(chooseOffer({ level: 0, streak: 0, misses: 3 }, 'down', true).level).toBe(0);
-  });
-
   it('keeps every sum inside its level, with a fair set of answers', () => {
     ADD_LEVELS.forEach((level, li) => {
       for (let round = 0; round < 120; round++) {
@@ -223,8 +191,8 @@ describe('Méhecske (addition)', () => {
     const r = { ...buildAddRound(0, 2), a: 3, b: 2, answer: 5 };
     expect(questionFeedback(r).speech).toBe('Három virág meg két virág. Hány virág van összesen?');
     expect(rightFeedback(r).text).toBe('Igen! 3 + 2 = 5. Ügyes vagy!');
-    expect(rightFeedback(r, 'up').text.endsWith('Jöhet a nehezebb, vagy maradunk még?')).toBe(true);
-    expect(rightFeedback(r, 'down').text.endsWith('Próbáljunk egy kicsit könnyebbet?')).toBe(true);
+    expect(rightFeedback(r, 'up').text.endsWith('Jöhet a nehezebb!')).toBe(true);
+    expect(rightFeedback(r, 'down').text.endsWith('egy kicsit könnyebben gyakoroljuk.')).toBe(true);
     expect(rightFeedback(r, 'down').text).not.toMatch(/rossz|hiba/i);
     expect(tourFeedback(r).text).not.toMatch(/rossz|hiba/i);
     expect(takeSentence(5, 2)).toBe('Öt virágból kettőt elvitt a méhecske, maradt három.');

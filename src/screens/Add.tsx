@@ -1,22 +1,18 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Basket, Bee, Bouquet, Hive, RoundFlower, Sprout, Tree } from '../components/art';
+import { Basket, Bee, Bouquet, Hive, RoundFlower } from '../components/art';
 import { FitBox } from '../components/FitBox';
-import { LevelMeter } from '../components/LevelMeter';
+import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
 import { useForm } from '../components/Stage';
 import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import {
-  ADD_LEVELS,
-  LEVEL_UP_STREAK,
   BOX_W,
   LEFT_X,
   SCENE_H,
   SCENE_W,
   TOO_MANY_SPEECH,
   UNTIE_SPEECH,
-  afterTask,
   bedWidth,
   carriedValue,
-  chooseOffer,
   buildAddRound,
   gatheredSlots,
   hiveX,
@@ -31,12 +27,12 @@ import {
   untie,
   type AddItem,
   type AddRound,
-  type Offer
 } from '../games/add/logic';
 import { numberCount } from '../lib/numbers';
 import { fanfare, popBubble } from '../lib/sound';
 import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
+import { LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../state/ladder';
 import { logTask } from '../state/taskLog';
 
 type Phase = 'ask' | 'tour' | 'solved';
@@ -135,7 +131,9 @@ function Dots({ n }: { n: number }) {
  */
 export function Add({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  const [round] = useState(() => buildAddRound(progress.addRound, progress.addLevel));
+  // The ladder when this sum started: the sum keeps its level even after its win steps up or down.
+  const [startLadder] = useState(() => ladderOf(progress, 'add'));
+  const [round] = useState(() => buildAddRound(progress.addRound, startLadder.level));
   const form = useForm();
   const countingOn = round.level.strategy === 'on';
   const gathering = round.level.strategy === 'gather';
@@ -150,8 +148,8 @@ export function Add({ onBack }: { onBack: () => void }) {
   const [visited, setVisited] = useState<AddItem[]>([]);
   const [bee, setBee] = useState(HOME);
   const [wrong, setWrong] = useState<number | null>(null);
-  /** Csepi's suggestion after this task: harder, easier, or nothing. */
-  const [offer, setOffer] = useState<Offer>(null);
+  /** This sum's win on the ladder: the meter shows it, and it may step up or down. */
+  const [step, setStep] = useState<LadderStep | null>(null);
   const rewarded = useRef(false);
   /** This task needed help (a wrong pick happened). */
   const missed = useRef(false);
@@ -176,7 +174,7 @@ export function Add({ onBack }: { onBack: () => void }) {
   const ready = !needsMoves(round) || (done >= round.b && flying === null);
   /** The flowers that make up the answer, in counting order: the bee's victory lap and the hop wave follow it. */
   const lap = tourOrder(round, taking ? moved : [], items);
-  const fb = phase === 'solved' ? rightFeedback(round, offer) : phase === 'tour' ? tourFeedback(round) : questionFeedback(round, done);
+  const fb = phase === 'solved' ? rightFeedback(round, step?.change ?? null) : phase === 'tour' ? tourFeedback(round) : questionFeedback(round, done);
   const layout = taking ? takeLayout(round, items) : null;
   const hasBouquets = round.items.some((i) => i.kind === 'ten');
   const showEquation = round.level.answers !== 'dots' || phase === 'solved';
@@ -327,19 +325,16 @@ export function Add({ onBack }: { onBack: () => void }) {
       setPhase('solved');
       setWrong(null);
       celebrate();
-      const step = afterTask({ level: progress.addLevel, streak: progress.addStreak, misses: progress.addMisses }, !missed.current);
-      setOffer(step.offer);
-      speak(rightFeedback(round, step.offer).speech);
+      const s = afterSolve(startLadder, LADDER_RULES.add, missed.current);
+      setStep(s);
+      speak(rightFeedback(round, s.change).speech);
       if (!rewarded.current) {
         rewarded.current = true;
-        const helped = missed.current;
-        update((p) => logTask({ ...p, seeds: p.seeds + 1, addSolved: p.addSolved + 1, addStreak: step.streak, addMisses: step.misses }, 'add', helped));
+        update((p) => withLadder(logTask({ ...p, seeds: p.seeds + 1, addSolved: p.addSolved + 1 }, 'add', s.helped), 'add', s.ladder));
       }
     } else {
       setWrong(n);
       missed.current = true;
-      // The stars empty at once; the level itself only changes if the child chooses so later.
-      update((p) => ({ ...p, addStreak: 0 }));
       startTour();
     }
   };
@@ -347,14 +342,9 @@ export function Add({ onBack }: { onBack: () => void }) {
   // App keys this screen by round, so the next sum remounts with fresh state.
   const next = () => update((p) => ({ ...p, addRound: p.addRound + 1 }));
 
-  /** The child's answer to Csepi's offer, then the next sum. */
-  const choose = (accept: boolean) => {
-    if (!offer) return;
-    update((p) => {
-      const s = chooseOffer({ level: p.addLevel, streak: p.addStreak, misses: p.addMisses }, offer, accept);
-      return { ...p, addLevel: s.level, addStreak: s.streak, addMisses: s.misses, addRound: p.addRound + 1 };
-    });
-  };
+  // The row is the first-try streak; a wrong pick empties it at once, and a full row steps up.
+  const meter = ladderMeter(wrong !== null && !step ? { ...startLadder, streak: 0 } : startLadder, LADDER_RULES.add, step);
+  const levelUp = useLevelUp(meter, next);
 
   const isVisited = (id: string) => visited.some((v) => v.id === id);
 
@@ -381,12 +371,7 @@ export function Add({ onBack }: { onBack: () => void }) {
           </div>
         )}
         <div className="topbar__right">
-          {/* The row is the first-try streak: full, Csepi offers a harder level and the child decides. */}
-          <LevelMeter
-            meter={{ level: progress.addLevel, levels: ADD_LEVELS.length, done: progress.addStreak, rounds: LEVEL_UP_STREAK, levelUp: false }}
-            world="garden"
-            justSolved={phase === 'solved' && progress.addStreak > 0}
-          />
+          <LevelMeter meter={meter} world="garden" justSolved={phase === 'solved' && !step?.helped} />
           <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
             <SpeakerIcon />
           </RoundButton>
@@ -479,33 +464,7 @@ export function Add({ onBack }: { onBack: () => void }) {
         </GuideBubble>
       </div>
 
-      {phase === 'solved' && offer ? (
-        <div className="choices choices--add offer" role="group" aria-label="Válassz">
-          {offer === 'up' ? (
-            <>
-              <button type="button" className="offer__btn" onClick={() => choose(false)}>
-                <RoundFlower petal={round.petalB} width={72} />
-                <span>Maradok még</span>
-              </button>
-              <button type="button" className="offer__btn offer__btn--go" onClick={() => choose(true)}>
-                <Tree />
-                <span>Nehezebbet!</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <button type="button" className="offer__btn offer__btn--go" onClick={() => choose(true)}>
-                <Sprout />
-                <span>Könnyebbet kérek</span>
-              </button>
-              <button type="button" className="offer__btn" onClick={() => choose(false)}>
-                <RoundFlower petal={round.petalB} width={72} />
-                <span>Maradok</span>
-              </button>
-            </>
-          )}
-        </div>
-      ) : !ready ? (
+      {!ready ? (
         <div className="choices choices--add" aria-hidden="true">
           <div className="add-wait" />
         </div>
@@ -533,12 +492,13 @@ export function Add({ onBack }: { onBack: () => void }) {
           );
         })}
         {phase === 'solved' && (
-          <button type="button" className="big-btn" onClick={next}>
+          <button type="button" className="big-btn" onClick={levelUp.advance}>
             Következő <NextIcon />
           </button>
         )}
       </div>
       )}
+      {levelUp.open && <LevelUpCard meter={meter} world="garden" onNext={levelUp.finish} />}
     </div>
   );
 }

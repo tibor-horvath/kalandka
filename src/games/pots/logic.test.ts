@@ -25,9 +25,8 @@ describe('Cserépbarátok', () => {
 
   it('keeps pots, flowers and answers consistent across many rounds and levels', () => {
     for (let level = 0; level < POTS_LEVELS.length; level++) {
-      const solved = level * POTS_ROUNDS_PER_LEVEL;
       for (let round = 0; round < 80; round++) {
-        const r = buildPotsRound(round, solved);
+        const r = buildPotsRound(round, level);
         expect(r.total).toBe(POTS_LEVELS[level].total);
         expect(r.have).toBeGreaterThanOrEqual(1);
         expect(r.need).toBeGreaterThanOrEqual(1);
@@ -44,8 +43,7 @@ describe('Cserépbarátok', () => {
   });
 
   it('meets every number friend of ten', () => {
-    const solved = POTS_ROUNDS_PER_LEVEL;
-    const needs = new Set(Array.from({ length: 80 }, (_, round) => buildPotsRound(round, solved).need));
+    const needs = new Set(Array.from({ length: 80 }, (_, round) => buildPotsRound(round, 1).need));
     expect([...needs].sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
   });
 

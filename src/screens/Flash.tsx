@@ -5,9 +5,9 @@ import { FitBox } from '../components/FitBox';
 import { useForm } from '../components/Stage';
 import { DotFace, MiniSprout } from '../components/seeds';
 import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { ASK, FIELD_H, FIELD_W, FLASH_ROUNDS_PER_LEVEL, LEVELS, READY, foldSeeds, buildFlashRound, revealFeedback, rightFeedback } from '../games/flash/logic';
+import { ASK, FIELD_H, FIELD_W, READY, foldSeeds, buildFlashRound, revealFeedback, rightFeedback } from '../games/flash/logic';
 import { speak } from '../lib/speech';
-import { evenLevels, levelMeter } from '../state/levelMeter';
+import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../state/ladder';
 import { useProgress } from '../state/progress';
 import { logTask } from '../state/taskLog';
 
@@ -16,8 +16,10 @@ type Phase = 'ready' | 'flash' | 'ask' | 'reveal' | 'solved';
 /** Magvillantás: ready → seeds shown → covered → child answers (peek again any time). */
 export function Flash({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  const [startSolved] = useState(() => progress.flashSolved);
-  const [round] = useState(() => buildFlashRound(progress.flashRound, startSolved));
+  // The ladder when this round started: the round keeps its level even after its win steps up or down.
+  const [startLadder] = useState(() => ladderOf(progress, 'flash'));
+  const [round] = useState(() => buildFlashRound(progress.flashRound, startLadder.level));
+  const [step, setStep] = useState<LadderStep | null>(null);
   // Portrait phones: the two groups stand one above the other, so the seeds can be bigger.
   const folded = useForm() === 'portrait' ? foldSeeds(round.seeds) : null;
   const field = folded ?? { width: FIELD_W, height: FIELD_H, seeds: round.seeds };
@@ -53,7 +55,10 @@ export function Flash({ onBack }: { onBack: () => void }) {
       speak(rightFeedback(n).speech);
       if (!rewarded.current) {
         rewarded.current = true;
-        update((p) => logTask({ ...p, seeds: p.seeds + 1, flashSolved: p.flashSolved + 1 }, 'flash', helped.current));
+        const s = afterSolve(startLadder, LADDER_RULES.flash, helped.current);
+        setStep(s);
+        if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
+        update((p) => withLadder(logTask({ ...p, seeds: p.seeds + 1, flashSolved: p.flashSolved + 1 }, 'flash', s.helped), 'flash', s.ladder));
       }
     } else {
       helped.current = true;
@@ -65,7 +70,7 @@ export function Flash({ onBack }: { onBack: () => void }) {
 
   // App keys this screen by round, so the next round remounts with fresh state.
   const next = () => update((p) => ({ ...p, flashRound: p.flashRound + 1 }));
-  const meter = levelMeter(startSolved, evenLevels(LEVELS.length, FLASH_ROUNDS_PER_LEVEL), phase === 'solved');
+  const meter = ladderMeter(startLadder, LADDER_RULES.flash, step);
   const levelUp = useLevelUp(meter, next);
 
   const seedsVisible = phase === 'flash' || phase === 'reveal' || phase === 'solved';

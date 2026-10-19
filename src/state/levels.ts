@@ -1,14 +1,15 @@
-import { ADD_LEVELS, clampLevel } from '../games/add/logic';
-import { FLASH_ROUNDS_PER_LEVEL, LEVELS as FLASH_LEVELS, levelFor } from '../games/flash/logic';
+import { ADD_LEVELS } from '../games/add/logic';
+import { LEVELS as FLASH_LEVELS } from '../games/flash/logic';
 import { LEARN_MAX } from '../games/learn/logic';
-import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL, potsLevelFor } from '../games/pots/logic';
+import { POTS_LEVELS } from '../games/pots/logic';
 import { SHAPE_ORDER } from '../games/patterns/logic';
-import { PATH_LEVELS, PATH_ROUNDS_PER_LEVEL, pathLevelIndex } from '../games/robot/path';
-import { SCALE_LEVELS, SCALE_ROUNDS_PER_LEVEL, scaleLevelIndex } from '../games/robot/scale';
-import { MIRROR_LEVELS, MIRROR_ROUNDS_PER_LEVEL, mirrorLevelIndex } from '../games/robot/mirror';
-import { SEQ_LEVELS, SEQ_ROUNDS_PER_LEVEL, seqLevelIndex } from '../games/robot/seq';
-import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL, sortLevelIndex } from '../games/robot/sort';
+import { PATH_LEVELS } from '../games/robot/path';
+import { SCALE_LEVELS } from '../games/robot/scale';
+import { MIRROR_LEVELS } from '../games/robot/mirror';
+import { SEQ_LEVELS } from '../games/robot/seq';
+import { SORT_LEVELS } from '../games/robot/sort';
 import { PLANTS } from '../games/water/logic';
+import { ladderOf, startAt, withLadder } from './ladder';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';
 
@@ -83,72 +84,72 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
     id: 'flash',
     world: 'garden',
     game: 'Magvillantás',
-    hint: '4 jó válasz után magától lép tovább.',
+    hint: '4 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
     options: FLASH_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => FLASH_LEVELS.indexOf(levelFor(p.flashSolved)),
-    apply: (p, v) => ({ ...p, flashSolved: v * FLASH_ROUNDS_PER_LEVEL })
+    current: (p) => ladderOf(p, 'flash').level,
+    apply: (p, v) => withLadder(p, 'flash', startAt(ladderOf(p, 'flash'), v))
   },
   {
     id: 'add',
     world: 'garden',
     game: 'Méhecske',
-    hint: '5 jó válasz után Csepi nehezebbet ajánl, 3 nehéz feladat után könnyebbet. A gyerek dönt.',
+    hint: '5 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
     options: ADD_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => clampLevel(p.addLevel),
-    apply: (p, v) => ({ ...p, addLevel: v, addStreak: 0, addMisses: 0 })
+    current: (p) => ladderOf(p, 'add').level,
+    apply: (p, v) => withLadder(p, 'add', startAt(ladderOf(p, 'add'), v))
   },
   {
     id: 'pots',
     world: 'garden',
     game: 'Cserépbarátok',
-    hint: '5 jó válasz után magától lép tovább.',
+    hint: '5 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
     options: POTS_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => POTS_LEVELS.indexOf(potsLevelFor(p.potsSolved)),
-    apply: (p, v) => ({ ...p, potsSolved: v * POTS_ROUNDS_PER_LEVEL })
+    current: (p) => ladderOf(p, 'pots').level,
+    apply: (p, v) => withLadder(p, 'pots', startAt(ladderOf(p, 'pots'), v))
   },
   {
     id: 'path',
     world: 'robot',
     game: 'Robotút',
-    hint: 'Robotműhely. 5 pálya után magától lép tovább.',
+    hint: 'Robotműhely. 4 jó pálya egymás után: nehezebb szint, 2 nehéz pálya egymás után: könnyebb. Ez alá nem lép vissza.',
     options: PATH_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => pathLevelIndex(p.pathSolved),
-    apply: (p, v) => ({ ...p, pathSolved: v * PATH_ROUNDS_PER_LEVEL })
+    current: (p) => ladderOf(p, 'path').level,
+    apply: (p, v) => withLadder(p, 'path', startAt(ladderOf(p, 'path'), v))
   },
   {
     id: 'sort',
     world: 'robot',
     game: 'Válogatógép',
-    hint: 'Robotműhely. 5 kör után magától lép tovább.',
+    hint: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
     options: SORT_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => sortLevelIndex(p.sortSolved),
-    apply: (p, v) => ({ ...p, sortSolved: v * SORT_ROUNDS_PER_LEVEL })
+    current: (p) => ladderOf(p, 'sort').level,
+    apply: (p, v) => withLadder(p, 'sort', startAt(ladderOf(p, 'sort'), v))
   },
   {
     id: 'scale',
     world: 'robot',
     game: 'Mérleg',
-    hint: 'Robotműhely. 5 kör után magától lép tovább.',
+    hint: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
     options: SCALE_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => scaleLevelIndex(p.scaleSolved),
-    apply: (p, v) => ({ ...p, scaleSolved: v * SCALE_ROUNDS_PER_LEVEL })
+    current: (p) => ladderOf(p, 'scale').level,
+    apply: (p, v) => withLadder(p, 'scale', startAt(ladderOf(p, 'scale'), v))
   },
   {
     id: 'seq',
     world: 'robot',
     game: 'Mintagép',
-    hint: 'Robotműhely. 5 kör után magától lép tovább.',
+    hint: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
     options: SEQ_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => seqLevelIndex(p.seqSolved),
-    apply: (p, v) => ({ ...p, seqSolved: v * SEQ_ROUNDS_PER_LEVEL })
+    current: (p) => ladderOf(p, 'seq').level,
+    apply: (p, v) => withLadder(p, 'seq', startAt(ladderOf(p, 'seq'), v))
   },
   {
     id: 'mirror',
     world: 'robot',
     game: 'Tükörgép',
-    hint: 'Robotműhely. 5 kör után magától lép tovább.',
+    hint: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
     options: MIRROR_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => mirrorLevelIndex(p.mirrorSolved),
-    apply: (p, v) => ({ ...p, mirrorSolved: v * MIRROR_ROUNDS_PER_LEVEL })
+    current: (p) => ladderOf(p, 'mirror').level,
+    apply: (p, v) => withLadder(p, 'mirror', startAt(ladderOf(p, 'mirror'), v))
   }
 ];

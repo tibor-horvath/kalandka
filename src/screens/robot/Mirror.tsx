@@ -16,7 +16,6 @@ import {
   lampFeedback,
   lampRightFeedback,
   lampWrongFeedback,
-  mirrorLevelIndex,
   nearestTarget,
   nextTaskFeedback,
   onGivenSide,
@@ -35,13 +34,11 @@ import {
   type LightTask,
   type MirrorFeedback,
   type PickTask,
-  MIRROR_LEVELS,
-  MIRROR_ROUNDS_PER_LEVEL
 } from '../../games/robot/mirror';
 import { COLOR_NAMES, type Color } from '../../games/robot/sort';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../../lib/sound';
-import { evenLevels, levelMeter } from '../../state/levelMeter';
+import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
 import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
 
@@ -77,9 +74,11 @@ function MissMark() {
 /** Tükörgép: light the reflections, tell a reflection from a copy, or find where the machine went wrong. */
 export function Mirror({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  // The solved count when this round started: the round keeps its level even after its win levels up.
-  const [startSolved] = useState(() => progress.mirrorSolved);
-  const levelIndex = mirrorLevelIndex(startSolved);
+  // The ladder when this round started: the round keeps its level even after its win steps up or down.
+  const [startLadder] = useState(() => ladderOf(progress, 'mirror'));
+  const levelIndex = startLadder.level;
+  /** This round's win on the ladder: the meter shows it, and it may step up or down. */
+  const [step, setStep] = useState<LadderStep | null>(null);
   const round = useMemo(() => buildMirrorRound(levelIndex, progress.mirrorRound), [levelIndex, progress.mirrorRound]);
   const first = progress.mirrorSolved === 0;
   const [taskIdx, setTaskIdx] = useState(0);
@@ -122,12 +121,15 @@ export function Mirror({ onBack }: { onBack: () => void }) {
     if (!rewarded.current) {
       rewarded.current = true;
       const helped = oops.current >= ROUND_HELP_AFTER;
-      update((p) => logTask({ ...p, bolts: p.bolts + 1, mirrorSolved: p.mirrorSolved + 1 }, 'mirror', helped));
+      const s = afterSolve(startLadder, LADDER_RULES.mirror, helped);
+      setStep(s);
+      if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
+      update((p) => withLadder(logTask({ ...p, bolts: p.bolts + 1, mirrorSolved: p.mirrorSolved + 1 }, 'mirror', helped), 'mirror', s.ladder));
     }
   };
 
   const next = () => update((p) => ({ ...p, mirrorRound: p.mirrorRound + 1 }));
-  const meter = levelMeter(startSolved, evenLevels(MIRROR_LEVELS.length, MIRROR_ROUNDS_PER_LEVEL), solved);
+  const meter = ladderMeter(startLadder, LADDER_RULES.mirror, step);
   const levelUp = useLevelUp(meter, next);
   const task = round.tasks[taskIdx];
   const props = { n: taskIdx, solved, say, onDone: done, later };

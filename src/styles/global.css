@@ -402,12 +402,6 @@ h1, h2, p { margin: 0; }
 .screentime__today { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 16px; background: #f3f7f9; border-radius: 14px; padding: 10px 14px; }
 .screentime__today b { font-variant-numeric: tabular-nums; }
 
-/* Csepi's level offer: two big picture choices */
-.offer { gap: 36px; }
-.offer__btn { width: 240px; height: 170px; border-radius: 32px; background: var(--paper); border: 5px solid var(--paper); box-shadow: 0 8px 0 var(--grass-deep); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-size: 24px; font-weight: 800; color: var(--ink); animation: sprout 0.4s cubic-bezier(.34, 1.56, .64, 1) both; }
-.offer__btn--go { border-color: var(--leaf); box-shadow: 0 8px 0 var(--leaf); }
-.offer__btn:active { transform: translateY(5px); box-shadow: 0 3px 0 var(--grass-deep); }
-.offer__btn svg { max-height: 100px; width: auto; }
 
 /* ---------- Mézút (tracing digits) ---------- */
 .plot__trail { position: relative; display: block; width: 96px; height: 76px; margin-bottom: 2px; }

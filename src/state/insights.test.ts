@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { article, gameNotes, gateQuestion, insights } from './insights';
+import { ladderOf, withLadder } from './ladder';
 import { DEFAULT_PROGRESS, type Progress } from './progress';
 import { LOG_KEEP, logTask, recentMarks, windowStart, type LoggedGame } from './taskLog';
 
@@ -68,10 +69,12 @@ describe('notes per game', () => {
     expect(note(solved('sort', [false, false, false]), 'Válogatógép').title).toBe('A „Két szín” megy neki.');
   });
 
-  it('still trusts the Méhecske miss count from before the log', () => {
-    const n = note({ ...DEFAULT_PROGRESS, addLevel: 8, addMisses: 2 }, 'Méhecske');
+  it('tells parents when a game stepped back on its own', () => {
+    const p = withLadder(DEFAULT_PROGRESS, 'mirror', { ...ladderOf(DEFAULT_PROGRESS, 'mirror'), level: 3, lastChange: 'down', sinceChange: 1, reached: 4 });
+    const n = note(p, 'Tükörgép');
     expect(n.tone).toBe('tip');
-    expect(n.title).toBe('A Méhecskében a „20-ig, tízes átlépéssel” még nehéz.');
+    expect(n.title).toBe('A Tükörgép visszalépett a „Színes kép” szintre.');
+    expect(note({ ...p, ladders: { mirror: { ...p.ladders.mirror!, sinceChange: 8 } } }, 'Tükörgép').tone).toBe('none');
   });
 
   it('says "az" before a level name read with a vowel', () => {

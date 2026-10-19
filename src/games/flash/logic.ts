@@ -41,8 +41,9 @@ export interface FlashRound {
   choices: number[];
 }
 
-export function buildFlashRound(round: number, solved: number): FlashRound {
-  const level = levelFor(solved);
+/** A round on this level (0-based; the level comes from the game's ladder, see state/ladder.ts). */
+export function buildFlashRound(round: number, levelIndex: number): FlashRound {
+  const level = LEVELS[Math.max(0, Math.min(LEVELS.length - 1, levelIndex))];
   const rand = rng(round + 1);
   const count = level.min + Math.floor(rand() * (level.max - level.min + 1));
   const seeds = layoutSeeds(count, level.layout, rand);
