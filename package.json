@@ -12,6 +12,8 @@
   "dependencies": {
     "@fontsource/baloo-2": "^5.2.5",
     "@fontsource/nunito": "^5.2.5",
+    "jsqr": "^1.4.0",
+    "qrcode-generator": "^1.4.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

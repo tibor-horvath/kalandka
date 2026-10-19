@@ -161,6 +161,15 @@
 .pa-dots i.is-done { background: var(--pa-good); }
 .pa-dots i.is-now { width: 18px; background: var(--pa-good); }
 
+/* moving profiles to a new device */
+.pa-transfer { display: flex; flex-direction: column; gap: 14px; }
+.pa-transfer__qr { display: block; width: min(340px, 100%); height: auto; align-self: center; border-radius: 12px; border: 2px solid var(--pa-line); }
+.pa-transfer__camera { display: block; width: min(420px, 100%); aspect-ratio: 4 / 3; object-fit: cover; align-self: center; border-radius: 16px; background: var(--pa-ink); }
+.pa-transfer__pager { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; font-size: 16px; }
+.pa-transfer__kids { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.pa-transfer__kids li { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; }
+.pa-transfer__status { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; min-height: 24px; font-size: 16px; font-weight: 700; text-align: center; }
+
 /* gate */
 .gate { position: absolute; inset: -1000px; z-index: 20; padding: 1000px; background: rgba(16, 35, 58, 0.55); display: flex; align-items: center; justify-content: center; font-family: var(--body); color: #10233a; }
 .gate__card { width: 460px; background: #ffffff; border-radius: 28px; padding: 30px 34px 22px; display: flex; flex-direction: column; align-items: center; gap: 12px; box-shadow: 0 24px 60px rgba(16, 35, 58, 0.28); }

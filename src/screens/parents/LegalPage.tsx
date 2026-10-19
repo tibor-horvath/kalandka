@@ -52,6 +52,11 @@ export function LegalPage() {
           a böngésző webhelyadatainak törlésével vagy az alkalmazás eltávolításával. A helyi tárolás a játék működéséhez szükséges, ezért nem
           kérünk hozzá külön sütihozzájárulást. Sütiket nem használunk.
         </p>
+        <p className="pa-legal">
+          Az <b>Átköltözés új eszközre</b> funkció a profilokat QR-kódként mutatja meg, az új eszköz pedig a kamerájával olvassa be. Az adatok
+          közvetlenül a két eszköz között, a képernyőn keresztül kerülnek át, internetre és szerverre nem jutnak. A kamera képét csak a kód
+          felismeréséhez használjuk, nem rögzítjük és nem tároljuk.
+        </p>
 
         <h3 className="pa-h3">3. Tárhelyszolgáltatás</h3>
         <p className="pa-legal">

@@ -3,6 +3,7 @@ import { promptInstall, useInstallState } from '../../lib/install';
 import { hungarianVoices, onVoicesChanged, speak, type Speaker } from '../../lib/speech';
 import { DEFAULT_PROGRESS, useProgress } from '../../state/progress';
 import { Check } from './controls';
+import { TransferCard } from './TransferCard';
 
 export function SettingsPage({ onLegal }: { onLegal: () => void }) {
   const { progress, update } = useProgress();
@@ -87,6 +88,8 @@ export function SettingsPage({ onLegal }: { onLegal: () => void }) {
       </section>
 
       <InstallCard />
+
+      <TransferCard />
 
       <section className="pa-card" aria-labelledby="s-data">
         <h2 id="s-data" className="pa-h2">
