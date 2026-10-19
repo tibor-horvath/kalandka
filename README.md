@@ -64,7 +64,8 @@ Screen time: only active play counts (app visible, parents' area closed) and the
 npm install
 npm run dev      # http://localhost:5173
 npm test         # game logic tests (vitest)
-npm run build    # type-check + production build with service worker
+npm run build    # type-check + production build with service worker, then the offline check:
+                 # every built file must be precached and every precached file must exist
 ```
 
 ## Structure
