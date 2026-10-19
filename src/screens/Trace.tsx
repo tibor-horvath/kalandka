@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { Bee } from '../components/art';
 import { FitBox } from '../components/FitBox';
+import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
 import { DotFace } from '../components/seeds';
 import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import {
+  TRACE_ORDER,
   BOX_H,
   BOX_W,
   GRAB_THE_BEE,
@@ -26,6 +28,7 @@ import {
 } from '../games/trace/logic';
 import { speak } from '../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../lib/sound';
+import { evenLevels, levelMeter } from '../state/levelMeter';
 import { useProgress } from '../state/progress';
 
 const PAD_X = 30;
@@ -273,6 +276,9 @@ export function Trace({ onBack }: { onBack: () => void }) {
 
   // App keys this screen by round, so the next digit remounts with fresh state.
   const next = () => update((p) => ({ ...p, traceRound: p.traceRound + 1 }));
+  // Half a lap of digits per level: 1–5 and 6–0 with the full trail, then both halves faded.
+  const meter = levelMeter(progress.traceRound, evenLevels(4, TRACE_ORDER.length / 2), done);
+  const levelUp = useLevelUp(meter, next);
 
   const guide = strayed && !done ? pts.slice(idx, idx + GUIDE_AHEAD) : null;
 
@@ -280,11 +286,14 @@ export function Trace({ onBack }: { onBack: () => void }) {
     <div className="screen screen--trace">
       <div className="meadow" aria-hidden="true" />
 
-      <header className="topbar">
+      <header className="topbar topbar--meter">
         <RoundButton label="Vissza a kertbe" onClick={onBack}>
           <BackIcon />
         </RoundButton>
-        <h1 className="screen-title">Mézút</h1>
+        <div className="topbar__title">
+          <h1 className="screen-title">Mézút</h1>
+          <LevelMeter meter={meter} world="garden" justSolved={done} />
+        </div>
         <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
           <SpeakerIcon />
         </RoundButton>
@@ -396,13 +405,15 @@ export function Trace({ onBack }: { onBack: () => void }) {
               </button>
             )}
             {done && (
-              <button type="button" className="big-btn" onClick={next}>
+              <button type="button" className="big-btn" onClick={levelUp.advance}>
                 Következő szám <NextIcon />
               </button>
             )}
           </div>
         </div>
       </div>
+
+      {levelUp.open && <LevelUpCard meter={meter} world="garden" onNext={levelUp.finish} />}
     </div>
   );
 }

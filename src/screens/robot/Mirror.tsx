@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { LevelMeter, LevelUpCard, useLevelUp } from '../../components/LevelMeter';
 import { FitBox } from '../../components/FitBox';
 import { Bolt, Lamp, LampGrid } from '../../components/robot';
 import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../../components/ui';
@@ -33,11 +34,14 @@ import {
   type Lamp as LampT,
   type LightTask,
   type MirrorFeedback,
-  type PickTask
+  type PickTask,
+  MIRROR_LEVELS,
+  MIRROR_ROUNDS_PER_LEVEL
 } from '../../games/robot/mirror';
 import { COLOR_NAMES, type Color } from '../../games/robot/sort';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../../lib/sound';
+import { evenLevels, levelMeter } from '../../state/levelMeter';
 import { useProgress } from '../../state/progress';
 
 /** After a board is finished, it stays a moment so the child sees the whole picture, then the next task comes. */
@@ -72,7 +76,9 @@ function MissMark() {
 /** Tükörgép: light the reflections, tell a reflection from a copy, or find where the machine went wrong. */
 export function Mirror({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  const levelIndex = mirrorLevelIndex(progress.mirrorSolved);
+  // The solved count when this round started: the round keeps its level even after its win levels up.
+  const [startSolved] = useState(() => progress.mirrorSolved);
+  const levelIndex = mirrorLevelIndex(startSolved);
   const round = useMemo(() => buildMirrorRound(levelIndex, progress.mirrorRound), [levelIndex, progress.mirrorRound]);
   const first = progress.mirrorSolved === 0;
   const [taskIdx, setTaskIdx] = useState(0);
@@ -116,6 +122,8 @@ export function Mirror({ onBack }: { onBack: () => void }) {
   };
 
   const next = () => update((p) => ({ ...p, mirrorRound: p.mirrorRound + 1 }));
+  const meter = levelMeter(startSolved, evenLevels(MIRROR_LEVELS.length, MIRROR_ROUNDS_PER_LEVEL), solved);
+  const levelUp = useLevelUp(meter, next);
   const task = round.tasks[taskIdx];
   const props = { n: taskIdx, solved, say, onDone: done, later };
 
@@ -123,11 +131,14 @@ export function Mirror({ onBack }: { onBack: () => void }) {
     <div className="screen screen--mirror world--robot">
       <div className="floor" aria-hidden="true" />
 
-      <header className="topbar">
+      <header className="topbar topbar--meter">
         <RoundButton label="Vissza a műhelybe" onClick={onBack}>
           <BackIcon />
         </RoundButton>
-        <h1 className="screen-title">{round.level.kind === 'fix' ? 'Hibás tükör' : 'Tükörgép'}</h1>
+        <div className="topbar__title">
+          <h1 className="screen-title">{round.level.kind === 'fix' ? 'Hibás tükör' : 'Tükörgép'}</h1>
+          <LevelMeter meter={meter} world="robot" justSolved={solved} />
+        </div>
         <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
           <SpeakerIcon />
         </RoundButton>
@@ -156,11 +167,13 @@ export function Mirror({ onBack }: { onBack: () => void }) {
           <span className="path-win__reward">
             +1 <Bolt size={34} /> csavar
           </span>
-          <button type="button" className="big-btn big-btn--robot" onClick={next}>
+          <button type="button" className="big-btn big-btn--robot" onClick={levelUp.advance}>
             Következő kör <NextIcon />
           </button>
         </div>
       )}
+
+      {levelUp.open && <LevelUpCard meter={meter} world="robot" onNext={levelUp.finish} />}
     </div>
   );
 }

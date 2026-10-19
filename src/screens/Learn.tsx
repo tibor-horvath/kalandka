@@ -1,19 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { Seed } from '../components/art';
 import { FitBox } from '../components/FitBox';
+import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
 import { useForm } from '../components/Stage';
 import { DotFace, MiniSprout } from '../components/seeds';
 import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import { FIELD_H, FIELD_W, foldSeeds } from '../games/flash/layout';
-import { LEARN_READY, buildLearnRound, learnedFeedback } from '../games/learn/logic';
+import { LEARN_MAX, LEARN_READY, buildLearnRound, learnedFeedback } from '../games/learn/logic';
 import { numberCount } from '../lib/numbers';
 import { speak } from '../lib/speech';
+import { evenLevels, levelMeter } from '../state/levelMeter';
 import { useProgress } from '../state/progress';
+
+const LEARN_BLOCK = 5;
 
 /** Számvetés: tap every seed, Csepi counts, then the number is named. No timer. */
 export function Learn({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
   const [round] = useState(() => buildLearnRound(progress.learnRound));
+  // The numbers come in blocks of five (1–5, 6–10, …), the same starts parents can pick.
+  const [startRound] = useState(() => progress.learnRound % LEARN_MAX);
   // Portrait phones: the two groups stand one above the other, so the seeds can be bigger.
   const folded = useForm() === 'portrait' ? foldSeeds(round.seeds) : null;
   const field = folded ?? { width: FIELD_W, height: FIELD_H, seeds: round.seeds };
@@ -42,16 +48,21 @@ export function Learn({ onBack }: { onBack: () => void }) {
 
   // App keys this screen by round, so the next number remounts with fresh state.
   const next = () => update((p) => ({ ...p, learnRound: p.learnRound + 1 }));
+  const meter = levelMeter(startRound, evenLevels(LEARN_MAX / LEARN_BLOCK, LEARN_BLOCK), learned);
+  const levelUp = useLevelUp(meter, next);
 
   return (
     <div className="screen screen--flash screen--learn">
       <div className="meadow" aria-hidden="true" />
 
-      <header className="topbar">
+      <header className="topbar topbar--meter">
         <RoundButton label="Vissza a kertbe" onClick={onBack}>
           <BackIcon />
         </RoundButton>
-        <h1 className="screen-title">Számoljuk meg együtt!</h1>
+        <div className="topbar__title">
+          <h1 className="screen-title">Számoljuk meg együtt!</h1>
+          <LevelMeter meter={meter} world="garden" justSolved={learned} />
+        </div>
         <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
           <SpeakerIcon />
         </RoundButton>
@@ -100,11 +111,13 @@ export function Learn({ onBack }: { onBack: () => void }) {
           )}
         </div>
         {learned && (
-          <button type="button" className="big-btn" onClick={next}>
+          <button type="button" className="big-btn" onClick={levelUp.advance}>
             Következő szám <NextIcon />
           </button>
         )}
       </div>
+
+      {levelUp.open && <LevelUpCard meter={meter} world="garden" onNext={levelUp.finish} />}
     </div>
   );
 }

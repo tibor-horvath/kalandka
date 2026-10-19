@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { PatternFlower } from '../components/art';
+import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
 import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { CHOICES, FLOWER_LABELS, buildRound, hintFeedback, isEndGap, screenTitle, solvedFeedback, startFeedback, type FlowerKind } from '../games/patterns/logic';
+import { CHOICES, FLOWER_LABELS, SHAPE_ORDER, buildRound, hintFeedback, isEndGap, screenTitle, solvedFeedback, startFeedback, type FlowerKind } from '../games/patterns/logic';
 import { speak } from '../lib/speech';
+import { evenLevels, levelMeter } from '../state/levelMeter';
 import { useProgress } from '../state/progress';
 
 export function Patterns({ onBack }: { onBack: () => void }) {
@@ -43,6 +45,9 @@ export function Patterns({ onBack }: { onBack: () => void }) {
   };
 
   const next = () => update((p) => ({ ...p, patternRound: p.patternRound + 1 }));
+  // Two levels: the first lap of shapes asks what comes next, later laps hide a flower inside the row.
+  const meter = levelMeter(roundNo, evenLevels(2, SHAPE_ORDER.length), solved);
+  const levelUp = useLevelUp(meter, next);
   const slots: (FlowerKind | null)[] = round.shown.map((k, i) => (i === round.gap && solved ? round.answer : k));
   const gapLabel = isEndGap(round) ? 'Kérdőjel: ide jön a következő virág' : 'Kérdőjel: ide hiányzik egy virág';
 
@@ -50,11 +55,14 @@ export function Patterns({ onBack }: { onBack: () => void }) {
     <div className="screen screen--patterns">
       <div className="meadow" aria-hidden="true" />
 
-      <header className="topbar">
+      <header className="topbar topbar--meter">
         <RoundButton label="Vissza a kertbe" onClick={onBack}>
           <BackIcon />
         </RoundButton>
-        <h1 className="screen-title">{screenTitle(round)}</h1>
+        <div className="topbar__title">
+          <h1 className="screen-title">{screenTitle(round)}</h1>
+          <LevelMeter meter={meter} world="garden" justSolved={solved} />
+        </div>
         <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
           <SpeakerIcon />
         </RoundButton>
@@ -95,11 +103,13 @@ export function Patterns({ onBack }: { onBack: () => void }) {
           );
         })}
         {solved && (
-          <button type="button" className="big-btn" onClick={next}>
+          <button type="button" className="big-btn" onClick={levelUp.advance}>
             Új virágsor <NextIcon />
           </button>
         )}
       </div>
+
+      {levelUp.open && <LevelUpCard meter={meter} world="garden" onNext={levelUp.finish} />}
     </div>
   );
 }

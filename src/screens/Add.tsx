@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Basket, Bee, Bouquet, Hive, RoundFlower, Sprout, Tree } from '../components/art';
 import { FitBox } from '../components/FitBox';
+import { LevelMeter } from '../components/LevelMeter';
 import { useForm } from '../components/Stage';
 import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import {
@@ -38,14 +39,6 @@ import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
 
 type Phase = 'ask' | 'tour' | 'solved';
-
-function StarIcon({ on }: { on: boolean }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" className={on ? 'star is-on' : 'star'}>
-      <path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6-4.9-4.6 6.6-.8z" />
-    </svg>
-  );
-}
 
 const HOME = { x: SCENE_W / 2, y: 40 };
 const BASKET = { x: LEFT_X + BOX_W / 2, y: SCENE_H / 2 + 10 };
@@ -386,17 +379,12 @@ export function Add({ onBack }: { onBack: () => void }) {
           </div>
         )}
         <div className="topbar__right">
-          <div
-            className="level-pill"
-            aria-label={`${progress.addLevel + 1}. szint: ${ADD_LEVELS[progress.addLevel]?.name ?? ''}. ${progress.addStreak} csillag az ötből a következő szintig.`}
-          >
-            <span className="level-pill__num">{progress.addLevel + 1}. szint</span>
-            <span className="level-pill__stars" aria-hidden="true">
-              {Array.from({ length: LEVEL_UP_STREAK }, (_, i) => (
-                <StarIcon key={i} on={i < progress.addStreak} />
-              ))}
-            </span>
-          </div>
+          {/* The row is the first-try streak: full, Csepi offers a harder level and the child decides. */}
+          <LevelMeter
+            meter={{ level: progress.addLevel, levels: ADD_LEVELS.length, done: progress.addStreak, rounds: LEVEL_UP_STREAK, levelUp: false }}
+            world="garden"
+            justSolved={phase === 'solved' && progress.addStreak > 0}
+          />
           <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
             <SpeakerIcon />
           </RoundButton>

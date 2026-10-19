@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { LevelMeter, LevelUpCard, useLevelUp } from '../../components/LevelMeter';
 import { BinSign, Bolt, Crate, SortPart } from '../../components/robot';
 import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../../components/ui';
 import {
@@ -20,10 +21,13 @@ import {
   type OddRound,
   type Part,
   type SortFeedback,
-  type SortRound
+  type SortRound,
+  SORT_LEVELS,
+  SORT_ROUNDS_PER_LEVEL
 } from '../../games/robot/sort';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../../lib/sound';
+import { evenLevels, levelMeter } from '../../state/levelMeter';
 import { useProgress } from '../../state/progress';
 
 /** After the odd part is found, the row stays a moment so the child sees why, then the next row comes. */
@@ -42,7 +46,9 @@ function PartPic({ part, size }: { part: Part; size: number }) {
 /** Válogatógép: sort the parts coming down the belt into the right boxes, or find the odd one out. */
 export function Sort({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  const levelIndex = sortLevelIndex(progress.sortSolved);
+  // The solved count when this round started: the round keeps its level even after its win levels up.
+  const [startSolved] = useState(() => progress.sortSolved);
+  const levelIndex = sortLevelIndex(startSolved);
   const round = useMemo(() => buildRound(levelIndex, progress.sortRound), [levelIndex, progress.sortRound]);
   const [fb, setFb] = useState<SortFeedback>(() => startFeedback(round));
   const [solved, setSolved] = useState(false);
@@ -72,16 +78,21 @@ export function Sort({ onBack }: { onBack: () => void }) {
   };
 
   const next = () => update((p) => ({ ...p, sortRound: p.sortRound + 1 }));
+  const meter = levelMeter(startSolved, evenLevels(SORT_LEVELS.length, SORT_ROUNDS_PER_LEVEL), solved);
+  const levelUp = useLevelUp(meter, next);
 
   return (
     <div className="screen screen--sort world--robot">
       <div className="floor" aria-hidden="true" />
 
-      <header className="topbar">
+      <header className="topbar topbar--meter">
         <RoundButton label="Vissza a műhelybe" onClick={onBack}>
           <BackIcon />
         </RoundButton>
-        <h1 className="screen-title">{isOdd(round) ? 'Kakukktojás' : 'Válogatógép'}</h1>
+        <div className="topbar__title">
+          <h1 className="screen-title">{isOdd(round) ? 'Kakukktojás' : 'Válogatógép'}</h1>
+          <LevelMeter meter={meter} world="robot" justSolved={solved} />
+        </div>
         <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
           <SpeakerIcon />
         </RoundButton>
@@ -106,11 +117,13 @@ export function Sort({ onBack }: { onBack: () => void }) {
           <span className="path-win__reward">
             +1 <Bolt size={34} /> csavar
           </span>
-          <button type="button" className="big-btn big-btn--robot" onClick={next}>
+          <button type="button" className="big-btn big-btn--robot" onClick={levelUp.advance}>
             Következő kör <NextIcon />
           </button>
         </div>
       )}
+
+      {levelUp.open && <LevelUpCard meter={meter} world="robot" onNext={levelUp.finish} />}
     </div>
   );
 }

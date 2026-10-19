@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { LevelMeter, LevelUpCard, useLevelUp } from '../../components/LevelMeter';
 import { FitBox } from '../../components/FitBox';
 import { ArrowTile, BlockStack, Bolt, SortPart } from '../../components/robot';
 import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../../components/ui';
@@ -19,10 +20,13 @@ import {
   type Item,
   type SeqFeedback,
   type SeqLevel,
-  type SeqTask
+  type SeqTask,
+  SEQ_LEVELS,
+  SEQ_ROUNDS_PER_LEVEL
 } from '../../games/robot/seq';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../../lib/sound';
+import { evenLevels, levelMeter } from '../../state/levelMeter';
 import { useProgress } from '../../state/progress';
 
 /** After the gap is filled, the finished row stays a moment so the child sees it, then the next task comes. */
@@ -70,7 +74,9 @@ function MissMark() {
 /** Mintagép: carry on the pattern on the belt, or find the part that does not fit. */
 export function Seq({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  const levelIndex = seqLevelIndex(progress.seqSolved);
+  // The solved count when this round started: the round keeps its level even after its win levels up.
+  const [startSolved] = useState(() => progress.seqSolved);
+  const levelIndex = seqLevelIndex(startSolved);
   const round = useMemo(() => buildSeqRound(levelIndex, progress.seqRound), [levelIndex, progress.seqRound]);
   const first = progress.seqSolved === 0;
   const [taskIdx, setTaskIdx] = useState(0);
@@ -116,16 +122,21 @@ export function Seq({ onBack }: { onBack: () => void }) {
   };
 
   const next = () => update((p) => ({ ...p, seqRound: p.seqRound + 1 }));
+  const meter = levelMeter(startSolved, evenLevels(SEQ_LEVELS.length, SEQ_ROUNDS_PER_LEVEL), solved);
+  const levelUp = useLevelUp(meter, next);
 
   return (
     <div className="screen screen--seq world--robot">
       <div className="floor" aria-hidden="true" />
 
-      <header className="topbar">
+      <header className="topbar topbar--meter">
         <RoundButton label="Vissza a műhelybe" onClick={onBack}>
           <BackIcon />
         </RoundButton>
-        <h1 className="screen-title">{round.level.kind === 'fix' ? 'Hibavadász' : 'Mintagép'}</h1>
+        <div className="topbar__title">
+          <h1 className="screen-title">{round.level.kind === 'fix' ? 'Hibavadász' : 'Mintagép'}</h1>
+          <LevelMeter meter={meter} world="robot" justSolved={solved} />
+        </div>
         <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
           <SpeakerIcon />
         </RoundButton>
@@ -152,11 +163,13 @@ export function Seq({ onBack }: { onBack: () => void }) {
           <span className="path-win__reward">
             +1 <Bolt size={34} /> csavar
           </span>
-          <button type="button" className="big-btn big-btn--robot" onClick={next}>
+          <button type="button" className="big-btn big-btn--robot" onClick={levelUp.advance}>
             Következő kör <NextIcon />
           </button>
         </div>
       )}
+
+      {levelUp.open && <LevelUpCard meter={meter} world="robot" onNext={levelUp.finish} />}
     </div>
   );
 }

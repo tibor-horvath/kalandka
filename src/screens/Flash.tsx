@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Seed } from '../components/art';
+import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
 import { FitBox } from '../components/FitBox';
 import { useForm } from '../components/Stage';
 import { DotFace, MiniSprout } from '../components/seeds';
 import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { ASK, FIELD_H, FIELD_W, READY, foldSeeds, buildFlashRound, revealFeedback, rightFeedback } from '../games/flash/logic';
+import { ASK, FIELD_H, FIELD_W, FLASH_ROUNDS_PER_LEVEL, LEVELS, READY, foldSeeds, buildFlashRound, revealFeedback, rightFeedback } from '../games/flash/logic';
 import { speak } from '../lib/speech';
+import { evenLevels, levelMeter } from '../state/levelMeter';
 import { useProgress } from '../state/progress';
 
 type Phase = 'ready' | 'flash' | 'ask' | 'reveal' | 'solved';
@@ -13,7 +15,8 @@ type Phase = 'ready' | 'flash' | 'ask' | 'reveal' | 'solved';
 /** Magvillantás: ready → seeds shown → covered → child answers (peek again any time). */
 export function Flash({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  const [round] = useState(() => buildFlashRound(progress.flashRound, progress.flashSolved));
+  const [startSolved] = useState(() => progress.flashSolved);
+  const [round] = useState(() => buildFlashRound(progress.flashRound, startSolved));
   // Portrait phones: the two groups stand one above the other, so the seeds can be bigger.
   const folded = useForm() === 'portrait' ? foldSeeds(round.seeds) : null;
   const field = folded ?? { width: FIELD_W, height: FIELD_H, seeds: round.seeds };
@@ -58,6 +61,8 @@ export function Flash({ onBack }: { onBack: () => void }) {
 
   // App keys this screen by round, so the next round remounts with fresh state.
   const next = () => update((p) => ({ ...p, flashRound: p.flashRound + 1 }));
+  const meter = levelMeter(startSolved, evenLevels(LEVELS.length, FLASH_ROUNDS_PER_LEVEL), phase === 'solved');
+  const levelUp = useLevelUp(meter, next);
 
   const seedsVisible = phase === 'flash' || phase === 'reveal' || phase === 'solved';
   const answering = phase === 'ask' || phase === 'reveal';
@@ -66,11 +71,14 @@ export function Flash({ onBack }: { onBack: () => void }) {
     <div className="screen screen--flash">
       <div className="meadow" aria-hidden="true" />
 
-      <header className="topbar">
+      <header className="topbar topbar--meter">
         <RoundButton label="Vissza a kertbe" onClick={onBack}>
           <BackIcon />
         </RoundButton>
-        <h1 className="screen-title">Hány magot láttál?</h1>
+        <div className="topbar__title">
+          <h1 className="screen-title">Hány magot láttál?</h1>
+          <LevelMeter meter={meter} world="garden" justSolved={phase === 'solved'} />
+        </div>
         <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
           <SpeakerIcon />
         </RoundButton>
@@ -118,11 +126,13 @@ export function Flash({ onBack }: { onBack: () => void }) {
           );
         })}
         {phase === 'solved' && (
-          <button type="button" className="big-btn" onClick={next}>
+          <button type="button" className="big-btn" onClick={levelUp.advance}>
             Újra! <NextIcon />
           </button>
         )}
       </div>
+
+      {levelUp.open && <LevelUpCard meter={meter} world="garden" onNext={levelUp.finish} />}
     </div>
   );
 }

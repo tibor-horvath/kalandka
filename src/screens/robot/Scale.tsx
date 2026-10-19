@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { LevelMeter, LevelUpCard, useLevelUp } from '../../components/LevelMeter';
 import { FitBox } from '../../components/FitBox';
 import { useForm } from '../../components/Stage';
 import { Bolt, Crate, WeightBlock } from '../../components/robot';
@@ -26,10 +27,13 @@ import {
   type ScaleFeedback,
   type ScaleLevel,
   type Side,
-  type Weight
+  type Weight,
+  SCALE_LEVELS,
+  SCALE_ROUNDS_PER_LEVEL
 } from '../../games/robot/scale';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble, thud } from '../../lib/sound';
+import { evenLevels, levelMeter } from '../../state/levelMeter';
 import { useProgress } from '../../state/progress';
 
 // The scale, in board units.
@@ -462,7 +466,9 @@ function ChooseTaskView({ task, say, onDone, later }: TaskProps<ChooseTask>) {
 /** Mérleg: weigh, compare and balance on Csavar's scale. */
 export function Scale({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  const levelIndex = scaleLevelIndex(progress.scaleSolved);
+  // The solved count when this round started: the round keeps its level even after its win levels up.
+  const [startSolved] = useState(() => progress.scaleSolved);
+  const levelIndex = scaleLevelIndex(startSolved);
   const round = useMemo(() => buildScaleRound(levelIndex, progress.scaleRound), [levelIndex, progress.scaleRound]);
   const { level, tasks } = round;
   const [at, setAt] = useState(0);
@@ -515,16 +521,21 @@ export function Scale({ onBack }: { onBack: () => void }) {
   const task = tasks[at];
   const props = { level, say, onDone: done, later };
   const next = () => update((p) => ({ ...p, scaleRound: p.scaleRound + 1 }));
+  const meter = levelMeter(startSolved, evenLevels(SCALE_LEVELS.length, SCALE_ROUNDS_PER_LEVEL), solved);
+  const levelUp = useLevelUp(meter, next);
 
   return (
     <div className="screen screen--scale world--robot">
       <div className="floor" aria-hidden="true" />
 
-      <header className="topbar">
+      <header className="topbar topbar--meter">
         <RoundButton label="Vissza a műhelybe" onClick={onBack}>
           <BackIcon />
         </RoundButton>
-        <h1 className="screen-title">Mérleg</h1>
+        <div className="topbar__title">
+          <h1 className="screen-title">Mérleg</h1>
+          <LevelMeter meter={meter} world="robot" justSolved={solved} />
+        </div>
         <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
           <SpeakerIcon />
         </RoundButton>
@@ -556,11 +567,13 @@ export function Scale({ onBack }: { onBack: () => void }) {
           <span className="path-win__reward">
             +1 <Bolt size={34} /> csavar
           </span>
-          <button type="button" className="big-btn big-btn--robot" onClick={next}>
+          <button type="button" className="big-btn big-btn--robot" onClick={levelUp.advance}>
             Következő kör <NextIcon />
           </button>
         </div>
       )}
+
+      {levelUp.open && <LevelUpCard meter={meter} world="robot" onNext={levelUp.finish} />}
     </div>
   );
 }

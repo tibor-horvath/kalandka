@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Cloud, Drop, GrowingPlant, Pot, WateringCan } from '../components/art';
+import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
 import { useForm } from '../components/Stage';
 import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { CAN_DROPS, addDrop, feedback, growth, introSpeech, maxDropsFor, plantForRound, removeDrop, slotKinds } from '../games/water/logic';
+import { CAN_DROPS, PLANTS, addDrop, feedback, growth, introSpeech, maxDropsFor, plantForRound, removeDrop, slotKinds } from '../games/water/logic';
 import { numberCount } from '../lib/numbers';
 import { speak } from '../lib/speech';
+import { levelMeter } from '../state/levelMeter';
 import { useProgress } from '../state/progress';
-
-const DOTS = 5;
 
 export function Water({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
@@ -103,6 +103,9 @@ export function Water({ onBack }: { onBack: () => void }) {
     if (!pouring.current) change(removeDrop(count));
   };
   const next = () => update((p) => ({ ...p, waterRound: p.waterRound + 1 }));
+  // First every plant with its own 2–10 drops, then 11–20 drops in rows of five.
+  const meter = levelMeter(round, [PLANTS.length, 5], done);
+  const levelUp = useLevelUp(meter, next);
 
   const guide = (
     <GuideBubble mood={fb.mood} tone={fb.tone}>
@@ -112,7 +115,6 @@ export function Water({ onBack }: { onBack: () => void }) {
 
   const kinds = slotKinds(count, plant.target);
   const scale = growth(count, plant.target);
-  const dotIndex = round % DOTS;
 
   return (
     <div className="screen screen--water">
@@ -122,11 +124,7 @@ export function Water({ onBack }: { onBack: () => void }) {
         <RoundButton label="Vissza a kertbe" onClick={onBack}>
           <BackIcon />
         </RoundButton>
-        <div className="dots" aria-label={`${dotIndex + 1}. virág az ötből`}>
-          {Array.from({ length: DOTS }, (_, k) => (
-            <span key={k} className={`dot${k < dotIndex ? ' dot--done' : k === dotIndex ? ' dot--now' : ''}`} />
-          ))}
-        </div>
+        <LevelMeter meter={meter} world="garden" justSolved={done} />
         <RoundButton label="Meghallgatom újra" onClick={() => speak(`${introSpeech(plant)} ${fb.speech}`)}>
           <SpeakerIcon />
         </RoundButton>
@@ -216,13 +214,15 @@ export function Water({ onBack }: { onBack: () => void }) {
           <div className="panel__foot">
             {!done && <p className="panel__hint">Koppints egy cseppre, és elveszed. Koppints egy üres helyre, és adsz egyet.</p>}
             {done && (
-              <button type="button" className="big-btn" onClick={next}>
+              <button type="button" className="big-btn" onClick={levelUp.advance}>
                 Következő virág <NextIcon />
               </button>
             )}
           </div>
         </div>
       </div>
+
+      {levelUp.open && <LevelUpCard meter={meter} world="garden" onNext={levelUp.finish} />}
     </div>
   );
 }
