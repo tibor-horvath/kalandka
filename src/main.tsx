@@ -17,6 +17,7 @@ import './styles/robot.css';
 import App from './App';
 // After App (which pulls in parents.css), so the phone layouts override both.
 import './styles/phone.css';
+import { probeBiometric } from './lib/biometric';
 import { listenForInstall } from './lib/install';
 import { registerUpdates } from './lib/update';
 
@@ -24,6 +25,8 @@ import { registerUpdates } from './lib/update';
 // Best effort: browsers may decline (or grant silently once the app is installed).
 navigator.storage?.persist?.().catch(() => {});
 listenForInstall();
+// Known before the parents' gate first opens, so a fingerprint-first gate does not flash the question.
+void probeBiometric();
 registerUpdates();
 
 createRoot(document.getElementById('root')!).render(

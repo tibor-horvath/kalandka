@@ -1,4 +1,5 @@
 import { useState, useSyncExternalStore } from 'react';
+import { disableBiometric, enrollBiometric, useBiometric } from '../../lib/biometric';
 import { promptInstall, useInstallState } from '../../lib/install';
 import { hungarianVoices, onVoicesChanged, speak, type Speaker } from '../../lib/speech';
 import { DEFAULT_PROGRESS, useProgress } from '../../state/progress';
@@ -86,6 +87,8 @@ export function SettingsPage({ onLegal }: { onLegal: () => void }) {
         </div>
         <VoicePicker />
       </section>
+
+      <UnlockCard />
 
       <InstallCard />
 
@@ -185,6 +188,48 @@ function VoicePicker() {
         </>
       )}
     </details>
+  );
+}
+
+/** Opt-in fingerprint or face unlock; only shown where the device can do it. The math gate always stays. */
+function UnlockCard() {
+  const { available, on } = useBiometric();
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  if (!available) return null;
+
+  const toggle = async (want: boolean) => {
+    setFailed(false);
+    if (!want) return disableBiometric();
+    setBusy(true);
+    const ok = await enrollBiometric();
+    setBusy(false);
+    setFailed(!ok);
+  };
+
+  return (
+    <section className="pa-card" aria-labelledby="s-unlock">
+      <h2 id="s-unlock" className="pa-h2">
+        Szülői sarok zárja
+      </h2>
+      <Check
+        id="s-unlock-on"
+        checked={on || busy}
+        onChange={(v) => void toggle(v)}
+        title="Feloldás ujjlenyomattal"
+        hint="A szülői sarok a készülék ujjlenyomat-olvasójával vagy arcfelismerésével is nyílik. A szorzásos kérdés ugyanúgy megmarad."
+      />
+      <p className="pa-muted">
+        Az ujjlenyomat a készüléken marad, a Kalandka nem látja. A készülék a PIN-kódját is elfogadhatja helyette, ezért ha a gyerek ismeri a
+        képernyőzár kódját, ne kapcsold be.
+      </p>
+      {failed && (
+        <p className="pa-muted" role="status">
+          Nem sikerült beállítani. Próbáld újra, vagy maradj a szorzásos kérdésnél.
+        </p>
+      )}
+    </section>
   );
 }
 

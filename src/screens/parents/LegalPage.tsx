@@ -57,6 +57,10 @@ export function LegalPage() {
           közvetlenül a két eszköz között, a képernyőn keresztül kerülnek át, internetre és szerverre nem jutnak. A kamera képét csak a kód
           felismeréséhez használjuk, nem rögzítjük és nem tároljuk.
         </p>
+        <p className="pa-legal">
+          A <b>Feloldás ujjlenyomattal</b> funkció a készülék saját képernyőzárát használja. Az ujjlenyomatot vagy az arcképet a készülék
+          ellenőrzi, az alkalmazáshoz nem jut el; a Kalandka csak egy azonosítót tárol ezen az eszközön, amelyet a funkció kikapcsolásakor töröl.
+        </p>
 
         <h3 className="pa-h3">3. Tárhelyszolgáltatás</h3>
         <p className="pa-legal">
