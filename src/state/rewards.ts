@@ -15,7 +15,8 @@ import type { Progress } from './progress';
 import type { WorldId } from './worlds';
 
 // The reward loop: every solved task earns a seed; seeds are planted in the child's own garden
-// (Kiskert); plants grow as the child keeps playing; a grown garden brings visitors; and each new
+// (Kiskert); plants grow as the child keeps playing; a grown garden brings visitors; picked fruit
+// (and, once the garden is full, spare seeds) is made into treats for the pantry shelf; and each new
 // skill earns a sticker for the album. Grown bushes and trees also ask for care (see below), but
 // rewards are only ever added: nothing wilts, nothing is taken away, nothing is random and nothing
 // depends on time played.
@@ -36,8 +37,12 @@ export const PLANT_OPTIONS: PlantOption[] = [
   { id: 'tree', name: 'Körtefa', cost: 10, grows: 8 }
 ];
 
-/** Beds in the garden, five in a row like a ten-frame. */
-export const BEDS = 10;
+/** Beds in one plot, five in a row like a ten-frame. */
+export const PLOT_BEDS = 10;
+/** The Kiskert's plots: the second opens once every bed of the first is planted. */
+export const PLOTS = 2;
+/** Beds in the whole garden, both plots. */
+export const BEDS = PLOT_BEDS * PLOTS;
 
 export interface Bed {
   kind: PlantKind;
@@ -76,9 +81,25 @@ export function grownCount(p: Progress): number {
   return p.beds.filter((b): b is Bed => !!b && isGrown(b, p.seeds)).length;
 }
 
+/** Beds the child can plant in: the first plot, and the second too once the first is planted full. */
+export function openBeds(p: Progress): number {
+  const firstFull = Array.from({ length: PLOT_BEDS }, (_, i) => bedAt(p, i)).every(Boolean);
+  return firstFull ? BEDS : PLOT_BEDS;
+}
+
+/** Empty beds the child can plant in now, in order. */
+export function emptyBeds(p: Progress): number[] {
+  return Array.from({ length: openBeds(p) }, (_, i) => i).filter((i) => !bedAt(p, i));
+}
+
+/** Every bed of both plots is planted: spare seeds go to the pantry then. */
+export function gardenFull(p: Progress): boolean {
+  return openBeds(p) === BEDS && emptyBeds(p).length === 0;
+}
+
 export function canPlant(p: Progress, i: number, kind: PlantKind): boolean {
   const option = PLANT_OPTIONS.find((o) => o.id === kind);
-  return !!option && i >= 0 && i < BEDS && !bedAt(p, i) && seedBalance(p) >= option.cost;
+  return !!option && i >= 0 && i < openBeds(p) && !bedAt(p, i) && seedBalance(p) >= option.cost;
 }
 
 /** Plants in an empty bed; unchanged when the bed is taken or the seeds are not enough. */
@@ -173,9 +194,80 @@ export function waterAll(p: Progress): Progress {
   return thirstyBeds(p).reduce(water, p);
 }
 
+// ---------- the pantry (Kamra) ----------
+// Fruit in the basket is made into treats that stand on the pantry shelf for good: the child counts
+// out the fruit a recipe asks for. Once both plots are planted full, spare seeds bake a seed loaf, so
+// seeds and fruit always have a use. Making a treat is always the child's choice, like planting.
+
+export type TreatId = 'jam' | 'compote' | 'pie' | 'loaf';
+
+export interface Recipe {
+  id: TreatId;
+  name: string;
+  pears: number;
+  berries: number;
+  seeds: number;
+}
+
+export const RECIPES: Recipe[] = [
+  { id: 'jam', name: 'Áfonyalekvár', pears: 0, berries: 3, seeds: 0 },
+  { id: 'compote', name: 'Körtebefőtt', pears: 3, berries: 0, seeds: 0 },
+  { id: 'pie', name: 'Gyümölcspite', pears: 2, berries: 2, seeds: 0 },
+  { id: 'loaf', name: 'Magos kalács', pears: 0, berries: 0, seeds: 5 }
+];
+
+export function recipeOf(id: TreatId): Recipe {
+  return RECIPES.find((r) => r.id === id)!;
+}
+
+/** Pears in the basket: picked ones not yet made into treats. `pears` counts every pear ever picked. */
+export function basketPears(p: Progress): number {
+  return Math.max(0, p.pears - p.pearsUsed);
+}
+
+export function basketBerries(p: Progress): number {
+  return Math.max(0, p.berries - p.berriesUsed);
+}
+
+/** The seed loaf waits until there is nowhere left to plant, so seeds go to the garden first. */
+export function recipeOpen(p: Progress, id: TreatId): boolean {
+  return id !== 'loaf' || gardenFull(p);
+}
+
+export function canMake(p: Progress, id: TreatId): boolean {
+  const r = recipeOf(id);
+  return recipeOpen(p, id) && basketPears(p) >= r.pears && basketBerries(p) >= r.berries && seedBalance(p) >= r.seeds;
+}
+
+/** Makes a treat for the shelf; unchanged when the basket (or the seeds) are not enough. */
+export function make(p: Progress, id: TreatId): Progress {
+  if (!canMake(p, id)) return p;
+  const r = recipeOf(id);
+  return {
+    ...p,
+    pearsUsed: p.pearsUsed + r.pears,
+    berriesUsed: p.berriesUsed + r.berries,
+    seedsSpent: p.seedsSpent + r.seeds,
+    pantry: { ...p.pantry, [id]: (p.pantry[id] ?? 0) + 1 }
+  };
+}
+
+export function treatsOf(p: Progress, id: TreatId): number {
+  return p.pantry[id] ?? 0;
+}
+
+/** Treats on the shelf, all kinds. */
+export function pantryCount(p: Progress): number {
+  return RECIPES.reduce((n, r) => n + treatsOf(p, r.id), 0);
+}
+
+export function canMakeAnything(p: Progress): boolean {
+  return RECIPES.some((r) => canMake(p, r.id));
+}
+
 // ---------- visitors ----------
 
-export type VisitorId = 'hedgehog' | 'ladybug' | 'butterfly' | 'blackbird';
+export type VisitorId = 'hedgehog' | 'ladybug' | 'butterfly' | 'blackbird' | 'frog' | 'squirrel';
 
 export interface Visitor {
   id: VisitorId;
@@ -190,7 +282,9 @@ export const VISITORS: Visitor[] = [
   { id: 'hedgehog', name: 'Süni', after: 3, speech: 'Nézd, ki jött! Süni beköltözött a kertedbe. Itt marad veled.' },
   { id: 'ladybug', name: 'Katica', after: 5, speech: 'Nézd, ki jött! Katica leszállt a kertedbe. Itt marad veled.' },
   { id: 'butterfly', name: 'Pillangó', after: 8, speech: 'Nézd, ki jött! Egy pillangó táncol a virágaid között.' },
-  { id: 'blackbird', name: 'Rigó', after: 10, speech: 'Nézd, ki jött! A rigó fészket rakott a kertedben. Tele van a kert!' }
+  { id: 'blackbird', name: 'Rigó', after: 10, speech: 'Nézd, ki jött! A rigó fészket rakott a kertedben. Itt marad veled.' },
+  { id: 'frog', name: 'Béka', after: 14, speech: 'Nézd, ki jött! Egy kis béka ugrált be a kertedbe. Itt marad veled.' },
+  { id: 'squirrel', name: 'Mókus', after: 20, speech: 'Nézd, ki jött! Mókus beköltözött a kertedbe. Tele van a kert!' }
 ];
 
 export function visitorsOf(p: Progress): Visitor[] {

@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import type { PlantKind, Sticker, VisitorId } from '../state/rewards';
+import type { PlantKind, Sticker, TreatId, VisitorId } from '../state/rewards';
 import { gameOf } from '../state/rewards';
 
 // Artwork for the Kiskert and the sticker album. Plants share one 160 × 220 box standing on its
@@ -238,11 +238,116 @@ function Blackbird() {
   );
 }
 
+function Frog() {
+  return (
+    <g transform="translate(10 18)">
+      <ellipse cx="50" cy="58" rx="40" ry="24" fill="#5BAA4A" />
+      <ellipse cx="50" cy="66" rx="26" ry="14" fill="#CDE7A6" />
+      <circle cx="30" cy="30" r="14" fill="#5BAA4A" />
+      <circle cx="70" cy="30" r="14" fill="#5BAA4A" />
+      <circle cx="30" cy="28" r="8" fill="#FFFFFF" />
+      <circle cx="70" cy="28" r="8" fill="#FFFFFF" />
+      <circle cx="32" cy="29" r="4" fill="#10233A" />
+      <circle cx="72" cy="29" r="4" fill="#10233A" />
+      <path d="M34 52q16 10 32 0" stroke="#2E6B2A" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <circle cx="24" cy="50" r="5" fill="#F4A3C4" opacity="0.7" />
+      <circle cx="76" cy="50" r="5" fill="#F4A3C4" opacity="0.7" />
+      <path d="M12 76c-6 2-10 6-8 8h20M88 76c6 2 10 6 8 8H76" fill="#3F8F3A" stroke="#3F8F3A" strokeWidth="4" strokeLinejoin="round" />
+    </g>
+  );
+}
+
+function Squirrel() {
+  return (
+    <g transform="translate(6 4)">
+      <path d="M30 86C2 84-4 50 12 30c10-12 30-10 32 6 2 14-14 18-16 30-2 10 6 16 2 20z" fill="#C8642A" />
+      <path d="M18 38c6-8 18-8 20 2" stroke="#E9A06A" strokeWidth="5" fill="none" strokeLinecap="round" />
+      <ellipse cx="62" cy="66" rx="24" ry="22" fill="#D9741A" />
+      <ellipse cx="64" cy="72" rx="12" ry="12" fill="#F3D2A8" />
+      <circle cx="78" cy="38" r="18" fill="#D9741A" />
+      <path d="M68 24l2-14 10 10zM84 22l6-12 4 14z" fill="#B0561A" />
+      <circle cx="84" cy="36" r="4" fill="#10233A" />
+      <circle cx="95" cy="42" r="3.5" fill="#10233A" />
+      <circle cx="80" cy="46" r="4" fill="#F4A3C4" opacity="0.7" />
+      <ellipse cx="66" cy="60" rx="7" ry="8" fill="#8A5A3B" />
+      <path d="M62 52h8" stroke="#5E3A22" strokeWidth="3" strokeLinecap="round" />
+      <rect x="48" y="84" width="14" height="8" rx="4" fill="#B0561A" />
+      <rect x="70" y="84" width="14" height="8" rx="4" fill="#B0561A" />
+    </g>
+  );
+}
+
 /** A Kiskert visitor, drawn in a 120 × 100 box. */
 export function VisitorArt({ id, width = 120 }: { id: VisitorId; width?: number }) {
   return (
     <svg aria-hidden="true" className={`visitor-art visitor-art--${id}`} width={width} height={Math.round((width * 100) / 120)} viewBox="0 0 120 100">
-      {id === 'hedgehog' ? <Hedgehog /> : id === 'ladybug' ? <Ladybug /> : id === 'butterfly' ? <Butterfly /> : <Blackbird />}
+      {id === 'hedgehog' ? (
+        <Hedgehog />
+      ) : id === 'ladybug' ? (
+        <Ladybug />
+      ) : id === 'butterfly' ? (
+        <Butterfly />
+      ) : id === 'frog' ? (
+        <Frog />
+      ) : id === 'squirrel' ? (
+        <Squirrel />
+      ) : (
+        <Blackbird />
+      )}
+    </svg>
+  );
+}
+
+function Jar({ fill, fruit }: { fill: string; fruit: 'pear' | 'berry' }) {
+  return (
+    <g>
+      <rect x="14" y="12" width="44" height="12" rx="4" fill="#E0533A" />
+      <path d="M14 18h44" stroke="#FFFFFF" strokeWidth="2" strokeDasharray="4 4" />
+      <path d="M18 24h36v34a8 8 0 0 1-8 8H26a8 8 0 0 1-8-8z" fill="#EAF6FB" stroke="#9FCDF3" strokeWidth="3" />
+      <path d="M21 34h30v24a5 5 0 0 1-5 5H26a5 5 0 0 1-5-5z" fill={fill} />
+      {fruit === 'pear' ? (
+        <path d="M36 38c-3 0-4 3-4 5-3 2-5 5-5 8a9 8 0 0 0 18 0c0-3-2-6-5-8 0-2-1-5-4-5z" fill="#FFE08A" stroke="#B07A10" strokeWidth="1.5" />
+      ) : (
+        <g fill="#7FB6EE">
+          <circle cx="30" cy="44" r="4" />
+          <circle cx="42" cy="46" r="4" />
+          <circle cx="36" cy="54" r="4" />
+        </g>
+      )}
+      <path d="M24 28v8" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" opacity="0.8" />
+    </g>
+  );
+}
+
+/** A treat from the Kiskert's pantry, drawn in a 72 × 72 box. */
+export function TreatArt({ id, size = 72 }: { id: TreatId; size?: number }) {
+  return (
+    <svg aria-hidden="true" className="treat-art" width={size} height={size} viewBox="0 0 72 72">
+      {id === 'jam' && <Jar fill="#2E5FA8" fruit="berry" />}
+      {id === 'compote' && <Jar fill="#F5CF55" fruit="pear" />}
+      {id === 'pie' && (
+        <g>
+          <ellipse cx="36" cy="50" rx="30" ry="12" fill="#B9773D" />
+          <path d="M6 46c0-12 14-20 30-20s30 8 30 20c0 6-14 10-30 10S6 52 6 46z" fill="#E8A95C" />
+          <path d="M14 42h44M18 36h36M24 30h24M24 30l-6 16M36 28v18M48 30l6 16" stroke="#C98443" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="30" cy="39" r="3" fill="#2E5FA8" />
+          <circle cx="44" cy="35" r="3" fill="#2E5FA8" />
+          <circle cx="40" cy="43" r="3" fill="#FFC93C" />
+        </g>
+      )}
+      {id === 'loaf' && (
+        <g>
+          <path d="M8 50c0-16 12-26 28-26s28 10 28 26c0 6-4 8-8 8H16c-4 0-8-2-8-8z" fill="#C98443" />
+          <path d="M18 34c4 6 4 14 0 22M30 28c4 8 4 20 0 28M42 28c4 8 4 20 0 28M54 34c4 6 4 14 0 22" stroke="#A86A2E" strokeWidth="3" fill="none" strokeLinecap="round" />
+          <g fill="#F3D2A8">
+            <ellipse cx="24" cy="38" rx="2" ry="3" />
+            <ellipse cx="36" cy="34" rx="2" ry="3" />
+            <ellipse cx="48" cy="38" rx="2" ry="3" />
+            <ellipse cx="30" cy="46" rx="2" ry="3" />
+            <ellipse cx="42" cy="46" rx="2" ry="3" />
+          </g>
+        </g>
+      )}
     </svg>
   );
 }

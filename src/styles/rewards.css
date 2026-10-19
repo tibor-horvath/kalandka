@@ -452,3 +452,45 @@
 @media (prefers-reduced-motion: reduce) {
   .kbed__thirst { animation: none; }
 }
+
+/* Kiskert plots: tabs once the second plot is open. */
+.kplots { display: flex; gap: 10px; }
+.kplots__tab { height: 48px; padding: 0 22px; border: 3px solid transparent; border-radius: 24px; background: rgba(255, 255, 255, 0.55); color: var(--leaf-deep); font-size: 22px; font-weight: 800; cursor: pointer; }
+.kplots__tab.is-on { background: var(--paper); border-color: var(--grass-deep); box-shadow: 0 4px 0 var(--grass-deep); }
+.kplots + .kbeds { padding-top: 6px; }
+
+/* Kamra: the pantry button and its dialog. */
+.pantry-btn { min-height: 64px; padding: 0 16px 0 10px; border: 3px solid #ead9a8; border-radius: 22px; background: #fff8e4; color: var(--ink); box-shadow: 0 5px 0 #d9b968; display: flex; align-items: center; gap: 10px; font-size: 26px; font-weight: 800; cursor: pointer; }
+.pantry-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #d9b968; }
+.pantry-btn > span:nth-child(2) { flex: 1; text-align: left; }
+.pantry-btn.is-ready { border-color: var(--leaf); background: var(--good-tint); }
+.pantry-btn .water-btn__count { background: var(--paper); color: var(--oops-ink, var(--ink)); }
+
+.pantry { position: absolute; z-index: 6; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(221, 240, 250, 0.94); }
+.pantry__card { width: min(980px, 100%); max-height: 100%; overflow: auto; display: flex; flex-direction: column; gap: 14px; padding: 20px 24px 24px; border-radius: 32px; background: var(--paper); box-shadow: 0 6px 0 #ead9a8; animation: settle 0.3s ease-out both; }
+.pantry__top { display: flex; align-items: center; gap: 14px; }
+.pantry__title { flex: 1; font-size: 40px; font-weight: 800; color: var(--leaf-deep); }
+.pantry__top .pill--basket > span + svg { margin-left: 8px; }
+.pantry__recipes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.pantry__recipe { padding: 10px 8px 12px; border: 3px solid #d6e4ee; border-radius: 24px; background: #f2f6f9; color: var(--ink); display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; text-align: center; }
+.pantry__recipe.is-ready { border-color: var(--grass-deep); background: var(--good-tint); box-shadow: 0 4px 0 var(--grass-deep); }
+.pantry__recipe.is-ready:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--grass-deep); }
+.pantry__recipe.is-later .treat-art { opacity: 0.5; }
+.pantry__name { font-size: 21px; font-weight: 800; line-height: 1.05; }
+.pantry__things { min-height: 30px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px; }
+.pantry__thing { display: inline-flex; }
+.pantry__thing.is-missing { opacity: 0.3; filter: grayscale(1); }
+.pantry__hint { font-family: var(--body); font-size: 15px; font-weight: 800; color: var(--ink-soft); }
+.pantry__recipe.is-ready .pantry__hint { color: var(--leaf-deep); }
+.pantry__shelf { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-radius: 20px; background: #f6ead0; border-bottom: 10px solid #c98443; }
+.pantry__empty { font-family: var(--body); font-size: 18px; font-weight: 700; color: var(--ink-soft); text-align: center; padding: 8px 0; }
+.pantry__row { display: flex; align-items: flex-end; gap: 12px; }
+.pantry__jars { flex: 1; display: flex; flex-wrap: wrap; gap: 2px; }
+.pantry__jars > span { display: inline-flex; }
+.pantry__count { min-width: 44px; height: 44px; padding: 0 10px; border-radius: 22px; background: var(--paper); font-size: 24px; font-weight: 800; display: grid; place-items: center; }
+.is-phone .pantry { padding: 10px; }
+.is-phone .pantry__recipes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.is-phone .pantry__title { font-size: 30px; }
+
+/* The newer visitors stand still; tapping one still gives it a little hop. */
+.visitors__roam--frog, .visitors__roam--squirrel { animation: none; }

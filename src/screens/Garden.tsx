@@ -1,19 +1,31 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { Seed } from '../components/art';
-import { BerryIcon, CanIcon, DropIcon, GardenPlant, PearIcon, PlantIcon, VisitorArt } from '../components/garden';
+import { BerryIcon, CanIcon, DropIcon, GardenPlant, PearIcon, PlantIcon, TreatArt, VisitorArt } from '../components/garden';
 import { BackIcon, GuideBubble, RoundButton, SpeakerIcon } from '../components/ui';
 import { chime, fanfare, popBubble } from '../lib/sound';
-import { capitalize, numberAttr, numberCount } from '../lib/numbers';
+import { article, capitalize, numberAttr, numberCount } from '../lib/numbers';
 import { speak } from '../lib/speech';
 import type { Mood, Tone } from '../lib/types';
 import { useProgress } from '../state/progress';
 import {
-  BEDS,
   PLANT_OPTIONS,
+  PLOT_BEDS,
+  RECIPES,
   VISITORS,
+  basketBerries,
+  basketPears,
   bedAt,
+  canMake,
+  canMakeAnything,
   canPlant,
+  emptyBeds,
   fruitName,
+  gardenFull,
+  make,
+  openBeds,
+  pantryCount,
+  recipeOpen,
+  treatsOf,
   growAfter,
   growthOf,
   isThirsty,
@@ -28,7 +40,9 @@ import {
   visitorsOf,
   water,
   waterAll,
-  type PlantKind
+  type PlantKind,
+  type Recipe,
+  type TreatId
 } from '../state/rewards';
 
 interface Say {
@@ -48,9 +62,16 @@ function tasksLeft(n: number): string {
 export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () => void }) {
   const { progress, update } = useProgress();
   const balance = seedBalance(progress);
-  const empty = Array.from({ length: BEDS }, (_, i) => i).filter((i) => !bedAt(progress, i));
+  const empty = emptyBeds(progress);
   const thirsty = thirstyBeds(progress);
+  const plots = openBeds(progress) / PLOT_BEDS;
+  const pears = basketPears(progress);
+  const berries = basketBerries(progress);
   const [selected, setSelected] = useState<number | null>(() => (balance >= CHEAPEST ? (empty[0] ?? null) : null));
+  // The plot on show: the one with the next empty bed, so planting picks up where it left off.
+  const [plot, setPlot] = useState(() => Math.floor((empty[0] ?? 0) / PLOT_BEDS));
+  const [pantryOpen, setPantryOpen] = useState(false);
+  const showPantry = pears + berries > 0 || pantryCount(progress) > 0 || gardenFull(progress);
   const [say, setSay] = useState<Say>(() => opening());
   // The last plant or visitor the child tapped; the count restarts its little reaction on every tap.
   const [poke, setPoke] = useState<{ id: string; n: number } | null>(null);
@@ -72,8 +93,21 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
     if (ripeTotal(progress) > 0) {
       return { text: 'Érett a termés! Koppints rá, és szedd le.', speech: 'Érett a termés! Koppints a fára vagy a bokorra, és szedd le.', mood: 'cheer', tone: 'plain' };
     }
+    if (canMakeAnything(progress)) {
+      return {
+        text: 'Van elég termés! Főzzünk valamit a kamrában.',
+        speech: 'Van elég termés a kosárban! Koppints a kamrára, és főzzünk belőle valami finomat.',
+        mood: 'cheer',
+        tone: 'plain'
+      };
+    }
     if (empty.length === 0) {
-      return { text: 'Tele a kert! Nézd, milyen szép lett.', speech: 'Tele a kert! Nézd, milyen szép lett.', mood: 'cheer', tone: 'good' };
+      return {
+        text: 'Tele a kert! Nézd, milyen szép lett.',
+        speech: gardenFull(progress) ? 'Tele a kert! Nézd, milyen szép lett. A maradék magból kalácsot süthetünk a kamrában.' : 'Tele a kert! Nézd, milyen szép lett.',
+        mood: 'cheer',
+        tone: 'good'
+      };
     }
     if (balance < CHEAPEST) {
       const need = CHEAPEST - balance;
@@ -144,10 +178,22 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
     const name = PLANT_OPTIONS.find((o) => o.id === kind)!.name.toLowerCase();
     const after = plant(progress, selected, kind);
     update((p) => plant(p, selected, kind));
-    chime();
     // Ready for the next planting when there are seeds for it.
-    const nextBed = Array.from({ length: BEDS }, (_, i) => i).find((i) => !bedAt(after, i));
+    const nextBed = emptyBeds(after)[0];
     setSelected(nextBed !== undefined && seedBalance(after) >= CHEAPEST ? nextBed : null);
+    if (openBeds(after) > openBeds(progress)) {
+      // The first plot is planted full: the second one opens next to it.
+      fanfare();
+      setPlot(1);
+      tell({
+        text: 'Megtelt az első kert! Itt a második.',
+        speech: `Elültettük! Megtelt az első kert, mind a tíz ágyás. Nézd, kinyílt a második kert! Ott is tíz ágyás vár.`,
+        mood: 'cheer',
+        tone: 'good'
+      });
+      return;
+    }
+    chime();
     tell({
       text: 'Elültettük!',
       speech: `Elültettük! Ebből ${name} lesz. Minden megoldott feladattal nő egy kicsit. ${tasksLeft(growAfter(kind))}`,
@@ -158,9 +204,9 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
 
   const waterThirsty = () => {
     if (thirsty.length === 0) return;
-    const before = progress.pears + progress.berries;
+    const before = basketPears(progress) + basketBerries(progress);
     const after = waterAll(progress);
-    const moved = after.pears + after.berries - before;
+    const moved = basketPears(after) + basketBerries(after) - before;
     chime();
     update(waterAll);
     const fruit = moved > 0 ? ` A termést a kosárba tettük: ${numberAttr(moved)} darab.` : '';
@@ -192,12 +238,12 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
             <span className="album-btn__icon" aria-hidden="true" />
             <span className="album-btn__label">Matricáim</span>
           </button>
-          {progress.pears + progress.berries > 0 && (
-            <div className="pill pill--basket" aria-label={`A kosárban ${progress.pears} körte és ${progress.berries} áfonya`}>
+          {pears + berries > 0 && (
+            <div className="pill pill--basket" aria-label={`A kosárban ${pears} körte és ${berries} áfonya`}>
               <PearIcon size={26} />
-              <span>{progress.pears}</span>
+              <span>{pears}</span>
               <BerryIcon size={28} />
-              <span>{progress.berries}</span>
+              <span>{berries}</span>
             </div>
           )}
           <div className="pill" aria-label={`${balance} mag`}>
@@ -212,8 +258,28 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
 
       <div className="kiskert">
         <div className="kiskert__field">
+          {plots > 1 && (
+            <div className="kplots" role="tablist" aria-label="Kertek">
+              {Array.from({ length: plots }, (_, k) => (
+                <button
+                  key={k}
+                  type="button"
+                  role="tab"
+                  aria-selected={plot === k}
+                  className={`kplots__tab${plot === k ? ' is-on' : ''}`}
+                  onClick={() => {
+                    popBubble(1);
+                    setPlot(k);
+                  }}
+                >
+                  {k + 1}. kert
+                </button>
+              ))}
+            </div>
+          )}
           <div className="kbeds">
-            {Array.from({ length: BEDS }, (_, i) => {
+            {Array.from({ length: PLOT_BEDS }, (_, k) => {
+              const i = plot * PLOT_BEDS + k;
               const bed = bedAt(progress, i);
               const growth = bed ? growthOf(bed, progress.seeds) : 0;
               const needs = bed ? growAfter(bed.kind) : 0;
@@ -313,6 +379,22 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
               <SpeakerIcon />
             </RoundButton>
           </div>
+          {showPantry && (
+            <button
+              type="button"
+              className={`pantry-btn${canMakeAnything(progress) ? ' is-ready' : ''}`}
+              onClick={() => {
+                popBubble(2);
+                setPantryOpen(true);
+              }}
+            >
+              <TreatArt id="jam" size={44} />
+              <span>Kamra</span>
+              <span className="water-btn__count" aria-label={`${pantryCount(progress)} finomság a polcon`}>
+                {pantryCount(progress)}
+              </span>
+            </button>
+          )}
           {thirsty.length > 0 && (
             <button type="button" className="water-btn" onClick={waterThirsty}>
               <CanIcon />
@@ -349,12 +431,24 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
             })}
             {selected === null && empty.length > 0 && balance >= CHEAPEST && <p className="plant-options__pick">Koppints egy üres ágyásra!</p>}
           </div>
-          <p className="kiskert__note">
-            A palánta minden megoldott feladattal nő egy kicsit. A virág 3, a bokor 5, a fa 8 feladat alatt nő ki. A kinőtt bokor és fa
-            termést hoz; néhány feladat után megszomjazik, de sosem hervad el.
-          </p>
+          {/* With both care buttons up the panel is full: the note for grown-ups makes way. */}
+          {!(showPantry && thirsty.length > 0) && (
+            <p className="kiskert__note">
+              A palánta minden megoldott feladattal nő egy kicsit. A virág 3, a bokor 5, a fa 8 feladat alatt nő ki. A kinőtt bokor és fa
+              termést hoz; néhány feladat után megszomjazik, de sosem hervad el. A termésből a kamrában finomság lesz.
+            </p>
+          )}
         </aside>
       </div>
+
+      {pantryOpen && !visitor && (
+        <Pantry
+          onClose={() => {
+            popBubble(1);
+            setPantryOpen(false);
+          }}
+        />
+      )}
 
       {visitor && (
         <div className="visitor-pop" role="dialog" aria-modal="true" aria-labelledby="visitor-title">
@@ -371,6 +465,155 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+/** "2 körte és 1 áfonya": what a recipe still needs, for Csepi's line. */
+function shortOf(r: Recipe, pears: number, berries: number, seeds: number): string {
+  const parts = [
+    r.pears > pears ? `${r.pears - pears} körte` : '',
+    r.berries > berries ? `${r.berries - berries} áfonya` : '',
+    r.seeds > seeds ? `${r.seeds - seeds} mag` : ''
+  ].filter(Boolean);
+  return parts.join(' és ');
+}
+
+/** The recipe's ingredients as pictures to count: the ones already in the basket are bright, the rest faded. */
+function Ingredients({ r, pears, berries, seeds }: { r: Recipe; pears: number; berries: number; seeds: number }) {
+  const row = (n: number, have: number, icon: (k: number) => ReactNode) =>
+    Array.from({ length: n }, (_, k) => (
+      <span key={k} className={`pantry__thing${k < have ? '' : ' is-missing'}`}>
+        {icon(k)}
+      </span>
+    ));
+  return (
+    <span className="pantry__things" aria-hidden="true">
+      {row(r.pears, pears, () => <PearIcon size={24} />)}
+      {row(r.berries, berries, () => <BerryIcon size={26} />)}
+      {row(r.seeds, seeds, () => <Seed size={22} />)}
+    </span>
+  );
+}
+
+/** Kamra: the child makes the basket's fruit (and, once the garden is full, spare seeds) into treats for the shelf. */
+function Pantry({ onClose }: { onClose: () => void }) {
+  const { progress, update } = useProgress();
+  const pears = basketPears(progress);
+  const berries = basketBerries(progress);
+  const seeds = seedBalance(progress);
+  const total = pantryCount(progress);
+  const intro = canMakeAnything(progress)
+    ? 'Mit főzzünk? Válassz egy receptet!'
+    : total > 0
+      ? 'Nézd, mennyi finomság van a polcon!'
+      : 'Szedj termést a fákról és a bokrokról, és itt finomságot főzünk belőle.';
+  const [line, setLine] = useState(intro);
+  // The treat just made pops onto the shelf; the count restarts the pop on every new one.
+  const [fresh, setFresh] = useState<{ id: TreatId; n: number } | null>(null);
+
+  useEffect(() => {
+    speak(intro);
+    // Runs once per visit.
+  }, []);
+
+  const tell = (text: string, speech = text) => {
+    setLine(text);
+    speak(speech);
+  };
+
+  const choose = (r: Recipe) => {
+    if (!recipeOpen(progress, r.id)) {
+      popBubble(1);
+      tell('Ezt akkor sütjük, ha tele a kert.', `${r.name}: ezt akkor sütjük, ha mind a húsz ágyásban nő valami.`);
+      return;
+    }
+    if (!canMake(progress, r.id)) {
+      popBubble(1);
+      tell(`Ehhez még ${shortOf(r, pears, berries, seeds)} kell.`);
+      return;
+    }
+    // Csepi counts the ingredients out as they go into the pot.
+    const n = r.pears + r.berries + r.seeds;
+    const counted = Array.from({ length: n }, (_, k) => capitalize(numberCount(k + 1))).join('! ');
+    fanfare();
+    update((p) => make(p, r.id));
+    setFresh((f) => ({ id: r.id, n: (f?.n ?? 0) + 1 }));
+    tell(`Kész: ${r.name.toLowerCase()}!`, `${counted}! Kész ${article(r.name)} ${r.name.toLowerCase()}. Felkerült a polcra.`);
+  };
+
+  return (
+    <div className="pantry" role="dialog" aria-modal="true" aria-labelledby="pantry-title">
+      <div className="pantry__card">
+        <header className="pantry__top">
+          <RoundButton label="Vissza a kertbe" onClick={onClose}>
+            <BackIcon />
+          </RoundButton>
+          <h2 id="pantry-title" className="pantry__title">
+            Kamra
+          </h2>
+          <div className="pill pill--basket" aria-label={`A kosárban ${pears} körte és ${berries} áfonya, és ${seeds} mag`}>
+            <PearIcon size={26} />
+            <span>{pears}</span>
+            <BerryIcon size={28} />
+            <span>{berries}</span>
+            <Seed size={24} />
+            <span>{seeds}</span>
+          </div>
+        </header>
+
+        <div className="kiskert__say">
+          <GuideBubble mood="cheer" tone="plain" csepiWidth={56}>
+            {line}
+          </GuideBubble>
+          <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(line)}>
+            <SpeakerIcon />
+          </RoundButton>
+        </div>
+
+        <div className="pantry__recipes">
+          {RECIPES.map((r) => {
+            const open = recipeOpen(progress, r.id);
+            const ok = canMake(progress, r.id);
+            const hint = !open ? 'Ha tele a kert' : ok ? 'Elkészítem!' : `Még ${shortOf(r, pears, berries, seeds)}`;
+            return (
+              <button
+                key={r.id}
+                type="button"
+                className={`pantry__recipe${ok ? ' is-ready' : ''}${open ? '' : ' is-later'}`}
+                onClick={() => choose(r)}
+                aria-label={`${r.name}. ${hint}.`}
+              >
+                <TreatArt id={r.id} size={64} />
+                <span className="pantry__name">{r.name}</span>
+                <Ingredients r={r} pears={pears} berries={berries} seeds={seeds} />
+                <span className="pantry__hint">{hint}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="pantry__shelf" aria-label={`A polcon ${total} finomság`}>
+          {total === 0 && <p className="pantry__empty">Itt lesz a polc. Még üres.</p>}
+          {RECIPES.filter((r) => treatsOf(progress, r.id) > 0).map((r) => {
+            const n = treatsOf(progress, r.id);
+            // Up to ten stand on the shelf, like a ten-frame; past that the number tells the rest.
+            const shown = Math.min(n, 10);
+            return (
+              <div key={r.id} className="pantry__row" aria-label={`${r.name}: ${n}`}>
+                <span className="pantry__jars">
+                  {Array.from({ length: shown }, (_, k) => (
+                    <span key={k === shown - 1 && fresh?.id === r.id ? `new${fresh.n}` : k} className={k === shown - 1 && fresh?.id === r.id ? 'pop-in' : ''}>
+                      <TreatArt id={r.id} size={40} />
+                    </span>
+                  ))}
+                </span>
+                <span className="pantry__count">{n}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

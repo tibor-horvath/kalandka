@@ -14,7 +14,7 @@ import { speak } from '../lib/speech';
 import type { Mood } from '../lib/types';
 import { kidName, useActiveKid, useProfiles } from '../state/profiles';
 import { useProgress } from '../state/progress';
-import { BEDS, PLANT_OPTIONS, bedAt, markStickerSeen, newStickers, newVisitor, seedBalance } from '../state/rewards';
+import { PLANT_OPTIONS, canMakeAnything, emptyBeds, markStickerSeen, newStickers, newVisitor, seedBalance } from '../state/rewards';
 
 export type GameId = 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'trace' | 'pots';
 
@@ -123,7 +123,7 @@ export function Home({
   // A sticker earned in a game is celebrated here, one at a time, the earliest first.
   const sticker = newStickers(progress, 'garden')[0] ?? null;
   const balance = seedBalance(progress);
-  const canPlantNow = balance >= Math.min(...PLANT_OPTIONS.map((o) => o.cost)) && Array.from({ length: BEDS }, (_, i) => bedAt(progress, i)).some((b) => !b);
+  const canPlantNow = balance >= Math.min(...PLANT_OPTIONS.map((o) => o.cost)) && emptyBeds(progress).length > 0;
   const visitorWaiting = newVisitor(progress) !== null;
 
   const learned = progress.learnSolved;
@@ -332,7 +332,7 @@ export function Home({
           count={balance}
           unit="mag"
           cta="Ültetés"
-          badge={visitorWaiting ? 'Vendég jött!' : canPlantNow ? 'Ültethetsz!' : null}
+          badge={visitorWaiting ? 'Vendég jött!' : canPlantNow ? 'Ültethetsz!' : canMakeAnything(progress) ? 'Főzhetsz!' : null}
           onClick={openGarden}
         />
       </div>

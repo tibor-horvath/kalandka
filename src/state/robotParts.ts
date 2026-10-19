@@ -1,7 +1,8 @@
 import type { Progress } from './progress';
 
-// Robotépítő, Robotműhely's reward: every solved Robotút course earns a bolt; bolts buy parts for
-// the child's own robot; a robot with more new parts brings robot friends who stay. The robot also
+// Robotépítő, Robotműhely's reward: every solved task in the workshop earns a bolt; bolts buy parts
+// for the child's own robot; once the first robot has a few new parts a second robot comes to the
+// workbench, which buys parts of its own; more new parts bring robot friends who stay. The robot also
 // asks for care (battery and oil, below). As in the Kiskert, rewards are only ever added: a bought
 // part is the child's for good (swapping back is free), nothing is random and nothing depends on
 // time played.
@@ -26,7 +27,7 @@ export interface Part {
   id: string;
   slot: PartSlot;
   name: string;
-  /** 0: the robot has it from the start. */
+  /** 0: every robot has it from the start. */
   cost: number;
 }
 
@@ -34,27 +35,44 @@ export const PARTS: Part[] = [
   { id: 'head-round', slot: 'head', name: 'Kerek fej', cost: 0 },
   { id: 'head-square', slot: 'head', name: 'Szögletes fej', cost: 3 },
   { id: 'head-dome', slot: 'head', name: 'Üvegkupola', cost: 5 },
+  { id: 'head-ears', slot: 'head', name: 'Füles fej', cost: 6 },
   { id: 'antenna-rod', slot: 'antenna', name: 'Pálca', cost: 0 },
   { id: 'antenna-spring', slot: 'antenna', name: 'Rugó', cost: 2 },
   { id: 'antenna-star', slot: 'antenna', name: 'Csillag', cost: 4 },
+  { id: 'antenna-dish', slot: 'antenna', name: 'Parabola', cost: 6 },
   { id: 'body-box', slot: 'body', name: 'Doboz', cost: 0 },
   { id: 'body-barrel', slot: 'body', name: 'Hordó', cost: 4 },
   { id: 'body-heart', slot: 'body', name: 'Szívpanel', cost: 6 },
+  { id: 'body-gear', slot: 'body', name: 'Fogaskerék', cost: 8 },
   { id: 'arms-short', slot: 'arms', name: 'Rövid kar', cost: 0 },
   { id: 'arms-claw', slot: 'arms', name: 'Fogó', cost: 3 },
   { id: 'arms-spring', slot: 'arms', name: 'Rugós kar', cost: 5 },
+  { id: 'arms-magnet', slot: 'arms', name: 'Mágneskar', cost: 7 },
   { id: 'legs-feet', slot: 'legs', name: 'Talpak', cost: 0 },
   { id: 'legs-wheels', slot: 'legs', name: 'Kerekek', cost: 4 },
   { id: 'legs-rocket', slot: 'legs', name: 'Rakéta', cost: 7 },
+  { id: 'legs-tracks', slot: 'legs', name: 'Lánctalp', cost: 9 },
   { id: 'paint-teal', slot: 'paint', name: 'Türkiz', cost: 0 },
+  { id: 'paint-blue', slot: 'paint', name: 'Kék', cost: 0 },
   { id: 'paint-orange', slot: 'paint', name: 'Narancs', cost: 2 },
   { id: 'paint-purple', slot: 'paint', name: 'Lila', cost: 2 },
-  { id: 'paint-yellow', slot: 'paint', name: 'Sárga', cost: 2 }
+  { id: 'paint-yellow', slot: 'paint', name: 'Sárga', cost: 2 },
+  { id: 'paint-pink', slot: 'paint', name: 'Rózsaszín', cost: 3 },
+  { id: 'paint-green', slot: 'paint', name: 'Zöld', cost: 3 }
 ];
 
 export type RobotLook = Record<PartSlot, string>;
 
+/** 0: the first robot, 1: the second. */
+export type RobotIdx = 0 | 1;
+
 export const BASIC_LOOK: RobotLook = { head: 'head-round', antenna: 'antenna-rod', body: 'body-box', arms: 'arms-short', legs: 'legs-feet', paint: 'paint-teal' };
+
+/** Each robot's starting look; the second one starts blue, so the two are easy to tell apart. */
+export const BASIC_LOOKS: Record<RobotIdx, RobotLook> = { 0: BASIC_LOOK, 1: { ...BASIC_LOOK, paint: 'paint-blue' } };
+
+/** New parts on the first robot that bring the second robot to the workbench. */
+export const SECOND_ROBOT_AFTER = 6;
 
 export function partById(id: string): Part | undefined {
   return PARTS.find((p) => p.id === id);
@@ -69,64 +87,105 @@ export function boltBalance(p: Progress): number {
   return Math.max(0, p.bolts - p.boltsSpent);
 }
 
-export function owns(p: Progress, id: string): boolean {
-  const part = partById(id);
-  return !!part && (part.cost === 0 || p.robotOwned.includes(id));
+function ownedList(p: Progress, r: RobotIdx): string[] {
+  return (r === 1 ? p.robot2Owned : p.robotOwned) ?? [];
 }
 
-/** The robot as it looks now; anything unknown or not owned falls back to the starting part. */
-export function lookOf(p: Progress): RobotLook {
-  const look = { ...BASIC_LOOK };
+function savedLook(p: Progress, r: RobotIdx): Partial<RobotLook> | undefined {
+  return r === 1 ? p.robot2Look : p.robotLook;
+}
+
+function withRobot(p: Progress, r: RobotIdx, owned: string[], look: RobotLook): Progress {
+  return r === 1 ? { ...p, robot2Owned: owned, robot2Look: look } : { ...p, robotOwned: owned, robotLook: look };
+}
+
+/** Parts bought for one robot (the starting parts do not count). */
+export function boughtOn(p: Progress, r: RobotIdx): number {
+  return ownedList(p, r).filter((id) => (partById(id)?.cost ?? 0) > 0).length;
+}
+
+/** Parts bought so far for both robots: they bring the robot friends. */
+export function boughtCount(p: Progress): number {
+  return boughtOn(p, 0) + boughtOn(p, 1);
+}
+
+/** The second robot comes once the first has a few new parts; it stays for good. */
+export function secondRobotOpen(p: Progress): boolean {
+  return boughtOn(p, 0) >= SECOND_ROBOT_AFTER;
+}
+
+/** The second robot has come but Csavar has not introduced it yet. */
+export function secondRobotNew(p: Progress): boolean {
+  return secondRobotOpen(p) && !p.robot2Announced;
+}
+
+/** The robots on the workbench so far. */
+export function robotsOpen(p: Progress): RobotIdx[] {
+  return secondRobotOpen(p) ? [0, 1] : [0];
+}
+
+/** The robot on the workbench (the first one until the second has come). */
+export function activeRobot(p: Progress): RobotIdx {
+  return p.robotActive === 1 && secondRobotOpen(p) ? 1 : 0;
+}
+
+export function owns(p: Progress, id: string, r: RobotIdx = activeRobot(p)): boolean {
+  const part = partById(id);
+  return !!part && (part.cost === 0 || ownedList(p, r).includes(id));
+}
+
+/** A robot as it looks now; anything unknown or not owned falls back to its starting part. */
+export function lookOf(p: Progress, r: RobotIdx = activeRobot(p)): RobotLook {
+  const look = { ...BASIC_LOOKS[r] };
+  const saved = savedLook(p, r);
   for (const slot of PART_SLOTS) {
-    const id = p.robotLook?.[slot.id];
+    const id = saved?.[slot.id];
     const part = id ? partById(id) : undefined;
-    if (part && part.slot === slot.id && owns(p, id!)) look[slot.id] = id!;
+    if (part && part.slot === slot.id && owns(p, id!, r)) look[slot.id] = id!;
   }
   return look;
 }
 
-export function canBuy(p: Progress, id: string): boolean {
+export function canBuy(p: Progress, id: string, r: RobotIdx = activeRobot(p)): boolean {
   const part = partById(id);
-  return !!part && !owns(p, id) && boltBalance(p) >= part.cost;
+  return !!part && !owns(p, id, r) && boltBalance(p) >= part.cost;
 }
 
-/** Buys a part and puts it on; unchanged when it is already owned or the bolts are not enough. */
-export function buy(p: Progress, id: string): Progress {
-  if (!canBuy(p, id)) return p;
+/** Buys a part for a robot and puts it on; unchanged when it is already owned or the bolts are not enough. */
+export function buy(p: Progress, id: string, r: RobotIdx = activeRobot(p)): Progress {
+  if (!canBuy(p, id, r)) return p;
   const part = partById(id)!;
-  return { ...p, boltsSpent: p.boltsSpent + part.cost, robotOwned: [...p.robotOwned, id], robotLook: { ...lookOf(p), [part.slot]: id } };
+  return withRobot({ ...p, boltsSpent: p.boltsSpent + part.cost }, r, [...ownedList(p, r), id], { ...lookOf(p, r), [part.slot]: id });
 }
 
-/** Puts on a part the child already owns; free, and unchanged for one they do not own. */
-export function wear(p: Progress, id: string): Progress {
+/** Puts on a part the robot already owns; free, and unchanged for one it does not own. */
+export function wear(p: Progress, id: string, r: RobotIdx = activeRobot(p)): Progress {
   const part = partById(id);
-  if (!part || !owns(p, id)) return p;
-  return { ...p, robotLook: { ...lookOf(p), [part.slot]: id } };
+  if (!part || !owns(p, id, r)) return p;
+  return withRobot(p, r, ownedList(p, r), { ...lookOf(p, r), [part.slot]: id });
 }
 
-/** Parts bought so far (the starting parts do not count). */
-export function boughtCount(p: Progress): number {
-  return p.robotOwned.filter((id) => (partById(id)?.cost ?? 0) > 0).length;
+/** The cheapest part still to buy for a robot, or null once it has them all. */
+export function cheapestLeft(p: Progress, r: RobotIdx = activeRobot(p)): Part | null {
+  return PARTS.filter((part) => !owns(p, part.id, r)).sort((a, b) => a.cost - b.cost)[0] ?? null;
 }
 
-/** The cheapest part still to buy, or null once the child has them all. */
-export function cheapestLeft(p: Progress): Part | null {
-  return PARTS.filter((part) => !owns(p, part.id)).sort((a, b) => a.cost - b.cost)[0] ?? null;
-}
-
+/** Some part for some robot on the workbench is within the bolts. */
 export function canBuyAnything(p: Progress): boolean {
-  const next = cheapestLeft(p);
-  return !!next && boltBalance(p) >= next.cost;
+  return robotsOpen(p).some((r) => {
+    const next = cheapestLeft(p, r);
+    return !!next && boltBalance(p) >= next.cost;
+  });
 }
 
 // ---------- robot friends ----------
 
-export type FriendId = 'dog' | 'drone' | 'mini' | 'cat';
+export type FriendId = 'dog' | 'drone' | 'mini' | 'cat' | 'bird' | 'turtle';
 
 export interface Friend {
   id: FriendId;
   name: string;
-  /** Parts bought that bring it. */
+  /** Parts bought (for both robots together) that bring it. */
   after: number;
   /** Csavar's line when it arrives. */
   speech: string;
@@ -136,7 +195,9 @@ export const FRIENDS: Friend[] = [
   { id: 'dog', name: 'Kutyabot', after: 2, speech: 'Nézd, ki jött! Kutyabot beköltözött a műhelybe. Itt marad veled.' },
   { id: 'drone', name: 'Drón', after: 5, speech: 'Nézd, ki jött! Egy kis drón szállt le a műhelyben. Itt marad veled.' },
   { id: 'mini', name: 'Csavarka', after: 8, speech: 'Nézd, ki jött! Csavarka, a kistestvérem! Ő is itt marad veled.' },
-  { id: 'cat', name: 'Macskabot', after: 12, speech: 'Nézd, ki jött! Macskabot dorombol a műhelyben. Minden alkatrész a tiéd!' }
+  { id: 'cat', name: 'Macskabot', after: 12, speech: 'Nézd, ki jött! Macskabot dorombol a műhelyben. Itt marad veled.' },
+  { id: 'bird', name: 'Madárbot', after: 20, speech: 'Nézd, ki jött! Madárbot berepült a műhelybe. Itt marad veled.' },
+  { id: 'turtle', name: 'Teknősbot', after: 30, speech: 'Nézd, ki jött! Teknősbot lassan, de ideért. Itt marad veled!' }
 ];
 
 export function friendsOf(p: Progress): Friend[] {

@@ -18,14 +18,18 @@ export const PAINTS: Record<string, Paint> = {
   'paint-teal': { main: '#2E9C97', light: '#4FB7B3', deep: '#0C5F5C' },
   'paint-orange': { main: '#E8893A', light: '#F5AC66', deep: '#A85417' },
   'paint-purple': { main: '#7E6BD6', light: '#A08EEA', deep: '#4E3FA0' },
-  'paint-yellow': { main: '#E6B325', light: '#F5CF55', deep: '#9C7410' }
+  'paint-yellow': { main: '#E6B325', light: '#F5CF55', deep: '#9C7410' },
+  'paint-blue': { main: '#3D7BD9', light: '#6A9DE8', deep: '#1F4F9A' },
+  'paint-pink': { main: '#E2689A', light: '#F293B8', deep: '#A23A66' },
+  'paint-green': { main: '#4C9F45', light: '#73BE68', deep: '#2E6B2A' }
 };
 
 /** Where each head puts its top (for the antenna) and its face. */
 const HEADS: Record<string, { top: number; face: number }> = {
   'head-round': { top: 52, face: 91 },
   'head-square': { top: 54, face: 92 },
-  'head-dome': { top: 32, face: 104 }
+  'head-dome': { top: 32, face: 104 },
+  'head-ears': { top: 52, face: 91 }
 };
 
 function Antenna({ id, top }: { id: string; top: number }) {
@@ -48,6 +52,16 @@ function Antenna({ id, top }: { id: string; top: number }) {
       <g>
         <path d={`M100 ${top} V${cy + 10}`} stroke={STEEL} strokeWidth="5" strokeLinecap="round" />
         <polygon points={pts} fill={SUN} stroke="#C98A1A" strokeWidth="2" strokeLinejoin="round" />
+      </g>
+    );
+  }
+  if (id === 'antenna-dish') {
+    return (
+      <g>
+        <path d={`M100 ${top} V${top - 16}`} stroke={STEEL} strokeWidth="5" strokeLinecap="round" />
+        <path d={`M76 ${top - 34} Q100 ${top - 4} 124 ${top - 34} Z`} fill="#E3EBF4" stroke={STEEL} strokeWidth="4" strokeLinejoin="round" />
+        <path d={`M100 ${top - 22} L112 ${top - 42}`} stroke={STEEL} strokeWidth="3" strokeLinecap="round" />
+        <circle cx="112" cy={top - 44} r="5" fill={SUN} />
       </g>
     );
   }
@@ -93,6 +107,18 @@ function Head({ id, paint }: { id: string; paint: Paint }) {
       </g>
     );
   }
+  if (id === 'head-ears') {
+    return (
+      <g>
+        <path d="M54 70 L48 30 L84 56 Z M146 70 L152 30 L116 56 Z" fill={paint.deep} strokeLinejoin="round" />
+        <path d="M58 62 L55 42 L74 56 Z M142 62 L145 42 L126 56 Z" fill="#F79AB8" />
+        <rect x="50" y="52" width="100" height="80" rx="30" fill={paint.light} />
+        <rect x="62" y="66" width="76" height="50" rx="16" fill={INK} />
+        <circle cx="100" cy="102" r="3" fill="#F79AB8" />
+        {eyes}
+      </g>
+    );
+  }
   return (
     <g>
       <circle cx="46" cy="92" r="8" fill={STEEL} />
@@ -125,6 +151,18 @@ function Body({ id, paint }: { id: string; paint: Paint }) {
       </g>
     );
   }
+  if (id === 'body-gear') {
+    return (
+      <g>
+        <rect x="58" y="142" width="84" height="72" rx="14" fill={paint.main} />
+        {Array.from({ length: 8 }, (_, i) => (
+          <rect key={i} x="95" y="154" width="10" height="10" rx="2" fill={SUN} transform={`rotate(${i * 45} 100 178)`} />
+        ))}
+        <circle cx="100" cy="178" r="17" fill={SUN} />
+        <circle cx="100" cy="178" r="7" fill={paint.deep} />
+      </g>
+    );
+  }
   return (
     <g>
       <rect x="58" y="142" width="84" height="72" rx="14" fill={paint.main} />
@@ -151,6 +189,16 @@ function Arms({ id, paint }: { id: string; paint: Paint }) {
         <path d="M142 158 l8 8 l4 -10 l8 8 l4 -10 l8 8 l2 14" fill="none" stroke={STEEL} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
         <circle cx="24" cy="184" r="9" fill={paint.light} />
         <circle cx="176" cy="184" r="9" fill={paint.light} />
+      </g>
+    );
+  }
+  if (id === 'arms-magnet') {
+    return (
+      <g fill="none" strokeLinecap="round">
+        <path d="M60 158 L38 180 M140 158 L162 180" stroke={STEEL} strokeWidth="9" />
+        <path d="M24 182 v6 a12 12 0 0 0 24 0 v-6" stroke="#E0533A" strokeWidth="9" />
+        <path d="M152 182 v6 a12 12 0 0 0 24 0 v-6" stroke="#E0533A" strokeWidth="9" />
+        <path d="M24 180 v4 M48 180 v4 M152 180 v4 M176 180 v4" stroke="#E3EBF4" strokeWidth="9" />
       </g>
     );
   }
@@ -186,6 +234,18 @@ function Legs({ id }: { id: string }) {
       </g>
     );
   }
+  if (id === 'legs-tracks') {
+    return (
+      <g>
+        <rect x="84" y="212" width="32" height="16" rx="5" fill={STEEL} />
+        <rect x="46" y="226" width="108" height="40" rx="20" fill={INK} />
+        <rect x="52" y="232" width="96" height="28" rx="14" fill="#5E7184" />
+        {[66, 90, 110, 134].map((cx) => (
+          <circle key={cx} cx={cx} cy="246" r="9" fill={STEEL} />
+        ))}
+      </g>
+    );
+  }
   return (
     <g>
       <rect x="72" y="212" width="18" height="38" rx="6" fill={STEEL} />
@@ -212,7 +272,7 @@ export function RobotFigure({ look, width = 200, className }: { look: RobotLook;
   );
 }
 
-/** The robot as the child has built it so far. */
+/** The robot on the workbench, as the child has built it so far. */
 export function MyRobot({ progress, width }: { progress: Progress; width?: number }) {
   return <RobotFigure look={lookOf(progress)} width={width} />;
 }
@@ -301,6 +361,34 @@ export function FriendArt({ id, width = 120 }: { id: FriendId; width?: number })
           <path d="M44 62 L34 72 M76 62 L86 72" stroke={STEEL} strokeWidth="4" strokeLinecap="round" />
           <rect x="46" y="80" width="10" height="12" rx="4" fill={INK} />
           <rect x="64" y="80" width="10" height="12" rx="4" fill={INK} />
+        </g>
+      )}
+      {id === 'bird' && (
+        <g>
+          <path d="M30 50 L8 38 L14 58 Z" fill="#3D7BD9" />
+          <ellipse cx="54" cy="56" rx="30" ry="22" fill="#6A9DE8" />
+          <path d="M40 54 q14 14 28 0" fill="none" stroke="#1F4F9A" strokeWidth="4" strokeLinecap="round" />
+          <rect x="66" y="18" width="38" height="32" rx="14" fill="#6A9DE8" />
+          <rect x="72" y="25" width="26" height="16" rx="7" fill={INK} />
+          <circle cx="80" cy="33" r="3" fill={SCREEN} />
+          <circle cx="91" cy="33" r="3" fill={SCREEN} />
+          <path d="M104 30 L116 36 L104 42 Z" fill={SUN} />
+          <path d="M84 18 V8" stroke={STEEL} strokeWidth="4" strokeLinecap="round" />
+          <circle cx="84" cy="6" r="4" fill={SUN} />
+          <path d="M46 76 V90 M62 76 V90 M40 90 H52 M56 90 H68" stroke={STEEL} strokeWidth="4" strokeLinecap="round" />
+        </g>
+      )}
+      {id === 'turtle' && (
+        <g>
+          <rect x="16" y="66" width="12" height="20" rx="5" fill={STEEL} />
+          <rect x="70" y="66" width="12" height="20" rx="5" fill={STEEL} />
+          <path d="M10 70 C10 30 88 30 88 70 Z" fill="#4C9F45" />
+          <path d="M30 46 L49 40 L68 46 L64 64 H34 Z" fill="#73BE68" stroke="#2E6B2A" strokeWidth="3" strokeLinejoin="round" />
+          <rect x="6" y="66" width="86" height="10" rx="5" fill="#2E6B2A" />
+          <rect x="84" y="44" width="30" height="26" rx="11" fill="#73BE68" />
+          <rect x="89" y="50" width="20" height="13" rx="6" fill={INK} />
+          <circle cx="95" cy="56" r="2.6" fill={SCREEN} />
+          <circle cx="103" cy="56" r="2.6" fill={SCREEN} />
         </g>
       )}
       {id === 'cat' && (

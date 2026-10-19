@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../games/add/logic';
-import { markEarnedSeen, type Bed } from './rewards';
+import { markEarnedSeen, type Bed, type TreatId } from './rewards';
 import type { PartSlot } from './robotParts';
 import type { WorldId } from './worlds';
 
@@ -14,6 +14,11 @@ export interface Progress {
   /** Fruit picked in the Kiskert, kept for good (see the care section in rewards.ts). */
   pears: number;
   berries: number;
+  /** Fruit made into treats; the basket holds pears − pearsUsed and berries − berriesUsed. */
+  pearsUsed: number;
+  berriesUsed: number;
+  /** Treats on the pantry shelf, by kind (see RECIPES). */
+  pantry: Partial<Record<TreatId, number>>;
   /** Kiskert visitors already welcomed (see VISITORS). */
   visitorsSeen: number;
   /** Stickers already celebrated; the rest of the earned ones get the sticker animation. */
@@ -103,6 +108,13 @@ export interface Progress {
   robotOwned: string[];
   /** The part worn in each slot. */
   robotLook: Partial<Record<PartSlot, string>>;
+  /** The second robot's parts and look (see SECOND_ROBOT_AFTER); each robot buys its own parts. */
+  robot2Owned: string[];
+  robot2Look: Partial<Record<PartSlot, string>>;
+  /** The robot on the workbench: 0 or 1. */
+  robotActive: number;
+  /** Csavar has announced the second robot. */
+  robot2Announced: boolean;
   /** Robot friends welcomed so far. */
   robotFriendsSeen: number;
   /** Bolt count the robot's battery is measured from (see the care section in robotParts.ts). */
@@ -119,6 +131,9 @@ export const DEFAULT_PROGRESS: Progress = {
   beds: [],
   pears: 0,
   berries: 0,
+  pearsUsed: 0,
+  berriesUsed: 0,
+  pantry: {},
   visitorsSeen: 0,
   stickersSeen: [],
   garden: [],
@@ -175,6 +190,10 @@ export const DEFAULT_PROGRESS: Progress = {
   boltsSpent: 0,
   robotOwned: [],
   robotLook: {},
+  robot2Owned: [],
+  robot2Look: {},
+  robotActive: 0,
+  robot2Announced: false,
   robotFriendsSeen: 0,
   robotChargedAt: 0,
   robotOiledAt: 0,

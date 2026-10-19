@@ -13,7 +13,7 @@ import { speak } from '../../lib/speech';
 import { kidName, useActiveKid, useProfiles } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
 import { markStickerSeen, newStickers } from '../../state/rewards';
-import { boltBalance, canBuyAnything, friendsOf, newFriend } from '../../state/robotParts';
+import { boltBalance, canBuyAnything, friendsOf, newFriend, secondRobotNew } from '../../state/robotParts';
 
 export type RobotGameId = 'path' | 'sort' | 'scale' | 'seq';
 
@@ -93,7 +93,7 @@ export function RobotHome({
   const sortIdx = sortLevelIndex(progress.sortSolved);
   const scaleIdx = scaleLevelIndex(progress.scaleSolved);
   const seqIdx = seqLevelIndex(progress.seqSolved);
-  const workshopBadge = newFriend(progress) ? 'Barát jött!' : canBuyAnything(progress) ? 'Építhetsz!' : null;
+  const workshopBadge = newFriend(progress) ? 'Barát jött!' : secondRobotNew(progress) ? 'Új robot!' : canBuyAnything(progress) ? 'Építhetsz!' : null;
 
   return (
     <div className="screen screen--home screen--robot-home world--robot">

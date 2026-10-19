@@ -609,6 +609,14 @@
 .workshop__tag.is-on { background: var(--leaf); color: var(--paper); }
 .workshop__short { position: absolute; right: 10px; bottom: 8px; font-family: var(--body); font-size: 13px; font-weight: 700; color: #3e5872; }
 .workshop__panel .kiskert__note { font-size: 15px; }
+/* A slot with many parts (the colours) stands them in a compact four-wide grid, so they fit the panel. */
+.workshop__parts--many { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.workshop__parts--many .workshop__part { min-height: 0; padding: 6px 4px 8px; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; justify-items: center; row-gap: 2px; text-align: center; }
+.workshop__parts--many .workshop__part > svg { grid-row: auto; width: 46px; height: auto; }
+.workshop__parts--many .workshop__part-name { font-size: 16px; align-self: auto; }
+.workshop__parts--many .workshop__part .plant-option__cost { justify-self: center; font-size: 18px; }
+.workshop__parts--many .workshop__short { display: none; }
+.workshop__parts--many .workshop__tag { justify-self: center; }
 
 @media (prefers-reduced-motion: reduce) {
   .workshop__hop.is-poked { animation: none; }
@@ -676,3 +684,8 @@ button.workshop__robot { border: none; background: none; padding: 0; font: inher
 @media (prefers-reduced-motion: reduce) {
   .workshop__trick--wobble, .workshop__trick--spin, .workshop__trick--jump { animation: none; }
 }
+
+/* Robotépítő: switching between the robots once the second has come. */
+.workshop__robots { align-self: stretch; display: flex; justify-content: center; gap: 10px; }
+.workshop__robot-tab { padding: 4px 14px 4px 8px; border: 3px solid transparent; border-radius: 22px; background: #e3ebf4; color: var(--leaf-deep); display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 800; cursor: pointer; }
+.workshop__robot-tab.is-on { background: var(--paper); border-color: #138a86; box-shadow: 0 4px 0 #0b5c59; }

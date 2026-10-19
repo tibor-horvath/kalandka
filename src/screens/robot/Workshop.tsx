@@ -11,8 +11,13 @@ import {
   BATTERY_BARS,
   FRIENDS,
   PART_SLOTS,
+  SECOND_ROBOT_AFTER,
   TRICKS,
+  activeRobot,
   batteryOf,
+  boughtOn,
+  robotsOpen,
+  secondRobotNew,
   boltBalance,
   chargeOne,
   chargesToNextTrick,
@@ -32,8 +37,11 @@ import {
   wear,
   type Part,
   type PartSlot,
+  type RobotIdx,
   type TrickId
 } from '../../state/robotParts';
+
+const ROBOT_NAMES: Record<RobotIdx, string> = { 0: 'Első robot', 1: 'Második robot' };
 
 interface Say {
   text: string;
@@ -51,6 +59,8 @@ function boltsWord(n: number): string {
 export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () => void }) {
   const { progress, update } = useProgress();
   const balance = boltBalance(progress);
+  const robot = activeRobot(progress);
+  const robots = robotsOpen(progress);
   const look = lookOf(progress);
   const battery = batteryOf(progress);
   const squeaky = isSqueaky(progress);
@@ -58,7 +68,9 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
   const [say, setSay] = useState<Say>(() => opening());
   /** The friend the child tapped last; the count restarts its little hop on every tap. */
   const [poke, setPoke] = useState<{ id: string; n: number } | null>(null);
+  // A friend is welcomed first; the second robot's arrival waits until no friend is waiting.
   const friend = newFriend(progress);
+  const robotArrived = !friend && secondRobotNew(progress);
   const welcomed = friendsOf(progress).slice(0, progress.robotFriendsSeen);
   const nextFriend = FRIENDS[welcomed.length];
   const tricks = tricksOf(progress);
@@ -73,7 +85,24 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
       return { text: 'Nyikorog a karom. Kérek egy csepp olajat!', speech: 'Nyikorog a karom. Kérek egy csepp olajat! Koppints az olajozásra.', mood: 'think', tone: 'plain' };
     }
     const next = cheapestLeft(progress);
-    if (!next) return { text: 'Kész a robotod! Minden alkatrész a tiéd.', speech: 'Kész a robotod! Minden alkatrész a tiéd. Nézd, milyen szép lett!', mood: 'cheer', tone: 'good' };
+    if (!next) {
+      const other = robots.find((r) => r !== robot && cheapestLeft(progress, r));
+      if (other !== undefined) {
+        return { text: 'Kész ez a robot! Építsük a másikat.', speech: 'Kész ez a robot, minden alkatrész az övé! Koppints a másik robotra, és építsük tovább.', mood: 'cheer', tone: 'good' };
+      }
+      return { text: 'Kész a robotod! Minden alkatrész a tiéd.', speech: 'Kész a robotod! Minden alkatrész a tiéd. Nézd, milyen szép lett!', mood: 'cheer', tone: 'good' };
+    }
+    if (robots.length === 1) {
+      const left = SECOND_ROBOT_AFTER - boughtOn(progress, 0);
+      if (left > 0 && left <= 2 && balance >= next.cost) {
+        return {
+          text: `Még ${left} új alkatrész, és jön egy második robot!`,
+          speech: `Ha még ${left === 1 ? 'egy' : left} új alkatrészt felszerelsz, jön egy második robot is!`,
+          mood: 'cheer',
+          tone: 'plain'
+        };
+      }
+    }
     if (balance < next.cost) {
       const need = next.cost - balance;
       return { text: `Még ${need} csavar, és vehetünk új alkatrészt.`, speech: `Gyűjts még ${boltsWord(need)}t a Robotúton, és veszünk új alkatrészt!`, mood: 'smile', tone: 'plain' };
@@ -87,7 +116,7 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
   };
 
   useEffect(() => {
-    if (!friend) speak(say.speech);
+    if (!friend && !robotArrived) speak(say.speech);
     // Runs once per visit.
   }, []);
 
@@ -95,6 +124,10 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
   useEffect(() => {
     if (friend) speak(friend.speech);
   }, [friend?.id]);
+
+  useEffect(() => {
+    if (robotArrived) speak('Nézd! Az első robotod már olyan szép, hogy jött egy második robot is. Építsük meg őt is!');
+  }, [robotArrived]);
 
   const pick = (part: Part) => {
     if (look[part.slot] === part.id) {
@@ -183,6 +216,27 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
     update((p) => ({ ...p, robotFriendsSeen: p.robotFriendsSeen + 1 }));
   };
 
+  const switchTo = (r: RobotIdx) => {
+    popBubble(2);
+    if (r === robot) {
+      tell({ text: `Ez a ${ROBOT_NAMES[r].toLowerCase()}.`, speech: `Most a ${ROBOT_NAMES[r].toLowerCase()}ot építjük.`, mood: 'smile', tone: 'plain' });
+      return;
+    }
+    update((p) => ({ ...p, robotActive: r }));
+    tell({ text: `Jöhet a ${ROBOT_NAMES[r].toLowerCase()}!`, speech: `Jöhet a ${ROBOT_NAMES[r].toLowerCase()}! Minden robotnak saját alkatrészei vannak.`, mood: 'cheer', tone: 'plain' });
+  };
+
+  const meetSecond = () => {
+    fanfare();
+    update((p) => ({ ...p, robot2Announced: true, robotActive: 1 }));
+    tell({
+      text: 'Építsük meg a második robotot!',
+      speech: 'Itt a második robot! Ő még csak kék. Válassz neki alkatrészeket. Az első robotodhoz bármikor visszamehetsz.',
+      mood: 'cheer',
+      tone: 'good'
+    });
+  };
+
   const slotName = PART_SLOTS.find((s) => s.id === slot)!.name;
 
   return (
@@ -211,6 +265,24 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
 
       <div className="workshop">
         <div className="workshop__stage">
+          {robots.length > 1 && (
+            <div className="workshop__robots" role="tablist" aria-label="Robotjaid">
+              {robots.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  role="tab"
+                  aria-selected={robot === r}
+                  aria-label={ROBOT_NAMES[r]}
+                  className={`workshop__robot-tab${robot === r ? ' is-on' : ''}`}
+                  onClick={() => switchTo(r)}
+                >
+                  <RobotFigure look={lookOf(progress, r)} width={46} />
+                  <span>{r + 1}.</span>
+                </button>
+              ))}
+            </div>
+          )}
           <div className="robot-care">
             <div className="robot-care__battery" role="img" aria-label={`Elem: ${battery} csík az ötből`}>
               {Array.from({ length: BATTERY_BARS }, (_, k) => (
@@ -297,7 +369,7 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
             ))}
           </div>
 
-          <div className="workshop__parts" role="tabpanel" aria-label={slotName}>
+          <div className={`workshop__parts${partsIn(slot).length > 4 ? ' workshop__parts--many' : ''}`} role="tabpanel" aria-label={slotName}>
             {partsIn(slot).map((part) => {
               const mine = owns(progress, part.id);
               const on = look[slot] === part.id;
@@ -327,7 +399,8 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
             })}
           </div>
           <p className="kiskert__note">
-            Minden megoldott Robotút-pálya egy csavar. Amit megvettél, az a tiéd marad: bármikor visszacserélheted. {boughtCount(progress)} új alkatrészed van.
+            Minden megoldott feladat a műhelyben egy csavar. Amit megvettél, az a tiéd marad: bármikor visszacserélheted. {boughtCount(progress)} új
+            alkatrészed van.{robots.length === 1 ? ` ${SECOND_ROBOT_AFTER} új alkatrésznél jön egy második robot.` : ' Minden robotnak saját alkatrészei vannak.'}
           </p>
         </aside>
       </div>
@@ -335,7 +408,9 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
       {friend && (
         <div className="visitor-pop" role="dialog" aria-modal="true" aria-labelledby="friend-title">
           <div className="visitor-pop__rays" aria-hidden="true" />
-          <p className="visitor-pop__kicker">{friend.after} új alkatrész van a robotodon</p>
+          <p className="visitor-pop__kicker">
+            {friend.after} új alkatrész van a {robots.length > 1 ? 'robotjaidon' : 'robotodon'}
+          </p>
           <h2 id="friend-title" className="visitor-pop__title">
             {friend.name} beköltözött!
           </h2>
@@ -344,6 +419,22 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
           </div>
           <button type="button" className="big-btn" onClick={welcome} autoFocus>
             Szia, {friend.name}!
+          </button>
+        </div>
+      )}
+
+      {robotArrived && (
+        <div className="visitor-pop" role="dialog" aria-modal="true" aria-labelledby="robot2-title">
+          <div className="visitor-pop__rays" aria-hidden="true" />
+          <p className="visitor-pop__kicker">{SECOND_ROBOT_AFTER} új alkatrész van az első robotodon</p>
+          <h2 id="robot2-title" className="visitor-pop__title">
+            Itt egy második robot!
+          </h2>
+          <div className="visitor-pop__art">
+            <RobotFigure look={lookOf(progress, 1)} width={170} />
+          </div>
+          <button type="button" className="big-btn" onClick={meetSecond} autoFocus>
+            Építsük meg!
           </button>
         </div>
       )}
