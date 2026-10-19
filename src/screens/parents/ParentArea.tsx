@@ -78,24 +78,31 @@ const PAGES: { id: Exclude<ParentPage, 'legal'>; label: string; icon: ReactNode 
   }
 ];
 
-/** On a shared device: whose overview, time and levels the page shows. */
-function KidSwitch({ viewId, onView }: { viewId: string; onView: (id: string) => void }) {
+/**
+ * On a shared device: whose overview, time and levels the page shows.
+ * It stays at the top while the page scrolls; once scrolled it turns into a compact header
+ * with the page title, and the other children shrink to their avatars.
+ */
+function KidSwitch({ viewId, onView, title, stuck }: { viewId: string; onView: (id: string) => void; title: string; stuck: boolean }) {
   const { profiles } = useProfiles();
   return (
-    <div className="pa-kidbar" role="radiogroup" aria-label="Melyik gyerek?">
-      {profiles.kids.map((kid) => (
-        <button
-          key={kid.id}
-          type="button"
-          role="radio"
-          aria-checked={kid.id === viewId}
-          className={`pa-kidbar__kid${kid.id === viewId ? ' is-on' : ''}`}
-          onClick={() => onView(kid.id)}
-        >
-          <Avatar id={kid.avatar} size={32} />
-          {kidName(kid)}
-        </button>
-      ))}
+    <div className={`pa-kidbar${stuck ? ' is-stuck' : ''}`}>
+      <span className="pa-kidbar__title" aria-hidden={!stuck}>{title}</span>
+      <div className="pa-kidbar__kids" role="radiogroup" aria-label="Melyik gyerek?">
+        {profiles.kids.map((kid) => (
+          <button
+            key={kid.id}
+            type="button"
+            role="radio"
+            aria-checked={kid.id === viewId}
+            className={`pa-kidbar__kid${kid.id === viewId ? ' is-on' : ''}`}
+            onClick={() => onView(kid.id)}
+          >
+            <Avatar id={kid.avatar} size={32} />
+            <span className="pa-kidbar__name">{kidName(kid)}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -107,6 +114,7 @@ export function ParentArea({ start = 'overview', onClose }: { start?: ParentStar
   // Opens on the child who is playing; parents can look at the others without changing who plays.
   const [viewId, setViewId] = useState(profiles.activeId);
   const shownId = profiles.kids.some((k) => k.id === viewId) ? viewId : profiles.activeId;
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -154,7 +162,7 @@ export function ParentArea({ start = 'overview', onClose }: { start?: ParentStar
           Vissza a játékhoz
         </button>
       </nav>
-      <main className="pa-main">
+      <main className="pa-main" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 12)}>
         {page === 'legal' ? (
           <LegalPage />
         ) : page === 'kids' ? (
@@ -164,7 +172,14 @@ export function ParentArea({ start = 'overview', onClose }: { start?: ParentStar
             }} />
         ) : (
           <KidScope kidId={shownId}>
-            {profiles.kids.length > 1 && <KidSwitch viewId={shownId} onView={setViewId} />}
+            {profiles.kids.length > 1 && (
+              <KidSwitch
+                viewId={shownId}
+                onView={setViewId}
+                title={PAGES.find((p) => p.id === page)?.label ?? ''}
+                stuck={scrolled}
+              />
+            )}
             {page === 'overview' && <Overview onGo={setPage} />}
             {page === 'time' && <TimePage />}
             {page === 'levels' && <LevelsPage />}

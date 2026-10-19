@@ -664,6 +664,16 @@
 .stage--portrait .pa-kidbar { padding-top: 72px; }
 .stage--landscape .pa-kidbar { padding: 14px 18px 0; }
 .is-phone .pa-kidbar + .pa-page { padding-top: 14px; }
+.is-phone .pa-kidbar.is-stuck { padding-top: 7px; padding-bottom: 7px; }
+.stage--landscape .pa-kidbar.is-stuck { padding-top: 7px; padding-bottom: 7px; }
+/* Portrait: the top padding clears the back button; stuck, that padding slides out of view and the
+   children sit left of the back button (which stays above the bar). No room for the title here. */
+.stage--portrait .pa-kidbar { top: -62px; padding-bottom: 8px; justify-content: flex-start; }
+.stage--portrait .pa-kidbar.is-stuck { padding-top: 72px; padding-bottom: 8px; padding-right: 16px; }
+.stage--portrait .pa-kidbar.is-stuck .pa-kidbar__title { display: none; }
+.stage--portrait .pa-kidbar.is-stuck .pa-kidbar__kids { max-width: calc(100% - 190px); overflow-x: auto; }
+.stage--portrait .pa-kidbar + .pa-page { padding-top: 6px; }
+.stage--portrait .pa-nav__back { z-index: 2; }
 .stage--portrait .pa-nav__item { font-size: 11px; }
 .is-phone .pa-kid { flex-wrap: wrap; gap: 10px 14px; padding: 14px 16px; }
 .is-phone .pa-kid > svg { width: 48px; height: 48px; }

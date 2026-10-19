@@ -208,10 +208,19 @@
 .gate__cancel { border: none; background: none; color: #1f6fc0; font-family: var(--body); font-size: 15px; font-weight: 800; padding: 8px 12px; cursor: pointer; }
 
 /* children: whose page this is (shared device) */
-.pa-kidbar { display: flex; flex-wrap: wrap; gap: 8px; padding: 22px 40px 0; }
+/* Sticks to the top of the scrolling page. Stuck, only its look changes, never its height, so the page doesn't jump. */
+.pa-kidbar { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 40px 0; background: var(--pa-bg); transition: background-color 0.15s, box-shadow 0.15s; }
+.pa-kidbar.is-stuck { padding-top: 11px; padding-bottom: 11px; background: #ffffff; box-shadow: 0 1px 0 var(--pa-line), 0 4px 12px rgba(16, 35, 58, 0.06); }
 .pa-kidbar + .pa-page { padding-top: 18px; }
-.pa-kidbar__kid { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px 0 6px; border-radius: 22px; border: 2px solid var(--pa-line); background: #ffffff; color: var(--pa-ink); font-size: 16px; font-weight: 800; cursor: pointer; }
+.pa-kidbar__title { display: none; min-width: 0; font-family: var(--display); font-size: 26px; font-weight: 800; line-height: 44px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pa-kidbar.is-stuck .pa-kidbar__title { display: block; }
+.pa-kidbar__kids { display: flex; flex-wrap: wrap; gap: 8px; }
+.pa-kidbar.is-stuck .pa-kidbar__kids { flex-wrap: nowrap; gap: 4px; padding: 4px; margin: -4px; border-radius: 26px; background: var(--pa-bg); }
+.pa-kidbar__kid { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px 0 6px; border-radius: 22px; border: 2px solid var(--pa-line); background: #ffffff; color: var(--pa-ink); font-size: 16px; font-weight: 800; cursor: pointer; flex: none; }
 .pa-kidbar__kid.is-on { border-color: var(--pa-accent); background: var(--pa-accent); color: #ffffff; }
+.pa-kidbar.is-stuck .pa-kidbar__kid:not(.is-on) { width: 44px; padding: 0; justify-content: center; border-color: transparent; background: transparent; }
+.pa-kidbar.is-stuck .pa-kidbar__kid:not(.is-on):hover { background: #ffffff; }
+.pa-kidbar.is-stuck .pa-kidbar__kid:not(.is-on) .pa-kidbar__name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* children page */
 .pa-kids { margin: 0; padding: 0; list-style: none; background: var(--pa-card); border-radius: 20px; display: flex; flex-direction: column; }
