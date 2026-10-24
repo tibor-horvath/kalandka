@@ -25,7 +25,7 @@
 .screen--robot-home .plot--play > svg { margin-bottom: 8px; }
 
 .stage--landscape .screen--robot-home .plot { height: 150px; }
-.is-phone .screen--robot-home .plot > svg.path-art, .is-phone .screen--robot-home .plot > svg.sort-art, .is-phone .screen--robot-home .plot > svg.scale-art, .is-phone .screen--robot-home .plot > svg.seq-art, .is-phone .screen--robot-home .plot > svg.mirror-art { width: 120px; height: auto; }
+.is-phone .screen--robot-home .plot > svg.path-art, .is-phone .screen--robot-home .plot > svg.sort-art, .is-phone .screen--robot-home .plot > svg.scale-art, .is-phone .screen--robot-home .plot > svg.seq-art, .is-phone .screen--robot-home .plot > svg.mirror-art, .is-phone .screen--robot-home .plot > svg.code-art { width: 120px; height: auto; }
 .is-phone .screen--robot-home .plot--locked > svg { width: 40px; height: 40px; }
 /* A short portrait card keeps the skill to one line: the lock already says the machine is coming. */
 @container plot (max-height: 124px) { .screen--robot-home .plot__soon { display: none; } }
@@ -860,3 +860,87 @@ button.workshop__robot { border: none; background: none; padding: 0; font: inher
 .workshop__robots { align-self: stretch; display: flex; justify-content: center; gap: 10px; }
 .workshop__robot-tab { padding: 4px 14px 4px 8px; border: 3px solid transparent; border-radius: 22px; background: #e3ebf4; color: var(--leaf-deep); display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 800; cursor: pointer; }
 .workshop__robot-tab.is-on { background: var(--paper); border-color: #138a86; box-shadow: 0 4px 0 #0b5c59; }
+
+/* ---------- Kódzár ----------
+   A crate shut with a code lock: the code on a light strip, the slots under it, the code key to its left.
+   The lock opens once (the shackle lifts, the lid tips, a bolt sits inside); nothing moves while it waits. */
+.screen--code { display: flex; flex-direction: column; }
+.screen--code .topbar { flex: none; }
+.screen--code .screen-title { color: var(--leaf-deep); }
+.code-machine { position: relative; flex: 1 1 auto; min-height: 0; display: flex; justify-content: center; align-items: center; padding: 6px 40px 0; }
+.code-stage { display: flex; align-items: center; justify-content: center; gap: 28px; box-sizing: border-box; animation: settle 0.35s ease-out both; }
+.code-stage--fold { flex-wrap: wrap; align-content: center; row-gap: 24px; }
+
+.code-key { flex: none; width: 250px; background: var(--paper); border-radius: 26px; box-shadow: 0 8px 0 #b8c8da; padding: 12px 14px 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; }
+.code-key__head { font-family: var(--display); font-size: 22px; font-weight: 800; color: var(--leaf-deep); text-align: center; line-height: 1; }
+.code-key__row { display: flex; align-items: center; justify-content: space-between; height: 60px; padding: 0 14px; border: 0; border-radius: 18px; background: #f1f5fa; cursor: pointer; }
+.code-key__row svg { display: block; }
+.code-key__row:active { transform: scale(0.97); }
+.code-key__row.is-glow { background: #fff4d1; box-shadow: 0 0 0 5px #ffe08a; animation: hint-glow 0.9s ease-in-out 2; }
+.code-key--faded .code-key__row:not(.is-glow) { opacity: 0.5; }
+.code-key__cover { width: 52px; height: 52px; border-radius: 14px; border: 4px dashed var(--leaf); background: var(--paper); box-sizing: border-box; display: grid; place-items: center; font-family: var(--display); font-size: 32px; font-weight: 800; color: var(--leaf); line-height: 1; }
+
+.code-note { position: relative; flex: none; width: 176px; padding: 24px 14px 16px; border: 0; border-radius: 10px; background: #fff6c9; box-shadow: 0 6px 0 #e6d48c; transform: rotate(-3deg); display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+.code-note.is-glow { box-shadow: 0 6px 0 #e6d48c, 0 0 0 6px #ffe08a; }
+.code-note__pin { position: absolute; top: -10px; left: 50%; margin-left: -11px; width: 22px; height: 22px; border-radius: 11px; background: var(--leaf); border: 4px solid var(--leaf-deep); box-sizing: border-box; }
+.code-note__row { display: flex; gap: 8px; }
+.code-note svg { display: block; }
+
+.code-lock { position: relative; z-index: 1; padding: 12px 22px 16px; background: #5e7184; border: 6px solid #3e5872; border-radius: 26px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.code-lock__code { display: flex; gap: 14px; padding: 6px 14px; border-radius: 42px; background: #eef3f8; }
+.code-lock__slots { display: flex; gap: 14px; padding: 0 14px; }
+.code-sign { width: 72px; height: 72px; padding: 0; border: 0; border-radius: 50%; background: transparent; display: grid; place-items: center; cursor: pointer; }
+.code-sign svg { display: block; }
+.code-sign:active { transform: scale(0.94); }
+.code-sign.is-glow { background: #fff4d1; box-shadow: 0 0 0 6px #ffe08a; animation: hint-glow 0.9s ease-in-out 2; }
+.code-slot { position: relative; width: 72px; height: 72px; border-radius: 18px; background: #4c6075; border: 4px solid #8fa3b8; box-sizing: border-box; display: grid; place-items: center; }
+.code-slot svg { display: block; }
+.code-slot.is-now { background: var(--paper); border: 5px dashed var(--leaf); }
+.code-slot__mark { font-family: var(--display); font-size: 44px; font-weight: 800; color: var(--leaf); line-height: 1; }
+.code-slot.is-right { background: var(--good-tint); border: 5px solid var(--leaf); }
+.code-slot.is-right > svg { animation: answer-pop 0.5s cubic-bezier(.3, 1.4, .5, 1); }
+.code-slot.is-wrong { background: var(--oops-tint); border: 5px solid var(--oops); animation: not-yet 0.48s ease-in-out; }
+.code-slot .seq-miss { top: -14px; right: -14px; }
+
+.code-crate { position: relative; flex: none; padding: 104px 30px 22px; }
+.code-crate::before { content: ""; position: absolute; left: 0; right: 0; top: 52px; bottom: 0; background: #d9a35f; border: 6px solid #9c6a2f; border-radius: 22px; box-sizing: border-box; }
+.code-crate__shackle { position: absolute; top: 0; left: 50%; margin-left: -48px; display: block; transition: transform 0.35s ease-out; }
+.code-crate__lid { position: absolute; left: 0; right: 0; top: 52px; height: 42px; background: #c98f4e; border: 6px solid #9c6a2f; border-radius: 20px 20px 10px 10px; box-sizing: border-box; transform-origin: 4% 100%; transition: transform 0.45s cubic-bezier(.34, 1.56, .64, 1) 0.15s; }
+.code-crate__inside { position: absolute; left: 14px; right: 14px; top: 86px; height: 14px; border-radius: 6px; background: #7a4e22; opacity: 0; transition: opacity 0.2s 0.15s; }
+.code-crate__bolt { position: absolute; z-index: 2; left: 68%; top: 22px; animation: tick-grow 0.4s cubic-bezier(.3, 1.4, .5, 1) 0.4s both; }
+.code-crate__bolt svg { display: block; }
+.code-crate.is-open .code-crate__shackle { transform: translateY(-18px); }
+.code-crate.is-open .code-crate__lid { transform: rotate(-8deg) translateY(-4px); }
+.code-crate.is-open .code-crate__inside { opacity: 1; }
+
+.code-radio { position: relative; flex: none; padding: 62px 30px 24px; }
+.code-radio::before { content: ""; position: absolute; left: 0; right: 0; top: 36px; bottom: 0; background: #4fb7b3; border: 6px solid #0c5f5c; border-radius: 28px; box-sizing: border-box; }
+.code-radio__antenna { position: absolute; top: 4px; right: 56px; width: 8px; height: 36px; border-radius: 4px; background: #3e5872; }
+.code-radio__antenna::after { content: ""; position: absolute; top: -10px; left: -6px; width: 20px; height: 20px; border-radius: 10px; background: var(--sun); border: 3px solid #a97c00; box-sizing: border-box; }
+.code-radio.is-sent .code-radio__antenna::after { animation: answer-pop 0.6s cubic-bezier(.3, 1.4, .5, 1) 2; }
+.code-dog { position: relative; flex: none; align-self: flex-end; margin-bottom: 16px; }
+.code-dog > svg { display: block; }
+.code-dog.is-got > svg { animation: answer-pop 0.6s cubic-bezier(.3, 1.4, .5, 1) 0.5s; }
+.code-dog__got { position: absolute; bottom: calc(100% + 8px); left: 50%; margin-left: -34px; padding: 6px; border-radius: 18px; background: var(--paper); box-shadow: 0 4px 0 #b8c8da; animation: tick-grow 0.35s cubic-bezier(.3, 1.4, .5, 1) 0.5s both; }
+.code-dog__got svg { display: block; }
+
+.code-pad { flex: none; align-items: center; margin-top: 0; padding: 14px 40px 30px; }
+.code-btn { width: 190px; height: 164px; }
+.code-btn svg { display: block; }
+.code-pad--four .code-btn { width: 170px; }
+.code-show { flex: none; margin-left: 8px; }
+.plot > svg.code-art { margin-bottom: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .code-stage, .code-key__row.is-glow, .code-sign.is-glow, .code-slot.is-right > svg, .code-slot.is-wrong, .code-crate__bolt, .code-radio.is-sent .code-radio__antenna::after, .code-dog.is-got > svg, .code-dog__got { animation: none; }
+  .code-crate__shackle, .code-crate__lid, .code-crate__inside { transition: none; }
+}
+
+.is-phone .code-machine { padding: 4px 16px 0; }
+.is-phone .code-fit { width: 100%; height: 100%; }
+.is-phone .code-pad { flex-wrap: wrap; justify-content: center; gap: 10px; padding: 8px 16px 18px; }
+.is-phone .code-btn { width: 96px; height: 96px; border-radius: 22px; }
+.is-phone .code-btn > svg { width: 68px; height: 68px; }
+.is-phone .code-show { margin-left: 0; }
+.stage--landscape .code-btn { width: 84px; height: 78px; }
+.stage--landscape .code-btn > svg { width: 56px; height: 56px; }

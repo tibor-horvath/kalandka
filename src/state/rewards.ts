@@ -7,6 +7,7 @@ import { TRACE_ORDER } from '../games/trace/logic';
 import { PLANTS } from '../games/water/logic';
 import { PATH_LEVELS } from '../games/robot/path';
 import { SCALE_LEVELS } from '../games/robot/scale';
+import { CODE_LEVELS } from '../games/robot/code';
 import { MIRROR_LEVELS } from '../games/robot/mirror';
 import { SEQ_LEVELS } from '../games/robot/seq';
 import { SORT_LEVELS } from '../games/robot/sort';
@@ -336,7 +337,8 @@ export const STICKER_GAMES: StickerGame[] = [
   { id: 'sort', name: 'Válogatógép', color: '#5E7184', ink: '#FFFFFF', world: 'robot' },
   { id: 'scale', name: 'Mérleg', color: '#F2B33D', ink: '#10233A', world: 'robot' },
   { id: 'seq', name: 'Mintagép', color: '#2E5FA8', ink: '#FFFFFF', world: 'robot' },
-  { id: 'mirror', name: 'Tükörgép', color: '#7FE9F0', ink: '#10233A', world: 'robot' }
+  { id: 'mirror', name: 'Tükörgép', color: '#7FE9F0', ink: '#10233A', world: 'robot' },
+  { id: 'code', name: 'Kódzár', color: '#C98F4E', ink: '#10233A', world: 'robot' }
 ];
 
 /** Robotút stickers: a course solved on a level (the first solved course of that level and on). */
@@ -356,6 +358,10 @@ const seqPassed = (name: string) => (p: Progress) => ladderOf(p, 'seq').solvedTo
 /** Tükörgép stickers: a round solved on a level. */
 const mirrorLevel = (name: string) => MIRROR_LEVELS.findIndex((l) => l.name === name);
 const mirrorPassed = (name: string) => (p: Progress) => ladderOf(p, 'mirror').solvedTop >= mirrorLevel(name);
+
+/** Kódzár stickers: a round solved on a level. */
+const codeLevel = (name: string) => CODE_LEVELS.findIndex((l) => l.name === name);
+const codePassed = (name: string) => (p: Progress) => ladderOf(p, 'code').solvedTop >= codeLevel(name);
 
 /** Méhecske levels that close a number range: the last level up to 5, up to 10, and round tens. */
 const ADD_PAST_5 = ADD_LEVELS.findIndex((l) => l.name === '10-ig, gyűjtéssel');
@@ -411,6 +417,11 @@ export const STICKERS: Sticker[] = [
   { id: 'mirror-flat', game: 'mirror', mark: '⇅', label: 'Fel-le tükör', praise: 'A fekvő tükörrel is boldogulsz!', earned: mirrorPassed('Fel-le tükör') },
   { id: 'mirror-pick', game: 'mirror', mark: 'b|d', label: 'Tükörkép', praise: 'Már nem téveszted össze a tükörképet a másolattal!', earned: mirrorPassed('Tükör vagy másolat?'), set: 1 },
   { id: 'mirror-fix', game: 'mirror', mark: '!', label: 'Tükörjavító', praise: 'Megtalálod, hol tévedett a tükörgép!', earned: mirrorPassed('Hibás tükör'), set: 1 },
+  { id: 'code-first', game: 'code', mark: '●●', label: 'Első zár', praise: 'Kinyitottad az első kódzárat!', earned: (p) => p.codeSolved >= 1 },
+  { id: 'code-key', game: 'code', mark: '●→', label: 'Kódtábla', praise: 'Már a kódtáblát is el tudod olvasni!', earned: codePassed('Kódtábla') },
+  { id: 'code-dots', game: 'code', mark: '•3', label: 'Pöttykód', praise: 'A pöttyökből számot csinálsz!', earned: codePassed('Pöttykód') },
+  { id: 'code-send', game: 'code', mark: '→●', label: 'Üzenetküldő', praise: 'Titkos üzenetet küldtél Kutyabotnak!', earned: codePassed('Üzenet'), set: 1 },
+  { id: 'code-crack', game: 'code', mark: '?', label: 'Kódfejtő', praise: 'Kitaláltad a letakart jelet!', earned: codePassed('Hiányzó jel'), set: 1 },
   { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => ladderOf(p, 'pots').reached >= POTS_LEVELS.length }
 ];
 

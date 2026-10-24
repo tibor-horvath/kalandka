@@ -23,7 +23,8 @@ const TILES: Record<PrintId, { glyph: string; tile: string }> = {
   sort: { glyph: '●▲', tile: 'pa-tile--sand' },
   scale: { glyph: '=', tile: 'pa-tile--sun' },
   seq: { glyph: 'AB?', tile: 'pa-tile--blue' },
-  mirror: { glyph: '•|•', tile: 'pa-tile--sky' }
+  mirror: { glyph: '•|•', tile: 'pa-tile--sky' },
+  code: { glyph: '●→?', tile: 'pa-tile--sand' }
 };
 
 function pagesOf(s: PrintSpec<unknown>, c: PrintChoice, answers: boolean): ReactNode[] {

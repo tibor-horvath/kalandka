@@ -5,6 +5,7 @@ import { POTS_LEVELS } from '../games/pots/logic';
 import { SHAPE_ORDER } from '../games/patterns/logic';
 import { PATH_LEVELS } from '../games/robot/path';
 import { SCALE_LEVELS } from '../games/robot/scale';
+import { CODE_LEVELS } from '../games/robot/code';
 import { MIRROR_LEVELS } from '../games/robot/mirror';
 import { SEQ_LEVELS } from '../games/robot/seq';
 import { SORT_LEVELS } from '../games/robot/sort';
@@ -23,7 +24,7 @@ export interface LevelOption {
 }
 
 export interface LevelSetting {
-  id: 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror';
+  id: 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code';
   world: WorldId;
   game: string;
   hint: string;
@@ -151,5 +152,14 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
     options: MIRROR_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
     current: (p) => ladderOf(p, 'mirror').level,
     apply: (p, v) => withLadder(p, 'mirror', startAt(ladderOf(p, 'mirror'), v))
+  },
+  {
+    id: 'code',
+    world: 'robot',
+    game: 'Kódzár',
+    hint: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
+    options: CODE_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
+    current: (p) => ladderOf(p, 'code').level,
+    apply: (p, v) => withLadder(p, 'code', startAt(ladderOf(p, 'code'), v))
   }
 ];

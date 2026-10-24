@@ -5,7 +5,7 @@ import { DENSITIES } from './sheet';
 
 describe('printable sheets', () => {
   it('has a sheet for every game', () => {
-    expect(PRINT_SHEETS.map((s) => s.id).sort()).toEqual(['add', 'flash', 'learn', 'mirror', 'path', 'patterns', 'pots', 'scale', 'seq', 'sort', 'trace', 'water']);
+    expect(PRINT_SHEETS.map((s) => s.id).sort()).toEqual(['add', 'code', 'flash', 'learn', 'mirror', 'path', 'patterns', 'pots', 'scale', 'seq', 'sort', 'trace', 'water']);
   });
 
   it('fills every page of every level and size', () => {

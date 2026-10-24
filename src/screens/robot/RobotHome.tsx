@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { KidChip, MapButton, ParentsButton, PrintButton, RewardPlot, VoiceButton } from '../../components/hub';
-import { Bolt, Gear, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../../components/robot';
+import { Bolt, CodeArt, Gear, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../../components/robot';
 import { FriendArt, MyRobot } from '../../components/robotParts';
 import { useForm } from '../../components/Stage';
 import { StickerPop } from '../../components/StickerPop';
@@ -12,11 +12,10 @@ import { useProgress } from '../../state/progress';
 import { markStickerSeen, newStickers } from '../../state/rewards';
 import { boltBalance, canBuyAnything, friendsOf, newFriend, secondRobotNew } from '../../state/robotParts';
 
-export type RobotGameId = 'path' | 'sort' | 'scale' | 'seq' | 'mirror';
+export type RobotGameId = 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code';
 
 /** Machines Csavar is still building: shown asleep, each with what it will teach. With the games they fill seven places, so Robotépítő is the eighth. */
 const COMING = [
-  { name: 'Kódzár', skill: 'Jelek és kódok' },
   { name: 'Hibakereső', skill: 'Hiba a programban' }
 ];
 
@@ -92,6 +91,7 @@ export function RobotHome({
   const scaleIdx = ladderOf(progress, 'scale').level;
   const seqIdx = ladderOf(progress, 'seq').level;
   const mirrorIdx = ladderOf(progress, 'mirror').level;
+  const codeIdx = ladderOf(progress, 'code').level;
   const workshopBadge = newFriend(progress) ? 'Barát jött!' : secondRobotNew(progress) ? 'Új robot!' : canBuyAnything(progress) ? 'Építhetsz!' : null;
 
   return (
@@ -175,6 +175,16 @@ export function RobotHome({
           <MirrorArt />
           <span className="plot__soil plot__soil--floor" />
           <span className="plot__name">Tükörgép</span>
+          <span className="plot__cta">
+            <PlayIcon /> Játék
+          </span>
+        </button>
+
+        <button type="button" className="plot plot--play" onClick={() => open('code')} aria-label="Kódzár – nyisd ki a ládát a kóddal">
+          {progress.codeSolved === 0 ? <span className="plot__badge">Új gép!</span> : <span className="plot__badge">{codeIdx + 1}. szint</span>}
+          <CodeArt />
+          <span className="plot__soil plot__soil--floor" />
+          <span className="plot__name">Kódzár</span>
           <span className="plot__cta">
             <PlayIcon /> Játék
           </span>

@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { Cmd } from '../games/robot/path';
 import type { Dir } from '../games/robot/seq';
+import type { Pic, Sign } from '../games/robot/code';
 import type { Color, Part, Shape } from '../games/robot/sort';
 import type { Mood } from '../lib/types';
 
@@ -485,6 +486,110 @@ export function MirrorArt() {
           </g>
         ))
       )}
+    </svg>
+  );
+}
+
+// ---------- Kódzár ----------
+
+/** The pictures a lamp can stand for, in a 100 × 100 box: steel and teal, never a lamp colour, each with its own outline. */
+export function CodePic({ pic }: { pic: Pic }) {
+  switch (pic) {
+    case 'gear':
+      return (
+        <g>
+          <path
+            d="M44 8h12l2 12 9 4 10-7 8 8-7 10 4 9 12 2v12l-12 2-4 9 7 10-8 8-10-7-9 4-2 12H44l-2-12-9-4-10 7-8-8 7-10-4-9-12-2V44l12-2 4-9-7-10 8-8 10 7 9-4z"
+            fill={STEEL}
+            stroke="#3E5872"
+            strokeWidth="5"
+            strokeLinejoin="round"
+          />
+          <circle cx="50" cy="50" r="14" fill="#FFFFFF" stroke="#3E5872" strokeWidth="5" />
+        </g>
+      );
+    case 'battery':
+      return (
+        <g>
+          <rect x="38" y="6" width="24" height="14" rx="4" fill="#0C5F5C" />
+          <rect x="22" y="16" width="56" height="78" rx="12" fill={ROBOT_TEAL} stroke="#0C5F5C" strokeWidth="5" />
+          <path d="M55 30 L38 58 H50 L45 82 L63 52 H51 Z" fill="#FFFFFF" stroke="#0C5F5C" strokeWidth="3" strokeLinejoin="round" />
+        </g>
+      );
+    case 'spanner':
+      return (
+        <g transform="rotate(-40 50 50)">
+          <rect x="41" y="40" width="18" height="56" rx="9" fill="#6F86A0" stroke="#2F4A63" strokeWidth="5" />
+          <path d="M28 30 C28 14 38 6 42 5 L42 22 L58 22 L58 5 C62 6 72 14 72 30 C72 42 62 49 50 49 C38 49 28 42 28 30 Z" fill="#6F86A0" stroke="#2F4A63" strokeWidth="5" strokeLinejoin="round" />
+        </g>
+      );
+    case 'magnet':
+      return (
+        <g>
+          <path d="M30 16 V52 a20 20 0 0 0 40 0 V16" fill="none" stroke="#2F4A63" strokeWidth="24" />
+          <path d="M30 18 V52 a20 20 0 0 0 40 0 V18" fill="none" stroke="#7A5BB5" strokeWidth="14" />
+          <rect x="17" y="6" width="26" height="18" rx="4" fill="#E6EDF6" stroke="#2F4A63" strokeWidth="4" />
+          <rect x="57" y="6" width="26" height="18" rx="4" fill="#E6EDF6" stroke="#2F4A63" strokeWidth="4" />
+        </g>
+      );
+  }
+}
+
+/** Where the dots sit on a die face, in a 100 × 100 box. */
+const PIPS: Record<number, [number, number][]> = {
+  1: [[50, 50]],
+  2: [[30, 30], [70, 70]],
+  3: [[28, 28], [50, 50], [72, 72]],
+  4: [[30, 30], [70, 30], [30, 70], [70, 70]],
+  5: [[28, 28], [72, 28], [50, 50], [28, 72], [72, 72]],
+  6: [[30, 26], [70, 26], [30, 50], [70, 50], [30, 74], [70, 74]]
+};
+
+/** A die face, in a 100 × 100 box. */
+export function Dice({ n }: { n: number }) {
+  return (
+    <g>
+      <rect x="8" y="8" width="84" height="84" rx="20" fill="#FFFFFF" stroke="#3E5872" strokeWidth="6" />
+      {(PIPS[n] ?? []).map(([x, y]) => (
+        <circle key={`${x},${y}`} cx={x} cy={y} r="8.5" fill={INK} />
+      ))}
+    </g>
+  );
+}
+
+/** Any Kódzár sign in a 100 × 100 box: a lamp, a picture, a die face or a numeral. */
+export function CodeSign({ sign, textured = false }: { sign: Sign; textured?: boolean }) {
+  switch (sign.kind) {
+    case 'lamp':
+      return <Lamp color={sign.color} textured={textured} />;
+    case 'pic':
+      return <CodePic pic={sign.pic} />;
+    case 'dots':
+      return <Dice n={sign.n} />;
+    case 'digit':
+      return (
+        <text x="50" y="82" textAnchor="middle" fontFamily="'Baloo 2', 'Trebuchet MS', sans-serif" fontSize="92" fontWeight="800" fill="#0C5F5C">
+          {sign.n}
+        </text>
+      );
+  }
+}
+
+/** Kódzár's tile on the Robotműhely home screen: a crate with a code lock, two lamps and a slot. */
+export function CodeArt() {
+  return (
+    <svg aria-hidden="true" className="code-art" width="200" height="83" viewBox="0 0 300 124">
+      <path d="M128 40 V24 a22 22 0 0 1 44 0 V40" fill="none" stroke="#3E5872" strokeWidth="14" />
+      <path d="M128 40 V24 a22 22 0 0 1 44 0 V40" fill="none" stroke={STEEL} strokeWidth="7" />
+      <rect x="40" y="34" width="220" height="86" rx="12" fill="#D9A35F" stroke="#9C6A2F" strokeWidth="5" />
+      <rect x="80" y="46" width="140" height="64" rx="14" fill="#5E7184" stroke="#3E5872" strokeWidth="4" />
+      <g transform="translate(96 56) scale(0.3)">
+        <Lamp color="red" />
+      </g>
+      <g transform="translate(135 56) scale(0.3)">
+        <Lamp color="blue" />
+      </g>
+      <rect x="176" y="58" width="28" height="28" rx="7" fill="#FFFFFF" stroke={ROBOT_TEAL} strokeWidth="3.5" strokeDasharray="6 4" />
     </svg>
   );
 }

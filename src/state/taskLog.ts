@@ -5,7 +5,7 @@ import { today } from './screenTime';
 // Only for the parents' overview; nothing the child sees depends on it.
 
 /** Games whose tasks can need help. Számvetés has no wrong answers, so it is not logged. */
-export type LoggedGame = 'water' | 'patterns' | 'flash' | 'trace' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror';
+export type LoggedGame = 'water' | 'patterns' | 'flash' | 'trace' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code';
 
 /** One solved task: its day (YYYY-MM-DD) and 1 when it needed help. Kept short, as every save carries it. */
 export interface TaskMark {

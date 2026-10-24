@@ -9,7 +9,7 @@ import { WORLDS, type WorldId } from '../state/worlds';
 // The tasks come from the games' own generators, so a sheet matches the child's level in the app;
 // tapping becomes circling, colouring, drawing a line or crossing out.
 
-export type PrintId = 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'trace' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror';
+export type PrintId = 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'trace' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code';
 
 /** Fewer, bigger tasks for the little ones, or more, smaller ones on a page. */
 export type Density = 'big' | 'normal' | 'many';

@@ -9,6 +9,7 @@ import { TRACE_ORDER, buildTraceRound } from '../../games/trace/logic';
 import { PATH_LEVELS } from '../../games/robot/path';
 import { SCALE_LEVELS } from '../../games/robot/scale';
 import { MIRROR_LEVELS } from '../../games/robot/mirror';
+import { CODE_LEVELS } from '../../games/robot/code';
 import { SEQ_LEVELS } from '../../games/robot/seq';
 import { SORT_LEVELS } from '../../games/robot/sort';
 import { POTS_LEVELS } from '../../games/pots/logic';
@@ -138,6 +139,12 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
       name: 'Tükörgép',
       detail: `${progress.mirrorSolved} kör · ${at('mirror', MIRROR_LEVELS)}`,
       share: levelShare('mirror')
+    },
+    {
+      world: 'robot',
+      name: 'Kódzár',
+      detail: `${progress.codeSolved} kör · ${at('code', CODE_LEVELS)}`,
+      share: levelShare('code')
     }
   ];
 

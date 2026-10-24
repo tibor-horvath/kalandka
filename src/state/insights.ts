@@ -3,6 +3,7 @@ import { LEVELS as FLASH_LEVELS } from '../games/flash/logic';
 import { LEARN_MAX } from '../games/learn/logic';
 import { SHAPE_ORDER } from '../games/patterns/logic';
 import { POTS_LEVELS } from '../games/pots/logic';
+import { CODE_LEVELS } from '../games/robot/code';
 import { MIRROR_LEVELS } from '../games/robot/mirror';
 import { PATH_LEVELS } from '../games/robot/path';
 import { SCALE_LEVELS } from '../games/robot/scale';
@@ -126,6 +127,12 @@ const GAMES: GameText[] = [
     level: (p) => levelName(MIRROR_LEVELS, ladderOf(p, 'mirror').level),
     hard: 'A legutóbbi körökben többször is rossz helyre tette a lámpát.',
     home: 'Tegyetek egy kézitükröt a rajz mellé: mi kerül a másik oldalra?'
+  },
+  {
+    id: 'code', world: 'robot', name: 'Kódzár', where: 'A Kódzárnál', unit: 'kör',
+    level: (p) => levelName(CODE_LEVELS, ladderOf(p, 'code').level),
+    hard: 'A legutóbbi körökben többször is rossz gombot nyomott, vagy Csavar mutatta meg a kódot.',
+    home: 'Találjatok ki titkos jeleket: a piros kocka azt jelenti, ugorj, a kék, hogy guggolj. Ő olvassa a kódot!'
   }
 ];
 

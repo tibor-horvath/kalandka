@@ -1,6 +1,7 @@
 import { ADD_LEVELS, clampLevel } from '../games/add/logic';
 import { FLASH_ROUNDS_PER_LEVEL, LEVELS as FLASH_LEVELS } from '../games/flash/logic';
 import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL } from '../games/pots/logic';
+import { CODE_LEVELS, CODE_ROUNDS_PER_LEVEL } from '../games/robot/code';
 import { MIRROR_LEVELS, MIRROR_ROUNDS_PER_LEVEL } from '../games/robot/mirror';
 import { PATH_LEVELS, PATH_ROUNDS_PER_LEVEL } from '../games/robot/path';
 import { SCALE_LEVELS, SCALE_ROUNDS_PER_LEVEL } from '../games/robot/scale';
@@ -14,7 +15,7 @@ import type { Progress } from './progress';
 // needed help and it quietly steps down. The level is kept apart from the solved counts, so stepping
 // down never takes a sticker, a seed or a bolt away.
 
-export type LadderGame = 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror';
+export type LadderGame = 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code';
 
 export interface LadderRule {
   levels: number;
@@ -38,7 +39,8 @@ export const LADDER_RULES: Record<LadderGame, LadderRule> = {
   sort: { levels: SORT_LEVELS.length, up: 4, down: 2, cooldown: 3 },
   scale: { levels: SCALE_LEVELS.length, up: 4, down: 2, cooldown: 3 },
   seq: { levels: SEQ_LEVELS.length, up: 4, down: 2, cooldown: 3 },
-  mirror: { levels: MIRROR_LEVELS.length, up: 4, down: 2, cooldown: 3 }
+  mirror: { levels: MIRROR_LEVELS.length, up: 4, down: 2, cooldown: 3 },
+  code: { levels: CODE_LEVELS.length, up: 4, down: 2, cooldown: 3 }
 };
 
 export interface Ladder {
@@ -74,7 +76,8 @@ const LEGACY: Partial<Record<LadderGame, { rounds: number; solved: (p: Progress)
   sort: { rounds: SORT_ROUNDS_PER_LEVEL, solved: (p) => p.sortSolved },
   scale: { rounds: SCALE_ROUNDS_PER_LEVEL, solved: (p) => p.scaleSolved },
   seq: { rounds: SEQ_ROUNDS_PER_LEVEL, solved: (p) => p.seqSolved },
-  mirror: { rounds: MIRROR_ROUNDS_PER_LEVEL, solved: (p) => p.mirrorSolved }
+  mirror: { rounds: MIRROR_ROUNDS_PER_LEVEL, solved: (p) => p.mirrorSolved },
+  code: { rounds: CODE_ROUNDS_PER_LEVEL, solved: (p) => p.codeSolved }
 };
 
 const fresh = (level = 0): Ladder => ({ level, floor: 0, streak: 0, helpRun: 0, sinceChange: 0, lastChange: null, reached: level, solvedTop: -1 });

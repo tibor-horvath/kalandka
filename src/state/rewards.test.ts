@@ -143,11 +143,11 @@ describe('stickers', () => {
   it('belong to known games, three per skill step, with unique ids', () => {
     expect(new Set(STICKERS.map((s) => s.id)).size).toBe(STICKERS.length);
     for (const g of STICKER_GAMES) expect(STICKERS.filter((s) => s.game === g.id && !s.set)).toHaveLength(3);
-    expect(STICKERS.filter((s) => s.set).map((s) => s.id)).toEqual(['trace-fade', 'trace-memory', 'path-repeat', 'path-two', 'sort-two', 'sort-rule', 'scale-missing', 'scale-secret', 'seq-fix', 'seq-translate', 'mirror-pick', 'mirror-fix']);
+    expect(STICKERS.filter((s) => s.set).map((s) => s.id)).toEqual(['trace-fade', 'trace-memory', 'path-repeat', 'path-two', 'sort-two', 'sort-rule', 'scale-missing', 'scale-secret', 'seq-fix', 'seq-translate', 'mirror-pick', 'mirror-fix', 'code-send', 'code-crack']);
   });
 
   it('keeps each world’s stickers to its own album page and home screen', () => {
-    expect(STICKER_GAMES.filter((g) => g.world === 'robot').map((g) => g.id)).toEqual(['path', 'sort', 'scale', 'seq', 'mirror']);
+    expect(STICKER_GAMES.filter((g) => g.world === 'robot').map((g) => g.id)).toEqual(['path', 'sort', 'scale', 'seq', 'mirror', 'code']);
     const p = { ...DEFAULT_PROGRESS, learnSolved: 5, pathSolved: 1 };
     expect(newStickers(p, 'garden').map((s) => s.id)).toEqual(['learn-5']);
     expect(newStickers(p, 'robot').map((s) => s.id)).toEqual(['path-first']);
@@ -186,6 +186,15 @@ describe('stickers', () => {
     expect(ids(10)).toEqual(['mirror-first']);
     expect(ids(11)).toEqual(['mirror-first', 'mirror-picture']);
     expect(ids(999)).toEqual(['mirror-first', 'mirror-picture', 'mirror-flat', 'mirror-pick', 'mirror-fix']);
+  });
+
+  it('gives a Kódzár sticker for the first round solved on its level', () => {
+    const ids = (codeSolved: number) => earnedStickers({ ...DEFAULT_PROGRESS, codeSolved }).map((s) => s.id);
+    expect(ids(0)).toEqual([]);
+    expect(ids(1)).toEqual(['code-first']);
+    expect(ids(10)).toEqual(['code-first']);
+    expect(ids(11)).toEqual(['code-first', 'code-key']);
+    expect(ids(999)).toEqual(['code-first', 'code-key', 'code-dots', 'code-send', 'code-crack']);
   });
 
   it('gives a Mérleg sticker for the first round solved on its level', () => {
