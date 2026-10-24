@@ -10,6 +10,7 @@ import { Album } from './screens/Album';
 import { Flash } from './screens/Flash';
 import { Garden } from './screens/Garden';
 import { Home, type GameId } from './screens/Home';
+import { Landing } from './screens/Landing';
 import { Learn } from './screens/Learn';
 import { Gate } from './screens/parents/Gate';
 import type { ParentStart } from './screens/parents/ParentArea';
@@ -27,7 +28,7 @@ import { Mirror } from './screens/robot/Mirror';
 import { Seq } from './screens/robot/Seq';
 import { Sort } from './screens/robot/Sort';
 import { Workshop } from './screens/robot/Workshop';
-import { ProfilesProvider, progressOf, setActive, useProfiles } from './state/profiles';
+import { ProfilesProvider, hasSave, progressOf, setActive, useProfiles } from './state/profiles';
 import { useProgress, type Progress } from './state/progress';
 import { GRACE_SECONDS, WARN_SECONDS, addPlay, isEveningRest, remainingSeconds, today } from './state/screenTime';
 import { WORLDS, currentWorld, type WorldId } from './state/worlds';
@@ -85,13 +86,16 @@ function depthOf(s: Screen): number {
 function Game() {
   const { progress, update } = useProgress();
   const { profiles, change } = useProfiles();
-  const [screen, setScreen] = useState<Screen>('home');
+  // A device that has never played here gets the landing page first; nothing is saved until the start button.
+  const [landing, setLanding] = useState(() => !hasSave());
+  // "Ki játszik?" comes first on a shared device, unless parents chose to continue with the last child.
+  const [picking, setPicking] = useState(() => profiles.kids.length > 1 && profiles.askOnStart);
+  // Without the picker, a child who has never chosen a world starts on the map, like after picking.
+  const [screen, setScreen] = useState<Screen>(() => (picking || progress.world ? 'home' : 'map'));
   const [parents, setParents] = useState<Parents>('closed');
   /** Where the sticker album was opened from, and so which world's page it opens on. */
   const [albumFrom, setAlbumFrom] = useState<'garden' | 'workshop'>('garden');
   const [parentStart, setParentStart] = useState<ParentStart>('overview');
-  // "Ki játszik?" comes first on a shared device, unless parents chose to continue with the last child.
-  const [picking, setPicking] = useState(() => profiles.kids.length > 1 && profiles.askOnStart);
   const showPicker = picking && profiles.kids.length > 1;
   const warned = useRef<string | null>(null);
   // Re-check the evening rest every minute even when nothing else changes.
@@ -136,12 +140,12 @@ function Game() {
 
   // Play clock: only while the app is on screen, a child is chosen, the parents' area is closed and the child is not resting.
   useEffect(() => {
-    if (inParents || resting || showPicker) return;
+    if (landing || inParents || resting || showPicker) return;
     const id = window.setInterval(() => {
       if (document.visibilityState === 'visible') update((p) => addPlay(p, TICK_SECONDS, today()));
     }, TICK_SECONDS * 1000);
     return () => window.clearInterval(id);
-  }, [inParents, resting, showPicker, update]);
+  }, [landing, inParents, resting, showPicker, update]);
 
   // A gentle spoken warning once per day and child, two minutes before the end (parents can switch it off).
   useEffect(() => {
@@ -208,6 +212,11 @@ function Game() {
     // A child who has never chosen a world starts on the map; the others go straight back to their last one.
     setScreen(progressOf(profiles, id).world ? 'home' : 'map');
   };
+  const start = () => {
+    // A copy, so the profile made on this first visit is saved now and the landing page does not come back.
+    change((s) => ({ ...s }));
+    setLanding(false);
+  };
   const openAlbum = (from: 'garden' | 'workshop') => {
     setAlbumFrom(from);
     go('album');
@@ -216,6 +225,8 @@ function Game() {
     update((p) => ({ ...p, world: w }));
     go('home');
   };
+
+  if (landing) return <Landing onStart={start} />;
 
   return (
     <Stage>

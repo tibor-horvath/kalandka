@@ -223,10 +223,10 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
         <GuideBubble mood="cheer" csepiWidth={60}>
           <div className="bubble__row">
             <div>
-              <div className="bubble__kicker">A hajód {DOCKED[last]} vár</div>
+              {progress.world && <div className="bubble__kicker">A hajód {DOCKED[progress.world]} vár</div>}
               <h1 className="bubble__title">Hova evezünk ma?</h1>
             </div>
-            <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(speech(last))}>
+            <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(speech(progress.world))}>
               <SpeakerIcon />
             </RoundButton>
           </div>

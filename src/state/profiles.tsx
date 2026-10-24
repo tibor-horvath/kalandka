@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PLANTS } from '../games/water/logic';
 import { DEFAULT_PROGRESS, ProgressContext, readProgress, type Progress, type Update } from './progress';
 
@@ -120,6 +120,16 @@ export function parseProfiles(raw: string | null, legacyRaw: string | null): Pro
   }
 }
 
+/** False on a device that has never played here (a first visit, or a private window), so the landing page shows. */
+export function hasSave(): boolean {
+  try {
+    return localStorage.getItem(KEY) !== null || localStorage.getItem(LEGACY_KEY) !== null;
+  } catch {
+    // Blocked storage forgets everything; the landing page would greet the child on every start.
+    return true;
+  }
+}
+
 function loadProfiles(): Profiles {
   try {
     return parseProfiles(localStorage.getItem(KEY), localStorage.getItem(LEGACY_KEY));
@@ -178,8 +188,12 @@ const ProfilesContext = createContext<{ profiles: Profiles; change: Change } | n
 /** Holds every profile and gives the games the active child's progress. */
 export function ProfilesProvider({ children }: { children: ReactNode }) {
   const [profiles, setProfiles] = useState<Profiles>(loadProfiles);
+  // The profiles as loaded are not written back, so a first visit leaves nothing behind until play starts.
+  const loaded = useRef(profiles);
 
-  useEffect(() => saveProfiles(profiles), [profiles]);
+  useEffect(() => {
+    if (profiles !== loaded.current) saveProfiles(profiles);
+  }, [profiles]);
 
   const change = useCallback<Change>((fn) => setProfiles((s) => fn(s)), []);
   const value = useMemo(() => ({ profiles, change }), [profiles, change]);
