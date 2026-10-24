@@ -67,6 +67,51 @@
 .map-spot__name { font-size: 30px; font-weight: 800; line-height: 1.05; }
 .map-spot__count { display: flex; align-items: center; gap: 6px; height: 46px; padding: 0 14px 0 10px; border-radius: 23px; background: var(--edge); color: var(--paper); font-size: 24px; font-weight: 800; }
 
+/*
+ * Map motion, all one-off: as the map opens the islands rise, the signs pop in, the boat glides into its dock
+ * and the guides hop hello. A tap presses the sign and sends one ring out; the boat sails (WorldMap.tsx moves it)
+ * over a white trail, the guide hops to greet it, then the map dives into the island. Arrival animations fill
+ * `backwards` only, so the signs' :active press still works once they have landed.
+ */
+.map__scene { position: absolute; inset: 0; transition: transform 0.56s cubic-bezier(.55, 0, .8, .3); }
+.map.is-diving { overflow: hidden; border-radius: 40px; }
+.map.is-diving .map__scene { transform: scale(1.9); }
+.map__wash { position: absolute; inset: 0; border-radius: 40px; opacity: 0; pointer-events: none; }
+.map__wash--garden { background: var(--good-tint); }
+.map__wash--robot { background: #ddf3f2; }
+.map.is-diving .map__wash { animation: map-fade 0.46s ease-in 0.1s both; }
+.map.is-sailing .map-spot { cursor: default; }
+
+.map-isle { animation: map-rise 0.56s cubic-bezier(.2, .7, .3, 1) var(--d) backwards; }
+.map-far { animation: map-fade-far 0.5s ease-out 0.3s backwards; }
+.map-boat__arrive { animation: map-boat-in 0.7s cubic-bezier(.2, .7, .3, 1) 0.25s backwards; }
+.map-route--boat { animation: map-fade 0.32s ease-out 0.85s backwards; transition: opacity 0.15s; }
+.map.is-sailing .map-route--boat { opacity: 0; }
+.map-spot__sign { animation: map-sign-in 0.42s cubic-bezier(.34, 1.56, .64, 1) 0.42s backwards; }
+.map-spot--robot .map-spot__sign { animation-delay: 0.52s; }
+.map-spot.is-picked .map-spot__sign { animation: map-press 0.2s ease-out; }
+.map-hop { transform-box: fill-box; transform-origin: 50% 100%; animation: map-hop 0.44s ease-out 0.76s; }
+.map-isle + .map-isle .map-hop { animation-delay: 0.86s; }
+.map-isle.is-picked .map-hop { animation: map-hop 0.44s ease-out 1.05s; }
+.map-ring { fill: none; stroke: var(--paper); stroke-width: 8; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.map-isle.is-picked .map-ring { animation: map-ring 0.65s ease-out; }
+.map-trail { fill: none; stroke: var(--paper); stroke-width: 7; stroke-linecap: round; opacity: 0.9; stroke-dasharray: 1 1; animation: map-trail 1.1s cubic-bezier(.65, 0, .35, 1) 0.12s both; }
+
+@keyframes map-rise { from { transform: translateY(18px); opacity: 0; } }
+@keyframes map-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes map-fade-far { from { opacity: 0; } }
+@keyframes map-boat-in { from { transform: translateX(-46px); opacity: 0; } }
+@keyframes map-sign-in { from { transform: scale(0.82); opacity: 0; } }
+@keyframes map-press { 50% { transform: translateY(5px); box-shadow: 0 1px 0 var(--edge); } }
+@keyframes map-hop { 40% { transform: translateY(-16px); } 72% { transform: scaleY(0.94); } }
+@keyframes map-ring { from { opacity: 0.9; transform: scale(0.94); } to { opacity: 0; transform: scale(1.07); } }
+@keyframes map-trail { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+/* Reduced motion: the map is still, and a tap opens the world straight away (WorldMap.tsx skips the trip). */
+@media (prefers-reduced-motion: reduce) {
+  .map-isle, .map-far, .map-boat__arrive, .map-route--boat, .map-spot__sign, .map-hop { animation: none; }
+}
+
 /* ---------- Robotút ---------- */
 .screen--path .screen-title { color: var(--leaf-deep); }
 .path-body { position: relative; display: flex; gap: 26px; padding: 14px 40px 0; align-items: flex-start; }

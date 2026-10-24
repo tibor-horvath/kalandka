@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { RoundFlower, Seed, Sprout, Tree } from '../components/art';
 import { Csepi } from '../components/Csepi';
 import { FitBox } from '../components/FitBox';
@@ -6,7 +6,7 @@ import { ParentsButton } from '../components/hub';
 import { Bolt, Csavar } from '../components/robot';
 import { useForm } from '../components/Stage';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from '../components/ui';
-import { speak } from '../lib/speech';
+import { speak, stopSpeaking } from '../lib/speech';
 import { useProgress } from '../state/progress';
 import { seedBalance } from '../state/rewards';
 import { boltBalance } from '../state/robotParts';
@@ -17,6 +17,20 @@ const DOCKED: Record<WorldId, string> = { garden: 'a kertnél', robot: 'a műhel
 
 const speech = (last: WorldId | null) =>
   `Hova evezünk ma?${last ? ` A hajód ${DOCKED[last]} vár.` : ''} A kert szigetén Csepi, a műhely szigetén Csavar, a robot. Koppints az egyik szigetre!`;
+
+/*
+ * The trip after a tap (ms): the boat sets off, sails to the island while its guide hops to greet it,
+ * then the map dives into the island and the world opens. Under reduced motion the world opens at once.
+ */
+const SAIL_DELAY = 120;
+const SAIL_MS = 1100;
+const TURN_MS = 260;
+const DIVE_AT = 1300;
+const OPEN_AT = 1860;
+
+const clamp01 = (t: number) => Math.min(1, Math.max(0, t));
+/** Ease in and out (cubic), the same curve as the trail's `cubic-bezier(.65, 0, .35, 1)`. */
+const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 
 interface Pt {
   x: number;
@@ -35,6 +49,8 @@ interface MapLayout {
   boat: Record<WorldId, Pt & { flip: boolean }>;
   /** The dotted route from the boat at each island to the other island. */
   route: Record<WorldId, string>;
+  /** Where the boat sails after a tap, keyed `from-to`: to the other island, or a short way to its own shore. */
+  sail: Record<`${WorldId}-${WorldId}`, string>;
   /** A far-off island in the haze: a hint that more worlds may come, not something to tap. */
   far: Pt;
   farRoute: string;
@@ -54,6 +70,12 @@ const WIDE: MapLayout = {
     garden: 'M566 494 C610 545 680 545 690 486',
     robot: 'M536 494 C492 545 420 545 410 486'
   },
+  sail: {
+    'garden-robot': 'M520 466 C566 524 652 534 702 474',
+    'garden-garden': 'M520 466 C498 506 446 510 402 470',
+    'robot-garden': 'M582 466 C536 524 450 534 400 474',
+    'robot-robot': 'M582 466 C604 506 656 510 700 470'
+  },
   far: { x: 1030, y: 82 },
   farRoute: 'M955 175 C975 150 990 132 1005 118'
 };
@@ -71,6 +93,12 @@ const TALL: MapLayout = {
   route: {
     garden: 'M478 528 C520 570 525 620 505 668',
     robot: 'M68 560 C40 510 60 450 112 398'
+  },
+  sail: {
+    'garden-robot': 'M480 500 C532 548 540 606 500 646',
+    'garden-garden': 'M480 500 C474 472 448 450 420 432',
+    'robot-garden': 'M110 560 C66 520 76 462 128 424',
+    'robot-robot': 'M110 560 C118 590 140 612 172 630'
   },
   far: { x: 90, y: 985 },
   farRoute: 'M150 905 C135 925 125 940 118 952'
@@ -125,7 +153,9 @@ function GardenScene({ at }: { at: Pt }) {
         <RoundFlower petal="#8E6BD6" width={46} />
       </g>
       <g transform="translate(40 -60)">
-        <Csepi mood="cheer" width={70} />
+        <g className="map-hop">
+          <Csepi mood="cheer" width={70} />
+        </g>
       </g>
       <g transform="translate(115 -20) scale(0.6)">
         <Sprout />
@@ -150,23 +180,60 @@ function RobotScene({ at }: { at: Pt }) {
       <path d="M72 -130 V-92" stroke="#5E7184" strokeWidth="3" />
       <rect x="58" y="-92" width="28" height="22" rx="4" fill="#C98B50" stroke="#8A5A3B" strokeWidth="3" />
       <g transform="translate(50 -50)">
-        <Csavar mood="cheer" width={66} />
+        <g className="map-hop">
+          <Csavar mood="cheer" width={66} />
+        </g>
       </g>
     </g>
   );
 }
 
-/** The child's own boat, moored at the island they chose last. */
-function Boat({ at }: { at: Pt & { flip: boolean } }) {
+/**
+ * The child's own boat, moored at the island they chose last. Given a `sail` route it sets off along it once,
+ * turning to `flipTo` and rocking twice, and leaves a white trail on the water behind it.
+ */
+function Boat({ at, sail, flipTo }: { at: Pt & { flip: boolean }; sail?: string; flipTo?: boolean }) {
+  const boat = useRef<SVGGElement>(null);
+  const track = useRef<SVGPathElement>(null);
+
+  useEffect(() => {
+    const el = boat.current;
+    const path = track.current;
+    if (!sail || !el || !path) return;
+    const length = path.getTotalLength();
+    const from = at.flip ? -1 : 1;
+    const to = flipTo ? -1 : 1;
+    // Timed from the tap, not the first frame, so a slow first frame cannot put the boat behind its trail and the dive.
+    const start = performance.now();
+    let frame = 0;
+    const step = (now: number) => {
+      const t = now - start - SAIL_DELAY;
+      const k = clamp01(t / SAIL_MS);
+      const pt = path.getPointAtLength(length * easeInOut(k));
+      const turn = from + (to - from) * easeInOut(clamp01(t / TURN_MS));
+      const tilt = k > 0 && k < 1 ? 4 * Math.sin(k * Math.PI * 4) * (1 - k / 2) : 0;
+      // The boat's own frame (no React re-render per frame): along the route, rocking at the waterline.
+      el.setAttribute('transform', `translate(${pt.x} ${pt.y}) rotate(${tilt} 0 22) scale(${turn} 1)`);
+      if (t < SAIL_MS) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [sail]);
+
   return (
-    <g transform={`translate(${at.x} ${at.y})${at.flip ? ' scale(-1 1)' : ''}`} className="map-boat">
-      <path d="M-54 30 q12 -8 24 0 q12 8 24 0 q12 -8 24 0 q12 8 24 0 q12 -8 24 0" className="map-boat__ripple" />
-      <path d="M-48 0 H48 L32 22 H-32 Z" fill="#C98B50" stroke="#8A5A3B" strokeWidth="4" strokeLinejoin="round" />
-      <path d="M-2 0 V-86" stroke="#8A5A3B" strokeWidth="5" strokeLinecap="round" />
-      <path d="M4 -82 L52 -12 H4 Z" fill="#B4335A" stroke="#FFFFFF" strokeWidth="3" strokeLinejoin="round" />
-      <path d="M-8 -76 L-42 -14 H-8 Z" fill="#FFFFFF" />
-      <path d="M22 -48 l3.5 7 7.5 1 -5.5 5 1.5 7.5 -7 -3.6 -7 3.6 1.5 -7.5 -5.5 -5 7.5 -1 z" fill="#FFC93C" />
-    </g>
+    <>
+      {sail && <path ref={track} d={sail} pathLength={1} transform="translate(0 26)" className="map-trail" />}
+      <g ref={boat} transform={`translate(${at.x} ${at.y})${at.flip ? ' scale(-1 1)' : ''}`} className="map-boat">
+        <g className="map-boat__arrive">
+          <path d="M-54 30 q12 -8 24 0 q12 8 24 0 q12 -8 24 0 q12 8 24 0 q12 -8 24 0" className="map-boat__ripple" />
+          <path d="M-48 0 H48 L32 22 H-32 Z" fill="#C98B50" stroke="#8A5A3B" strokeWidth="4" strokeLinejoin="round" />
+          <path d="M-2 0 V-86" stroke="#8A5A3B" strokeWidth="5" strokeLinecap="round" />
+          <path d="M4 -82 L52 -12 H4 Z" fill="#B4335A" stroke="#FFFFFF" strokeWidth="3" strokeLinejoin="round" />
+          <path d="M-8 -76 L-42 -14 H-8 Z" fill="#FFFFFF" />
+          <path d="M22 -48 l3.5 7 7.5 1 -5.5 5 1.5 7.5 -7 -3.6 -7 3.6 1.5 -7.5 -5.5 -5 7.5 -1 z" fill="#FFC93C" />
+        </g>
+      </g>
+    </>
   );
 }
 
@@ -191,11 +258,30 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
   const phone = form !== 'tablet';
   const map = form === 'portrait' ? TALL : WIDE;
   const last = currentWorld(progress);
+  const [picked, setPicked] = useState<WorldId | null>(null);
+  const [diving, setDiving] = useState(false);
+  const timers = useRef<number[]>([]);
 
   useEffect(() => {
     speak(speech(progress.world));
     // Said once when the map opens; the speaker button repeats it.
+    return () => timers.current.forEach((t) => window.clearTimeout(t));
   }, []);
+
+  // One trip per visit: a second tap while the boat is out is ignored, so the trip always finishes.
+  const pick = (id: WorldId) => {
+    if (picked) return;
+    stopSpeaking();
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      onPick(id);
+      return;
+    }
+    setPicked(id);
+    timers.current = [window.setTimeout(() => setDiving(true), DIVE_AT), window.setTimeout(() => onPick(id), OPEN_AT)];
+  };
+  const isle = (id: WorldId, delay: number) =>
+    ({ className: `map-isle${picked === id ? ' is-picked' : ''}`, style: { '--d': `${delay}ms` } as CSSProperties });
+  const diveAt = picked === 'robot' ? map.robot : map.garden;
 
   const spot = (at: Pt): CSSProperties => ({ left: at.x - 230, top: at.y - 165, width: 460, height: 330 });
   const counts: Record<WorldId, { icon: ReactNode; n: number }> = {
@@ -234,41 +320,58 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
       </div>
 
       <FitBox className="map-fit" width={map.w} height={map.h}>
-        <nav className="map" aria-label="Kalandka térkép: válassz szigetet" style={{ width: map.w, height: map.h }}>
-          <svg className="map__art" width={map.w} height={map.h} viewBox={`0 0 ${map.w} ${map.h}`} aria-hidden="true">
-            <rect width={map.w} height={map.h} rx="40" fill="#8CCBEC" />
-            <Waves w={map.w} h={map.h} />
-            <FarIsland at={map.far} route={map.farRoute} />
-            <Island at={map.garden} ground="#A6D676" edge="#8CC45E" sand="#F3DFA8" />
-            <Island at={map.robot} ground="#C9D6E4" edge="#9AAFC6" sand="#F3DFA8" />
-            <GardenScene at={map.garden} />
-            <RobotScene at={map.robot} />
-            <path d={map.route[last]} className="map-route" />
-            <Boat at={map.boat[last]} />
-          </svg>
+        <nav
+          className={`map${picked ? ' is-sailing' : ''}${diving ? ' is-diving' : ''}`}
+          aria-label="Kalandka térkép: válassz szigetet"
+          style={{ width: map.w, height: map.h }}
+        >
+          <div className="map__scene" style={{ transformOrigin: `${diveAt.x}px ${diveAt.y}px` }}>
+            <svg className="map__art" width={map.w} height={map.h} viewBox={`0 0 ${map.w} ${map.h}`} aria-hidden="true">
+              <rect width={map.w} height={map.h} rx="40" fill="#8CCBEC" />
+              <Waves w={map.w} h={map.h} />
+              <FarIsland at={map.far} route={map.farRoute} />
+              <g {...isle('garden', 0)}>
+                <Island at={map.garden} ground="#A6D676" edge="#8CC45E" sand="#F3DFA8" />
+                <GardenScene at={map.garden} />
+                <ellipse cx={map.garden.x} cy={map.garden.y} rx="232" ry="168" className="map-ring" />
+              </g>
+              <g {...isle('robot', 110)}>
+                <Island at={map.robot} ground="#C9D6E4" edge="#9AAFC6" sand="#F3DFA8" />
+                <RobotScene at={map.robot} />
+                <ellipse cx={map.robot.x} cy={map.robot.y} rx="232" ry="168" className="map-ring" />
+              </g>
+              <path d={map.route[last]} className="map-route map-route--boat" />
+              <Boat
+                at={map.boat[last]}
+                sail={picked ? map.sail[`${last}-${picked}`] : undefined}
+                flipTo={picked === last ? !map.boat[last].flip : map.boat[last].flip}
+              />
+            </svg>
 
-          {WORLDS.map((w) => {
-            const at = w.id === 'garden' ? map.garden : map.robot;
-            return (
-              <button
-                key={w.id}
-                type="button"
-                className={`map-spot map-spot--${w.id} map-spot--sign-${map.signs}${last === w.id ? ' is-last' : ''}`}
-                style={spot(at)}
-                onClick={() => onPick(w.id)}
-                aria-label={`${w.name}: ${w.about}. ${w.guide} vár.${last === w.id ? ' A hajód itt van.' : ''}`}
-              >
-                <span className="map-spot__sign">
-                  <span className="map-spot__face">{faces[w.id]}</span>
-                  <span className="map-spot__name">{w.name}</span>
-                  <span className="map-spot__count">
-                    {counts[w.id].icon}
-                    {counts[w.id].n}
+            {WORLDS.map((w) => {
+              const at = w.id === 'garden' ? map.garden : map.robot;
+              return (
+                <button
+                  key={w.id}
+                  type="button"
+                  className={`map-spot map-spot--${w.id} map-spot--sign-${map.signs}${last === w.id ? ' is-last' : ''}${picked === w.id ? ' is-picked' : ''}`}
+                  style={spot(at)}
+                  onClick={() => pick(w.id)}
+                  aria-label={`${w.name}: ${w.about}. ${w.guide} vár.${last === w.id ? ' A hajód itt van.' : ''}`}
+                >
+                  <span className="map-spot__sign">
+                    <span className="map-spot__face">{faces[w.id]}</span>
+                    <span className="map-spot__name">{w.name}</span>
+                    <span className="map-spot__count">
+                      {counts[w.id].icon}
+                      {counts[w.id].n}
+                    </span>
                   </span>
-                </span>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
+          <div className={`map__wash map__wash--${picked ?? last}`} aria-hidden="true" />
         </nav>
       </FitBox>
     </div>
