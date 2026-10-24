@@ -32,9 +32,11 @@
 @container plot (max-height: 96px) { .screen--robot-home .plot--locked > svg { display: none; } }
 
 /* Térkép button on every world's home screen. */
-.map-btn { height: 56px; padding: 0 18px; border: 3px solid var(--paper); background: transparent; border-radius: 28px; color: var(--ink); font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; flex: none; }
-.map-btn:active { transform: scale(0.96); }
-.is-phone .map-btn { width: 44px; height: 44px; padding: 0; border-radius: 22px; justify-content: center; }
+.map-btn { height: 64px; padding: 0 22px 0 8px; border: 0; background: var(--drop-deep); border-radius: 32px; box-shadow: 0 5px 0 #143f6d; color: var(--paper); font-size: 26px; font-weight: 800; display: flex; align-items: center; gap: 10px; cursor: pointer; flex: none; }
+.map-btn__icon { width: 46px; height: 46px; border-radius: 23px; background: var(--paper); color: var(--drop-deep); display: grid; place-items: center; }
+.map-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #143f6d; }
+.is-phone .map-btn { width: 44px; height: 44px; padding: 0; border-radius: 22px; justify-content: center; box-shadow: 0 4px 0 #143f6d; }
+.is-phone .map-btn__icon { width: auto; height: auto; background: none; color: var(--paper); }
 .is-phone .map-btn svg { width: 22px; height: 22px; }
 .is-phone .map-btn__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 

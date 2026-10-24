@@ -76,7 +76,9 @@ function MapIcon() {
 export function MapButton({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" className="map-btn" onClick={onClick} aria-label="Térkép: másik világ választása">
-      <MapIcon />
+      <span className="map-btn__icon">
+        <MapIcon />
+      </span>
       <span className="map-btn__label">Térkép</span>
     </button>
   );

@@ -15,8 +15,8 @@ import { WORLDS, currentWorld, type WorldId } from '../state/worlds';
 /** Where the child's boat waits, said the way the guide says it. */
 const DOCKED: Record<WorldId, string> = { garden: 'a kertnél', robot: 'a műhelynél' };
 
-const speech = (last: WorldId) =>
-  `Hova evezünk ma? A hajód ${DOCKED[last]} vár. A kert szigetén Csepi, a műhely szigetén Csavar, a robot. Koppints az egyik szigetre!`;
+const speech = (last: WorldId | null) =>
+  `Hova evezünk ma?${last ? ` A hajód ${DOCKED[last]} vár.` : ''} A kert szigetén Csepi, a műhely szigetén Csavar, a robot. Koppints az egyik szigetre!`;
 
 interface Pt {
   x: number;
@@ -193,7 +193,7 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
   const last = currentWorld(progress);
 
   useEffect(() => {
-    speak(speech(last));
+    speak(speech(progress.world));
     // Said once when the map opens; the speaker button repeats it.
   }, []);
 

@@ -85,8 +85,8 @@ export interface Progress {
   csepiVoice: string;
   robotVoice: string;
   welcomed: boolean;
-  /** The world the child last chose on the Kalandka map (see state/worlds.ts). */
-  world: WorldId;
+  /** The world the child last chose on the Kalandka map (see state/worlds.ts); null until they first choose one. */
+  world: WorldId | null;
   /** Csavar has introduced himself. */
   robotWelcomed: boolean;
   /** Robotműhely's reward: one bolt per solved task, like the garden's seeds. */
@@ -184,7 +184,7 @@ export const DEFAULT_PROGRESS: Progress = {
   csepiVoice: '',
   robotVoice: '',
   welcomed: false,
-  world: 'garden',
+  world: null,
   robotWelcomed: false,
   bolts: 0,
   pathRound: 0,

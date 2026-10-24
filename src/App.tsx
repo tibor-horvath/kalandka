@@ -27,7 +27,7 @@ import { Mirror } from './screens/robot/Mirror';
 import { Seq } from './screens/robot/Seq';
 import { Sort } from './screens/robot/Sort';
 import { Workshop } from './screens/robot/Workshop';
-import { ProfilesProvider, setActive, useProfiles } from './state/profiles';
+import { ProfilesProvider, progressOf, setActive, useProfiles } from './state/profiles';
 import { useProgress, type Progress } from './state/progress';
 import { GRACE_SECONDS, WARN_SECONDS, addPlay, isEveningRest, remainingSeconds, today } from './state/screenTime';
 import { WORLDS, currentWorld, type WorldId } from './state/worlds';
@@ -199,7 +199,8 @@ function Game() {
     stopSpeaking();
     change((s) => setActive(s, id));
     setPicking(false);
-    setScreen('home');
+    // A child who has never chosen a world starts on the map; the others go straight back to their last one.
+    setScreen(progressOf(profiles, id).world ? 'home' : 'map');
   };
   const openAlbum = (from: 'garden' | 'workshop') => {
     setAlbumFrom(from);
