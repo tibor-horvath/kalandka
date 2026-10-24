@@ -14,8 +14,10 @@ import '@fontsource/nunito/latin-ext-700.css';
 import './styles/global.css';
 import './styles/rewards.css';
 import './styles/robot.css';
+// Here rather than in the parents' area, which loads later: the gate needs it too, and phone.css must come after it.
+import './styles/parents.css';
 import App from './App';
-// After App (which pulls in parents.css), so the phone layouts override both.
+// Last, so the phone layouts override everything above.
 import './styles/phone.css';
 import { probeBiometric } from './lib/biometric';
 import { listenForInstall } from './lib/install';

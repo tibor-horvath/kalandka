@@ -8,7 +8,6 @@ import { LevelsPage } from './LevelsPage';
 import { Overview } from './Overview';
 import { SettingsPage } from './SettingsPage';
 import { TimePage } from './TimePage';
-import '../../styles/parents.css';
 
 /** 'legal' has no menu item: it opens from Settings, so the phone tab bar keeps five items. */
 export type ParentPage = 'overview' | 'kids' | 'time' | 'levels' | 'settings' | 'legal';

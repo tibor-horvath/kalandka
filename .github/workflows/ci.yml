@@ -22,6 +22,9 @@ jobs:
       typecheck-script: ""
       # `npm test` is `vitest` (watch mode locally); run once in CI.
       test-args: --run
+      # Public origin for the link-preview tags (repository variable, e.g. https://www.kalandka.hu); empty until the domain is set.
+      build-env: |
+        SITE_URL=${{ vars.SITE_URL }}
     permissions:
       contents: read
 

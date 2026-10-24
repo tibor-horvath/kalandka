@@ -84,7 +84,7 @@ The deployment token gives write access to the site. Do not commit it or paste i
 
 ### How the update reaches tablets
 
-`public/staticwebapp.config.json` (copied into `dist/`) makes `sw.js`, `registerSW.js`, `manifest.webmanifest` and `index.html` uncacheable, while hashed files in `/assets/` are cached for a year.
+`public/staticwebapp.config.json` (copied into `dist/`) makes `sw.js`, `registerSW.js`, `manifest.webmanifest` and `index.html` uncacheable, while hashed files in `/assets/` are cached for a year. It also sets the security headers on every response: a Content Security Policy that allows only the site's own files, the camera only for the site itself (QR transfer), no referrer and no framing. A new external resource (a CDN font, an online recording) has to be added to the policy, or the browser blocks it.
 The service worker precaches every file the app uses (`workbox.globPatterns` in `vite.config.ts`) on the first visit, and serves the app from that cache afterwards, online or not.
 So an installed tablet makes no requests while playing; the only traffic is the update check.
 The service worker uses `prompt` mode, driven by `src/lib/update.ts`: when the app is opened, and when it is brought back from the background or left open (at most every five minutes), it requests `sw.js` once to look for a new version.
@@ -125,7 +125,7 @@ az staticwebapp hostname show -n kalandka --hostname kalandka.hu --query validat
 
 Put the token in a TXT record at `kalandka.hu`, then point the apex at the site with an ALIAS/ANAME record (or an A record to the IP shown in the portal under Custom domains).
 
-**Link previews:** the Open Graph tags in `index.html` need the public origin to give crawlers absolute URLs. Set `SITE_URL` (e.g. `https://www.kalandka.hu`) in the environment of the build step; without it the tags use root-relative paths, which some sites (Facebook) ignore.
+**Link previews:** the Open Graph tags in `index.html` need the public origin to give crawlers absolute URLs. Set the `SITE_URL` repository variable (Settings → Secrets and variables → Actions → Variables, e.g. `https://www.kalandka.hu`); CI passes it to the build. Locally, put it in the environment or a `.env` file; without it the tags use root-relative paths, which some sites (Facebook) ignore.
 
 ## Rolling back
 

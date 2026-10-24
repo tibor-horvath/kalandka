@@ -49,6 +49,12 @@ export function applyUpdate(): void {
   void apply?.(true);
 }
 
+/** Reloads the app, into the waiting version when there is one (a plain reload would keep the old one). */
+export function restartApp(): void {
+  if (waiting && apply) applyUpdate();
+  else window.location.reload();
+}
+
 /** True once a new version has been downloaded and is waiting to take over. */
 export function useUpdateWaiting(): boolean {
   return useSyncExternalStore(

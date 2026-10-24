@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Oops } from './components/Oops';
 import { PageMotion } from './components/PageMotion';
 import { Stage } from './components/Stage';
 import { setSoundEnabled } from './lib/sound';
@@ -11,7 +12,7 @@ import { Garden } from './screens/Garden';
 import { Home, type GameId } from './screens/Home';
 import { Learn } from './screens/Learn';
 import { Gate } from './screens/parents/Gate';
-import { ParentArea, type ParentStart } from './screens/parents/ParentArea';
+import type { ParentStart } from './screens/parents/ParentArea';
 import { Patterns } from './screens/Patterns';
 import { Picker } from './screens/Picker';
 import { Pots } from './screens/Pots';
@@ -37,6 +38,10 @@ import { WORLDS, currentWorld, type WorldId } from './state/worlds';
  */
 type Screen = 'home' | 'map' | 'garden' | 'workshop' | 'album' | GameId | RobotGameId;
 type Parents = 'closed' | 'gate' | 'open';
+
+// Only grown-ups open it, so it loads on its own; the gate starts the download, so it is usually there before the answer is.
+const loadParentArea = () => import('./screens/parents/ParentArea');
+const ParentArea = lazy(async () => ({ default: (await loadParentArea()).ParentArea }));
 
 /** The play clock ticks in steps of this many seconds. */
 const TICK_SECONDS = 5;
@@ -182,6 +187,7 @@ function Game() {
   const openGate = (start: ParentStart = 'overview') => {
     setParentStart(start);
     setParents('gate');
+    void loadParentArea();
   };
   const closeParents = () => setParents('closed');
   const switchKid = () => {
@@ -237,15 +243,21 @@ function Game() {
         <Rest evening={evening && remaining > 0} onParents={() => openGate()} onSwitch={profiles.kids.length > 1 && !evening ? switchKid : undefined} />
       )}
       {parents === 'gate' && <Gate onPass={() => setParents('open')} onCancel={closeParents} />}
-      {parents === 'open' && <ParentArea start={parentStart} onClose={closeParents} />}
+      {parents === 'open' && (
+        <Suspense fallback={null}>
+          <ParentArea start={parentStart} onClose={closeParents} />
+        </Suspense>
+      )}
     </Stage>
   );
 }
 
 export default function App() {
   return (
-    <ProfilesProvider>
-      <Game />
-    </ProfilesProvider>
+    <Oops>
+      <ProfilesProvider>
+        <Game />
+      </ProfilesProvider>
+    </Oops>
   );
 }
