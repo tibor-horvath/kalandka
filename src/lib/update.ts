@@ -13,26 +13,65 @@ import { registerSW } from 'virtual:pwa-register';
 const CHECK_EVERY_MS = 5 * 60 * 1000;
 
 let waiting = false;
-let apply: ((reload?: boolean) => Promise<void>) | null = null;
+let applying = false;
+let reloading = false;
+let registration: ServiceWorkerRegistration | undefined;
 const listeners = new Set<() => void>();
+
+function markWaiting(): void {
+  if (waiting) return;
+  waiting = true;
+  listeners.forEach((l) => l());
+}
+
+function reloadOnce(): void {
+  if (reloading || !applying) return;
+  reloading = true;
+  window.location.reload();
+}
+
+/**
+ * The browser looks for a new `sw.js` as soon as the page is opened, while the service worker is
+ * registered only after the page has loaded: a new version found in between is already installing
+ * (or waiting) by then, and the plugin's own events never report it. So watch the registration directly.
+ */
+function watch(reg: ServiceWorkerRegistration): void {
+  // Without a controller this is the first install, not an update.
+  const isUpdate = () => Boolean(navigator.serviceWorker.controller);
+  const follow = (sw: ServiceWorker | null) => {
+    if (!sw) return;
+    const onState = () => {
+      if (sw.state === 'installed' && reg.waiting === sw && isUpdate()) markWaiting();
+    };
+    onState();
+    sw.addEventListener('statechange', onState);
+  };
+  if (reg.waiting && isUpdate()) markWaiting();
+  follow(reg.installing);
+  reg.addEventListener('updatefound', () => follow(reg.installing));
+}
 
 /** Call once at startup. */
 export function registerUpdates(): void {
-  apply = registerSW({
-    onNeedRefresh() {
-      waiting = true;
-      listeners.forEach((l) => l());
-    },
-    onRegisteredSW(_url, registration) {
-      if (!registration) return;
+  if (!('serviceWorker' in navigator)) return;
+  // The new version took over: reload into it, but only when this tab asked for it (from the home screen).
+  // When another tab switched, this one keeps going and reloads on its own next visit home.
+  navigator.serviceWorker.addEventListener('controllerchange', reloadOnce);
+  registerSW({
+    onNeedRefresh: markWaiting,
+    onNeedReload: reloadOnce,
+    onRegisteredSW(_url, reg) {
+      if (!reg) return;
+      registration = reg;
+      watch(reg);
       // Registering already made the browser look for a new version.
       let lastCheck = Date.now();
       const check = () => {
-        if (waiting || registration.installing || !navigator.onLine || document.visibilityState !== 'visible') return;
+        if (waiting || reg.installing || !navigator.onLine || document.visibilityState !== 'visible') return;
         if (Date.now() - lastCheck < CHECK_EVERY_MS) return;
         lastCheck = Date.now();
         // update() rejects when the server is unreachable; the next check tries again.
-        registration.update().catch(() => {});
+        reg.update().catch(() => {});
       };
       // Poll more often than the limit so a check is never much more than five minutes late; `check` throttles it.
       window.setInterval(check, CHECK_EVERY_MS / 4);
@@ -44,14 +83,18 @@ export function registerUpdates(): void {
   });
 }
 
-/** Activates the waiting version and reloads the page into it. */
+/** Activates the waiting version; the page reloads into it once it has taken over. */
 export function applyUpdate(): void {
-  void apply?.(true);
+  applying = true;
+  const next = registration?.waiting;
+  if (next) next.postMessage({ type: 'SKIP_WAITING' });
+  // Nothing left waiting (another tab already switched): the new version is in charge, just reload.
+  else reloadOnce();
 }
 
 /** Reloads the app, into the waiting version when there is one (a plain reload would keep the old one). */
 export function restartApp(): void {
-  if (waiting && apply) applyUpdate();
+  if (waiting) applyUpdate();
   else window.location.reload();
 }
 
