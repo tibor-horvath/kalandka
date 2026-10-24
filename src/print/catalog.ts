@@ -45,6 +45,15 @@ function readAll(): Saved {
   }
 }
 
+/** Forgets every child's last choices, with the profiles they belong to. */
+export function forgetChoices(): void {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    // Blocked storage keeps nothing anyway.
+  }
+}
+
 export function savedChoice(kidId: string, id: PrintId): PrintChoice | null {
   const c = readAll()[kidId]?.[id];
   const s = sheetFor(id);

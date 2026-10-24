@@ -1,12 +1,12 @@
 import { useState, type CSSProperties } from 'react';
 import { AVATARS, Avatar } from '../../components/avatars';
+import { AGE_LABEL, KidFields } from '../../components/KidFields';
+import { forgetChoices } from '../../print/catalog';
 import {
-  AGE_BANDS,
-  AVATAR_IDS,
   MAX_KIDS,
-  NAME_MAX,
   addKid,
   editKid,
+  forgetProfiles,
   freeAvatars,
   kidName,
   progressOf,
@@ -14,17 +14,28 @@ import {
   useProfiles,
   type AgeBand,
   type AvatarId,
-  type Kid
+  type Kid,
+  type Profiles
 } from '../../state/profiles';
 import { lastPlayed, playedToday, today } from '../../state/screenTime';
 import type { ParentPage } from './ParentArea';
 
-const AGE_LABEL: Record<AgeBand, string> = { '5': '5', '6': '6', '7+': '7+' };
+/** Removes a child; removing the only one forgets the device and starts over from the landing page. */
+function removeChild(profiles: Profiles, change: (fn: (s: Profiles) => Profiles) => void, id: string) {
+  if (profiles.kids.length > 1) {
+    change((s) => removeKid(s, id));
+    return;
+  }
+  forgetProfiles();
+  forgetChoices();
+  window.location.reload();
+}
 
 /** The children who play on this device: add, rename, change figure, remove. */
 export function KidsPage({ startAdding = false, onView }: { startAdding?: boolean; onView: (id: string, page: ParentPage) => void }) {
   const { profiles, change } = useProfiles();
   const [editing, setEditing] = useState<string | null>(startAdding && profiles.kids.length < MAX_KIDS ? 'new' : null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const shared = profiles.kids.length > 1;
   const day = today();
 
@@ -81,7 +92,32 @@ export function KidsPage({ startAdding = false, onView }: { startAdding?: boolea
                 <button type="button" className="pa-btn pa-btn--quiet" onClick={() => setEditing(k.id)}>
                   {k.name.trim() ? 'Szerkesztés' : 'Elnevezés'}
                 </button>
+                <button type="button" className="pa-btn pa-btn--warn" aria-label={`${kidName(k)} törlése`} onClick={() => setDeleting(k.id)}>
+                  Törlés
+                </button>
               </div>
+              {deleting === k.id && (
+                <div className="pa-confirm pa-kid__confirm" role="alert">
+                  <span>
+                    {shared
+                      ? `Biztosan törlöd ${kidName(k)} profilját a kerttel, a magokkal, a szintekkel és a játékidővel együtt? Ez nem vonható vissza.`
+                      : `${kidName(k)} az egyetlen gyerek. A törlés mindent töröl, a beállításokat is, és az app a kezdőoldalra áll vissza. Ez nem vonható vissza.`}
+                  </span>
+                  <button type="button" className="pa-btn pa-btn--quiet" onClick={() => setDeleting(null)}>
+                    Mégse
+                  </button>
+                  <button
+                    type="button"
+                    className="pa-btn pa-btn--danger"
+                    onClick={() => {
+                      setDeleting(null);
+                      removeChild(profiles, change, k.id);
+                    }}
+                  >
+                    Igen, törlöm
+                  </button>
+                </div>
+              )}
             </li>
           );
         })}
@@ -137,8 +173,10 @@ function KidForm({ kid, onDone }: { kid?: Kid; onDone: () => void }) {
     onDone();
   };
 
+  const onlyKid = profiles.kids.length === 1;
+
   const remove = () => {
-    if (kid) change((s) => removeKid(s, kid.id));
+    if (kid) removeChild(profiles, change, kid.id);
     onDone();
   };
 
@@ -159,62 +197,20 @@ function KidForm({ kid, onDone }: { kid?: Kid; onDone: () => void }) {
             save();
           }}
         >
-          <div className="pa-field">
-            <label htmlFor="k-name" className="pa-h2">
-              Név
-            </label>
-            <input
-              id="k-name"
-              type="text"
-              value={name}
-              maxLength={NAME_MAX}
-              autoComplete="off"
-              aria-invalid={missingName || undefined}
-              aria-describedby="k-name-hint"
-              onChange={(e) => {
-                setName(e.target.value);
+          <KidFields
+            draft={{ name, avatar, age }}
+            onChange={(patch) => {
+              if (patch.name !== undefined) {
+                setName(patch.name);
                 setMissingName(false);
-              }}
-            />
-            <small id="k-name-hint" className={missingName ? 'pa-field__error' : undefined}>
-              {missingName ? 'Írd be a gyerek nevét.' : 'Csepi így szólítja majd. Becenév is jó.'}
-            </small>
-          </div>
-
-          <fieldset className="pa-field">
-            <legend className="pa-h2">Figura</legend>
-            <div className="pa-avatars">
-              {AVATAR_IDS.map((id) => {
-                const taken = !free.includes(id);
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    className={`pa-avatar${avatar === id ? ' is-on' : ''}`}
-                    aria-pressed={avatar === id}
-                    aria-label={taken ? `${AVATARS[id].name} (már foglalt)` : AVATARS[id].name}
-                    disabled={taken}
-                    onClick={() => setAvatar(id)}
-                  >
-                    <Avatar id={id} size={56} />
-                  </button>
-                );
-              })}
-            </div>
-            <small>Mindenkinek más figurája van, így olvasás nélkül is megtalálja a sajátját.</small>
-          </fieldset>
-
-          <fieldset className="pa-field">
-            <legend className="pa-h2">Hány éves?</legend>
-            <div className="pa-seg pa-seg--4" role="radiogroup" aria-label="Életkor">
-              {AGE_BANDS.map((a) => (
-                <button key={a} type="button" role="radio" aria-checked={age === a} className={`pa-seg__btn${age === a ? ' is-on' : ''}`} onClick={() => setAge(a)}>
-                  {AGE_LABEL[a]}
-                </button>
-              ))}
-            </div>
-            <small>{kid ? 'A szinteket a Szintek oldalon állíthatod.' : 'Ebből állítjuk a kezdő szinteket. Később a Szintek oldalon bármikor módosíthatod.'}</small>
-          </fieldset>
+              }
+              if (patch.avatar) setAvatar(patch.avatar);
+              if (patch.age) setAge(patch.age);
+            }}
+            free={free}
+            missingName={missingName}
+            ageHint={kid ? 'A szinteket a Szintek oldalon állíthatod.' : 'Ebből állítjuk a kezdő szinteket. Később a Szintek oldalon bármikor módosíthatod.'}
+          />
 
           <div className="pa-row pa-kidform__buttons">
             <button type="button" className="pa-btn pa-btn--quiet" onClick={onDone}>
@@ -238,12 +234,16 @@ function KidForm({ kid, onDone }: { kid?: Kid; onDone: () => void }) {
         </aside>
       </div>
 
-      {kid && profiles.kids.length > 1 && (
+      {kid && (
         <section className="pa-card pa-card--warn" aria-labelledby="k-remove">
           <h2 id="k-remove" className="pa-h2 pa-h2--warn">
             {kidName(kid)} eltávolítása
           </h2>
-          <p className="pa-muted">Törli a profilt a kerttel, a magokkal, a szintekkel és a játékidővel együtt.</p>
+          <p className="pa-muted">
+            {onlyKid
+              ? 'Ő az egyetlen gyerek ezen az eszközön. Az eltávolítás a kertet, a magokat, a szinteket, a játékidőt és a beállításokat is törli, és az app a kezdőoldalra áll vissza.'
+              : 'Törli a profilt a kerttel, a magokkal, a szintekkel és a játékidővel együtt.'}
+          </p>
           {confirming ? (
             <div className="pa-confirm" role="alert">
               <span>Biztosan törlöd? Ez nem vonható vissza.</span>

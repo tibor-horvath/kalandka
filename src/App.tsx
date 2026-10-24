@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { KidDraft } from './components/KidFields';
 import { Oops } from './components/Oops';
 import { PageMotion } from './components/PageMotion';
 import { Stage } from './components/Stage';
@@ -28,7 +29,7 @@ import { Mirror } from './screens/robot/Mirror';
 import { Seq } from './screens/robot/Seq';
 import { Sort } from './screens/robot/Sort';
 import { Workshop } from './screens/robot/Workshop';
-import { ProfilesProvider, hasSave, progressOf, setActive, useProfiles } from './state/profiles';
+import { ProfilesProvider, firstKid, hasSave, progressOf, setActive, useProfiles } from './state/profiles';
 import { useProgress, type Progress } from './state/progress';
 import { GRACE_SECONDS, WARN_SECONDS, addPlay, isEveningRest, remainingSeconds, today } from './state/screenTime';
 import { WORLDS, currentWorld, type WorldId } from './state/worlds';
@@ -212,9 +213,9 @@ function Game() {
     // A child who has never chosen a world starts on the map; the others go straight back to their last one.
     setScreen(progressOf(profiles, id).world ? 'home' : 'map');
   };
-  const start = () => {
-    // A copy, so the profile made on this first visit is saved now and the landing page does not come back.
-    change((s) => ({ ...s }));
+  const start = (kid: KidDraft) => {
+    // The first child named on the landing page is saved now, so the landing page does not come back.
+    change((s) => firstKid(s, kid));
     setLanding(false);
   };
   const openAlbum = (from: 'garden' | 'workshop') => {

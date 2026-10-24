@@ -1,11 +1,14 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Csepi } from '../components/Csepi';
 import { Csavar } from '../components/robot';
+import { Avatar } from '../components/avatars';
+import { KidFields, type KidDraft } from '../components/KidFields';
 import { KalandkaIcon, KalandkaWordmark } from '../components/ui';
 import { promptInstall, useInstallState } from '../lib/install';
+import { AVATAR_IDS } from '../state/profiles';
 
 // The first page on a device that has never played here: it tells the grown-up what Kalandka is,
-// and its start button saves the first profile and opens the map. It scrolls like a web page, outside the game stage.
+// and its start button asks for the first child's name and figure, saves that profile and opens the map. It scrolls like a web page, outside the game stage.
 
 const GARDEN_GAMES: [string, string][] = [
   ['Számvetés', 'a számok 1–20-ig'],
@@ -122,16 +125,85 @@ function Install() {
   );
 }
 
-export function Landing({ onStart }: { onStart: () => void }) {
+/** The grown-up names the first child before anything is saved; cancelling leaves the device untouched. */
+function FirstKid({ onCreate, onCancel }: { onCreate: (kid: KidDraft) => void; onCancel: () => void }) {
+  const [draft, setDraft] = useState<KidDraft>({ name: '', avatar: 'frog', age: null });
+  const [missingName, setMissingName] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onCancel]);
+
+  const create = () => {
+    const name = draft.name.trim();
+    if (!name) {
+      setMissingName(true);
+      return;
+    }
+    onCreate({ ...draft, name });
+  };
+
+  return (
+    <div className="landing__modal" onClick={(e) => e.target === e.currentTarget && onCancel()}>
+      <form
+        className="landing__dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="first-kid-title"
+        onSubmit={(e) => {
+          e.preventDefault();
+          create();
+        }}
+      >
+        <div className="landing__dialog-head">
+          <Avatar id={draft.avatar} size={64} />
+          <div>
+            <h2 id="first-kid-title">Ki fog játszani?</h2>
+            <p>Saját kertet, magokat és szinteket kap. Testvéreket később a Szülői sarokban adhatsz hozzá.</p>
+          </div>
+        </div>
+        <KidFields
+          draft={draft}
+          onChange={(patch) => {
+            setDraft((d) => ({ ...d, ...patch }));
+            if (patch.name !== undefined) setMissingName(false);
+          }}
+          free={AVATAR_IDS}
+          missingName={missingName}
+          ageHint="Ebből állítjuk a kezdő szinteket. Később a Szülői sarokban bármikor módosíthatod."
+          autoFocus
+        />
+        <div className="pa-row landing__dialog-buttons">
+          <button type="button" className="pa-btn pa-btn--quiet" onClick={onCancel}>
+            Mégse
+          </button>
+          <button type="submit" className="pa-btn pa-btn--go">
+            Kezdhetjük!
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export function Landing({ onStart }: { onStart: (kid: KidDraft) => void }) {
+  const [asking, setAsking] = useState(false);
+  const ask = () => setAsking(true);
+
   return (
     <div className="landing">
+      {asking && <FirstKid onCreate={onStart} onCancel={() => setAsking(false)} />}
       <header className="landing__top">
         <div className="landing__wrap landing__bar">
           <span className="landing__brand">
             <KalandkaIcon size={44} />
             <KalandkaWordmark size={30} />
           </span>
-          <StartButton onStart={onStart}>Indítás</StartButton>
+          <StartButton onStart={ask}>Indítás</StartButton>
         </div>
       </header>
 
@@ -145,7 +217,7 @@ export function Landing({ onStart }: { onStart: () => void }) {
                 Gondolkodós játékok tabletre és telefonra. Csepi, a vízcsepp a számkertbe kalauzol, Csavar, a robot a műhelybe. A gyerek választ szigetet, a szint pedig magától követi
                 őt.
               </p>
-              <StartButton onStart={onStart} />
+              <StartButton onStart={ask} />
               <p className="landing__small">Internet nélkül is működik · nem kell fiók · minden adat ezen a készüléken marad</p>
             </div>
             <div className="landing__hero-art" aria-hidden="true">
@@ -233,7 +305,7 @@ export function Landing({ onStart }: { onStart: () => void }) {
         <section className="landing__section landing__section--tight landing__end">
           <div className="landing__wrap">
             <h2>Hova evezünk ma?</h2>
-            <StartButton onStart={onStart} />
+            <StartButton onStart={ask} />
           </div>
         </section>
       </main>

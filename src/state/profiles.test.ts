@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PLANTS } from '../games/water/logic';
 import { DEFAULT_PROGRESS } from './progress';
-import { MAX_KIDS, addKid, applyUpdate, editKid, freeAvatars, fromProgress, parseProfiles, progressOf, removeKid, setActive, startingProgress } from './profiles';
+import { MAX_KIDS, addKid, applyUpdate, editKid, firstKid, freeAvatars, fromProgress, parseProfiles, progressOf, removeKid, setActive, startingProgress } from './profiles';
 
 const two = () => addKid(fromProgress(DEFAULT_PROGRESS, 'a'), { name: 'Lili', avatar: 'ladybug', age: '5' }, 'b');
 
@@ -82,6 +82,14 @@ describe('profiles', () => {
     expect(s.activeId).toBe('a');
     expect(s.progress.b).toBeUndefined();
     expect(removeKid(s, 'a')).toBe(s);
+  });
+
+  it('names the first child on a new device with starting levels for their age', () => {
+    const fresh = fromProgress(startingProgress(null), 'a');
+    const s = firstKid(fresh, { name: 'Bence', avatar: 'bee', age: '7+' });
+    expect(s.kids).toEqual([{ id: 'a', name: 'Bence', avatar: 'bee', age: '7+' }]);
+    expect(s.activeId).toBe('a');
+    expect(progressOf(s, 'a').unlockAll).toBe(true);
   });
 
   it('renames and switches only to existing children', () => {

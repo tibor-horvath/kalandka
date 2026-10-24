@@ -130,6 +130,16 @@ export function hasSave(): boolean {
   }
 }
 
+/** Removes every child and shared setting, so the next start is a first visit with the landing page. */
+export function forgetProfiles(): void {
+  try {
+    localStorage.removeItem(KEY);
+    localStorage.removeItem(LEGACY_KEY);
+  } catch {
+    // Blocked storage keeps nothing anyway.
+  }
+}
+
 function loadProfiles(): Profiles {
   try {
     return parseProfiles(localStorage.getItem(KEY), localStorage.getItem(LEGACY_KEY));
@@ -159,11 +169,17 @@ export function addKid(s: Profiles, kid: Omit<Kid, 'id'>, id = newId()): Profile
   return { ...s, kids: [...s.kids, { ...kid, id }], progress: { ...s.progress, [id]: omitShared(startingProgress(kid.age)) } };
 }
 
+/** Names the first child on a new device: replaces the placeholder profile, with starting levels for their age. */
+export function firstKid(s: Profiles, kid: Omit<Kid, 'id'>): Profiles {
+  const id = s.activeId;
+  return { ...s, kids: [{ ...kid, id }], progress: { [id]: omitShared(startingProgress(kid.age)) } };
+}
+
 export function editKid(s: Profiles, id: string, patch: Partial<Omit<Kid, 'id'>>): Profiles {
   return { ...s, kids: s.kids.map((k) => (k.id === id ? { ...k, ...patch } : k)) };
 }
 
-/** The last child cannot be removed; the parents' reset clears their progress instead. */
+/** The last child is not removed here; removing them forgets the whole device instead (forgetProfiles). */
 export function removeKid(s: Profiles, id: string): Profiles {
   if (s.kids.length <= 1 || !s.kids.some((k) => k.id === id)) return s;
   const kids = s.kids.filter((k) => k.id !== id);

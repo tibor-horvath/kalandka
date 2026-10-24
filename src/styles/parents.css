@@ -1,5 +1,7 @@
 /* Parents' area: a calm adult space. Same brand (Csepi, Baloo 2 headings), quieter colours, Nunito text. */
-.pa {
+/* Its tokens are shared with the landing page's first-profile dialog, which uses the same form controls. */
+.pa,
+.landing__dialog {
   --pa-bg: #f2f6f9;
   --pa-card: #ffffff;
   --pa-ink: #10233a;
@@ -10,6 +12,9 @@
   --pa-good: #2f7d32;
   --pa-warn: #b4560b;
   --pa-warn-soft: #fff6ec;
+}
+
+.pa {
   position: absolute;
   inset: 0;
   z-index: 20;
@@ -236,7 +241,8 @@
 
 /* children page */
 .pa-kids { margin: 0; padding: 0; list-style: none; background: var(--pa-card); border-radius: 20px; display: flex; flex-direction: column; }
-.pa-kid { display: flex; align-items: center; gap: 18px; padding: 16px 22px; }
+.pa-kid { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; padding: 16px 22px; }
+.pa-kid__confirm { flex-basis: 100%; }
 .pa-kid + .pa-kid { border-top: 1px solid var(--pa-soft); }
 .pa-kid > svg { flex: none; }
 .pa-kid__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }

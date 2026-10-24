@@ -74,7 +74,18 @@
 .landing__foot { background: var(--ink); color: #d6e4ee; padding: 36px 16px; }
 .landing__foot .landing__wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: space-between; }
 
+/* the first child's profile, asked before anything is saved */
+.landing__modal { position: fixed; inset: 0; z-index: 10; background: rgba(16, 35, 58, 0.45); display: grid; place-items: center; padding: 16px; overflow-y: auto; }
+.landing__dialog { width: min(100%, 620px); box-sizing: border-box; background: var(--paper); border-radius: 28px; padding: clamp(20px, 4vw, 32px); display: flex; flex-direction: column; gap: 22px; user-select: none; -webkit-user-select: none; }
+.landing__dialog-head { display: flex; align-items: center; gap: 16px; }
+.landing__dialog-head > svg { flex: none; }
+.landing__dialog h2 { font-size: 30px; }
+.landing__dialog-head p { margin-top: 4px; color: var(--ink-soft); }
+.landing__dialog-buttons { justify-content: flex-end; }
+
 @media (max-width: 600px) {
+  .landing__dialog .pa-avatars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .landing__dialog-head > svg { display: none; }
   .landing__lead { font-size: 18px; }
   .landing__island { width: 150px; height: 150px; }
   .landing__island svg { width: 110px; height: auto; }
