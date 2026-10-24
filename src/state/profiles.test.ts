@@ -42,6 +42,12 @@ describe('profiles', () => {
     expect(progressOf(back, 'a').seeds).toBe(0);
   });
 
+  it('moves a saved 3–4 age to 5 and drops unknown ages', () => {
+    const s = two();
+    const old = { ...s, kids: [{ ...s.kids[0], age: '3-4' }, { ...s.kids[1], age: '9' }] };
+    expect(parseProfiles(JSON.stringify(old), null).kids.map((k) => k.age)).toEqual(['5', null]);
+  });
+
   it('keeps progress per child and device settings shared', () => {
     let s = two();
     s = applyUpdate(s, 'a', (p) => ({ ...p, seeds: 3, voice: false, screenLimitMin: 30 }));

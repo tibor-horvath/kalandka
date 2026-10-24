@@ -19,7 +19,7 @@ import {
 import { lastPlayed, playedToday, today } from '../../state/screenTime';
 import type { ParentPage } from './ParentArea';
 
-const AGE_LABEL: Record<AgeBand, string> = { '3-4': '3–4', '5': '5', '6': '6', '7+': '7+' };
+const AGE_LABEL: Record<AgeBand, string> = { '5': '5', '6': '6', '7+': '7+' };
 
 /** The children who play on this device: add, rename, change figure, remove. */
 export function KidsPage({ startAdding = false, onView }: { startAdding?: boolean; onView: (id: string, page: ParentPage) => void }) {

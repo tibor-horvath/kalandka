@@ -10,8 +10,14 @@ export type AvatarId = 'frog' | 'ladybug' | 'bee' | 'snail' | 'flower' | 'fish';
 export const AVATAR_IDS: AvatarId[] = ['frog', 'ladybug', 'bee', 'snail', 'flower', 'fish'];
 
 /** Sets the starting levels of a new profile; parents can change them later on the levels page. */
-export type AgeBand = '3-4' | '5' | '6' | '7+';
-export const AGE_BANDS: AgeBand[] = ['3-4', '5', '6', '7+'];
+export type AgeBand = '5' | '6' | '7+';
+export const AGE_BANDS: AgeBand[] = ['5', '6', '7+'];
+
+/** Saves from before the 5–7 audience may still hold '3-4'; those children start with the youngest band. */
+function readAge(age: unknown): AgeBand | null {
+  if (age === '3-4') return '5';
+  return AGE_BANDS.includes(age as AgeBand) ? (age as AgeBand) : null;
+}
 
 export interface Kid {
   id: string;
@@ -94,7 +100,7 @@ function isKid(k: unknown): k is Kid {
 export function parseProfiles(raw: string | null, legacyRaw: string | null): Profiles {
   try {
     const saved = raw ? (JSON.parse(raw) as Partial<Profiles>) : null;
-    const kids = Array.isArray(saved?.kids) ? saved.kids.filter(isKid).map((k) => ({ ...k, age: AGE_BANDS.includes(k.age as AgeBand) ? k.age : null })) : [];
+    const kids = Array.isArray(saved?.kids) ? saved.kids.filter(isKid).map((k) => ({ ...k, age: readAge(k.age) })) : [];
     if (saved && kids.length) {
       return {
         kids,
