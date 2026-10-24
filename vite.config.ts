@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
           id: '/',
           name: 'Kalandka',
           short_name: 'Kalandka',
-          description: 'Számolós és logikai játékok 4–7 éveseknek.',
+          description: 'Számolós és logikai játékok 5–7 éveseknek.',
           lang: 'hu',
           start_url: '/',
           display: 'fullscreen',

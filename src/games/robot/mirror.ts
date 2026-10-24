@@ -4,7 +4,7 @@ import { rng } from '../flash/layout';
 import { COLORS, COLOR_NAMES, type Color } from './sort';
 
 // Tükörgép: a lamp board with a mirror across it. What shines on one side has to shine on the
-// other, just as far from the mirror. First one lamp (for 4-year-olds), then several, then half a
+// other, just as far from the mirror. First one lamp (for 5-year-olds), then several, then half a
 // picture to finish, in one colour and then with paint pots; then the mirror lies flat; then
 // telling a true reflection from a plain copy or a turned shape; last a board the machine got
 // wrong in one place. Nothing fails: a wrong lamp blinks orange and goes out, Csavar counts the

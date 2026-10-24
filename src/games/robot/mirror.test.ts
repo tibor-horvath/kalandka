@@ -38,7 +38,7 @@ describe('Tükörgép levels', () => {
     for (let l = 0; l < MIRROR_LEVELS.length; l++) expect(buildMirrorRound(l, 3)).toEqual(buildMirrorRound(l, 3));
   });
 
-  it('starts 4-year-olds on a single lamp', () => {
+  it('starts 5-year-olds on a single lamp', () => {
     for (const round of rounds('one')) for (const t of round.tasks as LightTask[]) expect(t.given).toHaveLength(1);
   });
 });

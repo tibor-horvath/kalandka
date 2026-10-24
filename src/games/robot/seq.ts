@@ -4,7 +4,7 @@ import { rng } from '../flash/layout';
 import { COLORS, COLOR_NAMES, SHAPES, SHAPE_NAMES, type Color, type Shape } from './sort';
 
 // Mintagép: harder patterns than Virágsor. Parts ride the belt in a row that follows a rule and the
-// child picks what comes next: two colours (for 4-year-olds), longer repeats, colour and shape on
+// child picks what comes next: two colours (for 5-year-olds), longer repeats, colour and shape on
 // their own cycles, towers that grow, an arrow that turns, a row with one part out of place, and
 // last the same rule told again in arrows. Nothing fails: a wrong pick sits in the gap a moment,
 // Csavar reads the row aloud (the repeats bracketed under it), and after a second try the right

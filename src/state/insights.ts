@@ -212,7 +212,7 @@ export function insights(p: Progress, day: string, max = 4): Insight[] {
   return picked.sort((a, b) => ordered.indexOf(a) - ordered.indexOf(b));
 }
 
-// Parents' gate: a multiplication 4–7 year olds cannot do yet. Two-digit answers, so a lucky tap rarely opens it.
+// Parents' gate: a multiplication 5–7 year olds cannot do yet. Two-digit answers, so a lucky tap rarely opens it.
 
 export interface GateQuestion {
   a: number;
