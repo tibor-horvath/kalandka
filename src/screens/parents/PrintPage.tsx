@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { createPortal } from 'react-dom';
 import { MAX_PAGES, PRINT_SHEETS, buildPages, saveChoice, savedChoice, sheetFor, tasksPerPage, type PrintChoice } from '../../print/catalog';
 import { DENSITIES, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
-import { useProfiles } from '../../state/profiles';
+import { useProfiles, type AgeBand } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
 import { WORLDS } from '../../state/worlds';
 import { WorldGroup } from './controls';
@@ -26,6 +26,11 @@ const TILES: Record<PrintId, { glyph: string; tile: string }> = {
   mirror: { glyph: '•|•', tile: 'pa-tile--sky' },
   code: { glyph: '●→?', tile: 'pa-tile--sand' }
 };
+
+/** "az 5 éves", "a 6 éves", "a 7 éves": the age a visitor picked on the landing page, with its article. */
+function theAge(age: AgeBand): string {
+  return age === '5' ? 'az 5 éves' : `a ${age === '7+' ? '7' : age} éves`;
+}
 
 function pagesOf(s: PrintSpec<unknown>, c: PrintChoice, answers: boolean): ReactNode[] {
   return buildPages(s, c).map((p, i) => (
@@ -86,11 +91,11 @@ function Stepper({ label, value, dots, onStep, atMin, atMax }: { label: string; 
 }
 
 /** One game's sheet: level, size and pages, a preview, the answers (on the tablet only) and the print button. */
-function GameSheet({ id, kidId, onBack }: { id: PrintId; kidId: string; onBack: () => void }) {
+function GameSheet({ id, kidId, guestAge, onBack }: { id: PrintId; kidId: string; guestAge?: AgeBand; onBack: () => void }) {
   const { progress } = useProgress();
   const { profiles } = useProfiles();
   const s = sheetFor(id);
-  const young = profiles.kids.find((k) => k.id === kidId)?.age === '5';
+  const young = (guestAge ?? profiles.kids.find((k) => k.id === kidId)?.age) === '5';
   const [choice, setChoice] = useState<PrintChoice>(
     () => savedChoice(kidId, id) ?? { level: s.current(progress), density: young ? 'big' : 'normal', pages: 1, batch: Math.floor(Math.random() * 10_000) }
   );
@@ -148,7 +153,13 @@ function GameSheet({ id, kidId, onBack }: { id: PrintId; kidId: string; onBack: 
               atMax={choice.level === s.levels.length - 1}
               onStep={(by) => change({ level: choice.level + by })}
             />
-            {choice.level === s.current(progress) ? <p className="pa-muted">Ezen a szinten tart most a játékban.</p> : <p className="pa-muted">A játékban most a(z) {s.current(progress) + 1}. szinten tart.</p>}
+            {guestAge ? (
+              <p className="pa-muted">{choice.level === s.current(progress) ? `Ezzel a szinttel indulnak ${theAge(guestAge)} gyerekek.` : `${theAge(guestAge).replace('a', 'A')} gyerekek a(z) ${s.current(progress) + 1}. szinttel indulnak.`}</p>
+            ) : choice.level === s.current(progress) ? (
+              <p className="pa-muted">Ezen a szinten tart most a játékban.</p>
+            ) : (
+              <p className="pa-muted">A játékban most a(z) {s.current(progress) + 1}. szinten tart.</p>
+            )}
           </section>
 
           <section className="pa-card">
@@ -211,18 +222,22 @@ function GameSheet({ id, kidId, onBack }: { id: PrintId; kidId: string; onBack: 
 }
 
 /** Printable sheets: every game on paper, for play without a device. In the parents' corner, and open to all from "Ki játszik?" and the home screens (PrintArea). */
-export function PrintPage({ kidId }: { kidId: string }) {
+export function PrintPage({ kidId, guestAge }: { kidId: string; guestAge?: AgeBand }) {
   const { progress } = useProgress();
   const [open, setOpen] = useState<PrintId | null>(null);
 
-  if (open) return <GameSheet key={`${kidId}-${open}`} id={open} kidId={kidId} onBack={() => setOpen(null)} />;
+  if (open) return <GameSheet key={`${kidId}-${open}`} id={open} kidId={kidId} guestAge={guestAge} onBack={() => setOpen(null)} />;
 
   return (
     <div className="pa-page">
       <header className="pa-head">
         <div>
           <h1 className="pa-h1">Nyomtatás</h1>
-          <p className="pa-lead">Feladatlapok papírra, eszköz nélküli játékhoz. Minden játék a saját lapján, a gyerek mostani szintjén; ceruza és zsírkréta kell hozzá.</p>
+          <p className="pa-lead">
+            {guestAge
+              ? `Feladatlapok papírra, eszköz nélküli játékhoz. Minden játék a saját lapján, ${theAge(guestAge)} gyerekeknek való kezdőszinten; ceruza és zsírkréta kell hozzá.`
+              : 'Feladatlapok papírra, eszköz nélküli játékhoz. Minden játék a saját lapján, a gyerek mostani szintjén; ceruza és zsírkréta kell hozzá.'}
+          </p>
         </div>
       </header>
       {WORLDS.map((w) => (
