@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import type { Cmd } from '../games/robot/path';
 import type { Dir } from '../games/robot/seq';
 import type { Color, Part, Shape } from '../games/robot/sort';
@@ -207,6 +207,14 @@ const PART_FILL: Record<Color, [string, string]> = {
 };
 const HOLE = '#F4F7FB';
 
+/**
+ * Paper only (src/print): on a black-and-white printer the colours turn to greys, so with `textured` red is
+ * drawn striped and blue dotted over its colour (yellow stays plain). Each printed sheet defines its own patterns
+ * and provides their fills here: a url(#id) finds the first element with that id in the page, and the on-screen
+ * preview's copy is hidden when printing.
+ */
+export const TextureContext = createContext<Record<Color, string | null>>({ red: null, blue: null, yellow: null });
+
 function PartShape({ shape, fill, edge }: { shape: Shape; fill: string; edge: string }) {
   if (shape === 'round') {
     return (
@@ -234,11 +242,14 @@ function PartShape({ shape, fill, edge }: { shape: Shape; fill: string; edge: st
 }
 
 /** A machine part for Válogatógép, in a 100 × 100 box; a small one is drawn at 60%, standing on the same bottom edge. */
-export function SortPart({ part }: { part: Part }) {
+export function SortPart({ part, textured = false }: { part: Part; textured?: boolean }) {
   const [fill, edge] = PART_FILL[part.color];
+  const textures = useContext(TextureContext);
+  const texture = textured && textures[part.color];
   return (
     <g transform={part.size === 'small' ? 'translate(20 36) scale(0.6)' : undefined}>
       <PartShape shape={part.shape} fill={fill} edge={edge} />
+      {texture && <PartShape shape={part.shape} fill={texture} edge="none" />}
     </g>
   );
 }
@@ -246,7 +257,8 @@ export function SortPart({ part }: { part: Part }) {
 const LABEL_INK = '#5E7184';
 
 /** The sign on a Válogatógép box: what goes in, drawn so a child who cannot read yet sees it. */
-export function BinSign({ match, hidden = false, size = 56 }: { match: Partial<Part>; hidden?: boolean; size?: number }) {
+export function BinSign({ match, hidden = false, size = 56, textured = false }: { match: Partial<Part>; hidden?: boolean; size?: number; textured?: boolean }) {
+  const textures = useContext(TextureContext);
   const svg = (children: ReactNode) => (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 100 100">
       {children}
@@ -260,10 +272,17 @@ export function BinSign({ match, hidden = false, size = 56 }: { match: Partial<P
     );
   }
   const { color, shape, size: big } = match;
-  if (color && shape) return svg(<SortPart part={{ color, shape, size: 'big' }} />);
+  if (color && shape) return svg(<SortPart part={{ color, shape, size: 'big' }} textured={textured} />);
   if (color) {
     const [fill, edge] = PART_FILL[color];
-    return svg(<path d="M50 8 C72 36 84 52 84 66 A34 34 0 0 1 16 66 C16 52 28 36 50 8 Z" fill={fill} stroke={edge} strokeWidth="6" strokeLinejoin="round" />);
+    const texture = textured && textures[color];
+    const drop = 'M50 8 C72 36 84 52 84 66 A34 34 0 0 1 16 66 C16 52 28 36 50 8 Z';
+    return svg(
+      <>
+        <path d={drop} fill={fill} stroke={edge} strokeWidth="6" strokeLinejoin="round" />
+        {texture && <path d={drop} fill={texture} />}
+      </>
+    );
   }
   if (shape) return svg(<PartShape shape={shape} fill="#DDE5EE" edge={LABEL_INK} />);
   if (big) return svg(<SortPart part={{ color: 'blue', shape: 'square', size: big }} />);
@@ -311,12 +330,16 @@ export function SortArt() {
 const ARROW_TEAL: [string, string] = ['#138A86', '#0C5F5C'];
 
 /** A Mintagép arrow on a white tile, in a 100 × 100 box: 0 points up, each step a quarter turn clockwise. */
-export function ArrowTile({ dir, color }: { dir: Dir; color: Color | null }) {
+export function ArrowTile({ dir, color, textured = false }: { dir: Dir; color: Color | null; textured?: boolean }) {
   const [fill, edge] = color ? PART_FILL[color] : ARROW_TEAL;
+  const textures = useContext(TextureContext);
+  const texture = textured && color && textures[color];
+  const arrow = 'M50 14 L80 50 H61 V86 H39 V50 H20 Z';
   return (
     <g>
       <rect x="6" y="6" width="88" height="88" rx="20" fill="#FFFFFF" stroke="#CFDBE8" strokeWidth="5" />
-      <path d="M50 14 L80 50 H61 V86 H39 V50 H20 Z" fill={fill} stroke={edge} strokeWidth="4" strokeLinejoin="round" transform={`rotate(${dir * 90} 50 50)`} />
+      <path d={arrow} fill={fill} stroke={edge} strokeWidth="4" strokeLinejoin="round" transform={`rotate(${dir * 90} 50 50)`} />
+      {texture && <path d={arrow} fill={texture} transform={`rotate(${dir * 90} 50 50)`} />}
     </g>
   );
 }
@@ -411,20 +434,23 @@ const SOCKET_EDGE = '#A9B7C6';
 export const MIRROR_GLASS = '#BFE6F2';
 
 /** A lamp on the Tükörgép board, in a 100 × 100 box: a dark socket, or a bulb in a part colour with a soft halo. */
-export function Lamp({ color }: { color: Color | null }) {
+export function Lamp({ color, textured = false }: { color: Color | null; textured?: boolean }) {
+  const textures = useContext(TextureContext);
   if (!color) return <circle cx="50" cy="50" r="24" fill={SOCKET} stroke={SOCKET_EDGE} strokeWidth="5" />;
   const [fill, edge] = PART_FILL[color];
+  const texture = textured && textures[color];
   return (
     <g>
       <circle cx="50" cy="50" r="46" fill={fill} opacity="0.22" />
       <circle cx="50" cy="50" r="34" fill={fill} stroke={edge} strokeWidth="6" />
+      {texture && <circle cx="50" cy="50" r="31" fill={texture} />}
       <ellipse cx="39" cy="38" rx="10" ry="7" fill="#FFFFFF" opacity="0.6" />
     </g>
   );
 }
 
 /** A shape of lamps in a size × size frame, for the Tükörgép cards. */
-export function LampGrid({ cells, size, color, px }: { cells: { r: number; c: number }[]; size: number; color: Color; px: number }) {
+export function LampGrid({ cells, size, color, px, textured = false }: { cells: { r: number; c: number }[]; size: number; color: Color; px: number; textured?: boolean }) {
   return (
     <svg aria-hidden="true" width={px} height={px} viewBox={`0 0 ${size * 100} ${size * 100}`}>
       {Array.from({ length: size * size }, (_, i) => {
@@ -433,7 +459,7 @@ export function LampGrid({ cells, size, color, px }: { cells: { r: number; c: nu
         const on = cells.some((p) => p.r === r && p.c === c);
         return (
           <g key={i} transform={`translate(${c * 100} ${r * 100})`}>
-            <Lamp color={on ? color : null} />
+            <Lamp color={on ? color : null} textured={textured} />
           </g>
         );
       })}

@@ -154,7 +154,7 @@ function SortBoard({ r, answers }: { r: SortRound; answers: boolean }) {
     <Pic w={1000} h={400}>
       {belt.map((p, i) => (
         <At key={i} x={i * step + step / 2 - 45} y={10} s={0.9}>
-          <SortPart part={p} />
+          <SortPart part={p} textured />
         </At>
       ))}
       {r.bins.map((b, i) => {
@@ -165,11 +165,11 @@ function SortBoard({ r, answers }: { r: SortRound; answers: boolean }) {
             <path d={`M${x} 250 H${x + BIN_W} L${x + BIN_W - 24} 392 H${x + 24} Z`} fill="#F3E3D0" stroke="#8A5A3B" strokeWidth="5" strokeLinejoin="round" />
             <rect x={x + BIN_W / 2 - 46} y={276} width="92" height="92" rx="14" fill="#FFFFFF" stroke="#C9A27C" strokeWidth="3" />
             <At x={x + BIN_W / 2 - 40} y={282}>
-              <BinSign match={b.match} hidden={hidden} size={80} />
+              <BinSign match={b.match} hidden={hidden} size={80} textured />
             </At>
             {example && (
               <At x={x + 14} y={300} s={0.6}>
-                <SortPart part={example} />
+                <SortPart part={example} textured />
               </At>
             )}
           </g>
@@ -188,6 +188,7 @@ const sort = spec<SortTask>({
   id: 'sort',
   world: 'robot',
   game: 'Válogatógép',
+  colorKey: () => true,
   levels: SORT_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'sort').level,
   grid: (level, d) => (SORT_LEVELS[level].mode === 'odd' ? pickGrid(d, [2, 5], [2, 7], [3, 9]) : pickGrid(d, [1, 2], [1, 3], [2, 4])),
@@ -215,7 +216,7 @@ const sort = spec<SortTask>({
         {task.row.parts.map((p, i) => (
           <g key={i}>
             <At x={i * 117 + 10} y={10}>
-              <SortPart part={p} />
+              <SortPart part={p} textured />
             </At>
             {answers && i === task.row.odd && <Ring x={i * 117 + 10} y={10} w={100} h={100} />}
           </g>
@@ -342,8 +343,8 @@ const scale = spec<{ t: ScaleTask; equal: boolean }>({
 const STEP = 108;
 
 function SeqItem({ item }: { item: Item }) {
-  if (item.kind === 'part') return <SortPart part={{ color: item.color, shape: item.shape, size: 'big' }} />;
-  if (item.kind === 'arrow') return <ArrowTile dir={item.dir} color={item.color} />;
+  if (item.kind === 'part') return <SortPart part={{ color: item.color, shape: item.shape, size: 'big' }} textured />;
+  if (item.kind === 'arrow') return <ArrowTile dir={item.dir} color={item.color} textured />;
   return <BlockStack n={item.n} />;
 }
 
@@ -351,6 +352,8 @@ const seq = spec<SeqTask>({
   id: 'seq',
   world: 'robot',
   game: 'Mintagép',
+  // Towers are one colour; every other row has coloured parts or arrows.
+  colorKey: (level) => SEQ_LEVELS[level].kind !== 'grow',
   levels: SEQ_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'seq').level,
   grid: (level, d) => (SEQ_LEVELS[level].kind === 'grow' ? pickGrid(d, [1, 4], [1, 5], [1, 7]) : SEQ_LEVELS[level].kind === 'translate' ? pickGrid(d, [1, 4], [1, 5], [1, 7]) : pickGrid(d, [1, 6], [1, 8], [1, 10])),
@@ -434,7 +437,7 @@ function MirrorBoard({ task, answers }: { task: Exclude<MirrorTask, { mode: 'pic
         const c = i % cols;
         return (
           <At key={i} x={c * CELL} y={r * CELL}>
-            <Lamp color={lit.get(`${r},${c}`) ?? null} />
+            <Lamp color={lit.get(`${r},${c}`) ?? null} textured />
           </At>
         );
       })}
@@ -452,6 +455,8 @@ const mirror = spec<MirrorTask>({
   id: 'mirror',
   world: 'robot',
   game: 'Tükörgép',
+  // Only the coloured pictures ask for a colour; the other boards are one colour.
+  colorKey: (level) => MIRROR_LEVELS[level].kind === 'paint' || MIRROR_LEVELS[level].kind === 'fix',
   levels: MIRROR_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'mirror').level,
   grid: (level, d) => {
@@ -478,12 +483,12 @@ const mirror = spec<MirrorTask>({
     const px = 300;
     return (
       <Pic w={1360} h={px}>
-        <LampGrid cells={task.shape} size={task.size} color={task.color} px={px} />
+        <LampGrid cells={task.shape} size={task.size} color={task.color} px={px} textured />
         <rect x={px + 18} y="0" width="16" height={px} rx="8" fill={MIRROR_GLASS} stroke="#5FA8C2" strokeWidth="3" />
         <Choices x={px + 90} y={0} w={px} h={px} gap={20} pick={task.choices.findIndex((c) => c.kind === 'mirror')} answers={answers}>
           {task.choices.map((c, i) => (
             <At key={i} x={20} y={20}>
-              <LampGrid cells={c.cells} size={task.size} color={task.color} px={px - 40} />
+              <LampGrid cells={c.cells} size={task.size} color={task.color} px={px - 40} textured />
             </At>
           ))}
         </Choices>

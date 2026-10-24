@@ -1,5 +1,7 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
+import { Lamp, TextureContext } from '../components/robot';
 import { KalandkaIcon, KalandkaWordmark } from '../components/ui';
+import type { Color } from '../games/robot/sort';
 import type { Progress } from '../state/progress';
 import { WORLDS, type WorldId } from '../state/worlds';
 
@@ -48,6 +50,8 @@ export interface PrintSpec<T> {
   tip: (level: number) => string;
   /** Pictures that explain the answer cards, shown beside the instruction. */
   legend?: (level: number) => ReactNode;
+  /** Colour is part of the task: the sheet shows which texture stands for which colour, for black-and-white printers. */
+  colorKey?: (level: number) => boolean;
   /**
    * Whether "Új feladatok" gives other tasks on this level (yes unless said). Not for sheets that follow a fixed order,
    * such as the numbers 1–20 in Számvetés or the digits in writing order in Mézút.
@@ -151,6 +155,31 @@ export function WriteBox({ x, y, size = 90, answer, answers }: { x: number; y: n
   );
 }
 
+/**
+ * The textures that keep colours apart in black and white (TextureContext in components/robot.tsx):
+ * red striped, blue dotted, yellow plain. Hidden but not display:none, so the patterns still paint.
+ */
+function Textures({ red, blue }: { red: string; blue: string }) {
+  return (
+    <svg className="ps-defs" width="0" height="0" aria-hidden="true">
+      <defs>
+        <pattern id={red} width="13" height="13" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="5" height="13" fill={INK} opacity="0.45" />
+        </pattern>
+        <pattern id={blue} width="15" height="15" patternUnits="userSpaceOnUse">
+          <circle cx="7.5" cy="7.5" r="3.4" fill="#FFFFFF" />
+        </pattern>
+      </defs>
+    </svg>
+  );
+}
+
+const COLOR_KEY: { color: Color; label: string }[] = [
+  { color: 'red', label: 'piros: csíkos' },
+  { color: 'blue', label: 'kék: pöttyös' },
+  { color: 'yellow', label: 'sárga: sima' }
+];
+
 /** The star a child colours in when a task is done. */
 function Star() {
   return (
@@ -169,40 +198,58 @@ export function siteAddress(): string {
 export function Sheet({ spec, level, grid, tasks, answers, footer }: { spec: PrintSpec<unknown>; level: number; grid: Grid; tasks: unknown[]; answers: boolean; footer: string }) {
   const [cols, rows] = grid;
   const { Task } = spec;
+  // Pattern ids of this sheet's own: the preview and the printed copy each use theirs (see TextureContext).
+  const uid = `ps-tex-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const textures = { red: `url(#${uid}-red)`, blue: `url(#${uid}-blue)`, yellow: null };
   return (
-    <section className={`ps-sheet ps-sheet--${spec.world}`}>
-      <header className="ps-head">
-        <KalandkaIcon size={44} />
-        <div className="ps-head__text">
-          <span className="ps-world">{WORLDS.find((w) => w.id === spec.world)!.name}</span>
-          <h2 className="ps-title">{spec.game}</h2>
-        </div>
-        <span className="ps-name">Név: </span>
-      </header>
-      <div className="ps-ask">
-        <p>{spec.ask(level)}</p>
-        {spec.legend && <div className="ps-legend">{spec.legend(level)}</div>}
-      </div>
-      <p className="ps-tip">
-        <b>Szülőknek:</b> {spec.tip(level)} Ha egy feladat kész, a gyerek kiszínezheti a csillagot.
-      </p>
-      <div className="ps-grid" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}>
-        {tasks.map((t, i) => (
-          <div key={i} className="ps-cell">
-            <span className="ps-num">{i + 1}.</span>
-            <Star />
-            <div className="ps-pic">
-              <Task task={t} answers={answers} />
-            </div>
+    <TextureContext.Provider value={textures}>
+      <section className={`ps-sheet ps-sheet--${spec.world}`}>
+        <Textures red={`${uid}-red`} blue={`${uid}-blue`} />
+        <header className="ps-head">
+          <KalandkaIcon size={44} />
+          <div className="ps-head__text">
+            <span className="ps-world">{WORLDS.find((w) => w.id === spec.world)!.name}</span>
+            <h2 className="ps-title">{spec.game}</h2>
           </div>
-        ))}
-      </div>
-      <footer className="ps-foot">
-        <KalandkaWordmark size={15} />
-        <span className="ps-foot__site">{siteAddress()}</span>
-        <span className="ps-foot__about">Gondolkodtató játékok 5–7 éveseknek</span>
-        <span className="ps-foot__level">{footer}</span>
-      </footer>
-    </section>
+          <span className="ps-name">Név: </span>
+        </header>
+        <div className="ps-ask">
+          <p>{spec.ask(level)}</p>
+          {spec.legend && <div className="ps-legend">{spec.legend(level)}</div>}
+          {spec.colorKey?.(level) && (
+            <div className="ps-legend">
+              {COLOR_KEY.map((k) => (
+                <span key={k.color} className="ps-legend__item">
+                  <svg viewBox="0 0 100 100" aria-hidden="true">
+                    <Lamp color={k.color} textured />
+                  </svg>
+                  {k.label}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <p className="ps-tip">
+          <b>Szülőknek:</b> {spec.tip(level)} Ha egy feladat kész, a gyerek kiszínezheti a csillagot.
+        </p>
+        <div className="ps-grid" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}>
+          {tasks.map((t, i) => (
+            <div key={i} className="ps-cell">
+              <span className="ps-num">{i + 1}.</span>
+              <Star />
+              <div className="ps-pic">
+                <Task task={t} answers={answers} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <footer className="ps-foot">
+          <KalandkaWordmark size={15} />
+          <span className="ps-foot__site">{siteAddress()}</span>
+          <span className="ps-foot__about">Gondolkodtató játékok 5–7 éveseknek</span>
+          <span className="ps-foot__level">{footer}</span>
+        </footer>
+      </section>
+    </TextureContext.Provider>
   );
 }
