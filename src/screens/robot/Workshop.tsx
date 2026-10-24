@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Bolt } from '../../components/robot';
-import { FriendArt, RobotFigure, SlotIcon } from '../../components/robotParts';
+import { FriendArt, RobotFigure, SlotIcon, type PartMotion } from '../../components/robotParts';
 import { BackIcon, GuideBubble, RoundButton, SpeakerIcon } from '../../components/ui';
 import { chime, fanfare, popBubble, robotChirp } from '../../lib/sound';
 import { capitalize, numberCount } from '../../lib/numbers';
@@ -76,6 +76,11 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
   const tricks = tricksOf(progress);
   /** The trick playing now; the count restarts it on every tap. */
   const [trick, setTrick] = useState<{ id: TrickId; n: number } | null>(null);
+  /** The last part tap, played on the robot; it settles after a second and a half. */
+  const [motion, setMotion] = useState<PartMotion | null>(null);
+  /** The last card answer: a bump for a purchase (with the bolts spent), a shake when bolts are short. */
+  const [answer, setAnswer] = useState<{ id: string; kind: 'got' | 'nope'; n: number; cost: number } | null>(null);
+  const taps = useRef(0);
 
   function opening(): Say {
     if (battery === 0) {
@@ -115,6 +120,16 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
     speak(s.speech);
   };
 
+  // Every effect of a tap plays once; afterwards the robot and the card are still again.
+  useEffect(() => {
+    if (!motion && !answer) return;
+    const t = setTimeout(() => {
+      setMotion(null);
+      setAnswer(null);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [motion?.n, answer?.n]);
+
   useEffect(() => {
     if (!friend && !robotArrived) speak(say.speech);
     // Runs once per visit.
@@ -130,12 +145,16 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
   }, [robotArrived]);
 
   const pick = (part: Part) => {
-    if (look[part.slot] === part.id) {
+    const n = ++taps.current;
+    const from = look[part.slot];
+    if (from === part.id) {
+      setMotion({ n, slot: part.slot, kind: 'same' });
       popBubble(2);
       tell({ text: `Ez van rajta: ${part.name.toLowerCase()}.`, speech: `Most ez van a robotodon: ${part.name.toLowerCase()}.`, mood: 'smile', tone: 'plain' });
       return;
     }
     if (owns(progress, part.id)) {
+      setMotion({ n, slot: part.slot, kind: 'swap', from });
       chime();
       update((p) => wear(p, part.id));
       tell({ text: 'Visszacseréltük!', speech: `Visszacseréltük. ${part.name}, ez is a tiéd.`, mood: 'cheer', tone: 'good' });
@@ -143,9 +162,12 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
     }
     if (!canBuy(progress, part.id)) {
       const need = part.cost - balance;
+      setAnswer({ id: part.id, kind: 'nope', n, cost: part.cost });
       tell({ text: `Ehhez még ${need} csavar kell.`, speech: `Ehhez még ${boltsWord(need)} kell. A Robotúton gyűjthetsz!`, mood: 'think', tone: 'plain' });
       return;
     }
+    setMotion({ n, slot: part.slot, kind: 'buy', from });
+    setAnswer({ id: part.id, kind: 'got', n, cost: part.cost });
     fanfare();
     update((p) => buy(p, part.id));
     tell({ text: 'Felszereltük! Nézd, milyen menő lett!', speech: `Felszereltük: ${part.name.toLowerCase()}! Nézd, milyen menő lett a robotod!`, mood: 'cheer', tone: 'good' });
@@ -205,6 +227,7 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
     // Each tap shows the next trick it knows, in turn.
     const k = trick ? (tricks.findIndex((t) => t.id === trick.id) + 1) % tricks.length : 0;
     const next = tricks[k];
+    setMotion(null);
     robotChirp();
     setTrick((t) => ({ id: next.id, n: (t?.n ?? 0) + 1 }));
     tell({ text: `${next.name}!`, speech: `${next.name}!`, mood: 'cheer', tone: 'good' });
@@ -222,11 +245,13 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
       tell({ text: `Ez a ${ROBOT_NAMES[r].toLowerCase()}.`, speech: `Most a ${ROBOT_NAMES[r].toLowerCase()}ot építjük.`, mood: 'smile', tone: 'plain' });
       return;
     }
+    setMotion(null);
     update((p) => ({ ...p, robotActive: r }));
     tell({ text: `Jöhet a ${ROBOT_NAMES[r].toLowerCase()}!`, speech: `Jöhet a ${ROBOT_NAMES[r].toLowerCase()}! Minden robotnak saját alkatrészei vannak.`, mood: 'cheer', tone: 'plain' });
   };
 
   const meetSecond = () => {
+    setMotion(null);
     fanfare();
     update((p) => ({ ...p, robot2Announced: true, robotActive: 1 }));
     tell({
@@ -253,12 +278,17 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
             <span className="album-btn__icon" aria-hidden="true" />
             <span className="album-btn__label">Matricáim</span>
           </button>
-          <div className="pill" aria-label={`${balance} csavar`}>
+          <div className={`pill workshop__bolts${answer?.kind === 'nope' ? ` is-short-${answer.n % 2 ? 'a' : 'b'}` : ''}`} aria-label={`${balance} csavar`}>
             <Bolt />
             <span>
               {balance}
               <span className="pill__unit"> csavar</span>
             </span>
+            {answer?.kind === 'got' && (
+              <span key={answer.n} className="workshop__spent" aria-hidden="true">
+                −{answer.cost}
+              </span>
+            )}
           </div>
         </div>
       </header>
@@ -307,7 +337,7 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
             aria-label={`A robotod: ${PART_SLOTS.map((s) => partById(look[s.id])!.name.toLowerCase()).join(', ')}. ${tricks.length ? 'Koppints, és trükköt mutat.' : ''}`}
           >
             <span key={trick?.n ?? 0} className={`workshop__trick${trick ? ` workshop__trick--${trick.id}` : ''}`}>
-              <RobotFigure key={Object.values(look).join()} look={look} width={230} className="pop-in" />
+              <RobotFigure key={robot} look={look} width={230} className="pop-in" motion={motion} />
             </span>
             <span className="workshop__platform" aria-hidden="true" />
           </button>
@@ -375,18 +405,23 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
               const on = look[slot] === part.id;
               const short = part.cost - balance;
               const state = on ? 'Rajta van' : mine ? 'A tiéd' : short > 0 ? `Még ${short}` : '';
+              const answered = answer?.id === part.id ? ` is-${answer.kind}-${answer.n % 2 ? 'a' : 'b'}` : '';
+              // The tag pops onto the card the robot has just put on.
+              const fresh = on && motion?.slot === slot && motion.kind !== 'same' ? motion.n : 0;
               return (
                 <button
                   key={part.id}
                   type="button"
-                  className={`workshop__part${on ? ' is-on' : ''}${!mine && short > 0 ? ' is-later' : ''}`}
+                  className={`workshop__part${on ? ' is-on' : ''}${!mine && short > 0 ? ' is-later' : ''}${answered}`}
                   onClick={() => pick(part)}
                   aria-label={`${part.name}. ${on ? 'Rajta van.' : mine ? 'A tiéd, koppints, és felveszi.' : short > 0 ? `${part.cost} csavar, még ${short} kell hozzá.` : `${part.cost} csavar, koppints, és megveszed.`}`}
                 >
                   <RobotFigure look={{ ...look, [slot]: part.id }} width={74} />
                   <span className="workshop__part-name">{part.name}</span>
                   {mine ? (
-                    <span className={`workshop__tag${on ? ' is-on' : ''}`}>{state}</span>
+                    <span key={fresh} className={`workshop__tag${on ? ' is-on' : ''}${fresh ? ' is-new' : ''}`}>
+                      {state}
+                    </span>
                   ) : (
                     <span className="plant-option__cost">
                       <Bolt size={22} />

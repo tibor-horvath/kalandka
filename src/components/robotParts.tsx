@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { lookOf, type FriendId, type PartSlot, type RobotLook } from '../state/robotParts';
 import type { Progress } from '../state/progress';
 
@@ -256,18 +257,115 @@ function Legs({ id }: { id: string }) {
   );
 }
 
+/** One tap on a part card, played on the robot: the changed part moves on its own joint, once. */
+export interface PartMotion {
+  /** Counts up on every tap, so tapping the same card again replays it. */
+  n: number;
+  slot: PartSlot;
+  /** buy: a new part; swap: back to one it owns; same: the part it already wears. */
+  kind: 'buy' | 'swap' | 'same';
+  /** The part it wore before, which lifts away. */
+  from?: string;
+}
+
+type DrawnSlot = Exclude<PartSlot, 'paint'>;
+
+/** Back to front, as the robot is drawn. */
+const LAYERS: DrawnSlot[] = ['legs', 'arms', 'body', 'antenna', 'head'];
+
+/** Where each part meets the robot, in drawing units: it turns, squashes and grows around this point. */
+function jointOf(slot: DrawnSlot, top: number): [number, number] {
+  if (slot === 'head') return [100, 132];
+  if (slot === 'antenna') return [100, top];
+  if (slot === 'body') return [100, 214];
+  if (slot === 'arms') return [100, 158];
+  return [100, 212];
+}
+
+/** Where the sparks and the bolt sit: on the seam the child should look at. */
+function seamsOf(slot: PartSlot, top: number): [number, number][] {
+  if (slot === 'head') return [[100, 134]];
+  if (slot === 'antenna') return [[100, top]];
+  if (slot === 'body') return [[100, 144]];
+  if (slot === 'arms') return [[60, 158], [140, 158]];
+  if (slot === 'legs') return [[100, 214]];
+  return [[100, top - 2]];
+}
+
+const RAYS = Array.from({ length: 8 }, (_, i) => {
+  const a = (Math.PI / 4) * i + Math.PI / 8;
+  return `M${(16 * Math.cos(a)).toFixed(1)} ${(16 * Math.sin(a)).toFixed(1)} L${(28 * Math.cos(a)).toFixed(1)} ${(28 * Math.sin(a)).toFixed(1)}`;
+}).join(' ');
+
+function drawPart(slot: DrawnSlot, id: string, paint: Paint, top: number) {
+  if (slot === 'legs') return <Legs id={id} />;
+  if (slot === 'arms') return <Arms id={id} paint={paint} />;
+  if (slot === 'body') return <Body id={id} paint={paint} />;
+  if (slot === 'antenna') return <Antenna id={id} top={top} />;
+  return <Head id={id} paint={paint} />;
+}
+
 /** The child's robot, standing; 200 × 280 drawing units. */
-export function RobotFigure({ look, width = 200, className }: { look: RobotLook; width?: number; className?: string }) {
+export function RobotFigure({ look, width = 200, className, motion }: { look: RobotLook; width?: number; className?: string; motion?: PartMotion | null }) {
   const paint = PAINTS[look.paint] ?? PAINTS['paint-teal'];
   const top = HEADS[look.head]?.top ?? 52;
+  const m = motion ?? null;
+  const ab = m && m.n % 2 ? 'a' : 'b';
+  const repaint = m?.slot === 'paint' && m.kind !== 'same';
+  // The whole robot hops once for a new part, and wiggles when its colour is tapped again.
+  const all = !m ? '' : m.kind === 'buy' ? ` rp-hop-${ab}${repaint ? ' rp-hop--soon' : ''}` : m.slot === 'paint' && m.kind === 'same' ? ` rp-wiggle-${ab}` : '';
+  const cls = [className, repaint ? 'robot--repaint' : ''].filter(Boolean).join(' ') || undefined;
+
+  const layer = (slot: DrawnSlot) => {
+    const [jx, jy] = jointOf(slot, top);
+    const origin = { transformOrigin: `${jx}px ${jy}px` };
+    const here = m?.slot === slot ? m : null;
+    const moving = here && here.kind !== 'same';
+    const arrive = slot === 'head' || slot === 'antenna' ? 'rp-drop' : 'rp-grow';
+    return (
+      <Fragment key={slot}>
+        {moving && here.from && (
+          <g key={`out-${here.n}`} className={`rp ${slot === 'legs' ? 'rp-lift-side' : 'rp-lift'}`} style={origin}>
+            {drawPart(slot, here.from, paint, top)}
+          </g>
+        )}
+        <g key={here ? here.n : 0} className={`rp rp--${slot}${!here ? '' : moving ? ` ${arrive}` : ` rp-wiggle-${ab}`}`} style={origin}>
+          {drawPart(slot, look[slot], paint, top)}
+        </g>
+      </Fragment>
+    );
+  };
+
   return (
-    <svg className={className} aria-hidden="true" width={width} height={Math.round(width * 1.4)} viewBox="0 0 200 280">
-      <Legs id={look.legs} />
-      <Arms id={look.arms} paint={paint} />
-      <rect x="90" y="128" width="20" height="16" fill={STEEL} />
-      <Body id={look.body} paint={paint} />
-      <Antenna id={look.antenna} top={top} />
-      <Head id={look.head} paint={paint} />
+    <svg className={cls} aria-hidden="true" width={width} height={Math.round(width * 1.4)} viewBox="0 0 200 280" overflow="visible">
+      <g className={`rp${all}`} style={{ transformOrigin: '100px 268px' }}>
+        {layer('legs')}
+        {layer('arms')}
+        <rect x="90" y="128" width="20" height="16" fill={STEEL} />
+        {LAYERS.slice(2).map(layer)}
+      </g>
+      {m && m.kind !== 'same' && (
+        <g key={`fx-${m.n}`}>
+          {seamsOf(m.slot, top).map(([x, y]) => (
+            <g key={`${x}-${y}`} transform={`translate(${x} ${y})`}>
+              {repaint && (
+                <g className="rp-fx rp-drip">
+                  <path d="M0 -22 C6 -12 10 -7 10 -2 a10 10 0 0 1 -20 0 C-10 -7 -6 -12 0 -22 Z" fill={paint.light} stroke="#FFFFFF" strokeWidth="2" />
+                </g>
+              )}
+              <g className={`rp-fx rp-spark${repaint ? ' rp-spark--late' : ''}`}>
+                <path d={RAYS} stroke={repaint ? paint.light : SUN} strokeWidth="5" strokeLinecap="round" />
+              </g>
+              {m.kind === 'buy' && !repaint && (
+                <g className="rp-fx rp-twist">
+                  <polygon points="0,-10 8.7,-5 8.7,5 0,10 -8.7,5 -8.7,-5" fill="#F2B33D" stroke="#C98A1A" strokeWidth="2" strokeLinejoin="round" />
+                  <path d="M-4 0 H4" stroke="#7A5300" strokeWidth="2.4" strokeLinecap="round" />
+                </g>
+              )}
+            </g>
+          ))}
+        </g>
+      )}
     </svg>
   );
 }

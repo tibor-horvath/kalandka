@@ -742,6 +742,75 @@ button.workshop__robot { border: none; background: none; padding: 0; font: inher
   .workshop__trick--wobble, .workshop__trick--spin, .workshop__trick--jump { animation: none; }
 }
 
+/* ---------- Robotépítő: a part tap, played once on the robot ----------
+   Only the changed part moves, on its own joint: the old one lifts away, the new one lands with a squash,
+   sparks and a bolt mark the seam, and a new part earns one hop. Nothing loops.
+   The -a / -b twins restart the same animation when the same card is tapped again. */
+.rp { transform-box: view-box; }
+.rp-fx { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
+.rp-lift { animation: rp-lift 0.18s ease-in forwards; }
+.rp-lift-side { animation: rp-lift-side 0.18s ease-in forwards; }
+.rp-drop { animation: rp-drop 0.46s cubic-bezier(.3, .7, .4, 1) 0.17s both; }
+.rp-grow { animation: rp-grow 0.46s cubic-bezier(.3, .7, .4, 1) 0.17s both; }
+.rp-spark { animation: rp-spark 0.42s ease-out 0.42s both; }
+.rp-spark--late { animation-delay: 0.3s; }
+.rp-twist { animation: rp-twist 0.52s ease-in-out 0.42s both; }
+.rp-drip { animation: rp-drip 0.32s cubic-bezier(.5, 0, .9, .6) both; }
+.rp-hop-a { animation: rp-hop-a 0.38s ease-out 0.65s both; }
+.rp-hop-b { animation: rp-hop-b 0.38s ease-out 0.65s both; }
+.rp-hop--soon { animation-delay: 0.5s; }
+.rp-wiggle-a { animation: rp-wiggle-a 0.42s ease-in-out; }
+.rp-wiggle-b { animation: rp-wiggle-b 0.42s ease-in-out; }
+/* A new colour lands as a drop on the head, then runs down: head, body, arms. */
+.robot--repaint .rp--head *, .robot--repaint .rp--antenna * { transition: fill 0.42s ease 0.28s, stroke 0.42s ease 0.28s; }
+.robot--repaint .rp--body * { transition: fill 0.42s ease 0.39s, stroke 0.42s ease 0.39s; }
+.robot--repaint .rp--arms * { transition: fill 0.42s ease 0.47s, stroke 0.42s ease 0.47s; }
+@keyframes rp-lift { to { transform: translateY(-30px) rotate(-8deg); opacity: 0; } }
+@keyframes rp-lift-side { to { transform: translate(24px, 8px) rotate(10deg); opacity: 0; } }
+@keyframes rp-drop { 0% { transform: translateY(-90px) scale(0.9); opacity: 0; } 25% { opacity: 1; } 55% { transform: translateY(0) scale(1.14, 0.86); } 75% { transform: translateY(-4px) scale(0.96, 1.04); } 100% { transform: none; opacity: 1; } }
+@keyframes rp-grow { 0% { transform: scale(0.2); opacity: 0; } 30% { opacity: 1; } 60% { transform: scale(1.12); } 80% { transform: scale(0.97); } 100% { transform: none; opacity: 1; } }
+@keyframes rp-spark { 0% { opacity: 0; transform: scale(0.5); } 15% { opacity: 1; } 100% { opacity: 0; transform: scale(1.35); } }
+@keyframes rp-twist { 0% { opacity: 0; transform: scale(0.6); } 20% { opacity: 1; transform: scale(1); } 70% { opacity: 1; transform: rotate(180deg); } 100% { opacity: 0; transform: scale(0.8) rotate(180deg); } }
+@keyframes rp-drip { 0% { opacity: 0; transform: translateY(-110px); } 15% { opacity: 1; } 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(4px) scale(1.5, 0.5); } }
+@keyframes rp-hop-a { 40% { transform: translateY(-16px); } 70% { transform: translateY(0) scale(1.05, 0.95); } }
+@keyframes rp-hop-b { 40% { transform: translateY(-16px); } 70% { transform: translateY(0) scale(1.05, 0.95); } }
+@keyframes rp-wiggle-a { 25% { transform: rotate(-5deg); } 50% { transform: rotate(4deg); } 75% { transform: rotate(-2deg); } }
+@keyframes rp-wiggle-b { 25% { transform: rotate(-5deg); } 50% { transform: rotate(4deg); } 75% { transform: rotate(-2deg); } }
+
+/* The card and the bolts answer the tap too. */
+.workshop__part.is-got-a { animation: part-got-a 0.32s ease-out; }
+.workshop__part.is-got-b { animation: part-got-b 0.32s ease-out; }
+.workshop__part.is-nope-a { animation: part-nope-a 0.38s ease-in-out; }
+.workshop__part.is-nope-b { animation: part-nope-b 0.38s ease-in-out; }
+.workshop__part.is-nope-a .workshop__short, .workshop__part.is-nope-b .workshop__short { color: var(--oops-ink); }
+.workshop__tag.is-new { animation: tag-new 0.28s cubic-bezier(.3, 1.5, .5, 1) 0.42s both; }
+.workshop__bolts { position: relative; }
+.workshop__bolts.is-short-a { animation: bolts-short-a 0.64s ease-out; }
+.workshop__bolts.is-short-b { animation: bolts-short-b 0.64s ease-out; }
+.workshop__spent { position: absolute; right: 16px; top: -8px; font-size: 26px; font-weight: 800; color: #9c5a00; pointer-events: none; animation: bolts-spent 0.9s ease-out forwards; }
+@keyframes part-got-a { 35% { transform: scale(1.05); } }
+@keyframes part-got-b { 35% { transform: scale(1.05); } }
+@keyframes part-nope-a { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@keyframes part-nope-b { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@keyframes tag-new { from { opacity: 0; transform: translateY(8px) scale(0.8); } }
+@keyframes bolts-short-a { from { box-shadow: 0 0 0 0 rgba(217, 116, 26, 0.7); } to { box-shadow: 0 0 0 14px rgba(217, 116, 26, 0); } }
+@keyframes bolts-short-b { from { box-shadow: 0 0 0 0 rgba(217, 116, 26, 0.7); } to { box-shadow: 0 0 0 14px rgba(217, 116, 26, 0); } }
+@keyframes bolts-spent { 0% { opacity: 0; transform: translateY(4px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateY(-34px); } }
+
+/* Reduced motion: the parts and the tag only fade; no sparks, bolt, hop, shake or drip. */
+@media (prefers-reduced-motion: reduce) {
+  .rp-lift, .rp-lift-side { animation: rp-fade-out 0.12s ease forwards; }
+  .rp-drop, .rp-grow { animation: rp-fade-in 0.22s ease 0.12s both; }
+  .rp-fx { display: none; }
+  .rp-hop-a, .rp-hop-b, .rp-wiggle-a, .rp-wiggle-b { animation: none; }
+  .robot--repaint .rp * { transition-delay: 0s !important; }
+  .workshop__part.is-got-a, .workshop__part.is-got-b, .workshop__part.is-nope-a, .workshop__part.is-nope-b { animation: none; }
+  .workshop__bolts.is-short-a, .workshop__bolts.is-short-b { animation: none; }
+  .workshop__tag.is-new, .workshop__spent { animation-name: rp-fade-in; }
+  @keyframes rp-fade-in { from { opacity: 0; } }
+  @keyframes rp-fade-out { to { opacity: 0; } }
+}
+
 /* Robotépítő: switching between the robots once the second has come. */
 .workshop__robots { align-self: stretch; display: flex; justify-content: center; gap: 10px; }
 .workshop__robot-tab { padding: 4px 14px 4px 8px; border: 3px solid transparent; border-radius: 22px; background: #e3ebf4; color: var(--leaf-deep); display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 800; cursor: pointer; }
