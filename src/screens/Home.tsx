@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../components/art';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { KidChip, MapButton, ParentsButton, RewardPlot, VoiceButton } from '../components/hub';
+import { KidChip, MapButton, ParentsButton, PrintButton, RewardPlot, VoiceButton } from '../components/hub';
 import { DotFace } from '../components/seeds';
 import { PlantIcon } from '../components/garden';
 import { StickerPop } from '../components/StickerPop';
@@ -105,12 +105,14 @@ export function Home({
   onOpen,
   onGarden,
   onParents,
+  onPrint,
   onSwitch,
   onMap
 }: {
   onOpen: (game: GameId) => void;
   onGarden: () => void;
   onParents: () => void;
+  onPrint: () => void;
   onSwitch: () => void;
   onMap: () => void;
 }) {
@@ -211,6 +213,7 @@ export function Home({
           {shared && <KidChip onSwitch={onSwitch} />}
           <MapButton onClick={onMap} />
           <VoiceButton />
+          <PrintButton onClick={onPrint} />
           <ParentsButton onClick={onParents} />
         </div>
       </header>

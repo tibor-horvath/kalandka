@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { KidChip, MapButton, ParentsButton, RewardPlot, VoiceButton } from '../../components/hub';
+import { KidChip, MapButton, ParentsButton, PrintButton, RewardPlot, VoiceButton } from '../../components/hub';
 import { Bolt, Gear, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../../components/robot';
 import { FriendArt, MyRobot } from '../../components/robotParts';
 import { useForm } from '../../components/Stage';
@@ -29,12 +29,14 @@ export function RobotHome({
   onOpen,
   onWorkshop,
   onParents,
+  onPrint,
   onSwitch,
   onMap
 }: {
   onOpen: (game: RobotGameId) => void;
   onWorkshop: () => void;
   onParents: () => void;
+  onPrint: () => void;
   onSwitch: () => void;
   onMap: () => void;
 }) {
@@ -108,6 +110,7 @@ export function RobotHome({
           {shared && <KidChip onSwitch={onSwitch} />}
           <MapButton onClick={onMap} />
           <VoiceButton guide="Csavar" />
+          <PrintButton onClick={onPrint} />
           <ParentsButton onClick={onParents} />
         </div>
       </header>

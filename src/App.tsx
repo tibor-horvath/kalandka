@@ -37,11 +37,13 @@ import { WORLDS, currentWorld, type WorldId } from './state/worlds';
  * beside it: no task runs there.
  */
 type Screen = 'home' | 'map' | 'garden' | 'workshop' | 'album' | GameId | RobotGameId;
-type Parents = 'closed' | 'gate' | 'open';
+/** 'print' is the printable sheets, opened without the gate; like the parents' corner it pauses the play clock. */
+type Parents = 'closed' | 'gate' | 'open' | 'print';
 
 // Only grown-ups open it, so it loads on its own; the gate starts the download, so it is usually there before the answer is.
 const loadParentArea = () => import('./screens/parents/ParentArea');
 const ParentArea = lazy(async () => ({ default: (await loadParentArea()).ParentArea }));
+const PrintArea = lazy(async () => ({ default: (await import('./screens/PrintArea')).PrintArea }));
 
 /** The play clock ticks in steps of this many seconds. */
 const TICK_SECONDS = 5;
@@ -190,6 +192,10 @@ function Game() {
     void loadParentArea();
   };
   const closeParents = () => setParents('closed');
+  const openPrint = () => {
+    stopSpeaking();
+    setParents('print');
+  };
   const switchKid = () => {
     stopSpeaking();
     setPicking(true);
@@ -214,12 +220,12 @@ function Game() {
   return (
     <Stage>
       <PageMotion page={screen === 'home' ? (showPicker ? 'picker' : `home-${world}`) : screen} depth={showPicker ? 0 : depthOf(screen)}>
-        {screen === 'home' && showPicker && <Picker onPick={pick} onAdd={() => openGate('add')} onParents={() => openGate()} />}
+        {screen === 'home' && showPicker && <Picker onPick={pick} onAdd={() => openGate('add')} onParents={() => openGate()} onPrint={openPrint} />}
         {screen === 'home' && !showPicker && world === 'garden' && (
-          <Home key={profiles.activeId} onOpen={go} onGarden={() => go('garden')} onParents={() => openGate()} onSwitch={switchKid} onMap={() => go('map')} />
+          <Home key={profiles.activeId} onOpen={go} onGarden={() => go('garden')} onParents={() => openGate()} onPrint={openPrint} onSwitch={switchKid} onMap={() => go('map')} />
         )}
         {screen === 'home' && !showPicker && world === 'robot' && (
-          <RobotHome key={profiles.activeId} onOpen={go} onWorkshop={() => go('workshop')} onParents={() => openGate()} onSwitch={switchKid} onMap={() => go('map')} />
+          <RobotHome key={profiles.activeId} onOpen={go} onWorkshop={() => go('workshop')} onParents={() => openGate()} onPrint={openPrint} onSwitch={switchKid} onMap={() => go('map')} />
         )}
         {screen === 'map' && !showPicker && <WorldMap onPick={pickWorld} onParents={() => openGate()} />}
         {screen === 'garden' && <Garden onBack={() => go('home')} onAlbum={() => openAlbum('garden')} />}
@@ -247,6 +253,11 @@ function Game() {
       {parents === 'open' && (
         <Suspense fallback={null}>
           <ParentArea start={parentStart} onClose={closeParents} />
+        </Suspense>
+      )}
+      {parents === 'print' && (
+        <Suspense fallback={null}>
+          <PrintArea onClose={closeParents} />
         </Suspense>
       )}
     </Stage>

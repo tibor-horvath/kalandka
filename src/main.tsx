@@ -16,6 +16,7 @@ import './styles/rewards.css';
 import './styles/robot.css';
 // Here rather than in the parents' area, which loads later: the gate needs it too, and phone.css must come after it.
 import './styles/parents.css';
+import './styles/print.css';
 import App from './App';
 // Last, so the phone layouts override everything above.
 import './styles/phone.css';

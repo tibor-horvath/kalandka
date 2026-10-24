@@ -54,6 +54,26 @@ export function VoiceButton({ guide = 'Csepi' }: { guide?: string }) {
   );
 }
 
+/** Printable sheets: open to everyone, no parents' gate (the sheets are for play without a device). */
+export function PrintButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" className="parents-btn" onClick={onClick}>
+      <PrinterIcon />
+      <span className="parents-btn__label">Nyomtatás</span>
+    </button>
+  );
+}
+
+export function PrinterIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9V3h12v6" />
+      <rect x="3" y="9" width="18" height="8" rx="2" />
+      <path d="M7 14h10v7H7z" />
+    </svg>
+  );
+}
+
 export function ParentsButton({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" className="parents-btn" onClick={onClick}>

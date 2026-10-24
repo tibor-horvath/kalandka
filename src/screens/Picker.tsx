@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Seed } from '../components/art';
 import { AVATARS, Avatar } from '../components/avatars';
+import { PrintButton } from '../components/hub';
 import { Bolt } from '../components/robot';
 import { KalandkaIcon, KalandkaWordmark, LockIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import { useForm } from '../components/Stage';
@@ -17,7 +18,7 @@ const PICK_MS = 650;
 const PICK_MS_STILL = 300;
 
 /** "Ki játszik?": each child taps their own figure, in Kalandka's harbour. Adding a child goes through the parents' gate. */
-export function Picker({ onPick, onAdd, onParents }: { onPick: (id: string) => void; onAdd: () => void; onParents: () => void }) {
+export function Picker({ onPick, onAdd, onParents, onPrint }: { onPick: (id: string) => void; onAdd: () => void; onParents: () => void; onPrint: () => void }) {
   const { profiles } = useProfiles();
   const phone = useForm() !== 'tablet';
   const day = today();
@@ -44,10 +45,13 @@ export function Picker({ onPick, onAdd, onParents }: { onPick: (id: string) => v
           <KalandkaIcon size={56} />
           <KalandkaWordmark size={phone ? 28 : 40} />
         </div>
-        <button type="button" className="parents-btn" onClick={onParents}>
-          <LockIcon size={22} />
-          <span className="parents-btn__label">Szülőknek</span>
-        </button>
+        <div className="topbar__right">
+          <PrintButton onClick={onPrint} />
+          <button type="button" className="parents-btn" onClick={onParents}>
+            <LockIcon size={22} />
+            <span className="parents-btn__label">Szülőknek</span>
+          </button>
+        </div>
       </header>
 
       <div className="home-guide">

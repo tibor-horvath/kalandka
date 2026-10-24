@@ -653,6 +653,15 @@
 .stage--landscape .pa-h1 { font-size: 28px; }
 .stage--landscape .pa-games__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
+/* Feladatlapok (print pages without the gate): the back button sits in the top bar, so nothing has to clear it. */
+.stage--portrait .pa--print .pa-nav__back { position: static; }
+.stage--portrait .pa--print .pa-main { padding-top: 0; }
+.stage--portrait .pa--print .pa-page { padding-top: 18px; }
+.stage--portrait .pa--print .pa-kidbar { top: 0; padding-top: 14px; }
+.stage--portrait .pa--print .pa-kidbar.is-stuck { padding-top: 7px; }
+.stage--portrait .pa--print .pa-kidbar.is-stuck .pa-kidbar__kids { max-width: none; }
+.stage--portrait .pa--print .pa-kidbar + .pa-page { padding-top: 6px; }
+
 /* Parents' children page and the child switch on a phone. */
 .is-phone .pa-kidbar { padding: 14px 16px 0; }
 .stage--portrait .pa-kidbar { padding-top: 72px; }

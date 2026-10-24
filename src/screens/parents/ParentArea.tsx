@@ -6,11 +6,12 @@ import { KidsPage } from './KidsPage';
 import { LegalPage } from './LegalPage';
 import { LevelsPage } from './LevelsPage';
 import { Overview } from './Overview';
+import { PrintPage } from './PrintPage';
 import { SettingsPage } from './SettingsPage';
 import { TimePage } from './TimePage';
 
-/** 'legal' has no menu item: it opens from Settings, so the phone tab bar keeps five items. */
-export type ParentPage = 'overview' | 'kids' | 'time' | 'levels' | 'settings' | 'legal';
+/** 'legal' has no menu item: it opens from Settings, so the phone tab bar keeps six items. */
+export type ParentPage = 'overview' | 'kids' | 'time' | 'levels' | 'print' | 'settings' | 'legal';
 /** Where the area opens: a page, or straight into adding a child (from "Ki játszik?"). */
 export type ParentStart = ParentPage | 'add';
 
@@ -62,6 +63,17 @@ const PAGES: { id: Exclude<ParentPage, 'legal'>; label: string; icon: ReactNode 
     )
   },
   {
+    id: 'print',
+    label: 'Nyomtatás',
+    icon: (
+      <>
+        <path d="M6 9V3h12v6" />
+        <rect x="3" y="9" width="18" height="8" rx="2" />
+        <path d="M7 14h10v7H7z" />
+      </>
+    )
+  },
+  {
     id: 'settings',
     label: 'Beállítások',
     icon: (
@@ -82,7 +94,7 @@ const PAGES: { id: Exclude<ParentPage, 'legal'>; label: string; icon: ReactNode 
  * It stays at the top while the page scrolls; once scrolled it turns into a compact header
  * with the page title, and the other children shrink to their avatars.
  */
-function KidSwitch({ viewId, onView, title, stuck }: { viewId: string; onView: (id: string) => void; title: string; stuck: boolean }) {
+export function KidSwitch({ viewId, onView, title, stuck }: { viewId: string; onView: (id: string) => void; title: string; stuck: boolean }) {
   const { profiles } = useProfiles();
   return (
     <div className={`pa-kidbar${stuck ? ' is-stuck' : ''}`}>
@@ -182,6 +194,7 @@ export function ParentArea({ start = 'overview', onClose }: { start?: ParentStar
             {page === 'overview' && <Overview onGo={setPage} />}
             {page === 'time' && <TimePage />}
             {page === 'levels' && <LevelsPage />}
+            {page === 'print' && <PrintPage kidId={shownId} />}
             {page === 'settings' && <SettingsPage onLegal={() => setPage('legal')} />}
           </KidScope>
         )}
