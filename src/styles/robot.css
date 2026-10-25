@@ -1,5 +1,5 @@
 /* ---------- Robotműhely: the workshop world ----------
-   The world re-colours the shared tokens, so every shared part (plots, buttons, bubbles) turns workshop-blue and teal. */
+   The world re-colours the shared tokens, so every shared part (places, buttons, bubbles) turns workshop-blue and teal. */
 .world--robot {
   --sky: #e6edf6;
   --grass: #b8c8da;
@@ -11,26 +11,7 @@
   --bolt: #f2b33d;
 }
 .world--robot .floor { background: repeating-linear-gradient(90deg, var(--grass) 0 118px, #adbfd2 118px 121px), var(--grass); }
-.world--robot .plot--locked { background: #cfdbe8; border-color: #edf2f8; }
-.world--robot .plot__lock { background: #edf2f8; color: #3e5872; }
-.world--robot .plot__skill { color: #3e5872; }
-.world--robot .garden__empty { color: #2f4a63; }
 .world--robot .bubble__kicker { color: var(--leaf-deep); }
-.plot__soil--floor { background: var(--soil); height: 14px; border-radius: 8px; margin-top: 2px; }
-.screen--robot-home .plots { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-/* Two rows of four like Számkertész: three machines, the ones still being built, and Robotépítő last. */
-/* The machines' pictures fill the tile, so their badges sit on the top edge, as the reward tile's does. */
-.screen--robot-home .plot__badge { top: -17px; height: 30px; border: 3px solid var(--paper); }
-.screen--robot-home .plot--locked > svg { width: 44px; height: 44px; margin-bottom: 4px; }
-.screen--robot-home .plot--play > svg { margin-bottom: 8px; }
-
-.stage--landscape .screen--robot-home .plot { height: 150px; }
-.is-phone .screen--robot-home .plot > svg.path-art, .is-phone .screen--robot-home .plot > svg.sort-art, .is-phone .screen--robot-home .plot > svg.scale-art, .is-phone .screen--robot-home .plot > svg.seq-art, .is-phone .screen--robot-home .plot > svg.mirror-art, .is-phone .screen--robot-home .plot > svg.code-art { width: 120px; height: auto; }
-.is-phone .screen--robot-home .plot--locked > svg { width: 40px; height: 40px; }
-/* A short portrait card keeps the skill to one line: the lock already says the machine is coming. */
-@container plot (max-height: 124px) { .screen--robot-home .plot__soon { display: none; } }
-@container plot (max-height: 96px) { .screen--robot-home .plot--locked > svg { display: none; } }
-
 /* Térkép button on every world's home screen. */
 .map-btn { height: 64px; padding: 0 22px 0 8px; border: 0; background: var(--drop-deep); border-radius: 32px; box-shadow: 0 5px 0 #143f6d; color: var(--paper); font-size: 26px; font-weight: 800; display: flex; align-items: center; gap: 10px; cursor: pointer; flex: none; }
 .map-btn__icon { width: 46px; height: 46px; border-radius: 23px; background: var(--paper); color: var(--drop-deep); display: grid; place-items: center; }
@@ -376,7 +357,6 @@
 .sort-odd__part.is-dim { opacity: 0.45; }
 
 .sort-win { top: 46%; }
-.plot > svg.sort-art, .plot > svg.scale-art { margin-bottom: 8px; }
 
 @media (prefers-reduced-motion: reduce) {
   .sort-belt__part, .sort-odd__row, .sort-bin__part, .sort-bin__count, .sort-bin.is-glow, .sort-odd__part.is-glow { animation: none; }
@@ -480,7 +460,6 @@
 .seq-choice svg { display: block; }
 .seq-choices--tower .seq-choice { height: 196px; justify-content: flex-end; padding-bottom: 10px; }
 .seq-choice.is-glow { border-color: var(--bolt); box-shadow: 0 8px 0 #d9961e, 0 0 0 8px #ffe08a; animation: hint-glow 0.9s ease-in-out 2; }
-.plot > svg.seq-art { margin-bottom: 8px; }
 
 @media (prefers-reduced-motion: reduce) {
   .seq-belt, .seq-gap.is-wrong, .seq-gap.is-right > svg, .seq-miss, .seq-item.is-glow, .seq-choice.is-glow { animation: none; }
@@ -542,7 +521,6 @@
 .mirror-pick__gap.is-right { border-style: solid; background: var(--good-tint); }
 .mirror-pick__gap .done-tick, .mirror-pick__gap .seq-miss { position: absolute; top: -14px; right: -14px; }
 .mirror-choices { flex: none; margin-top: 0; padding: 14px 40px 30px; }
-.plot > svg.mirror-art { margin-bottom: 8px; }
 
 @media (prefers-reduced-motion: reduce) {
   .mirror-board, .mirror-glass.is-shine, .mirror-cell.is-lit > svg, .mirror-cell.is-wrong, .mirror-cell.is-glow, .mirror-pick__gap.is-wrong { animation: none; }
@@ -675,11 +653,6 @@
 .stage--landscape .scale-task { grid-area: task; padding: 8px 12px 10px 0; gap: 6px; }
 .stage--landscape .scale-answer, .stage--landscape .scale-tray__btn { height: 48px; }
 
-/* ---------- Robotépítő ---------- */
-.shelf { gap: 18px; align-items: flex-end; }
-.shelf__robot svg, .shelf__friend svg { display: block; }
-.shelf__hint { margin-bottom: 30px; }
-
 .screen--workshop { display: flex; flex-direction: column; }
 .screen--workshop .screen-title { flex: 1; color: var(--leaf-deep); }
 .screen--workshop .topbar { gap: 20px; justify-content: flex-start; }
@@ -756,10 +729,6 @@
 .stage--landscape .workshop__part { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; min-height: 0; }
 .stage--landscape .workshop__part > svg { grid-row: auto; width: 38px; }
 .stage--landscape .workshop__part-name { font-size: 13px; }
-.is-phone .shelf__robot svg { width: 48px; height: auto; }
-.is-phone .shelf__friend svg { width: 52px; height: auto; }
-/* Portrait: the hint stands beside the robot in two tight lines, clear of the cards above. */
-.stage--portrait .shelf .shelf__hint { font-size: 16px; line-height: 1.2; text-align: left; text-wrap: balance; margin-bottom: 12px; }
 
 /* ---------- Robotépítő care: battery, oil and tricks ---------- */
 .robot-care { align-self: stretch; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -929,7 +898,6 @@ button.workshop__robot { border: none; background: none; padding: 0; font: inher
 .code-btn svg { display: block; }
 .code-pad--four .code-btn { width: 170px; }
 .code-show { flex: none; margin-left: 8px; }
-.plot > svg.code-art { margin-bottom: 8px; }
 
 @media (prefers-reduced-motion: reduce) {
   .code-stage, .code-key__row.is-glow, .code-sign.is-glow, .code-slot.is-right > svg, .code-slot.is-wrong, .code-crate__bolt, .code-radio.is-sent .code-radio__antenna::after, .code-dog.is-got > svg, .code-dog__got { animation: none; }

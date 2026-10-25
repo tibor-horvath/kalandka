@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../components/art';
-import { GuideBubble, KalandkaIcon, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { KidChip, MapButton, ParentsButton, PrintButton, RewardPlot, VoiceButton } from '../components/hub';
+import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from '../components/ui';
+import { KidChip, MapButton, ParentsButton, PrintButton, VoiceButton } from '../components/hub';
+import { Island, useLeave, type Place, type RewardPlace } from '../components/island';
 import { DotFace } from '../components/seeds';
 import { PlantIcon } from '../components/garden';
 import { StickerPop } from '../components/StickerPop';
@@ -9,7 +10,6 @@ import { useForm } from '../components/Stage';
 import { UNLOCK_ADD_AFTER, addLockedSpeech } from '../games/add/logic';
 import { UNLOCK_FLASH_AFTER, flashLockedSpeech } from '../games/learn/logic';
 import { UNLOCK_POTS_AFTER, potsLockedSpeech } from '../games/pots/logic';
-import { PLANTS } from '../games/water/logic';
 import { speak } from '../lib/speech';
 import type { Mood } from '../lib/types';
 import { kidName, useActiveKid, useProfiles } from '../state/profiles';
@@ -56,7 +56,6 @@ function PotsArt() {
   );
 }
 
-const GARDEN_SLOTS = 12;
 const NOTICE_MS = 6000;
 /** The greeting without a name: one child on the device, or an online voice. */
 const HELLO = 'Szia, de jó, hogy itt vagy!';
@@ -74,20 +73,6 @@ function SeedTrio() {
       <Seed size={34} />
       <Seed size={34} />
     </span>
-  );
-}
-
-function LockedPlot({ name, skill, art, onTap }: { name: string; skill: string; art?: ReactNode; onTap: () => void }) {
-  return (
-    <button type="button" className="plot plot--locked" onClick={onTap} aria-label={`${name}: még zárva`}>
-      <span className="plot__lock">
-        <LockIcon />
-      </span>
-      {art ?? <Seed size={44} />}
-      <span className="plot__soil plot__soil--wide" />
-      <span className="plot__name">{name}</span>
-      <span className="plot__skill">{skill}</span>
-    </button>
   );
 }
 
@@ -121,6 +106,7 @@ export function Home({
   const kid = useActiveKid();
   const shared = profiles.kids.length > 1;
   const phone = useForm() !== 'tablet';
+  const [leaving, leaveForMap] = useLeave(onMap);
   const [notice, setNotice] = useState<Notice | null>(null);
   const noticeTimer = useRef<number | null>(null);
   // A sticker earned in a game is celebrated here, one at a time, the earliest first.
@@ -189,18 +175,70 @@ export function Home({
     onGarden();
   };
 
+  const places: Place[] = [
+    {
+      id: 'learn',
+      name: 'Számvetés',
+      label: 'Számvetés – ismerkedés a számokkal',
+      badge: progress.learnSolved === 0 ? 'Kezdd itt!' : null,
+      start: progress.learnSolved === 0,
+      art: (
+        <span className="plot__learn">
+          <span className="plot__learn-num">3</span>
+          <DotFace n={3} size={44} />
+        </span>
+      ),
+      onOpen: () => open('learn')
+    },
+    { id: 'water', name: 'Locsolás', label: 'Locsolás – számolós játék', badge: 'Szomjas!', art: <Sprout />, onOpen: () => open('water') },
+    {
+      id: 'patterns',
+      name: 'Virágsor',
+      label: 'Virágsor – mintázatos játék',
+      badge: progress.patternsSolved === 0 ? 'Új!' : null,
+      art: (
+        <span className="plot__trio plot__trio--flowers">
+          <PatternFlower kind="tulip" width={44} />
+          <PatternFlower kind="sun" width={44} />
+          <PatternFlower kind="star" width={44} />
+        </span>
+      ),
+      onOpen: () => open('patterns')
+    },
+    flashOpen
+      ? { id: 'flash', name: 'Magvillantás', label: 'Magvillantás – hány darab játék', badge: progress.flashSolved === 0 ? 'Új!' : null, art: <SeedTrio />, onOpen: () => open('flash') }
+      : { id: 'flash', name: 'Magvillantás', label: 'Magvillantás: még zárva', art: <SeedTrio />, locked: { skill: `Még ${UNLOCK_FLASH_AFTER - learned} szám, és kinyílik`, hint: `még ${UNLOCK_FLASH_AFTER - learned} szám`, onTap: tapFlashLocked } },
+    addOpen
+      ? {
+          id: 'add',
+          name: 'Méhecske',
+          label: 'Méhecske – összeadós játék',
+          badge: progress.addSolved === 0 ? 'Új!' : `${ladderOf(progress, 'add').level + 1}. szint`,
+          art: <BeeArt />,
+          onOpen: () => open('add')
+        }
+      : { id: 'add', name: 'Méhecske', label: 'Méhecske: még zárva', art: <BeeArt />, locked: { skill: `Összeadás · még ${UNLOCK_ADD_AFTER - learned} szám`, hint: `még ${UNLOCK_ADD_AFTER - learned} szám`, onTap: tapAddLocked } },
+    { id: 'trace', name: 'Mézút', label: 'Mézút – számírás a méhecskével', badge: progress.traceSolved === 0 ? 'Új!' : null, art: <TrailArt />, onOpen: () => open('trace') },
+    potsOpen
+      ? { id: 'pots', name: 'Cserépbarátok', label: 'Cserépbarátok – tízes barátok játék', badge: progress.potsSolved === 0 ? 'Új!' : null, art: <PotsArt />, onOpen: () => open('pots') }
+      : { id: 'pots', name: 'Cserépbarátok', label: 'Cserépbarátok: még zárva', art: <PotsArt />, locked: { skill: `Tízes barátok · még ${UNLOCK_POTS_AFTER - learned} szám`, hint: `még ${UNLOCK_POTS_AFTER - learned} szám`, onTap: tapPotsLocked } }
+  ];
+  const reward: RewardPlace = {
+    label: 'Kiskertem – ültess a magjaidból',
+    name: 'Kiskertem',
+    art: <KiskertArt />,
+    icon: <Seed size={30} />,
+    count: balance,
+    unit: 'mag',
+    badge: visitorWaiting ? 'Vendég jött!' : canPlantNow ? 'Ültethetsz!' : canMakeAnything(progress) ? 'Főzhetsz!' : null,
+    onClick: openGarden
+  };
+
   const bubble = notice ?? { kicker: greeting, title: question, mood: 'cheer' as Mood };
   const replay = () => (notice ? speak(`${notice.kicker} ${notice.title}`) : sayGreeting());
 
-  const garden = progress.garden
-    .slice(-GARDEN_SLOTS)
-    .map((id) => PLANTS.find((p) => p.id === id))
-    .filter((p) => p !== undefined);
-
   return (
-    <div className="screen screen--home">
-      <div className="hill" aria-hidden="true" />
-
+    <div className="screen screen--home screen--island">
       <header className="topbar">
         <div className="brand">
           <KalandkaIcon size={56} />
@@ -211,7 +249,7 @@ export function Home({
         </div>
         <div className="topbar__right">
           {shared && <KidChip onSwitch={onSwitch} />}
-          <MapButton onClick={onMap} />
+          <MapButton onClick={leaveForMap} />
           <VoiceButton />
           <PrintButton onClick={onPrint} />
           <ParentsButton onClick={onParents} />
@@ -232,128 +270,9 @@ export function Home({
         </GuideBubble>
       </div>
 
-      <div className="plots">
-        <button type="button" className="plot plot--play" onClick={() => open('learn')} aria-label="Számvetés – ismerkedés a számokkal">
-          {progress.learnSolved === 0 && <span className="plot__badge">Kezdd itt!</span>}
-          <span className="plot__learn">
-            <span className="plot__learn-num">3</span>
-            <DotFace n={3} size={44} />
-          </span>
-          <span className="plot__soil" />
-          <span className="plot__name">Számvetés</span>
-          <span className="plot__cta">
-            <PlayIcon /> Játék
-          </span>
-        </button>
-
-        <button type="button" className="plot plot--play" onClick={() => open('water')} aria-label="Locsolás – számolós játék">
-          <span className="plot__badge">Szomjas!</span>
-          <Sprout />
-          <span className="plot__soil" />
-          <span className="plot__name">Locsolás</span>
-          <span className="plot__cta">
-            <PlayIcon /> Játék
-          </span>
-        </button>
-
-        <button type="button" className="plot plot--play" onClick={() => open('patterns')} aria-label="Virágsor – mintázatos játék">
-          {progress.patternsSolved === 0 && <span className="plot__badge">Új!</span>}
-          <span className="plot__trio plot__trio--flowers">
-            <PatternFlower kind="tulip" width={44} />
-            <PatternFlower kind="sun" width={44} />
-            <PatternFlower kind="star" width={44} />
-          </span>
-          <span className="plot__soil" />
-          <span className="plot__name">Virágsor</span>
-          <span className="plot__cta">
-            <PlayIcon /> Játék
-          </span>
-        </button>
-
-        {flashOpen ? (
-          <button type="button" className="plot plot--play" onClick={() => open('flash')} aria-label="Magvillantás – hány darab játék">
-            {progress.flashSolved === 0 && <span className="plot__badge">Új!</span>}
-            <SeedTrio />
-            <span className="plot__soil" />
-            <span className="plot__name">Magvillantás</span>
-            <span className="plot__cta">
-              <PlayIcon /> Játék
-            </span>
-          </button>
-        ) : (
-          <LockedPlot
-            name="Magvillantás"
-            skill={`Még ${UNLOCK_FLASH_AFTER - learned} szám, és kinyílik`}
-            art={<SeedTrio />}
-            onTap={tapFlashLocked}
-          />
-        )}
-
-        {addOpen ? (
-          <button type="button" className="plot plot--play" onClick={() => open('add')} aria-label="Méhecske – összeadós játék">
-            {progress.addSolved === 0 ? <span className="plot__badge">Új!</span> : <span className="plot__badge">{ladderOf(progress, 'add').level + 1}. szint</span>}
-            <BeeArt />
-            <span className="plot__soil" />
-            <span className="plot__name">Méhecske</span>
-            <span className="plot__cta">
-              <PlayIcon /> Játék
-            </span>
-          </button>
-        ) : (
-          <LockedPlot name="Méhecske" skill={`Összeadás · még ${UNLOCK_ADD_AFTER - learned} szám`} art={<BeeArt />} onTap={tapAddLocked} />
-        )}
-
-        <button type="button" className="plot plot--play" onClick={() => open('trace')} aria-label="Mézút – számírás a méhecskével">
-          {progress.traceSolved === 0 && <span className="plot__badge">Új!</span>}
-          <TrailArt />
-          <span className="plot__soil" />
-          <span className="plot__name">Mézút</span>
-          <span className="plot__cta">
-            <PlayIcon /> Játék
-          </span>
-        </button>
-
-        {potsOpen ? (
-          <button type="button" className="plot plot--play" onClick={() => open('pots')} aria-label="Cserépbarátok – tízes barátok játék">
-            {progress.potsSolved === 0 && <span className="plot__badge">Új!</span>}
-            <PotsArt />
-            <span className="plot__soil" />
-            <span className="plot__name">Cserépbarátok</span>
-            <span className="plot__cta">
-              <PlayIcon /> Játék
-            </span>
-          </button>
-        ) : (
-          <LockedPlot name="Cserépbarátok" skill={`Tízes barátok · még ${UNLOCK_POTS_AFTER - learned} szám`} art={<PotsArt />} onTap={tapPotsLocked} />
-        )}
-
-        <RewardPlot
-          className="plot--kiskert"
-          label="Kiskertem – ültess a magjaidból"
-          name="Kiskertem"
-          art={<KiskertArt />}
-          icon={<Seed size={30} />}
-          count={balance}
-          unit="mag"
-          cta="Ültetés"
-          badge={visitorWaiting ? 'Vendég jött!' : canPlantNow ? 'Ültethetsz!' : canMakeAnything(progress) ? 'Főzhetsz!' : null}
-          onClick={openGarden}
-        />
-      </div>
+      <Island world="garden" places={places} reward={reward} leaving={leaving} />
 
       {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}
-
-      <div className="garden" aria-label={`A kerted: ${garden.length} virág`}>
-        {garden.length === 0 ? (
-          <p className="garden__empty">Itt nőnek majd a virágaid.</p>
-        ) : (
-          garden.map((p, i) => (
-            <div key={`${p.id}-${i}`} className="garden__flower">
-              <RoundFlower petal={p.petal} width={64} />
-            </div>
-          ))
-        )}
-      </div>
     </div>
   );
 }

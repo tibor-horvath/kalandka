@@ -1,0 +1,151 @@
+/*
+ * Island homes: each world's home is its island, every game a place along one trail from the boat's dock.
+ * The tablet draws it on the whole stage; phones fit a tall or wide island into the room beside Csepi.
+ * On arrival the island rises, the boat sails in, the trail draws and the places pop up in trail order;
+ * after that only the sea, the boat and the places' pictures move, gently. Leaving for the map plays it backwards.
+ */
+.screen--island { --sky: #bfe4f6; }
+.world--robot.screen--island { --sky: #c3dcef; }
+.screen--island .home-guide { z-index: 1; }
+
+.island { --last: 0.84s; }
+.island--tablet { position: absolute; inset: 0; z-index: 0; }
+.island--portrait, .island--landscape { position: relative; display: flex; }
+.island__board { position: relative; }
+.island__scene { position: absolute; inset: 0; overflow: visible; }
+.island.is-leaving { pointer-events: none; }
+
+/* ---------- a place: its picture in a round window (a rounded panel in the workshop), its name on a sign ---------- */
+.spot { --disc-w: 124px; --disc-h: 124px; position: absolute; translate: -50% calc(var(--disc-h) / -2); border: 0; background: none; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; color: var(--ink); }
+.spot__disc { position: relative; width: var(--disc-w); height: var(--disc-h); box-sizing: border-box; border-radius: 50%; background: var(--paper); border: 5px solid var(--leaf); box-shadow: 0 7px 0 var(--leaf-deep); display: grid; place-items: center; transition: transform 70ms ease-out, box-shadow 70ms ease-out; }
+.spot:active .spot__disc { transform: translateY(5px); box-shadow: 0 2px 0 var(--leaf-deep); }
+.spot__art { display: flex; align-items: flex-end; justify-content: center; line-height: 0; zoom: 0.8; }
+.spot__art svg { flex: none; }
+.spot .plot__trio { display: flex; align-items: flex-end; gap: 4px; }
+.spot .plot__learn, .spot .plot__trail { margin: 0; }
+.spot__name { display: flex; align-items: center; gap: 6px; height: 38px; padding: 0 16px; border-radius: 19px; background: var(--paper); font-size: 22px; font-weight: 800; line-height: 1; white-space: nowrap; box-shadow: 0 3px 0 rgba(16, 35, 58, 0.12); }
+.spot__name svg { color: var(--leaf); }
+.spot__badge { position: absolute; top: -16px; left: 50%; translate: -50% 0; z-index: 1; height: 30px; padding: 0 12px; border-radius: 15px; border: 3px solid var(--paper); background: #ffe08a; font-size: 17px; font-weight: 800; display: flex; align-items: center; white-space: nowrap; }
+
+/* Asleep: the same dashed look as before, with what opens it under the name. */
+.spot--locked .spot__disc { background: #c9e6ae; border: 4px dashed #eaf6dd; box-shadow: none; }
+.spot--locked:active .spot__disc { transform: scale(0.96); box-shadow: none; }
+.spot--locked .spot__name { background: #eaf6dd; }
+.spot__lock { position: absolute; top: -8px; right: -8px; z-index: 1; width: 40px; height: 40px; border-radius: 20px; background: var(--paper); color: #34503c; display: grid; place-items: center; }
+.spot__hint { max-width: 180px; padding: 2px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.75); font-family: var(--body); font-size: 16px; font-weight: 700; line-height: 1.2; color: #2d4a36; text-align: center; }
+
+/* The reward closes the trail: bigger, cream, the seeds or bolts on a tag. */
+.spot--reward { --disc-w: 150px; --disc-h: 150px; }
+.spot--reward .spot__disc { background: #fff4d1; }
+.spot--reward .spot__art { zoom: 1; }
+.spot__count { position: absolute; right: -26px; bottom: -10px; height: 42px; padding: 0 12px 0 6px; border-radius: 21px; background: var(--paper); display: flex; align-items: center; gap: 4px; font-size: 26px; font-weight: 800; line-height: 1; box-shadow: 0 3px 0 rgba(16, 35, 58, 0.12); }
+
+/* The workshop's machines are wide: rounded panels instead of round windows. */
+.island--robot .spot { --disc-w: 164px; --disc-h: 108px; }
+.island--robot .spot__disc { border-radius: 30px; }
+.island--robot .spot__art { zoom: 0.7; }
+.island--robot .spot--locked .spot__art { zoom: 1; }
+.island--robot .spot--reward { --disc-w: 170px; --disc-h: 136px; }
+.island--robot .spot--reward .spot__art { zoom: 0.9; }
+.world--robot .spot--locked .spot__disc { background: #cfdbe8; border-color: #edf2f8; }
+.world--robot .spot--locked .spot__name { background: #edf2f8; }
+.world--robot .spot__lock { color: #3e5872; }
+.world--robot .spot__hint { color: #2f4a63; }
+
+/* ---------- phones: smaller places, the hint on one short line ---------- */
+.island--portrait .spot, .island--landscape .spot { gap: 5px; }
+.island--portrait .spot__disc, .island--landscape .spot__disc { border-width: 4px; box-shadow: 0 5px 0 var(--leaf-deep); }
+.island--portrait .spot:active .spot__disc, .island--landscape .spot:active .spot__disc { transform: translateY(4px); box-shadow: 0 1px 0 var(--leaf-deep); }
+.island--portrait .spot--locked .spot__disc, .island--landscape .spot--locked .spot__disc { border-width: 3px; box-shadow: none; }
+.island--portrait .spot__name { height: 30px; padding: 0 12px; border-radius: 15px; gap: 4px; font-size: 16px; }
+.island--portrait .spot__name svg, .island--landscape .spot__name svg { width: 10px; height: 10px; }
+.island--portrait .spot__badge, .island--landscape .spot__badge { top: -12px; height: 24px; padding: 0 9px; border-radius: 12px; border-width: 2px; font-size: 13px; }
+.island--portrait .spot__lock, .island--landscape .spot__lock { top: -6px; right: -6px; width: 30px; height: 30px; border-radius: 15px; }
+.island--portrait .spot__lock svg, .island--landscape .spot__lock svg { width: 16px; height: 16px; }
+.island--portrait .spot__hint, .island--landscape .spot__hint { max-width: none; margin-top: -2px; padding: 1px 8px; border-radius: 8px; font-size: 13px; white-space: nowrap; }
+.island--portrait .spot__count, .island--landscape .spot__count { right: -18px; bottom: -6px; height: 32px; padding: 0 9px 0 4px; border-radius: 16px; gap: 2px; font-size: 19px; }
+.island--portrait .spot__count svg, .island--landscape .spot__count svg { width: 20px; height: 20px; }
+.island--portrait .spot--start .spot__disc::after, .island--landscape .spot--start .spot__disc::after { inset: -9px; border-width: 3px; }
+
+.island--portrait .spot { --disc-w: 84px; --disc-h: 84px; }
+.island--portrait .spot__art { zoom: 0.54; }
+.island--portrait .spot--reward { --disc-w: 100px; --disc-h: 100px; }
+.island--portrait .spot--reward .spot__art { zoom: 0.65; }
+.island--portrait.island--robot .spot { --disc-w: 110px; --disc-h: 74px; }
+.island--portrait.island--robot .spot__disc { border-radius: 20px; }
+.island--portrait.island--robot .spot__art { zoom: 0.45; }
+.island--portrait.island--robot .spot--locked .spot__art { zoom: 0.7; }
+.island--portrait.island--robot .spot--reward { --disc-w: 120px; --disc-h: 96px; }
+.island--portrait.island--robot .spot--reward .spot__disc { border-radius: 26px; }
+.island--portrait.island--robot .spot--reward .spot__art { zoom: 0.6; }
+
+.island--landscape .spot { --disc-w: 72px; --disc-h: 72px; gap: 4px; }
+.island--landscape .spot__art { zoom: 0.46; }
+.island--landscape .spot__name { height: 26px; padding: 0 10px; border-radius: 13px; gap: 4px; font-size: 15px; }
+.island--landscape .spot__badge { height: 22px; font-size: 12px; }
+.island--landscape .spot__lock { width: 26px; height: 26px; }
+.island--landscape .spot__lock svg { width: 14px; height: 14px; }
+.island--landscape .spot__hint { font-size: 12px; }
+.island--landscape .spot__count { height: 28px; font-size: 17px; }
+.island--landscape .spot__count svg { width: 17px; height: 17px; }
+.island--landscape .spot--reward { --disc-w: 84px; --disc-h: 84px; }
+.island--landscape .spot--reward .spot__art { zoom: 0.55; }
+.island--landscape.island--robot .spot { --disc-w: 96px; --disc-h: 64px; }
+.island--landscape.island--robot .spot__disc { border-radius: 18px; }
+.island--landscape.island--robot .spot__art { zoom: 0.4; }
+.island--landscape.island--robot .spot--locked .spot__art { zoom: 0.6; }
+.island--landscape.island--robot .spot--reward { --disc-w: 104px; --disc-h: 80px; }
+.island--landscape.island--robot .spot--reward .spot__disc { border-radius: 22px; }
+.island--landscape.island--robot .spot--reward .spot__art { zoom: 0.5; }
+
+/* ---------- arrival ---------- */
+.island__scene { animation: island-rise 0.5s cubic-bezier(.2, .8, .2, 1) backwards; }
+/* The boat sails in from the open sea; on a turned-around (phone workshop) island the drawing turns it for us. */
+.island__boat { --sail-x: -120px; animation: island-sail 0.8s cubic-bezier(.2, .8, .2, 1) 0.15s backwards; }
+.island--tablet.island--robot .island__boat { --sail-x: 120px; }
+.island--portrait .island__boat, .island--landscape .island__boat { --sail-x: -60px; }
+.island__trail { stroke-dasharray: 1; stroke-dashoffset: 1; animation: island-draw 0.8s ease-in-out 0.2s forwards; }
+.island__dots { animation: island-fade 0.4s ease-out 0.9s backwards; }
+.spot { animation: island-pop 0.45s cubic-bezier(.34, 1.56, .64, 1) var(--d, 0s) backwards; }
+.spot__badge { animation: island-pop 0.4s cubic-bezier(.34, 1.56, .64, 1) calc(var(--d, 0s) + 0.25s) backwards; }
+/* Where a new child begins: two soft rings once everything has arrived. */
+.spot--start .spot__disc::after { content: ''; position: absolute; inset: -12px; border-radius: inherit; border: 4px solid var(--sun); opacity: 0; pointer-events: none; animation: island-ring 1.2s ease-out 1.2s 2; }
+
+@keyframes island-rise { from { opacity: 0; transform: translateY(16px); } }
+@keyframes island-sail { from { opacity: 0; transform: translate(var(--sail-x), 40px); } }
+@keyframes island-draw { to { stroke-dashoffset: 0; } }
+@keyframes island-fade { from { opacity: 0; } }
+@keyframes island-pop { from { opacity: 0; scale: 0.5; } }
+@keyframes island-ring { 0% { opacity: 0.9; transform: scale(0.92); } 100% { opacity: 0; transform: scale(1.25); } }
+
+/* ---------- the living island: waves drift, the boat rocks, the pictures sway as before ---------- */
+.island__waves path { animation: island-drift 5s ease-in-out infinite alternate; }
+.island__waves path:nth-child(2) { animation-delay: -1.3s; }
+.island__waves path:nth-child(3) { animation-delay: -2.6s; }
+.island__waves path:nth-child(4) { animation-delay: -3.4s; }
+.island__waves path:nth-child(5) { animation-delay: -4.2s; }
+.island__bob { --tilt: -2deg; transform-box: fill-box; transform-origin: 50% 100%; animation: island-bob 3.6s ease-in-out 1s infinite; }
+.island--tablet.island--robot .island__bob { --tilt: 2deg; }
+.screen--home .spot:not(.spot--reward) .spot__art > svg { transform-origin: 50% 100%; animation: plant-sway 4.5s ease-in-out infinite; animation-delay: calc(var(--d, 0s) * -3); }
+
+@keyframes island-drift { from { transform: translateX(-10px); opacity: 0.55; } to { transform: translateX(10px); opacity: 1; } }
+@keyframes island-bob { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-3px) rotate(var(--tilt)); } 70% { transform: translateY(2px) rotate(calc(var(--tilt) * -0.75)); } }
+
+/* ---------- leaving for the map: the places go in reverse, the boat sails off, the island sinks away ---------- */
+.is-leaving .spot { animation: island-out 0.3s ease-in calc((var(--last) - var(--d, 0s)) * 0.6) both; }
+.is-leaving .spot__badge, .is-leaving .spot--start .spot__disc::after { animation: none; }
+.is-leaving .island__dots { animation: island-gone 0.2s ease-in both; }
+.is-leaving .island__boat { animation: island-away 0.6s ease-in both; }
+.is-leaving .island__scene { transform-origin: 50% 55%; animation: island-sink 0.45s ease-in 0.35s both; }
+
+@keyframes island-out { to { opacity: 0; scale: 0.5; } }
+@keyframes island-gone { to { opacity: 0; } }
+@keyframes island-away { to { opacity: 0; transform: translate(var(--sail-x), 40px) rotate(var(--tilt, -2deg)); } }
+@keyframes island-sink { to { opacity: 0; transform: scale(0.86); } }
+
+/* Infinite loops would flicker under the global reduced-motion rule: stop everything outright (the map then opens at once). */
+@media (prefers-reduced-motion: reduce) {
+  .island__scene, .island__boat, .island__bob, .island__trail, .island__dots, .island__waves path,
+  .spot, .spot__badge, .spot--start .spot__disc::after, .screen--home .spot .spot__art > svg { animation: none !important; }
+  .island__trail { stroke-dashoffset: 0; }
+}

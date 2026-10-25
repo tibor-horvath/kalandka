@@ -3,9 +3,9 @@
  * animation. Tablet first; the phone layouts follow at the end of this file.
  */
 
-/* ---------- home: the Kiskert plot ---------- */
-/* A flower and the pear tree, sized to stand in the reward tile's round window. */
-.plot--kiskert .plot__trio--kiskert { align-items: flex-end; gap: 0; }
+/* ---------- home: the Kiskertem place ---------- */
+/* A flower and the pear tree, sized to stand in the reward place's round window. */
+.spot .plot__trio--kiskert { align-items: flex-end; gap: 0; }
 .plot__trio--kiskert .gplant-icon { width: 34px; height: 47px; }
 .plot__trio--kiskert .gplant-icon + .gplant-icon { width: 62px; height: 86px; margin-left: -6px; }
 
@@ -293,9 +293,6 @@
 .kbed .gplant--sprout { animation-duration: 3s; }
 .plot__trio--kiskert .gplant-icon { transform-origin: 50% 100%; animation: plant-sway 4.5s ease-in-out infinite; }
 .plot__trio--kiskert .gplant-icon + .gplant-icon { animation: tree-sway 6s ease-in-out -2s infinite; }
-.garden__flower svg { transform-origin: 50% 100%; animation: plant-sway 4.5s ease-in-out infinite; }
-.garden__flower:nth-child(3n + 2) svg { animation-delay: -1.5s; }
-.garden__flower:nth-child(3n) svg { animation-delay: -3s; }
 
 @keyframes plant-sway { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
 @keyframes tree-sway { 0%, 100% { transform: rotate(-1deg); } 50% { transform: rotate(1deg); } }
@@ -416,8 +413,7 @@
   92%, 100% { translate: 0 0; scale: 1 1; }
 }
 
-/* Home screen: the tiles' flowers and sprout sway, the bees hover (their wings already flap). */
-.screen--home .plot > svg,
+/* Home screen: the places' flowers sway, the bees hover (their wings already flap); island.css sways the single pictures. */
 .screen--home .plot__trio--flowers > svg,
 .screen--home .plot__pot > svg:first-child { transform-origin: 50% 100%; animation: plant-sway 4.5s ease-in-out infinite; }
 .screen--home .plot__trio--flowers > svg:nth-child(2) { animation-delay: -1.5s; }
@@ -430,8 +426,8 @@
 
 /* Infinite loops would flicker under the global 0.01 ms reduced-motion rule: stop them outright. */
 @media (prefers-reduced-motion: reduce) {
-  .gplant, .gplant-icon, .garden__flower svg, .vis-part, .kbed__sway, .visitors__hop, .visitors__roam,
-  .screen--home .plot > svg, .screen--home .plot__trio--flowers > svg, .screen--home .plot__pot > svg:first-child,
+  .gplant, .gplant-icon, .vis-part, .kbed__sway, .visitors__hop, .visitors__roam,
+  .screen--home .plot__trio--flowers > svg, .screen--home .plot__pot > svg:first-child,
   .screen--home .plot__trio--bee > svg, .screen--home .plot__trail-bee > svg { animation: none !important; }
 }
 

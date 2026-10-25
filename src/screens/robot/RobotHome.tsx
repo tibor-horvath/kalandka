@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import { KidChip, MapButton, ParentsButton, PrintButton, RewardPlot, VoiceButton } from '../../components/hub';
+import { KidChip, MapButton, ParentsButton, PrintButton, VoiceButton } from '../../components/hub';
+import { Island, useLeave, type Place, type RewardPlace } from '../../components/island';
 import { Bolt, CodeArt, Gear, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../../components/robot';
-import { FriendArt, MyRobot } from '../../components/robotParts';
+import { MyRobot } from '../../components/robotParts';
 import { useForm } from '../../components/Stage';
 import { StickerPop } from '../../components/StickerPop';
-import { GuideBubble, KalandkaIcon, KalandkaWordmark, LockIcon, PlayIcon, RoundButton, SpeakerIcon } from '../../components/ui';
+import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from '../../components/ui';
 import { speak } from '../../lib/speech';
 import { kidName, useActiveKid, useProfiles } from '../../state/profiles';
 import { ladderOf } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
 import { markStickerSeen, newStickers } from '../../state/rewards';
-import { boltBalance, canBuyAnything, friendsOf, newFriend, secondRobotNew } from '../../state/robotParts';
+import { boltBalance, canBuyAnything, newFriend, secondRobotNew } from '../../state/robotParts';
 
 export type RobotGameId = 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code';
 
@@ -43,13 +44,13 @@ export function RobotHome({
   const { profiles } = useProfiles();
   const kid = useActiveKid();
   const phone = useForm() !== 'tablet';
+  const [leaving, leaveForMap] = useLeave(onMap);
   const shared = profiles.kids.length > 1;
   const [notice, setNotice] = useState<string | null>(null);
   const noticeTimer = useRef<number | null>(null);
   // A Robotút sticker earned in the game is celebrated here, one at a time.
   const sticker = newStickers(progress, 'robot')[0] ?? null;
   const balance = boltBalance(progress);
-  const friends = friendsOf(progress).slice(0, progress.robotFriendsSeen);
 
   // Aloud with an online voice Csavar leaves the name out: it would leave the device.
   const hello = shared ? `Szia, ${kidName(kid)}! Jó, hogy itt vagy a műhelyben!` : HELLO;
@@ -93,11 +94,54 @@ export function RobotHome({
   const mirrorIdx = ladderOf(progress, 'mirror').level;
   const codeIdx = ladderOf(progress, 'code').level;
   const workshopBadge = newFriend(progress) ? 'Barát jött!' : secondRobotNew(progress) ? 'Új robot!' : canBuyAnything(progress) ? 'Építhetsz!' : null;
+  /** A machine's badge: new until first solved, then the level the child is on. */
+  const machineBadge = (solved: number, level: number) => (solved === 0 ? 'Új gép!' : `${level + 1}. szint`);
+
+  const places: Place[] = [
+    {
+      id: 'path',
+      name: 'Robotút',
+      label: 'Robotút – programozd a robotot',
+      badge: progress.pathSolved === 0 ? 'Kezdd itt!' : `${levelIdx + 1}. szint`,
+      start: progress.pathSolved === 0,
+      art: <PathArt />,
+      onOpen: () => open('path')
+    },
+    { id: 'sort', name: 'Válogatógép', label: 'Válogatógép – válogasd szét a darabokat', badge: machineBadge(progress.sortSolved, sortIdx), art: <SortArt />, onOpen: () => open('sort') },
+    { id: 'scale', name: 'Mérleg', label: 'Mérleg – melyik a nehezebb?', badge: machineBadge(progress.scaleSolved, scaleIdx), art: <ScaleArt />, onOpen: () => open('scale') },
+    { id: 'seq', name: 'Mintagép', label: 'Mintagép – mi jön a sorban?', badge: machineBadge(progress.seqSolved, seqIdx), art: <SeqArt />, onOpen: () => open('seq') },
+    { id: 'mirror', name: 'Tükörgép', label: 'Tükörgép – hol a tükörkép?', badge: machineBadge(progress.mirrorSolved, mirrorIdx), art: <MirrorArt />, onOpen: () => open('mirror') },
+    { id: 'code', name: 'Kódzár', label: 'Kódzár – nyisd ki a ládát a kóddal', badge: machineBadge(progress.codeSolved, codeIdx), art: <CodeArt />, onOpen: () => open('code') },
+    ...COMING.map((m) => ({
+      id: m.name,
+      name: m.name,
+      label: `${m.name}: még készül`,
+      art: <Gear />,
+      locked: {
+        skill: (
+          <>
+            {m.skill}
+            <span className="plot__soon"> · hamarosan</span>
+          </>
+        ),
+        hint: 'hamarosan',
+        onTap: () => tapComing(m.name)
+      }
+    }))
+  ];
+  const reward: RewardPlace = {
+    label: 'Robotépítő – építsd meg a saját robotodat',
+    name: 'Robotépítő',
+    art: <MyRobot progress={progress} width={92} />,
+    icon: <Bolt size={30} />,
+    count: balance,
+    unit: 'csavar',
+    badge: workshopBadge,
+    onClick: openWorkshop
+  };
 
   return (
-    <div className="screen screen--home screen--robot-home world--robot">
-      <div className="hill floor" aria-hidden="true" />
-
+    <div className="screen screen--home screen--robot-home world--robot screen--island">
       <header className="topbar">
         <div className="brand">
           <KalandkaIcon size={56} />
@@ -108,7 +152,7 @@ export function RobotHome({
         </div>
         <div className="topbar__right">
           {shared && <KidChip onSwitch={onSwitch} />}
-          <MapButton onClick={onMap} />
+          <MapButton onClick={leaveForMap} />
           <VoiceButton guide="Csavar" />
           <PrintButton onClick={onPrint} />
           <ParentsButton onClick={onParents} />
@@ -129,110 +173,9 @@ export function RobotHome({
         </GuideBubble>
       </div>
 
-      <div className="plots">
-        <button type="button" className="plot plot--play" onClick={() => open('path')} aria-label="Robotút – programozd a robotot">
-          {progress.pathSolved === 0 ? <span className="plot__badge">Kezdd itt!</span> : <span className="plot__badge">{levelIdx + 1}. szint</span>}
-          <PathArt />
-          <span className="plot__soil plot__soil--floor" />
-          <span className="plot__name">Robotút</span>
-          <span className="plot__cta">
-            <PlayIcon /> Játék
-          </span>
-        </button>
-
-        <button type="button" className="plot plot--play" onClick={() => open('sort')} aria-label="Válogatógép – válogasd szét a darabokat">
-          {progress.sortSolved === 0 ? <span className="plot__badge">Új gép!</span> : <span className="plot__badge">{sortIdx + 1}. szint</span>}
-          <SortArt />
-          <span className="plot__soil plot__soil--floor" />
-          <span className="plot__name">Válogatógép</span>
-          <span className="plot__cta">
-            <PlayIcon /> Játék
-          </span>
-        </button>
-
-        <button type="button" className="plot plot--play" onClick={() => open('scale')} aria-label="Mérleg – melyik a nehezebb?">
-          {progress.scaleSolved === 0 ? <span className="plot__badge">Új gép!</span> : <span className="plot__badge">{scaleIdx + 1}. szint</span>}
-          <ScaleArt />
-          <span className="plot__soil plot__soil--floor" />
-          <span className="plot__name">Mérleg</span>
-          <span className="plot__cta">
-            <PlayIcon /> Játék
-          </span>
-        </button>
-
-        <button type="button" className="plot plot--play" onClick={() => open('seq')} aria-label="Mintagép – mi jön a sorban?">
-          {progress.seqSolved === 0 ? <span className="plot__badge">Új gép!</span> : <span className="plot__badge">{seqIdx + 1}. szint</span>}
-          <SeqArt />
-          <span className="plot__soil plot__soil--floor" />
-          <span className="plot__name">Mintagép</span>
-          <span className="plot__cta">
-            <PlayIcon /> Játék
-          </span>
-        </button>
-
-        <button type="button" className="plot plot--play" onClick={() => open('mirror')} aria-label="Tükörgép – hol a tükörkép?">
-          {progress.mirrorSolved === 0 ? <span className="plot__badge">Új gép!</span> : <span className="plot__badge">{mirrorIdx + 1}. szint</span>}
-          <MirrorArt />
-          <span className="plot__soil plot__soil--floor" />
-          <span className="plot__name">Tükörgép</span>
-          <span className="plot__cta">
-            <PlayIcon /> Játék
-          </span>
-        </button>
-
-        <button type="button" className="plot plot--play" onClick={() => open('code')} aria-label="Kódzár – nyisd ki a ládát a kóddal">
-          {progress.codeSolved === 0 ? <span className="plot__badge">Új gép!</span> : <span className="plot__badge">{codeIdx + 1}. szint</span>}
-          <CodeArt />
-          <span className="plot__soil plot__soil--floor" />
-          <span className="plot__name">Kódzár</span>
-          <span className="plot__cta">
-            <PlayIcon /> Játék
-          </span>
-        </button>
-
-        {COMING.map((m) => (
-          <button key={m.name} type="button" className="plot plot--locked" onClick={() => tapComing(m.name)} aria-label={`${m.name}: még készül`}>
-            <span className="plot__lock">
-              <LockIcon />
-            </span>
-            <Gear />
-            <span className="plot__soil plot__soil--floor" />
-            <span className="plot__name">{m.name}</span>
-            <span className="plot__skill">
-              {m.skill}
-              <span className="plot__soon"> · hamarosan</span>
-            </span>
-          </button>
-        ))}
-
-        {/* The reward tile always closes the row of eight, as Kiskertem does in Számkertész. */}
-        <RewardPlot
-          className="plot--builder"
-          label="Robotépítő – építsd meg a saját robotodat"
-          name="Robotépítő"
-          art={<MyRobot progress={progress} width={92} />}
-          icon={<Bolt size={30} />}
-          count={balance}
-          unit="csavar"
-          cta="Építés"
-          badge={workshopBadge}
-          onClick={openWorkshop}
-        />
-      </div>
+      <Island world="robot" places={places} reward={reward} leaving={leaving} />
 
       {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}
-
-      <div className="garden shelf" aria-label={`A polcod: a robotod${friends.length ? ` és ${friends.length} barátja` : ''}`}>
-        <span className="garden__flower shelf__robot">
-          <MyRobot progress={progress} width={70} />
-        </span>
-        {friends.map((f) => (
-          <span key={f.id} className="garden__flower shelf__friend">
-            <FriendArt id={f.id} width={76} />
-          </span>
-        ))}
-        {friends.length === 0 && <p className="garden__empty shelf__hint">Ő a te robotod. A csavarjaidból építhetsz rá!</p>}
-      </div>
     </div>
   );
 }
