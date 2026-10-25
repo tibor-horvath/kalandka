@@ -194,7 +194,7 @@ export function siteAddress(): string {
   return `${window.location.host}${import.meta.env.BASE_URL}`.replace(/\/+$/, '');
 }
 
-/** One A4 page: name line, the instruction, a line for the grown-up, and the tasks in a grid. */
+/** One A4 page: name line, the instruction, a line for the grown-up, and the tasks in a grid. `footer` says which page of the printout this is. */
 export function Sheet({ spec, level, grid, tasks, answers, footer }: { spec: PrintSpec<unknown>; level: number; grid: Grid; tasks: unknown[]; answers: boolean; footer: string }) {
   const [cols, rows] = grid;
   const { Task } = spec;
@@ -205,10 +205,12 @@ export function Sheet({ spec, level, grid, tasks, answers, footer }: { spec: Pri
     <TextureContext.Provider value={textures}>
       <section className={`ps-sheet ps-sheet--${spec.world}`}>
         <Textures red={`${uid}-red`} blue={`${uid}-blue`} />
+        {/* The header names the task; the brand stands once, in the footer. */}
         <header className="ps-head">
-          <KalandkaIcon size={44} />
           <div className="ps-head__text">
-            <span className="ps-world">{WORLDS.find((w) => w.id === spec.world)!.name}</span>
+            <span className="ps-world">
+              {WORLDS.find((w) => w.id === spec.world)!.name} · {level + 1}. szint: {spec.levels[level]}
+            </span>
             <h2 className="ps-title">{spec.game}</h2>
           </div>
           <span className="ps-name">Név: </span>
@@ -244,6 +246,7 @@ export function Sheet({ spec, level, grid, tasks, answers, footer }: { spec: Pri
           ))}
         </div>
         <footer className="ps-foot">
+          <KalandkaIcon size={22} />
           <KalandkaWordmark size={15} />
           <span className="ps-foot__site">{siteAddress()}</span>
           <span className="ps-foot__about">Gondolkodtató játékok 5–7 éveseknek</span>

@@ -15,16 +15,15 @@
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
-.ps-head { display: flex; align-items: center; gap: 3mm; padding-bottom: 2mm; border-bottom: 0.6mm solid #10233a; }
-.ps-head > svg { flex: none; width: 12mm; height: 12mm; }
+.ps-head { display: flex; align-items: flex-end; gap: 6mm; padding-bottom: 2mm; border-bottom: 0.6mm solid #10233a; }
 .ps-head__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.6mm; }
 .ps-world { font-size: 9pt; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #4a5e70; }
-.ps-title { margin: 0; font-family: var(--display); font-size: 25pt; font-weight: 800; line-height: 1; }
+.ps-title { margin: 0; font-family: var(--display); font-size: 28pt; font-weight: 800; line-height: 1; }
 /* The black-and-white colour textures: defined once per sheet, takes no room. */
 .ps-defs { position: absolute; }
 .ps-sheet--garden .ps-title { color: #1e5520; }
 .ps-sheet--robot .ps-title { color: #0c5f5c; }
-.ps-name { flex: 0 0 72mm; align-self: flex-end; padding-bottom: 1mm; border-bottom: 0.4mm solid #10233a; font-size: 13pt; font-weight: 700; }
+.ps-name { flex: 0 0 80mm; padding-bottom: 1mm; border-bottom: 0.4mm solid #10233a; font-size: 13pt; font-weight: 700; }
 .ps-ask { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5mm 4mm; font-family: var(--display); font-size: 15pt; font-weight: 700; line-height: 1.2; }
 .ps-ask p { flex: 1 1 120mm; margin: 0; }
 .ps-legend { display: flex; flex-wrap: wrap; gap: 2mm; }
@@ -37,7 +36,8 @@
 .ps-star { position: absolute; left: 1.5mm; bottom: 1.5mm; width: 6mm; height: 6mm; }
 .ps-pic { flex: 1; min-width: 0; min-height: 0; }
 .ps-svg { display: block; width: 100%; height: 100%; }
-.ps-foot { display: flex; align-items: baseline; gap: 2.5mm; padding-top: 1.5mm; border-top: 0.3mm solid #d6e4ee; font-size: 8.5pt; color: #4a5e70; }
+.ps-foot { display: flex; align-items: center; gap: 2.5mm; padding-top: 1.5mm; border-top: 0.3mm solid #d6e4ee; font-size: 8.5pt; color: #4a5e70; }
+.ps-foot > svg { flex: none; width: 5.5mm; height: 5.5mm; margin-right: -1mm; }
 .ps-foot__site { font-weight: 800; color: #1f6fc0; }
 .ps-foot__level { margin-left: auto; }
 

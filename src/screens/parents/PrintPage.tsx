@@ -34,7 +34,7 @@ function theAge(age: AgeBand): string {
 
 function pagesOf(s: PrintSpec<unknown>, c: PrintChoice, answers: boolean): ReactNode[] {
   return buildPages(s, c).map((p, i) => (
-    <Sheet key={i} spec={s} level={c.level} grid={p.grid} tasks={p.tasks} answers={answers} footer={`${c.level + 1}. szint: ${s.levels[c.level]}${c.pages > 1 ? ` · ${i + 1}/${c.pages}. lap` : ''}`} />
+    <Sheet key={i} spec={s} level={c.level} grid={p.grid} tasks={p.tasks} answers={answers} footer={c.pages > 1 ? `${i + 1}/${c.pages}. lap` : ''} />
   ));
 }
 
