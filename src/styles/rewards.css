@@ -485,7 +485,15 @@
 .pantry__jars > span { display: inline-flex; }
 .pantry__count { min-width: 44px; height: 44px; padding: 0 10px; border-radius: 22px; background: var(--paper); font-size: 24px; font-weight: 800; display: grid; place-items: center; }
 .is-phone .pantry { padding: 10px; }
-.is-phone .pantry__recipes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.is-phone .pantry__recipes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+/* Phones: tighter recipe cards, so the shelf under them stays on screen without scrolling. */
+.is-phone .pantry__card { gap: 10px; padding: 14px 14px 16px; }
+.is-phone .pantry__recipe { padding: 6px 6px 8px; gap: 2px; border-radius: 20px; }
+.is-phone .pantry__recipe .treat-art { width: 52px; height: 52px; }
+.is-phone .pantry__name { font-size: 18px; }
+.is-phone .pantry__things { min-height: 26px; }
+.is-phone .pantry__shelf { gap: 4px; padding: 8px 12px; }
+.is-phone .pantry__row { align-items: center; }
 .is-phone .pantry__title { font-size: 30px; }
 
 /* The newer visitors stand still; tapping one still gives it a little hop. */
