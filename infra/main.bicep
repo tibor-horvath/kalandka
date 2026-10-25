@@ -21,8 +21,8 @@ param location string = 'westeurope'
 ])
 param sku string = 'Free'
 
-@description('Optional custom subdomain, e.g. www.kalandka.hu. Its CNAME must already point at the default hostname. Apex domains need TXT validation; see docs/deploy.md.')
-param customDomain string = ''
+@description('Custom subdomain; pass an empty string to skip it. Its CNAME must already point at the default hostname. Apex domains need TXT validation; see docs/deploy.md.')
+param customDomain string = 'www.kalandka.hu'
 
 param tags object = {
   app: 'kalandka'

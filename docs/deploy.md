@@ -11,7 +11,7 @@ Manual deploys with the SWA CLI still work for previews and emergencies.
 | --- | --- |
 | Resource group (`kalandka-rg`) | Created by hand, once. |
 | Static web app (`kalandka`) | Free tier, `westeurope`. Content is served from Azure's global edge. |
-| Custom domain (optional) | Only when the `customDomain` parameter is set. |
+| Custom domain (`www.kalandka.hu`) | Skipped when `customDomain` is passed as an empty string. |
 
 Free tier costs nothing and includes HTTPS, two custom domains and three preview environments.
 
@@ -37,9 +37,10 @@ az account set --subscription "<subscription name or id>"
 2. Create the static web app:
 
    ```bash
-   az deployment group create -g kalandka-rg -f infra/main.bicep
+   az deployment group create -g kalandka-rg -f infra/main.bicep --parameters customDomain=''
    ```
 
+   The empty `customDomain` skips the domain for now: it can only be bound once its CNAME points at the site (see [Custom domain](#custom-domain)).
    The output `url` is the site's default address (`https://<random-name>.azurestaticapps.net`).
 
 3. Connect GitHub Actions to the site (once):
@@ -60,10 +61,10 @@ az account set --subscription "<subscription name or id>"
 | `name` | `kalandka` | Name of the static web app. |
 | `location` | `westeurope` | Region of the resource (`westeurope`, `centralus`, `eastus2`, `westus2`, `eastasia`). |
 | `sku` | `Free` | `Free` or `Standard`. Standard adds an SLA and more custom domains. |
-| `customDomain` | empty | A subdomain such as `www.kalandka.hu`. |
+| `customDomain` | `www.kalandka.hu` | Custom subdomain; its CNAME must already resolve. Empty skips it. |
 | `tags` | `{ app: 'kalandka' }` | Resource tags. |
 
-Pass them with `--parameters`, e.g. `--parameters customDomain=www.kalandka.hu`.
+Pass them with `--parameters`, e.g. `--parameters sku=Standard`.
 Re-running the deployment is safe; it only changes what differs.
 
 ## Releasing a new version
@@ -110,11 +111,13 @@ az staticwebapp environment delete -n kalandka --environment-name preview
 
 ## Custom domain
 
-**Subdomain (e.g. `www.kalandka.hu`):**
+The domain is registered at Rackhost, which also hosts its DNS.
 
-1. At the DNS provider, add a CNAME from `www` to the default hostname (without `https://`).
+**Subdomain (`www.kalandka.hu`):**
+
+1. At the DNS provider, add a CNAME from `www` to the default hostname (without `https://`). Remove any A record on `www` first; a name cannot have both.
 2. Wait until it resolves (`nslookup www.kalandka.hu`).
-3. Redeploy the Bicep with `--parameters customDomain=www.kalandka.hu`. Azure validates the CNAME and issues the certificate (can take a few minutes up to an hour).
+3. Redeploy the Bicep (`az deployment group create -g kalandka-rg -f infra/main.bicep`); `customDomain` defaults to `www.kalandka.hu`. Azure validates the CNAME and issues the certificate (can take a few minutes up to an hour).
 
 **Apex domain (e.g. `kalandka.hu`):** needs TXT validation, which the Bicep file does not do. Add it with the CLI:
 
