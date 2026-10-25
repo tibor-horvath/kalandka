@@ -119,7 +119,7 @@ export function KidSwitch({ viewId, onView, title, stuck }: { viewId: string; on
 }
 
 /** The parents' area: its own calm, adult space with a menu, separate from the garden. */
-export function ParentArea({ start = 'overview', onClose }: { start?: ParentStart; onClose: () => void }) {
+export function ParentArea({ start = 'overview', onClose, onAbout }: { start?: ParentStart; onClose: () => void; onAbout: () => void }) {
   const { profiles } = useProfiles();
   const [page, setPage] = useState<ParentPage>(start === 'add' ? 'kids' : start);
   // Opens on the child who is playing; parents can look at the others without changing who plays.
@@ -164,6 +164,9 @@ export function ParentArea({ start = 'overview', onClose }: { start?: ParentStar
           Reklám, csevegés és vásárlás nélkül. Minden adat csak ezen az eszközön marad.{' '}
           <button type="button" className="pa-nav__link" onClick={() => setPage('legal')}>
             Adatkezelés és impresszum
+          </button>
+          <button type="button" className="pa-nav__link" onClick={onAbout}>
+            A Kalandkáról
           </button>
         </p>
         <button type="button" className="pa-nav__back" onClick={onClose}>

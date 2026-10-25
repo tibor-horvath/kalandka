@@ -26,7 +26,8 @@ export default defineConfig(({ mode }) => {
           short_name: 'Kalandka',
           description: 'Számolós és logikai játékok 5–7 éveseknek.',
           lang: 'hu',
-          start_url: '/',
+          // The installed app opens on the game; / is the landing page (src/App.tsx). The id stays '/', so existing installs keep their identity.
+          start_url: '/jatek',
           display: 'fullscreen',
           orientation: 'landscape',
           background_color: '#DDF0FA',

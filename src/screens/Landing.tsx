@@ -580,12 +580,17 @@ function LegalSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function Landing({ onStart }: { onStart: (kid: KidDraft) => void }) {
+/**
+ * `onResume` is set when a child is already saved on this device (the page was opened at / in a browser or from the
+ * parents' corner): the start buttons then go straight back to the game instead of asking for a first child.
+ */
+export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => void; onResume?: () => void }) {
   const [asking, setAsking] = useState(false);
   const [sheetsFor, setSheetsFor] = useState<AgeBand | null>(null);
   const [legal, setLegal] = useState(false);
   const installed = useInstallState() === 'installed';
-  const ask = () => setAsking(true);
+  const ask = onResume ?? (() => setAsking(true));
+  const back = onResume ? 'Vissza a játékhoz' : undefined;
 
   return (
     <>
@@ -608,7 +613,7 @@ export function Landing({ onStart }: { onStart: (kid: KidDraft) => void }) {
                   Telepítés
                 </button>
               )}
-              <StartButton onStart={ask}>Indítás</StartButton>
+              <StartButton onStart={ask}>{back ?? 'Indítás'}</StartButton>
             </nav>
           </div>
         </header>
@@ -627,7 +632,9 @@ export function Landing({ onStart }: { onStart: (kid: KidDraft) => void }) {
                   Fejlesztő játékok tabletre és telefonra. Csepi, a vízcsepp a Számkertben, Csavar, a robot pedig a Műhelyben várja a gyerekeket. Ők választanak szigetet, a feladatok
                   nehézsége pedig észrevétlenül alkalmazkodik hozzájuk.
                 </p>
-                <StartButton onStart={ask} className="landing__in" style={delay(360)} />
+                <StartButton onStart={ask} className="landing__in" style={delay(360)}>
+                  {back}
+                </StartButton>
                 <HeroSheets onOpen={setSheetsFor} className="landing__in" style={delay(440)} />
                 <ul className="landing__highlights landing__in" style={delay(520)}>
                   {HIGHLIGHTS.map((h) => (
@@ -740,7 +747,7 @@ export function Landing({ onStart }: { onStart: (kid: KidDraft) => void }) {
           <section className="landing__section landing__section--tight landing__end">
             <div className="landing__wrap landing__reveal">
               <h2>Hova evezünk ma?</h2>
-              <StartButton onStart={ask} />
+              <StartButton onStart={ask}>{back}</StartButton>
             </div>
           </section>
         </main>

@@ -30,7 +30,7 @@ import { Code } from './screens/robot/Code';
 import { Seq } from './screens/robot/Seq';
 import { Sort } from './screens/robot/Sort';
 import { Workshop } from './screens/robot/Workshop';
-import { ProfilesProvider, firstKid, hasSave, progressOf, setActive, useProfiles } from './state/profiles';
+import { ProfilesProvider, editKid, firstKid, hasSave, progressOf, setActive, useProfiles } from './state/profiles';
 import { useProgress, type Progress } from './state/progress';
 import { GRACE_SECONDS, WARN_SECONDS, addPlay, isEveningRest, remainingSeconds, today } from './state/screenTime';
 import { WORLDS, currentWorld, type WorldId } from './state/worlds';
@@ -47,6 +47,31 @@ type Parents = 'closed' | 'gate' | 'open' | 'print';
 const loadParentArea = () => import('./screens/parents/ParentArea');
 const ParentArea = lazy(async () => ({ default: (await loadParentArea()).ParentArea }));
 const PrintArea = lazy(async () => ({ default: (await import('./screens/PrintArea')).PrintArea }));
+
+/** The game lives at /jatek (the installed app starts there); every other address is the landing page. */
+const GAME_PATH = '/jatek';
+const LANDING_PATH = '/';
+
+function onGamePath(): boolean {
+  return window.location.pathname === GAME_PATH || window.location.pathname.startsWith(`${GAME_PATH}/`);
+}
+
+/** Launched from the home screen. Older installs still start at /, so they skip the landing page this way. */
+function isInstalled(): boolean {
+  return (
+    window.matchMedia('(display-mode: fullscreen)').matches ||
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
+}
+
+/** Moves the address to the page on screen; `push` adds a history step, so Back returns to the previous page. */
+function goTo(path: string, push = false) {
+  if (window.location.pathname === path) return;
+  const url = path + window.location.search + window.location.hash;
+  if (push) window.history.pushState(null, '', url);
+  else window.history.replaceState(window.history.state, '', url);
+}
 
 /** The play clock ticks in steps of this many seconds. */
 const TICK_SECONDS = 5;
@@ -89,8 +114,13 @@ function depthOf(s: Screen): number {
 function Game() {
   const { progress, update } = useProgress();
   const { profiles, change } = useProfiles();
-  // A device that has never played here gets the landing page first; nothing is saved until the start button.
-  const [landing, setLanding] = useState(() => !hasSave());
+  // A device with no named child gets the landing page first; nothing is saved until the start button.
+  // An older save may hold only the unnamed placeholder, which counts as no child yet.
+  // With a named child, / is still the landing page in a browser tab, but the installed app goes straight to the game.
+  const named = hasSave() && profiles.kids.some((k) => k.name.trim() !== '');
+  const [landing, setLanding] = useState(() => !named || (!onGamePath() && !isInstalled()));
+  const namedNow = useRef(named);
+  namedNow.current = named;
   // "Ki játszik?" comes first on a shared device, unless parents chose to continue with the last child.
   const [picking, setPicking] = useState(() => profiles.kids.length > 1 && profiles.askOnStart);
   // Without the picker, a child who has never chosen a world starts on the map, like after picking.
@@ -113,8 +143,16 @@ function Game() {
   // A layout effect, so the voice is set before the new screen's own effects say their first line.
   useLayoutEffect(() => setSpeaker(csavarTalks ? 'robot' : 'csepi'), [csavarTalks]);
   useEffect(() => {
-    document.title = `Kalandka – ${WORLDS.find((w) => w.id === world)!.name}`;
-  }, [world]);
+    document.title = landing ? 'Kalandka' : `Kalandka – ${WORLDS.find((w) => w.id === world)!.name}`;
+  }, [world, landing]);
+  // The address matches the page from the start: /jatek without a named child goes to /, an installed app at / to /jatek.
+  useEffect(() => goTo(landing ? LANDING_PATH : GAME_PATH), []);
+  // Back and Forward move between the landing page and the game.
+  useEffect(() => {
+    const onPop = () => setLanding(!namedNow.current || !onGamePath());
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
   useEffect(() => {
     const id = window.setInterval(() => setClock(Date.now()), 60_000);
     return () => window.clearInterval(id);
@@ -217,8 +255,20 @@ function Game() {
   };
   const start = (kid: KidDraft) => {
     // The first child named on the landing page is saved now, so the landing page does not come back.
-    change((s) => firstKid(s, kid));
+    // An unnamed child already saved keeps their progress and just gets the name.
+    change((s) => (hasSave() ? editKid(s, s.activeId, kid) : firstKid(s, kid)));
+    goTo(GAME_PATH, true);
     setLanding(false);
+  };
+  const resume = () => {
+    goTo(GAME_PATH, true);
+    setLanding(false);
+  };
+  const openLanding = () => {
+    stopSpeaking();
+    setParents('closed');
+    goTo(LANDING_PATH, true);
+    setLanding(true);
   };
   const openAlbum = (from: 'garden' | 'workshop') => {
     setAlbumFrom(from);
@@ -229,7 +279,7 @@ function Game() {
     go('home');
   };
 
-  if (landing) return <Landing onStart={start} />;
+  if (landing) return <Landing onStart={start} onResume={named ? resume : undefined} />;
 
   return (
     <Stage>
@@ -267,7 +317,7 @@ function Game() {
       {parents === 'gate' && <Gate onPass={() => setParents('open')} onCancel={closeParents} />}
       {parents === 'open' && (
         <Suspense fallback={null}>
-          <ParentArea start={parentStart} onClose={closeParents} />
+          <ParentArea start={parentStart} onClose={closeParents} onAbout={openLanding} />
         </Suspense>
       )}
       {parents === 'print' && (
