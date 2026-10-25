@@ -43,8 +43,6 @@ interface MapLayout {
   h: number;
   garden: Pt;
   robot: Pt;
-  /** Signs float above the islands, or sit on their bottom shore where there is no room above. */
-  signs: 'top' | 'bottom';
   /** The boat at each island's dock; `flip` turns it to face the other island. */
   boat: Record<WorldId, Pt & { flip: boolean }>;
   /** The dotted route from the boat at each island to the other island. */
@@ -95,9 +93,8 @@ function bank(w: number, h: number, y: number, radii: number[], fromBottom = fal
 const WIDE: MapLayout = {
   w: 1100,
   h: 560,
-  garden: { x: 275, y: 320 },
-  robot: { x: 825, y: 320 },
-  signs: 'top',
+  garden: { x: 263, y: 320 },
+  robot: { x: 837, y: 320 },
   boat: {
     garden: { x: 520, y: 466, flip: false },
     robot: { x: 582, y: 466, flip: true }
@@ -125,7 +122,6 @@ const TALL: MapLayout = {
   h: 1040,
   garden: { x: 300, y: 260 },
   robot: { x: 300, y: 770 },
-  signs: 'bottom',
   boat: {
     garden: { x: 480, y: 500, flip: false },
     robot: { x: 110, y: 560, flip: true }
@@ -151,15 +147,34 @@ const TALL: MapLayout = {
   ]
 };
 
-/** An island's outline around its centre: soft and a little uneven, about 440 × 300. */
-const ISLAND = 'M-210 -40 C-220 -120 -120 -150 -40 -140 C40 -160 160 -150 200 -90 C240 -30 230 60 180 110 C120 160 -20 160 -110 140 C-200 120 -230 40 -210 -40 Z';
+/*
+ * The two world islands, each about 420 × 290 around its centre, with room under it for its sign on the bottom shore.
+ * The garden is soft and round; the workshop is a many-sided rock under a steel deck. Each dock points at the boat.
+ */
+const GARDEN_SHORE = 'M-205 -40 C-218 -120 -132 -160 -40 -148 C22 -170 132 -164 182 -110 C226 -64 222 12 200 52 C186 78 160 90 140 106 C108 140 34 146 -44 140 C-134 136 -210 82 -205 -40 Z';
+const WORKSHOP_SHORE = 'M-190 -78 L-138 -148 L128 -152 L196 -86 L204 46 L150 110 L-134 114 L-204 52 Z';
 
-function Island({ at, ground, edge, sand }: { at: Pt; ground: string; edge: string; sand: string }) {
+/** A shore in layers: the pale shallows, the beach's wet edge, the beach, then the island's own top and its side. */
+function Shore({ d, edge, sand, side, top, round }: { d: string; edge: string; sand: string; side: string; top: string; round?: boolean }) {
+  // The workshop's straight sides get rounded corners from a thick stroke in the shape's own colour.
+  const corners = (fill: string, width: number) => (round ? { stroke: fill, strokeWidth: width, strokeLinejoin: 'round' as const } : {});
   return (
-    <g transform={`translate(${at.x} ${at.y})`}>
-      <path d={ISLAND} transform="scale(1.06 1.08) translate(0 8)" fill={sand} />
-      <path d={ISLAND} transform="translate(0 10)" fill={edge} />
-      <path d={ISLAND} fill={ground} />
+    <>
+      <path d={d} transform="translate(0 10) scale(1.08)" fill="#BFE4F6" {...corners('#BFE4F6', 28)} />
+      <path d={d} transform="translate(0 14)" fill={edge} {...corners(edge, 28)} />
+      <path d={d} fill={sand} {...corners(sand, 28)} />
+      <path d={d} transform={round ? 'translate(0 -2) scale(.84)' : 'translate(0 2) scale(.86)'} fill={side} {...corners(side, 10)} />
+      <path d={d} transform={round ? 'translate(0 -12) scale(.84)' : 'translate(0 -8) scale(.86)'} fill={top} {...corners(top, 10)} />
+    </>
+  );
+}
+
+/** A short pier from the beach out towards the boat; `dir` is -1 for one pointing left. */
+function Dock({ dir, deck, post }: { dir: 1 | -1; deck: string; post: string }) {
+  return (
+    <g transform={`scale(${dir} 1)`} strokeLinecap="round">
+      <path d="M146 102 L214 132" stroke={deck} strokeWidth="26" />
+      <path d="M150 116 L218 146" stroke={post} strokeWidth="6" />
     </g>
   );
 }
@@ -179,70 +194,70 @@ function Waves({ w, h }: { w: number; h: number }) {
   );
 }
 
-/** Csepi's island: flower beds, trees and a sprout. */
-function GardenScene({ at }: { at: Pt }) {
+/** Csepi's island: a big fruit tree and a small one, a flower bed, Csepi and a sprout. It stands still; only Csepi hops hello. */
+function GardenIsland({ at }: { at: Pt }) {
   return (
     <g transform={`translate(${at.x} ${at.y})`}>
-      <ellipse cx="-70" cy="40" rx="70" ry="16" fill="#8A5A3B" opacity="0.85" />
-      {/* Trees and flowers sway gently in the breeze, each a little out of step with the next. */}
-      <g transform="translate(-175 -120)">
-        <g className="map-sway" style={{ '--sway': '-0.4s' } as CSSProperties}>
-          <Tree width={96} />
-        </g>
+      <Shore d={GARDEN_SHORE} edge="#DDBF7A" sand="#F3DFA8" side="#8CC45E" top="#A6D676" />
+      <Dock dir={1} deck="#C99A6B" post="#5A3B26" />
+      <g transform="translate(-172 -148)">
+        <Tree width={112} />
       </g>
-      <g transform="translate(95 -130)">
-        <g className="map-sway" style={{ '--sway': '-2.6s' } as CSSProperties}>
-          <Tree width={84} />
-        </g>
+      <g transform="translate(88 -150)">
+        <Tree width={92} />
       </g>
-      <g transform="translate(-130 -30)">
-        <g className="map-sway map-sway--flower" style={{ '--sway': '-1.1s' } as CSSProperties}>
-          <RoundFlower petal="#E8577D" width={46} />
-        </g>
+      <ellipse cx="-72" cy="44" rx="78" ry="17" fill="#8A5A3B" opacity="0.85" />
+      <g transform="translate(-142 -16)">
+        <RoundFlower petal="#E8577D" width={52} />
       </g>
-      <g transform="translate(-85 -20)">
-        <g className="map-sway map-sway--flower" style={{ '--sway': '-2.2s' } as CSSProperties}>
-          <RoundFlower petal="#FFC93C" width={42} />
-        </g>
+      <g transform="translate(-98 -8)">
+        <RoundFlower petal="#FFC93C" width={48} />
       </g>
-      <g transform="translate(-40 -30)">
-        <g className="map-sway map-sway--flower" style={{ '--sway': '-3.3s' } as CSSProperties}>
-          <RoundFlower petal="#8E6BD6" width={46} />
-        </g>
+      <g transform="translate(-56 -16)">
+        <RoundFlower petal="#8E6BD6" width={52} />
       </g>
-      <g transform="translate(40 -60)">
+      <ellipse cx="58" cy="44" rx="30" ry="7" fill="#8CC45E" />
+      <g transform="translate(20 -76)">
         <g className="map-hop">
-          <Csepi mood="cheer" width={70} />
+          <Csepi mood="cheer" width={76} />
         </g>
       </g>
-      <g transform="translate(115 -20) scale(0.6)">
+      <g transform="translate(108 -14) scale(0.6)">
         <Sprout />
       </g>
     </g>
   );
 }
 
-/** Csavar's island: the workshop and a crane. */
-function RobotScene({ at }: { at: Pt }) {
+/** Csavar's island: a steel deck on a rock, the workshop, the crane with its crate, and Csavar. Only Csavar hops hello. */
+function WorkshopIsland({ at }: { at: Pt }) {
   return (
     <g transform={`translate(${at.x} ${at.y})`}>
-      {/* workshop: walls, saw-tooth roof, door and window */}
-      <rect x="-180" y="-80" width="190" height="120" rx="10" fill="#EEF3F9" stroke="#5E7184" strokeWidth="5" />
-      <path d="M-186 -78 L-150 -128 L-150 -78 L-110 -128 L-110 -78 L-70 -128 L-70 -78 L-30 -128 L-30 -78 L10 -128 L10 -78 Z" fill="#138A86" stroke="#0C5F5C" strokeWidth="4" strokeLinejoin="round" />
-      <rect x="-110" y="-30" width="52" height="70" rx="6" fill="#7E93AB" />
-      <rect x="-160" y="-55" width="36" height="30" rx="5" fill="#BFE6E3" stroke="#5E7184" strokeWidth="3" />
-      <rect x="-40" y="-55" width="36" height="30" rx="5" fill="#BFE6E3" stroke="#5E7184" strokeWidth="3" />
-      {/* crane */}
+      <Shore d={WORKSHOP_SHORE} edge="#C9B47E" sand="#F3DFA8" side="#9AAFC6" top="#C9D6E4" round />
+      {/* the deck's plate seams and rivets */}
+      <path d="M-60 -128 V78 M60 -128 V78 M-150 -26 H156" stroke="#B3C3D6" strokeWidth="5" strokeLinecap="round" />
+      <g fill="#AABBD0">
+        {[[-110, -118], [104, -120], [-150, 40], [154, 36], [-100, 74], [110, 74]].map(([x, y]) => (
+          <circle key={`${x}-${y}`} cx={x} cy={y} r="5" />
+        ))}
+      </g>
+      <Dock dir={-1} deck="#8FA3BA" post="#4F5F72" />
+      {/* workshop: walls, saw-tooth roof, door and windows */}
+      <g transform="translate(12 0)">
+        <rect x="-180" y="-80" width="190" height="120" rx="10" fill="#EEF3F9" stroke="#5E7184" strokeWidth="5" />
+        <path d="M-186 -78 L-150 -128 L-150 -78 L-110 -128 L-110 -78 L-70 -128 L-70 -78 L-30 -128 L-30 -78 L10 -128 L10 -78 Z" fill="#138A86" stroke="#0C5F5C" strokeWidth="4" strokeLinejoin="round" />
+        <rect x="-110" y="-30" width="52" height="70" rx="6" fill="#7E93AB" />
+        <rect x="-160" y="-55" width="36" height="30" rx="5" fill="#BFE6E3" stroke="#5E7184" strokeWidth="3" />
+        <rect x="-40" y="-55" width="36" height="30" rx="5" fill="#BFE6E3" stroke="#5E7184" strokeWidth="3" />
+      </g>
+      {/* crane, its crate hanging still */}
       <path d="M150 50 V-130 H60" fill="none" stroke="#F2B33D" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M150 -100 L120 -130" stroke="#F2B33D" strokeWidth="6" strokeLinecap="round" />
-      {/* the crate swings a little on its rope */}
-      <g className="map-swing">
-        <path d="M72 -130 V-92" stroke="#5E7184" strokeWidth="3" />
-        <rect x="58" y="-92" width="28" height="22" rx="4" fill="#C98B50" stroke="#8A5A3B" strokeWidth="3" />
-      </g>
-      <g transform="translate(50 -50)">
+      <path d="M72 -130 V-92" stroke="#5E7184" strokeWidth="3" />
+      <rect x="58" y="-92" width="28" height="22" rx="4" fill="#C98B50" stroke="#8A5A3B" strokeWidth="3" />
+      <g transform="translate(46 -56)">
         <g className="map-hop">
-          <Csavar mood="cheer" width={66} />
+          <Csavar mood="cheer" width={70} />
         </g>
       </g>
     </g>
@@ -412,14 +427,15 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
     ({ className: `map-isle${picked === id ? ' is-picked' : ''}`, style: { '--d': `${delay}ms` } as CSSProperties });
   const diveAt = picked === 'robot' ? map.robot : map.garden;
 
-  const spot = (at: Pt): CSSProperties => ({ left: at.x - 230, top: at.y - 165, width: 460, height: 330 });
+  // The whole island is the button; its sign sits on the bottom shore.
+  const spot = (at: Pt): CSSProperties => ({ left: at.x - 230, top: at.y - 170, width: 460, height: 340 });
   const counts: Record<WorldId, { icon: ReactNode; n: number }> = {
-    garden: { icon: <Seed size={24} />, n: seedBalance(progress) },
-    robot: { icon: <Bolt size={24} />, n: boltBalance(progress) }
+    garden: { icon: <Seed size={28} />, n: seedBalance(progress) },
+    robot: { icon: <Bolt size={28} />, n: boltBalance(progress) }
   };
   const faces: Record<WorldId, ReactNode> = {
-    garden: <Csepi mood="cheer" width={34} />,
-    robot: <Csavar mood="cheer" width={34} />
+    garden: <Csepi mood="cheer" width={40} />,
+    robot: <Csavar mood="cheer" width={40} />
   };
 
   return (
@@ -479,14 +495,12 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
                 <MistIsland key={m.kind} mist={m} asked={asked === m.kind} />
               ))}
               <g {...isle('garden', 0)}>
-                <Island at={map.garden} ground="#A6D676" edge="#8CC45E" sand="#F3DFA8" />
-                <GardenScene at={map.garden} />
-                <ellipse cx={map.garden.x} cy={map.garden.y} rx="232" ry="168" className="map-ring" />
+                <GardenIsland at={map.garden} />
+                <ellipse cx={map.garden.x} cy={map.garden.y - 8} rx="226" ry="160" className="map-ring" />
               </g>
               <g {...isle('robot', 110)}>
-                <Island at={map.robot} ground="#C9D6E4" edge="#9AAFC6" sand="#F3DFA8" />
-                <RobotScene at={map.robot} />
-                <ellipse cx={map.robot.x} cy={map.robot.y} rx="232" ry="168" className="map-ring" />
+                <WorkshopIsland at={map.robot} />
+                <ellipse cx={map.robot.x} cy={map.robot.y - 8} rx="226" ry="160" className="map-ring" />
               </g>
               <path d={map.route[last]} className="map-route map-route--boat" />
               <Boat
@@ -514,7 +528,7 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
                 <button
                   key={w.id}
                   type="button"
-                  className={`map-spot map-spot--${w.id} map-spot--sign-${map.signs}${last === w.id ? ' is-last' : ''}${picked === w.id ? ' is-picked' : ''}`}
+                  className={`map-spot map-spot--${w.id}${last === w.id ? ' is-last' : ''}${picked === w.id ? ' is-picked' : ''}`}
                   style={spot(at)}
                   onClick={() => pick(w.id)}
                   aria-label={`${w.name}: ${w.about}. ${w.guide} vár.${last === w.id ? ' A hajód itt van.' : ''}`}

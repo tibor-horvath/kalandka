@@ -44,19 +44,17 @@
 .map-mist-spot:focus-visible { outline-offset: -10px; }
 .map.is-sailing .map-mist-spot { cursor: default; }
 .map-boat__ripple { fill: none; stroke: #ffffff; stroke-width: 4; stroke-linecap: round; opacity: 0.8; }
-.map-spot { position: absolute; border: none; background: transparent; border-radius: 48%; cursor: pointer; padding: 0; display: flex; justify-content: center; }
-.map-spot--sign-top { align-items: flex-start; }
-.map-spot--sign-top .map-spot__sign { margin-top: -40px; }
-.map-spot--sign-bottom { align-items: flex-end; }
-.map-spot--sign-bottom .map-spot__sign { margin-bottom: -26px; }
-.map-spot:active .map-spot__sign { transform: translateY(4px); box-shadow: 0 2px 0 var(--edge); }
+/* The whole island is the button; its sign sits on the bottom shore, big enough to read when phones draw the map at half size. */
+.map-spot { position: absolute; border: none; background: transparent; border-radius: 48%; cursor: pointer; padding: 0; display: flex; justify-content: center; align-items: flex-end; }
+.map-spot__sign { margin-bottom: 2px; }
+.map-spot:active .map-spot__sign { transform: translateY(5px); box-shadow: 0 2px 0 var(--edge-deep); }
 .map-spot:focus-visible { outline-offset: -10px; }
-.map-spot--garden { --edge: #2f7d32; --face: #e3f1fc; }
-.map-spot--robot { --edge: #138a86; --face: #ddf3f2; }
-.map-spot__sign { display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 8px; border-radius: 30px; background: var(--paper); border: 4px solid var(--edge); box-shadow: 0 6px 0 var(--edge); }
-.map-spot__face { width: 60px; height: 60px; border-radius: 30px; background: var(--face); display: flex; align-items: center; justify-content: center; overflow: hidden; flex: none; }
-.map-spot__name { font-size: 30px; font-weight: 800; line-height: 1.05; }
-.map-spot__count { display: flex; align-items: center; gap: 6px; height: 46px; padding: 0 14px 0 10px; border-radius: 23px; background: var(--edge); color: var(--paper); font-size: 24px; font-weight: 800; }
+.map-spot--garden { --edge: #2f7d32; --edge-deep: #1e5520; --face: #e3f1fc; }
+.map-spot--robot { --edge: #138a86; --edge-deep: #0c5f5c; --face: #ddf3f2; }
+.map-spot__sign { display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 8px; border-radius: 46px; background: var(--paper); border: 5px solid var(--edge); box-shadow: 0 7px 0 var(--edge-deep); white-space: nowrap; }
+.map-spot__face { width: 66px; height: 66px; border-radius: 33px; background: var(--face); display: flex; align-items: center; justify-content: center; overflow: hidden; flex: none; }
+.map-spot__name { font-size: 36px; font-weight: 800; line-height: 1.05; }
+.map-spot__count { display: flex; align-items: center; gap: 6px; height: 52px; padding: 0 16px 0 10px; border-radius: 26px; background: var(--edge); color: var(--paper); font-size: 28px; font-weight: 800; }
 
 /*
  * Map motion, all one-off: as the map opens the islands rise, the signs pop in, the boat glides into its dock
@@ -101,28 +99,23 @@
 .map-fog__low { animation: map-fog-drift 24s ease-in-out -9s infinite alternate-reverse; }
 .map-mist__veil { animation: map-veil-drift 9s ease-in-out infinite alternate; }
 .map-mist:nth-of-type(2n) .map-mist__veil { animation-delay: -4s; }
-/* The islands' own scenery: far islands float in the fog, garden plants sway, the workshop crate swings. */
+/* The far islands float in the fog. The two world islands stand still: only their guides hop, once, to say hello. */
 .map-mist__float { animation: map-float 7s ease-in-out infinite alternate; }
 .map-mist__float--tower { animation-delay: -2.5s; }
 .map-mist__float--peak { animation-delay: -5s; }
-.map-sway { transform-box: fill-box; transform-origin: 50% 100%; animation: map-sway 4.5s ease-in-out var(--sway, 0s) infinite; }
-.map-sway--flower { animation-duration: 3.4s; }
-.map-swing { transform-box: fill-box; transform-origin: 50% 0; animation: map-swing 4s ease-in-out infinite; }
 
 @keyframes map-drift { from { transform: translateX(-10px); opacity: 0.55; } to { transform: translateX(10px); opacity: 1; } }
 @keyframes map-bob { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-3px) rotate(-2deg); } 70% { transform: translateY(2px) rotate(1.5deg); } }
 @keyframes map-fog-drift { from { transform: translateX(-16px); } to { transform: translateX(16px); } }
 @keyframes map-veil-drift { from { transform: translateX(-8px); } to { transform: translateX(8px); } }
 @keyframes map-float { from { transform: translateY(4px); } to { transform: translateY(-6px); } }
-@keyframes map-sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
-@keyframes map-swing { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
 
 @keyframes map-rise { from { transform: translateY(18px); opacity: 0; } }
 @keyframes map-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes map-fade-far { from { opacity: 0; } }
 @keyframes map-boat-in { from { transform: translateX(-46px); opacity: 0; } }
 @keyframes map-sign-in { from { transform: scale(0.82); opacity: 0; } }
-@keyframes map-press { 50% { transform: translateY(5px); box-shadow: 0 1px 0 var(--edge); } }
+@keyframes map-press { 50% { transform: translateY(5px); box-shadow: 0 1px 0 var(--edge-deep); } }
 @keyframes map-hop { 40% { transform: translateY(-16px); } 72% { transform: scaleY(0.94); } }
 @keyframes map-ring { from { opacity: 0.9; transform: scale(0.94); } to { opacity: 0; transform: scale(1.07); } }
 @keyframes map-trail { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
@@ -131,7 +124,7 @@
 @media (prefers-reduced-motion: reduce) {
   .map-isle, .map-fog, .map-mist, .map-boat__arrive, .map-route--boat, .map-spot__sign, .map-hop,
   .map-waves path, .map-boat__bob, .map-fog__high, .map-fog__low, .map-mist__veil,
-  .map-mist__float, .map-sway, .map-swing { animation: none !important; }
+  .map-mist__float { animation: none !important; }
 }
 
 /* ---------- Robotút ---------- */
@@ -257,8 +250,18 @@
 .is-phone .map-fit { flex: 1 1 0; min-height: 0; margin: 8px 12px 12px; }
 .is-phone .map { margin: 0; }
 .stage--portrait .screen--map .topbar { padding-top: 18px; }
-.stage--landscape .map-guide .guide__csepi { display: none; }
-.stage--landscape .screen--map .topbar { padding-top: 8px; }
+/* Landscape map: the brand and Csepi's bubble in a side column (as on the landscape home), the map in the room beside it. */
+.stage--landscape .screen--map {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas: 'top map' 'guide map' '. map';
+  column-gap: 12px;
+  row-gap: 12px;
+  padding-top: 14px;
+}
+.stage--landscape .screen--map .topbar { grid-area: top; }
+.stage--landscape .map-fit { grid-area: map; min-height: 0; margin: 0; }
 
 .is-phone .screen--path { display: flex; flex-direction: column; }
 .is-phone .screen--path .topbar { flex: none; }
