@@ -67,6 +67,49 @@
 .ps-preview__page { overflow: hidden; border-radius: 6px; background: #ffffff; box-shadow: 0 2px 10px rgba(16, 35, 58, 0.16); }
 .is-phone .ps-layout { grid-template-columns: minmax(0, 1fr); }
 
+/* Narrow: one column, by the area's own width, since from the landing page it opens outside the stage (no .is-phone). */
+.pa--print { container: pa-print / inline-size; }
+@container pa-print (max-width: 600px) {
+  .pa--print .pa-printbar { padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; gap: 12px; }
+  .pa--print .pa-printbar .pa-nav__brand { min-width: 0; }
+  .pa--print .pa-printbar .pa-nav__brand svg { flex: none; width: 36px; height: 36px; }
+  .pa--print .pa-printbar .pa-nav__title { font-size: 20px; }
+  .pa--print .pa-printbar .pa-nav__sub { display: none; }
+  .pa--print .pa-printbar .pa-nav__back { flex: none; height: 44px; padding: 0 14px 0 10px; gap: 4px; font-size: 16px; }
+  .pa--print .pa-page { padding: 18px 16px 24px; gap: 14px; }
+  .pa--print .pa-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .pa--print .pa-h1 { font-size: 30px; }
+  .pa--print .pa-lead { font-size: 15px; line-height: 1.45; }
+  .pa--print .pa-card { padding: 16px; border-radius: 18px; }
+  .pa--print .pa-world { padding: 12px; border-radius: 18px; gap: 10px; }
+
+  /* The list: tile | name, level and task | arrow. */
+  .pa--print .pa-level.ps-game { display: grid; grid-template-columns: 48px minmax(0, 1fr) 22px; align-items: center; gap: 12px; padding: 12px 10px 12px 12px; border-radius: 16px; }
+  .pa--print .ps-game .pa-tile { width: 48px; height: 48px; border-radius: 14px; font-size: 19px; align-self: start; }
+  .pa--print .ps-game .pa-level__text { gap: 4px; }
+  .pa--print .ps-game .pa-level__title { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .pa--print .ps-game .pa-level__title h3 { font-size: 19px; }
+  .pa--print .ps-game .pa-level__title span { padding: 2px 8px; border-radius: 8px; background: #e3f1fc; color: #1f5c9e; font-size: 12px; font-weight: 800; line-height: 1.4; }
+  .pa--print .ps-game .pa-level__mode { line-height: 1.35; }
+
+  /* One game: the settings, then the preview, with the print buttons held at the bottom of the screen. */
+  .pa--print .ps-layout { display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
+  .pa--print .ps-controls { display: contents; }
+  .pa--print .ps-side { order: 1; }
+  .pa--print .ps-controls > .pa-muted { order: 2; font-size: 13px; line-height: 1.45; }
+  .pa--print .ps-controls > .pa-row { order: 3; position: sticky; bottom: 0; z-index: 1; flex-wrap: nowrap; margin: 0 -16px -24px; padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px)); background: #ffffff; border-top: 1px solid var(--pa-line); box-shadow: 0 -4px 16px rgba(16, 35, 58, 0.08); }
+  .pa--print .ps-controls > .pa-row .pa-btn { height: 56px; border-radius: 16px; }
+  .pa--print .ps-controls > .pa-row .pa-btn--go { flex: 1; justify-content: center; font-size: 18px; }
+  .pa--print .ps-controls .pa-stepper { flex: none; width: 100%; justify-content: space-between; }
+  .pa--print .ps-controls .pa-stepper__value { min-width: 0; }
+  .pa--print .ps-controls .pa-dots { flex-wrap: wrap; justify-content: center; }
+  .pa--print .ps-controls .pa-spread { flex-direction: column; align-items: stretch; gap: 12px; padding-top: 14px; border-top: 1px solid var(--pa-soft); }
+  .pa--print .ps-seg .pa-seg__btn { min-height: 72px; padding: 8px 6px; gap: 4px; font-size: 14px; line-height: 1.2; }
+  .pa--print .ps-seg .pa-seg__btn small { font-size: 12px; }
+  .pa--print .ps-side .pa-seg--pill { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pa--print .ps-side .pa-seg--pill .pa-seg__btn { min-width: 0; }
+}
+
 /* Paper: only the sheets, one per page. */
 .ps-print { display: none; }
 @media print {
