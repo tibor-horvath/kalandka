@@ -51,9 +51,45 @@ interface MapLayout {
   route: Record<WorldId, string>;
   /** Where the boat sails after a tap, keyed `from-to`: to the other island, or a short way to its own shore. */
   sail: Record<`${WorldId}-${WorldId}`, string>;
-  /** A far-off island in the haze: a hint that more worlds may come, not something to tap. */
-  far: Pt;
-  farRoute: string;
+  /** The fog banks at the map's far edges, each a pale lower bank and a whiter upper one. */
+  banks: [string, string][];
+  /** The islands asleep in the fog: worlds still to come. A tap only makes the guide talk. */
+  mist: Mist[];
+}
+
+type MistKind = 'grove' | 'tower' | 'peak';
+
+/** An island in the fog, centred at `x`, `y` and drawn `w` wide. */
+interface Mist extends Pt {
+  kind: MistKind;
+  w: number;
+}
+
+const MIST_LINE: Record<MistKind, string> = {
+  grove: 'Ez a sziget még a ködben alszik. Egyszer odaevezünk!',
+  tower: 'Látod a kis fényt? Ott már készül valami.',
+  peak: 'Egy hegyes sziget! Majd ha eloszlik a köd, megnézzük.'
+};
+
+const MIST_NAME: Record<MistKind, string> = {
+  grove: 'Ködös sziget a távolban',
+  tower: 'Ködös sziget toronnyal',
+  peak: 'Ködös hegyes sziget'
+};
+
+/**
+ * A flat fog bank from the top (or bottom) edge to `y`, its inner edge a row of soft scallops.
+ * It runs 40 past each side so its slow drift never shows a gap at the map's edge.
+ */
+function bank(w: number, h: number, y: number, radii: number[], fromBottom = false) {
+  const base = fromBottom ? h : 0;
+  let d = `M-40 ${base} H${w + 40} V${y}`;
+  for (let x = w + 40, i = 0; x > -60; i++) {
+    const r = radii[i % radii.length];
+    d += ` a${r} ${r} 0 0 ${fromBottom ? 0 : 1} ${-2 * r} 0`;
+    x -= 2 * r;
+  }
+  return `${d} V${base} Z`;
 }
 
 const WIDE: MapLayout = {
@@ -76,8 +112,12 @@ const WIDE: MapLayout = {
     'robot-garden': 'M582 466 C536 524 450 534 400 474',
     'robot-robot': 'M582 466 C604 506 656 510 700 470'
   },
-  far: { x: 1030, y: 82 },
-  farRoute: 'M955 175 C975 150 990 132 1005 118'
+  banks: [[bank(1100, 560, 86, [38, 26, 44, 30]), bank(1100, 560, 34, [30, 22, 34])]],
+  mist: [
+    { kind: 'peak', x: 107, y: 71, w: 170 },
+    { kind: 'grove', x: 550, y: 112, w: 250 },
+    { kind: 'tower', x: 995, y: 81, w: 186 }
+  ]
 };
 
 const TALL: MapLayout = {
@@ -100,8 +140,15 @@ const TALL: MapLayout = {
     'robot-garden': 'M110 560 C66 520 76 462 128 424',
     'robot-robot': 'M110 560 C118 590 140 612 172 630'
   },
-  far: { x: 90, y: 985 },
-  farRoute: 'M150 905 C135 925 125 940 118 952'
+  banks: [
+    [bank(600, 1040, 80, [34, 24, 40]), bank(600, 1040, 30, [26, 20, 30])],
+    [bank(600, 1040, 975, [34, 26, 40], true), bank(600, 1040, 1015, [24, 30, 20], true)]
+  ],
+  mist: [
+    { kind: 'peak', x: 105, y: 67, w: 170 },
+    { kind: 'tower', x: 494, y: 71, w: 180 },
+    { kind: 'grove', x: 300, y: 1000, w: 230 }
+  ]
 };
 
 /** An island's outline around its centre: soft and a little uneven, about 440 × 300. */
@@ -137,20 +184,31 @@ function GardenScene({ at }: { at: Pt }) {
   return (
     <g transform={`translate(${at.x} ${at.y})`}>
       <ellipse cx="-70" cy="40" rx="70" ry="16" fill="#8A5A3B" opacity="0.85" />
+      {/* Trees and flowers sway gently in the breeze, each a little out of step with the next. */}
       <g transform="translate(-175 -120)">
-        <Tree width={96} />
+        <g className="map-sway" style={{ '--sway': '-0.4s' } as CSSProperties}>
+          <Tree width={96} />
+        </g>
       </g>
       <g transform="translate(95 -130)">
-        <Tree width={84} />
+        <g className="map-sway" style={{ '--sway': '-2.6s' } as CSSProperties}>
+          <Tree width={84} />
+        </g>
       </g>
       <g transform="translate(-130 -30)">
-        <RoundFlower petal="#E8577D" width={46} />
+        <g className="map-sway map-sway--flower" style={{ '--sway': '-1.1s' } as CSSProperties}>
+          <RoundFlower petal="#E8577D" width={46} />
+        </g>
       </g>
       <g transform="translate(-85 -20)">
-        <RoundFlower petal="#FFC93C" width={42} />
+        <g className="map-sway map-sway--flower" style={{ '--sway': '-2.2s' } as CSSProperties}>
+          <RoundFlower petal="#FFC93C" width={42} />
+        </g>
       </g>
       <g transform="translate(-40 -30)">
-        <RoundFlower petal="#8E6BD6" width={46} />
+        <g className="map-sway map-sway--flower" style={{ '--sway': '-3.3s' } as CSSProperties}>
+          <RoundFlower petal="#8E6BD6" width={46} />
+        </g>
       </g>
       <g transform="translate(40 -60)">
         <g className="map-hop">
@@ -177,8 +235,11 @@ function RobotScene({ at }: { at: Pt }) {
       {/* crane */}
       <path d="M150 50 V-130 H60" fill="none" stroke="#F2B33D" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M150 -100 L120 -130" stroke="#F2B33D" strokeWidth="6" strokeLinecap="round" />
-      <path d="M72 -130 V-92" stroke="#5E7184" strokeWidth="3" />
-      <rect x="58" y="-92" width="28" height="22" rx="4" fill="#C98B50" stroke="#8A5A3B" strokeWidth="3" />
+      {/* the crate swings a little on its rope */}
+      <g className="map-swing">
+        <path d="M72 -130 V-92" stroke="#5E7184" strokeWidth="3" />
+        <rect x="58" y="-92" width="28" height="22" rx="4" fill="#C98B50" stroke="#8A5A3B" strokeWidth="3" />
+      </g>
       <g transform="translate(50 -50)">
         <g className="map-hop">
           <Csavar mood="cheer" width={66} />
@@ -226,26 +287,82 @@ function Boat({ at, sail, flipTo }: { at: Pt & { flip: boolean }; sail?: string;
       <g ref={boat} transform={`translate(${at.x} ${at.y})${at.flip ? ' scale(-1 1)' : ''}`} className="map-boat">
         <g className="map-boat__arrive">
           <path d="M-54 30 q12 -8 24 0 q12 8 24 0 q12 -8 24 0 q12 8 24 0 q12 -8 24 0" className="map-boat__ripple" />
-          <path d="M-48 0 H48 L32 22 H-32 Z" fill="#C98B50" stroke="#8A5A3B" strokeWidth="4" strokeLinejoin="round" />
-          <path d="M-2 0 V-86" stroke="#8A5A3B" strokeWidth="5" strokeLinecap="round" />
-          <path d="M4 -82 L52 -12 H4 Z" fill="#B4335A" stroke="#FFFFFF" strokeWidth="3" strokeLinejoin="round" />
-          <path d="M-8 -76 L-42 -14 H-8 Z" fill="#FFFFFF" />
-          <path d="M22 -48 l3.5 7 7.5 1 -5.5 5 1.5 7.5 -7 -3.6 -7 3.6 1.5 -7.5 -5.5 -5 7.5 -1 z" fill="#FFC93C" />
+          {/* Moored, the boat rocks gently on the water (as at the island homes' docks); sailing, the trip rocks it instead. */}
+          <g className="map-boat__bob">
+            <path d="M-48 0 H48 L32 22 H-32 Z" fill="#C98B50" stroke="#8A5A3B" strokeWidth="4" strokeLinejoin="round" />
+            <path d="M-2 0 V-86" stroke="#8A5A3B" strokeWidth="5" strokeLinecap="round" />
+            <path d="M4 -82 L52 -12 H4 Z" fill="#B4335A" stroke="#FFFFFF" strokeWidth="3" strokeLinejoin="round" />
+            <path d="M-8 -76 L-42 -14 H-8 Z" fill="#FFFFFF" />
+            <path d="M22 -48 l3.5 7 7.5 1 -5.5 5 1.5 7.5 -7 -3.6 -7 3.6 1.5 -7.5 -5.5 -5 7.5 -1 z" fill="#FFC93C" />
+          </g>
         </g>
       </g>
     </>
   );
 }
 
-/** A small island far off in the haze, with a faint route towards it. */
-function FarIsland({ at, route }: { at: Pt; route: string }) {
+/** A fog island's shore, drawn 280 wide around its centre (the island homes' shape, small). */
+const MIST_SHORE = 'M-118 8 C-122 -30 -70 -50 -10 -48 C50 -54 112 -40 120 -6 C128 26 90 44 20 44 C-50 48 -114 38 -118 8 Z';
+const MIST_TRAIL = 'M-40 26 C-10 18 24 22 44 10';
+
+/**
+ * An island asleep in the fog: an island home (sandy rim, trees, trail, pier) in the colours of the mist.
+ * Asked about, its mist thins and it comes a little clearer.
+ */
+function MistIsland({ mist, asked }: { mist: Mist; asked: boolean }) {
+  const s = mist.w / 280;
   return (
-    <g className="map-far">
-      <path d={route} className="map-route map-route--far" />
-      <g transform={`translate(${at.x} ${at.y})`}>
-        <ellipse cx="0" cy="14" rx="74" ry="40" fill="#B4DCF0" />
-        <ellipse cx="-24" cy="-12" rx="40" ry="26" fill="#EEF7FC" />
-        <ellipse cx="22" cy="-18" rx="46" ry="30" fill="#F7FBFE" />
+    <g className={`map-mist${asked ? ' is-asked' : ''}`} transform={`translate(${mist.x} ${mist.y}) scale(${s})`}>
+      {/* The far island rises and settles slowly in the fog. */}
+      <g className={`map-mist__float map-mist__float--${mist.kind}`}>
+        <g className="map-mist__isle">
+          <ellipse cx="0" cy="52" rx="128" ry="12" fill="#A9D4EA" />
+          <path d={MIST_SHORE} fill="#D6E6F0" stroke="#D6E6F0" strokeWidth="18" strokeLinejoin="round" />
+          <path d={MIST_SHORE} fill="#B9D3E4" />
+          <ellipse cx="6" cy="-6" rx="56" ry="15" fill="#C6DCEA" />
+          {mist.kind === 'grove' && (
+            <g fill="#A3C0D5">
+              <rect x="-75" y="-20" width="7" height="20" />
+              <circle cx="-72" cy="-26" r="19" />
+              <rect x="-46" y="-12" width="5" height="14" />
+              <circle cx="-44" cy="-16" r="12" fill="#ADC8DB" />
+              <rect x="84" y="-14" width="6" height="18" />
+              <circle cx="87" cy="-20" r="16" fill="#ADC8DB" />
+            </g>
+          )}
+          {mist.kind === 'tower' && (
+            <g>
+              <rect x="-78" y="-18" width="6" height="18" fill="#A3C0D5" />
+              <circle cx="-75" cy="-24" r="17" fill="#A3C0D5" />
+              <path d="M58 6 L62 -80 H82 L86 6 Z" fill="#A9C4D8" />
+              <path d="M61 -52 H83 M60 -26 H84" stroke="#9CB9CF" strokeWidth="8" />
+              <path d="M56 -80 L72 -102 L88 -80 Z" fill="#9CB9CF" />
+              <circle cx="72" cy="-66" r="6" className="map-mist__light" />
+            </g>
+          )}
+          {mist.kind === 'peak' && (
+            <g>
+              <path d="M-108 -6 L-66 -92 L-48 -62 L-36 -78 L-4 -6 Z" fill="#A8C3D6" />
+              <path d="M-66 -92 L-78 -68 L-68 -72 L-60 -64 L-54 -72 Z M-36 -78 L-44 -62 L-36 -66 L-30 -60 Z" fill="#EEF6FB" />
+              <rect x="86" y="-14" width="6" height="18" fill="#A3C0D5" />
+              <circle cx="89" cy="-20" r="15" fill="#A3C0D5" />
+            </g>
+          )}
+          <path d={MIST_TRAIL} fill="none" stroke="#CFE1EC" strokeWidth="12" strokeLinecap="round" />
+          <path d={MIST_TRAIL} fill="none" stroke="#B4CCDD" strokeWidth="3" strokeLinecap="round" strokeDasharray="0 9" />
+          <g stroke="#A7C1D4" strokeWidth="5" strokeLinecap="round">
+            <path d="M-118 46 L-92 30" />
+            <path d="M-110 54 L-84 38" />
+          </g>
+          <path d="M-112 44 L-88 30" stroke="#C3D8E6" strokeWidth="14" strokeLinecap="round" />
+        </g>
+        <g className="map-mist__veil">
+          <rect x="-150" y="30" width="130" height="15" rx="7.5" />
+          <rect x="-30" y="40" width="170" height="15" rx="7.5" />
+          <rect x="-104" y="54" width="140" height="13" rx="6.5" />
+          <rect x="44" y="22" width="100" height="12" rx="6" />
+          <rect x="-140" y="16" width="56" height="10" rx="5" />
+        </g>
       </g>
     </g>
   );
@@ -260,6 +377,8 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
   const last = currentWorld(progress);
   const [picked, setPicked] = useState<WorldId | null>(null);
   const [diving, setDiving] = useState(false);
+  /** The fog island the child last asked about: the guide's bubble says its line. */
+  const [asked, setAsked] = useState<MistKind | null>(null);
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
@@ -278,6 +397,16 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
     }
     setPicked(id);
     timers.current = [window.setTimeout(() => setDiving(true), DIVE_AT), window.setTimeout(() => onPick(id), OPEN_AT)];
+  };
+  // A fog island is not a world yet: the guide says something about it and the boat stays put.
+  const hear = (kind: MistKind) => {
+    if (picked) return;
+    setAsked(kind);
+    speak(MIST_LINE[kind]);
+  };
+  const mistSpot = (m: Mist): CSSProperties => {
+    const s = m.w / 280;
+    return { left: m.x - 140 * s, top: m.y - 100 * s, width: m.w, height: 160 * s };
   };
   const isle = (id: WorldId, delay: number) =>
     ({ className: `map-isle${picked === id ? ' is-picked' : ''}`, style: { '--d': `${delay}ms` } as CSSProperties });
@@ -309,10 +438,14 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
         <GuideBubble mood="cheer" csepiWidth={60}>
           <div className="bubble__row">
             <div>
-              {progress.world && <div className="bubble__kicker">A hajód {DOCKED[progress.world]} vár</div>}
-              <h1 className="bubble__title">Hova evezünk ma?</h1>
+              {asked ? (
+                <div className="bubble__kicker">Messze, a ködben…</div>
+              ) : (
+                progress.world && <div className="bubble__kicker">A hajód {DOCKED[progress.world]} vár</div>
+              )}
+              <h1 className="bubble__title">{asked ? MIST_LINE[asked] : 'Hova evezünk ma?'}</h1>
             </div>
-            <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(speech(progress.world))}>
+            <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(asked ? MIST_LINE[asked] : speech(progress.world))}>
               <SpeakerIcon />
             </RoundButton>
           </div>
@@ -327,9 +460,24 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
         >
           <div className="map__scene" style={{ transformOrigin: `${diveAt.x}px ${diveAt.y}px` }}>
             <svg className="map__art" width={map.w} height={map.h} viewBox={`0 0 ${map.w} ${map.h}`} aria-hidden="true">
+              <defs>
+                <clipPath id="map-clip">
+                  <rect width={map.w} height={map.h} rx="40" />
+                </clipPath>
+              </defs>
               <rect width={map.w} height={map.h} rx="40" fill="#8CCBEC" />
               <Waves w={map.w} h={map.h} />
-              <FarIsland at={map.far} route={map.farRoute} />
+              <g className="map-fog" clipPath="url(#map-clip)">
+                {map.banks.map(([low, high]) => (
+                  <g key={low}>
+                    <path d={low} className="map-fog__low" />
+                    <path d={high} className="map-fog__high" />
+                  </g>
+                ))}
+              </g>
+              {map.mist.map((m) => (
+                <MistIsland key={m.kind} mist={m} asked={asked === m.kind} />
+              ))}
               <g {...isle('garden', 0)}>
                 <Island at={map.garden} ground="#A6D676" edge="#8CC45E" sand="#F3DFA8" />
                 <GardenScene at={map.garden} />
@@ -347,6 +495,18 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
                 flipTo={picked === last ? !map.boat[last].flip : map.boat[last].flip}
               />
             </svg>
+
+            {/* Before the worlds' spots, so where they overlap a world's sign wins the tap. */}
+            {map.mist.map((m) => (
+              <button
+                key={m.kind}
+                type="button"
+                className="map-mist-spot"
+                style={mistSpot(m)}
+                onClick={() => hear(m.kind)}
+                aria-label={`${MIST_NAME[m.kind]}: ez a világ még alszik.`}
+              />
+            ))}
 
             {WORLDS.map((w) => {
               const at = w.id === 'garden' ? map.garden : map.robot;

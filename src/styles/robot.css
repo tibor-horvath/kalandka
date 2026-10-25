@@ -31,8 +31,18 @@
 .map__art { position: absolute; inset: 0; }
 .map-waves path { fill: none; stroke: #c4e6f7; stroke-width: 4; stroke-linecap: round; }
 .map-route { fill: none; stroke: #ffffff; stroke-width: 9; stroke-linecap: round; stroke-dasharray: 0 22; }
-.map-route--far { stroke-opacity: 0.6; stroke-width: 8; }
-.map-far { opacity: 0.75; }
+/* The far sea: flat fog banks, and islands asleep in them (worlds still to come). Asked about, an island's mist thins once. */
+.map-fog__low { fill: #e4f0f8; opacity: 0.85; }
+.map-fog__high { fill: #f6fafd; opacity: 0.95; }
+.map-mist__isle { opacity: 0.92; transition: opacity 0.6s ease; }
+.map-mist__veil { fill: #f6fafd; opacity: 0.95; transition: opacity 0.6s ease; }
+.map-mist__light { fill: #ffe3a3; transition: fill 0.4s ease; }
+.map-mist.is-asked .map-mist__isle { opacity: 1; }
+.map-mist.is-asked .map-mist__veil { opacity: 0.35; }
+.map-mist.is-asked .map-mist__light { fill: #ffd66b; }
+.map-mist-spot { position: absolute; border: none; background: transparent; border-radius: 40%; cursor: pointer; padding: 0; }
+.map-mist-spot:focus-visible { outline-offset: -10px; }
+.map.is-sailing .map-mist-spot { cursor: default; }
 .map-boat__ripple { fill: none; stroke: #ffffff; stroke-width: 4; stroke-linecap: round; opacity: 0.8; }
 .map-spot { position: absolute; border: none; background: transparent; border-radius: 48%; cursor: pointer; padding: 0; display: flex; justify-content: center; }
 .map-spot--sign-top { align-items: flex-start; }
@@ -64,7 +74,7 @@
 .map.is-sailing .map-spot { cursor: default; }
 
 .map-isle { animation: map-rise 0.56s cubic-bezier(.2, .7, .3, 1) var(--d) backwards; }
-.map-far { animation: map-fade-far 0.5s ease-out 0.3s backwards; }
+.map-fog, .map-mist { animation: map-fade-far 0.5s ease-out 0.3s backwards; }
 .map-boat__arrive { animation: map-boat-in 0.7s cubic-bezier(.2, .7, .3, 1) 0.25s backwards; }
 .map-route--boat { animation: map-fade 0.32s ease-out 0.85s backwards; transition: opacity 0.15s; }
 .map.is-sailing .map-route--boat { opacity: 0; }
@@ -78,6 +88,35 @@
 .map-isle.is-picked .map-ring { animation: map-ring 0.65s ease-out; }
 .map-trail { fill: none; stroke: var(--paper); stroke-width: 7; stroke-linecap: round; opacity: 0.9; stroke-dasharray: 1 1; animation: map-trail 1.1s cubic-bezier(.65, 0, .35, 1) 0.12s both; }
 
+/*
+ * The living map, after it has opened: the scenery moves gently, as at the island homes. Waves drift, the moored
+ * boat rocks, the fog banks and the mist around the far islands drift slowly. The places and signs stay still.
+ */
+.map-waves path { animation: map-drift 5s ease-in-out infinite alternate; }
+.map-waves path:nth-child(3n + 2) { animation-delay: -1.7s; }
+.map-waves path:nth-child(3n) { animation-delay: -3.4s; }
+.map-boat__bob { transform-box: fill-box; transform-origin: 50% 100%; animation: map-bob 3.6s ease-in-out 1s infinite; }
+.map.is-sailing .map-boat__bob { animation: none; }
+.map-fog__high { animation: map-fog-drift 18s ease-in-out infinite alternate; }
+.map-fog__low { animation: map-fog-drift 24s ease-in-out -9s infinite alternate-reverse; }
+.map-mist__veil { animation: map-veil-drift 9s ease-in-out infinite alternate; }
+.map-mist:nth-of-type(2n) .map-mist__veil { animation-delay: -4s; }
+/* The islands' own scenery: far islands float in the fog, garden plants sway, the workshop crate swings. */
+.map-mist__float { animation: map-float 7s ease-in-out infinite alternate; }
+.map-mist__float--tower { animation-delay: -2.5s; }
+.map-mist__float--peak { animation-delay: -5s; }
+.map-sway { transform-box: fill-box; transform-origin: 50% 100%; animation: map-sway 4.5s ease-in-out var(--sway, 0s) infinite; }
+.map-sway--flower { animation-duration: 3.4s; }
+.map-swing { transform-box: fill-box; transform-origin: 50% 0; animation: map-swing 4s ease-in-out infinite; }
+
+@keyframes map-drift { from { transform: translateX(-10px); opacity: 0.55; } to { transform: translateX(10px); opacity: 1; } }
+@keyframes map-bob { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-3px) rotate(-2deg); } 70% { transform: translateY(2px) rotate(1.5deg); } }
+@keyframes map-fog-drift { from { transform: translateX(-16px); } to { transform: translateX(16px); } }
+@keyframes map-veil-drift { from { transform: translateX(-8px); } to { transform: translateX(8px); } }
+@keyframes map-float { from { transform: translateY(4px); } to { transform: translateY(-6px); } }
+@keyframes map-sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+@keyframes map-swing { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+
 @keyframes map-rise { from { transform: translateY(18px); opacity: 0; } }
 @keyframes map-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes map-fade-far { from { opacity: 0; } }
@@ -90,7 +129,9 @@
 
 /* Reduced motion: the map is still, and a tap opens the world straight away (WorldMap.tsx skips the trip). */
 @media (prefers-reduced-motion: reduce) {
-  .map-isle, .map-far, .map-boat__arrive, .map-route--boat, .map-spot__sign, .map-hop { animation: none; }
+  .map-isle, .map-fog, .map-mist, .map-boat__arrive, .map-route--boat, .map-spot__sign, .map-hop,
+  .map-waves path, .map-boat__bob, .map-fog__high, .map-fog__low, .map-mist__veil,
+  .map-mist__float, .map-sway, .map-swing { animation: none !important; }
 }
 
 /* ---------- Robotút ---------- */
