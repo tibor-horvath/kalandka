@@ -300,11 +300,174 @@ export function newVisitor(p: Progress): Visitor | null {
   return visitorsOf(p)[p.visitorsSeen] ?? null;
 }
 
+/** Visitors already welcomed, in order of arrival. */
+export function welcomedVisitors(p: Progress): Visitor[] {
+  return visitorsOf(p).slice(0, p.visitorsSeen);
+}
+
+// ---------- gifts and decorations ----------
+// Treats from the pantry shelf are gifts for the visitors. Each visitor likes one treat and takes
+// three gifts: one treat, then two, then three, counted out together. Every gift leaves a
+// decoration in the visitor's corner for good, the third one their own home. When all eighteen are
+// there, the garden is done (Kész a kert!). Giving is always the child's choice, like cooking.
+
+export const GIFTS_EACH = 3;
+
+export type DecorId =
+  | 'mushroom'
+  | 'leaves'
+  | 'hedgehog-house'
+  | 'spotted-stone'
+  | 'fence'
+  | 'daisies'
+  | 'lavender'
+  | 'sunflower'
+  | 'arch'
+  | 'feeder'
+  | 'birdbath'
+  | 'birdhouse'
+  | 'reeds'
+  | 'stepping-stones'
+  | 'pond'
+  | 'pinecone'
+  | 'stump'
+  | 'swing';
+
+export interface Decor {
+  id: DecorId;
+  name: string;
+}
+
+export interface Wish {
+  visitor: VisitorId;
+  treat: TreatId;
+  /** What the visitor leaves after each gift, in order. */
+  decor: [Decor, Decor, Decor];
+}
+
+export const WISHES: Wish[] = [
+  {
+    visitor: 'hedgehog',
+    treat: 'jam',
+    decor: [
+      { id: 'mushroom', name: 'Gomba' },
+      { id: 'leaves', name: 'Levélkupac' },
+      { id: 'hedgehog-house', name: 'Sünház' }
+    ]
+  },
+  {
+    visitor: 'ladybug',
+    treat: 'pie',
+    decor: [
+      { id: 'spotted-stone', name: 'Pöttyös kő' },
+      { id: 'fence', name: 'Kis kerítés' },
+      { id: 'daisies', name: 'Százszorszép-csokor' }
+    ]
+  },
+  {
+    visitor: 'butterfly',
+    treat: 'jam',
+    decor: [
+      { id: 'lavender', name: 'Levendula' },
+      { id: 'sunflower', name: 'Napraforgó' },
+      { id: 'arch', name: 'Virágkapu' }
+    ]
+  },
+  {
+    visitor: 'blackbird',
+    treat: 'loaf',
+    decor: [
+      { id: 'feeder', name: 'Madáretető' },
+      { id: 'birdbath', name: 'Madáritató' },
+      { id: 'birdhouse', name: 'Madárodú' }
+    ]
+  },
+  {
+    visitor: 'frog',
+    treat: 'compote',
+    decor: [
+      { id: 'reeds', name: 'Kis nádas' },
+      { id: 'stepping-stones', name: 'Ugróköves ösvény' },
+      { id: 'pond', name: 'Kis tó' }
+    ]
+  },
+  {
+    visitor: 'squirrel',
+    treat: 'loaf',
+    decor: [
+      { id: 'pinecone', name: 'Toboz' },
+      { id: 'stump', name: 'Fatönk' },
+      { id: 'swing', name: 'Hinta' }
+    ]
+  }
+];
+
+/** "áfonyalekvárt": a treat as the thing asked for, in Csepi's lines. */
+export const TREAT_WANTED: Record<TreatId, string> = {
+  jam: 'áfonyalekvárt',
+  compote: 'körtebefőttet',
+  pie: 'gyümölcspitét',
+  loaf: 'magos kalácsot'
+};
+
+export function wishOf(id: VisitorId): Wish {
+  return WISHES.find((w) => w.visitor === id)!;
+}
+
+/** Gifts this visitor has had, 0 … GIFTS_EACH. */
+export function giftsOf(p: Progress, id: VisitorId): number {
+  return Math.min(GIFTS_EACH, p.gifts[id] ?? 0);
+}
+
+/** Treats the visitor's next gift takes (one, then two, then three); 0 once they have had them all. */
+export function giftSize(p: Progress, id: VisitorId): number {
+  const given = giftsOf(p, id);
+  return given >= GIFTS_EACH ? 0 : given + 1;
+}
+
+/** Decorations this visitor has left so far. */
+export function decorOf(p: Progress, id: VisitorId): Decor[] {
+  return wishOf(id).decor.slice(0, giftsOf(p, id));
+}
+
+export function canGive(p: Progress, id: VisitorId): boolean {
+  const n = giftSize(p, id);
+  return n > 0 && welcomedVisitors(p).some((v) => v.id === id) && treatsOf(p, wishOf(id).treat) >= n;
+}
+
+/** Gives the visitor their next gift from the shelf; unchanged when it is not there yet. */
+export function give(p: Progress, id: VisitorId): Progress {
+  if (!canGive(p, id)) return p;
+  const { treat } = wishOf(id);
+  return {
+    ...p,
+    pantry: { ...p.pantry, [treat]: treatsOf(p, treat) - giftSize(p, id) },
+    gifts: { ...p.gifts, [id]: giftsOf(p, id) + 1 }
+  };
+}
+
+/** Welcomed visitors whose next gift is on the shelf. */
+export function giftsReady(p: Progress): Visitor[] {
+  return welcomedVisitors(p).filter((v) => canGive(p, v.id));
+}
+
+export function decorCount(p: Progress): number {
+  return VISITORS.reduce((n, v) => n + giftsOf(p, v.id), 0);
+}
+
+/** Every visitor has had every gift: the garden is done. */
+export function gardenDone(p: Progress): boolean {
+  return decorCount(p) === VISITORS.length * GIFTS_EACH;
+}
+
 // ---------- stickers ----------
+
+/** The Kiskert's own album row, next to the games. */
+export type StickerGameId = GameId | RobotGameId | 'kiskert';
 
 export interface Sticker {
   id: string;
-  game: GameId | RobotGameId;
+  game: StickerGameId;
   /** Printed on the sticker. */
   mark: string;
   label: string;
@@ -316,7 +479,7 @@ export interface Sticker {
 }
 
 export interface StickerGame {
-  id: GameId | RobotGameId;
+  id: StickerGameId;
   name: string;
   color: string;
   ink: string;
@@ -333,6 +496,7 @@ export const STICKER_GAMES: StickerGame[] = [
   { id: 'add', name: 'Méhecske', color: '#FFC93C', ink: '#10233A', world: 'garden' },
   { id: 'trace', name: 'Mézút', color: '#D9741A', ink: '#FFFFFF', world: 'garden' },
   { id: 'pots', name: 'Cserépbarátok', color: '#2F7D32', ink: '#FFFFFF', world: 'garden' },
+  { id: 'kiskert', name: 'Kiskert', color: '#7A4FB5', ink: '#FFFFFF', world: 'garden' },
   { id: 'path', name: 'Robotút', color: '#138A86', ink: '#FFFFFF', world: 'robot' },
   { id: 'sort', name: 'Válogatógép', color: '#5E7184', ink: '#FFFFFF', world: 'robot' },
   { id: 'scale', name: 'Mérleg', color: '#F2B33D', ink: '#10233A', world: 'robot' },
@@ -422,6 +586,9 @@ export const STICKERS: Sticker[] = [
   { id: 'code-dots', game: 'code', mark: '•3', label: 'Pöttykód', praise: 'A pöttyökből számot csinálsz!', earned: codePassed('Pöttykód') },
   { id: 'code-send', game: 'code', mark: '→●', label: 'Üzenetküldő', praise: 'Titkos üzenetet küldtél Kutyabotnak!', earned: codePassed('Üzenet'), set: 1 },
   { id: 'code-crack', game: 'code', mark: '?', label: 'Kódfejtő', praise: 'Kitaláltad a letakart jelet!', earned: codePassed('Hiányzó jel'), set: 1 },
+  { id: 'kiskert-gift', game: 'kiskert', mark: '1', label: 'Első ajándék', praise: 'Megajándékoztad az első lakót a kertedben!', earned: (p) => decorCount(p) >= 1 },
+  { id: 'kiskert-all', game: 'kiskert', mark: '6', label: 'Minden lakónak', praise: 'Mind a hat lakó kapott tőled ajándékot!', earned: (p) => VISITORS.every((v) => giftsOf(p, v.id) >= 1) },
+  { id: 'kiskert-done', game: 'kiskert', mark: '18', label: 'Kész a kert', praise: 'Kész a kert! Minden lakó megkapta az ajándékát.', earned: gardenDone },
   { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => ladderOf(p, 'pots').reached >= POTS_LEVELS.length }
 ];
 

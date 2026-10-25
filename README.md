@@ -61,9 +61,11 @@ The same rules as the garden: rewards are only ever added, nothing is random, no
 
 | Part | How it works |
 | --- | --- |
-| Kiskert | The child's own garden, opened from the eighth plot on the home screen. Seeds are planted in ten beds: a flower (3), a blueberry bush (6) or a pear tree (10). A planting starts as a seedling and grows as the child solves tasks in any game: a flower in 3, a bush in 5, a tree in 8 (shown as dots in rows of five, like a ten-frame). |
-| Visitors | A growing garden brings visitors who stay: Süni at 3 grown plants, Katica at 5, a butterfly at 8 and a blackbird at 10. Each is welcomed once with its own screen. |
-| Matricáim | Three stickers per game, one for each skill step (e.g. Mézút: writing 1–5, 6–9, all digits); Mézút adds two for Halvány út (5 digits, then all ten on the faint trail). Empty places show what comes next; tapping a sticker has Csepi say what it is for. |
+| Kiskert | The child's own garden, opened from the eighth plot on the home screen. Seeds are planted in ten beds: a flower (3), a blueberry bush (6) or a pear tree (10). A planting starts as a seedling and grows as the child solves tasks in any game: a flower in 3, a bush in 5, a tree in 8 (shown as dots in rows of five, like a ten-frame). Once all ten are planted a second plot of ten opens (1. kert / 2. kert tabs). |
+| Care and Kamra | A grown bush or tree ripens one fruit per solved task, picked one tap at a time and counted aloud. A few tasks after watering it gets thirsty and stops ripening until watered (free; it never wilts). In the Kamra the basket's fruit is counted out into treats for the shelf: Áfonyalekvár (3 berries), Körtebefőtt (3 pears), Gyümölcspite (2 + 2); once all twenty beds are planted, spare seeds bake a Magos kalács (5 seeds). |
+| Visitors | A growing garden brings visitors who stay: Süni at 3 grown plants, Katica at 5, a butterfly at 8, a blackbird at 10, Béka at 14 and Mókus at 20. Each is welcomed once with its own screen, and Csepi says which treat they like. |
+| Gifts and decorations | Tapping a visitor opens their corner: the treat they ask for and the three things they make in return. Each visitor takes three gifts from the pantry shelf, one treat, then two, then three, counted out aloud: Süni and the butterfly like Áfonyalekvár, Katica Gyümölcspite, Béka Körtebefőtt, the blackbird and Mókus Magos kalács. Every gift leaves a decoration in the visitor's lane for good (Süni: Gomba, Levélkupac, Sünház; Katica: Pöttyös kő, Kis kerítés, Százszorszép-csokor; butterfly: Levendula, Napraforgó, Virágkapu; blackbird: Madáretető, Madáritató, Madárodú; Béka: Kis nádas, Ugróköves ösvény, Kis tó; Mókus: Toboz, Fatönk, Hinta). A visitor whose gift is on the shelf shows that treat in a badge. After all eighteen, a "Kész a kert!" card shows every visitor once; the Kamra keeps working after that. |
+| Matricáim | Three stickers per game, one for each skill step (e.g. Mézút: writing 1–5, 6–9, all digits); Mézút adds two for Halvány út (5 digits, then all ten on the faint trail). The Kiskert has a row of its own: Első ajándék, Minden lakónak (every visitor has had a gift) and Kész a kert (all eighteen). Empty places show what comes next; tapping a sticker has Csepi say what it is for. |
 | New sticker | Back on the home screen, a newly earned sticker spins in, sparkles, then flies into its place in the game's album page and settles with a squash. Tapping it replays the animation; with reduced motion it simply appears in place. |
 
 Rewards are only ever added: nothing wilts, nothing is taken away, nothing is random and nothing depends on time played. Stickers come from skill progress, never from the number of tasks; a starting level set by parents (or progress from before the stickers existed) fills the album without a celebration.
@@ -105,7 +107,7 @@ src/
   lib/speech.ts             Csepi's voice via browser hu-HU text-to-speech (placeholder for recorded audio)
   lib/sound.ts              synthesised pops and chimes (Web Audio) and light vibration
   state/progress.tsx        seeds, garden and rounds, saved to localStorage
-  state/rewards.ts          Kiskert planting and growth, visitors, stickers and which ones are new
+  state/rewards.ts          Kiskert planting and growth, care, Kamra recipes, visitors, gifts and decorations, stickers and which ones are new
   state/worlds.ts           the Kalandka worlds and which one the child is in
   state/robotParts.ts       Robotépítő parts, buying and wearing them, robot friends
   state/screenTime.ts       daily limit, play clock and 14-day history, bonus, rest now, evening rest
@@ -127,7 +129,6 @@ src/
 ## Not done yet
 
 - Recorded Hungarian voice for Csepi (the browser voice is a stand-in).
-- What happens once the Kiskert's ten beds are full (a second garden, or replanting); seeds keep counting meanwhile.
 - Parents' overview of stickers and the garden.
 
 ## Deploy

@@ -1,29 +1,37 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Seed } from '../components/art';
-import { BerryIcon, CanIcon, DropIcon, GardenPlant, PearIcon, PlantIcon, TreatArt, VisitorArt } from '../components/garden';
+import { BerryIcon, CanIcon, DecorArt, DropIcon, GardenPlant, PearIcon, PlantIcon, TreatArt, VisitorArt } from '../components/garden';
 import { BackIcon, GuideBubble, RoundButton, SpeakerIcon } from '../components/ui';
 import { chime, fanfare, popBubble } from '../lib/sound';
 import { article, capitalize, numberAttr, numberCount } from '../lib/numbers';
 import { speak } from '../lib/speech';
 import type { Mood, Tone } from '../lib/types';
-import { useProgress } from '../state/progress';
+import { useProgress, type Progress } from '../state/progress';
 import {
   PLANT_OPTIONS,
   PLOT_BEDS,
   RECIPES,
+  TREAT_WANTED,
   VISITORS,
   basketBerries,
   basketPears,
   bedAt,
   canMake,
   canMakeAnything,
+  canGive,
   canPlant,
+  decorOf,
   emptyBeds,
   fruitName,
+  gardenDone,
   gardenFull,
+  giftSize,
+  giftsReady,
+  give,
   make,
   openBeds,
   pantryCount,
+  recipeOf,
   recipeOpen,
   treatsOf,
   growAfter,
@@ -37,12 +45,15 @@ import {
   ripeTotal,
   seedBalance,
   thirstyBeds,
-  visitorsOf,
   water,
   waterAll,
+  welcomedVisitors,
+  wishOf,
+  type DecorId,
   type PlantKind,
   type Recipe,
-  type TreatId
+  type TreatId,
+  type VisitorId
 } from '../state/rewards';
 
 interface Say {
@@ -78,7 +89,12 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
   const poked = (id: string) => (poke?.id === id ? poke.n : 0);
   const pokeAt = (id: string) => setPoke((p) => ({ id, n: (p?.id === id ? p.n : 0) + 1 }));
   const visitor = newVisitor(progress);
-  const welcomed = visitorsOf(progress).slice(0, progress.visitorsSeen);
+  const welcomed = welcomedVisitors(progress);
+  // The visitor whose gift card is open, the decoration just left (it pops in once), and the "Kész a kert!" card.
+  const [guest, setGuest] = useState<VisitorId | null>(null);
+  const [freshDecor, setFreshDecor] = useState<DecorId | null>(null);
+  const givenDecor = useRef<DecorId | null>(null);
+  const [done, setDone] = useState(false);
   const nextVisitor = VISITORS[welcomed.length];
 
   function opening(): Say {
@@ -97,6 +113,15 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
       return {
         text: 'Van elég termés! Főzzünk valamit a kamrában.',
         speech: 'Van elég termés a kosárban! Koppints a kamrára, és főzzünk belőle valami finomat.',
+        mood: 'cheer',
+        tone: 'plain'
+      };
+    }
+    const ready = giftsReady(progress)[0];
+    if (ready) {
+      return {
+        text: `${ready.name} ajándékot vár! Koppints rá.`,
+        speech: `Van a polcon ${TREAT_WANTED[wishOf(ready.id).treat]}. ${ready.name} nagyon szereti! Koppints rá, és add oda neki.`,
         mood: 'cheer',
         tone: 'plain'
       };
@@ -222,6 +247,25 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
     if (!visitor) return;
     fanfare();
     update((p) => ({ ...p, visitorsSeen: p.visitorsSeen + 1 }));
+    const wanted = TREAT_WANTED[wishOf(visitor.id).treat];
+    tell({
+      text: `${visitor.name} ${wanted} szeret.`,
+      speech: `${visitor.name} ${wanted} szeret. Ha főzöl neki a kamrában, megajándékozhatod. Koppints rá!`,
+      mood: 'cheer',
+      tone: 'plain'
+    });
+  };
+
+  const gave = (v: VisitorId) => {
+    const after = give(progress, v);
+    update((p) => give(p, v));
+    // It pops into the visitor's corner once the card is closed and the garden is in view again.
+    givenDecor.current = decorOf(after, v).at(-1)!.id;
+    if (gardenDone(after)) {
+      setGuest(null);
+      setDone(true);
+      speak('Kész a kert! Minden lakó megkapta az ajándékát, és mindegyik készített neked valamit. Nézd, milyen szép lett!');
+    }
   };
 
   return (
@@ -345,13 +389,25 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
                 key={v.id}
                 type="button"
                 className="visitors__one pop-in"
-                aria-label={v.name}
+                aria-label={`${v.name}${canGive(progress, v.id) ? ', ajándékot vár' : ''}`}
                 onClick={() => {
                   pokeAt(v.id);
                   popBubble(3);
-                  tell({ text: `Szia, ${v.name}!`, speech: `Ő ${v.name}. Itt lakik a kertedben.`, mood: 'cheer', tone: 'good' });
+                  setGuest(v.id);
                 }}
               >
+                <span className="visitors__decor" aria-hidden="true">
+                  {decorOf(progress, v.id).map((d) => (
+                    <span key={d.id} className={`visitors__thing${freshDecor === d.id ? ' pop-in' : ''}`}>
+                      <DecorArt id={d.id} />
+                    </span>
+                  ))}
+                </span>
+                {canGive(progress, v.id) && (
+                  <span className="visitors__gift" aria-hidden="true">
+                    <TreatArt id={wishOf(v.id).treat} size={34} />
+                  </span>
+                )}
                 <span className={`visitors__roam visitors__roam--${v.id}`} style={{ '--roam-delay': `${-k * 3.5}s` } as CSSProperties}>
                   <span key={poked(v.id)} className={`visitors__hop${poked(v.id) ? ' is-poked' : ''}`}>
                     <VisitorArt id={v.id} width={92} />
@@ -448,6 +504,45 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
             setPantryOpen(false);
           }}
         />
+      )}
+
+      {guest && !visitor && (
+        <GiftCard
+          id={guest}
+          onGive={() => gave(guest)}
+          onClose={() => {
+            popBubble(1);
+            setGuest(null);
+            setFreshDecor(givenDecor.current);
+          }}
+        />
+      )}
+
+      {done && !visitor && (
+        <div className="visitor-pop" role="dialog" aria-modal="true" aria-labelledby="done-title">
+          <div className="visitor-pop__rays" aria-hidden="true" />
+          <p className="visitor-pop__kicker">Minden lakó megkapta az ajándékát</p>
+          <h2 id="done-title" className="visitor-pop__title">
+            Kész a kert!
+          </h2>
+          <div className="done-pop__all" aria-hidden="true">
+            {VISITORS.map((v) => (
+              <VisitorArt key={v.id} id={v.id} width={120} />
+            ))}
+          </div>
+          <button
+            type="button"
+            className="big-btn"
+            autoFocus
+            onClick={() => {
+              popBubble(2);
+              setDone(false);
+              setFreshDecor(givenDecor.current);
+            }}
+          >
+            Hurrá!
+          </button>
+        </div>
       )}
 
       {visitor && (
@@ -613,6 +708,112 @@ function Pantry({ onClose }: { onClose: () => void }) {
             );
           })}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** What Csepi says about a visitor's next gift: what they ask for and whether it is on the shelf yet. */
+function wishLine(p: Progress, id: VisitorId): string {
+  const v = VISITORS.find((x) => x.id === id)!;
+  const n = giftSize(p, id);
+  if (n === 0) return `${v.name} nagyon boldog. Nézd, mi mindent készített neked!`;
+  const { treat } = wishOf(id);
+  const ask = `${v.name} ${numberAttr(n)} ${TREAT_WANTED[treat]} kér.`;
+  if (canGive(p, id)) return `${ask} Add oda neki!`;
+  const short = n - treatsOf(p, treat);
+  const later = recipeOpen(p, treat) ? 'Főzz a kamrában!' : 'Kalácsot akkor sütünk, ha tele a kert.';
+  return `${ask} Még ${numberCount(short)} kell. ${later}`;
+}
+
+/** A visitor's corner: the gift they ask for next, counted out from the shelf, and the three things they make in return. */
+function GiftCard({ id, onGive, onClose }: { id: VisitorId; onGive: () => void; onClose: () => void }) {
+  const { progress } = useProgress();
+  const v = VISITORS.find((x) => x.id === id)!;
+  const wish = wishOf(id);
+  const n = giftSize(progress, id);
+  const have = treatsOf(progress, wish.treat);
+  const made = decorOf(progress, id).length;
+  const [line, setLine] = useState(() => wishLine(progress, id));
+  const [fresh, setFresh] = useState(-1);
+
+  useEffect(() => {
+    speak(line);
+    // Runs once per visit.
+  }, []);
+
+  const tell = (text: string, speech = text) => {
+    setLine(text);
+    speak(speech);
+  };
+
+  const offer = () => {
+    if (!canGive(progress, id)) {
+      popBubble(1);
+      tell(wishLine(progress, id));
+      return;
+    }
+    const counted = Array.from({ length: n }, (_, k) => capitalize(numberCount(k + 1))).join('! ');
+    const decor = wish.decor[made];
+    fanfare();
+    setFresh(made);
+    onGive();
+    tell(`${v.name} köszöni! Készített neked valamit.`, `${counted}! ${v.name} köszöni. Nézd, mit készített neked: egy ${decor.name.toLowerCase()}!`);
+  };
+
+  return (
+    <div className="pantry gift" role="dialog" aria-modal="true" aria-labelledby="gift-title">
+      <div className="pantry__card">
+        <header className="pantry__top">
+          <RoundButton label="Vissza a kertbe" onClick={onClose}>
+            <BackIcon />
+          </RoundButton>
+          <h2 id="gift-title" className="pantry__title">
+            {v.name}
+          </h2>
+          <div className="pill pill--basket" aria-label={`A polcon ${have} ${recipeOf(wish.treat).name.toLowerCase()}`}>
+            <TreatArt id={wish.treat} size={30} />
+            <span>{have}</span>
+          </div>
+        </header>
+
+        <div className="kiskert__say">
+          <GuideBubble mood="cheer" tone="plain" csepiWidth={56}>
+            {line}
+          </GuideBubble>
+          <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(line)}>
+            <SpeakerIcon />
+          </RoundButton>
+        </div>
+
+        <div className="gift__main">
+          <div className="gift__guest" aria-hidden="true">
+            <VisitorArt id={id} width={180} />
+          </div>
+          {n > 0 && (
+            <button type="button" className={`gift__offer${canGive(progress, id) ? ' is-ready' : ''}`} onClick={offer} aria-label={`Odaadom: ${n} ${recipeOf(wish.treat).name.toLowerCase()}. A polcon ${have} van.`}>
+              <span className="gift__treats" aria-hidden="true">
+                {Array.from({ length: n }, (_, k) => (
+                  <span key={k} className={`pantry__thing${k < have ? '' : ' is-missing'}`}>
+                    <TreatArt id={wish.treat} size={56} />
+                  </span>
+                ))}
+              </span>
+              <span className="gift__label">Odaadom!</span>
+            </button>
+          )}
+        </div>
+
+        <ul className="gift__decor" aria-label={`${v.name} ajándékai: ${made} a háromból`}>
+          {wish.decor.map((d, k) => (
+            <li key={d.id} className={`gift__thing${k < made ? '' : ' is-later'}`} aria-label={k < made ? d.name : 'Még nem készült el'}>
+              <span className={k === fresh ? 'pop-in' : ''}>
+                <DecorArt id={d.id} size={96} />
+              </span>
+              <span className="gift__name">{k < made ? d.name : `${k + 1}. ajándék`}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

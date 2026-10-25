@@ -75,6 +75,37 @@
 .landing__icon--sun { background: #fff6d6; color: #6b5310; }
 .landing__icon--drop { background: var(--drop-tint); color: var(--drop-deep); }
 
+/* "Miért Kalandka?": kaland + -ka, then the name told as a four-step story */
+.landing__name { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+.landing__name h2 { max-width: 18em; }
+.landing__name-sum { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 14px; margin-top: 24px; }
+.landing__name-part { flex: 1 1 220px; max-width: 290px; background: var(--paper); border-radius: 24px; padding: 24px 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.landing__name-part b { font-family: var(--display); font-weight: 800; font-size: 42px; line-height: 1; color: var(--ink); }
+.landing__name-part span { color: var(--ink-soft); }
+.landing__name-ka { color: var(--drop-deep) !important; }
+.landing__name-part--whole { background: var(--ink); }
+.landing__name-part--whole span { color: #d6e4ee; }
+.landing__name-op { align-self: center; font-family: var(--display); font-weight: 800; font-size: 40px; color: var(--ink-soft); }
+.landing__story { margin: 24px 0 0; padding: 0; list-style: none; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; text-align: left; }
+/* four steps read as 4 across or 2×2, never 3 + 1 */
+@media (min-width: 960px) { .landing__story { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .landing__story { grid-template-columns: minmax(0, 1fr); } }
+/* on a narrow screen the sum reads top to bottom, the signs between the cards */
+@media (max-width: 760px) {
+  .landing__name-sum { flex-direction: column; align-items: center; gap: 6px; }
+  .landing__name-part { flex: none; width: 100%; max-width: 360px; box-sizing: border-box; }
+  .landing__name-op { line-height: 1; }
+}
+.landing__story li { background: var(--paper); border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 8px; }
+.landing__story-art { height: 110px; border-radius: 16px; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; overflow: hidden; }
+.landing__story-art--drop { background: var(--drop-tint); align-items: flex-end; }
+.landing__story-art--good { background: var(--good-tint); }
+.landing__story-art--sky { background: var(--sky); }
+.landing__story-art--sun { background: #fff6d6; }
+.landing__story-step { font-family: var(--display); font-weight: 800; font-size: 19px; color: var(--leaf-deep); }
+.landing__story h3 { font-size: 23px; }
+.landing__story p { color: var(--ink-soft); }
+
 .landing__parents { display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start; }
 .landing__parents-text { flex: 1 1 360px; min-width: 0; }
 .landing__features { flex: 1 1 520px; min-width: 0; margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 16px; }

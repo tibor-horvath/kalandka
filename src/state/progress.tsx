@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../games/add/logic';
-import { markEarnedSeen, type Bed, type TreatId } from './rewards';
+import { markEarnedSeen, type Bed, type TreatId, type VisitorId } from './rewards';
 import type { PartSlot } from './robotParts';
 import type { Ladder, LadderGame } from './ladder';
 import type { TaskLog } from './taskLog';
@@ -23,6 +23,8 @@ export interface Progress {
   pantry: Partial<Record<TreatId, number>>;
   /** Kiskert visitors already welcomed (see VISITORS). */
   visitorsSeen: number;
+  /** Gifts each visitor has had from the pantry shelf, 0 … 3 (see the gifts section in rewards.ts). */
+  gifts: Partial<Record<VisitorId, number>>;
   /** Stickers already celebrated; the rest of the earned ones get the sticker animation. */
   stickersSeen: string[];
   /** Plant ids grown in the watering game, oldest first. */
@@ -146,6 +148,7 @@ export const DEFAULT_PROGRESS: Progress = {
   berriesUsed: 0,
   pantry: {},
   visitorsSeen: 0,
+  gifts: {},
   stickersSeen: [],
   garden: [],
   waterRound: 0,

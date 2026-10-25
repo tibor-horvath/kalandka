@@ -1,5 +1,5 @@
-import type { CSSProperties } from 'react';
-import type { PlantKind, Sticker, TreatId, VisitorId } from '../state/rewards';
+import type { CSSProperties, ReactElement } from 'react';
+import type { DecorId, PlantKind, Sticker, TreatId, VisitorId } from '../state/rewards';
 import { gameOf } from '../state/rewards';
 
 // Artwork for the Kiskert and the sticker album. Plants share one 160 × 220 box standing on its
@@ -348,6 +348,210 @@ export function TreatArt({ id, size = 72 }: { id: TreatId; size?: number }) {
           </g>
         </g>
       )}
+    </svg>
+  );
+}
+
+// ---------- decorations the visitors leave ----------
+// Each stands on the bottom edge of an 80 × 80 box, small and plain, so a corner of three reads at a glance.
+
+const WOOD = '#B0763F';
+const WOOD_DARK = '#7E5128';
+const STONE = '#B8C2CC';
+const WATER = '#7FB6EE';
+
+const DECOR: Record<DecorId, () => ReactElement> = {
+  mushroom: () => (
+    <g>
+      <path d="M32 78V56h16v22z" fill="#F3E6D0" />
+      <path d="M14 58c0-16 12-28 26-28s26 12 26 28z" fill="#E0533A" />
+      <circle cx="30" cy="44" r="4" fill="#FFFFFF" />
+      <circle cx="48" cy="40" r="5" fill="#FFFFFF" />
+      <circle cx="56" cy="52" r="3" fill="#FFFFFF" />
+    </g>
+  ),
+  leaves: () => (
+    <g>
+      <ellipse cx="40" cy="70" rx="34" ry="12" fill="#C8642A" />
+      <ellipse cx="26" cy="60" rx="14" ry="7" fill="#D9741A" transform="rotate(-20 26 60)" />
+      <ellipse cx="52" cy="58" rx="14" ry="7" fill="#F2B33D" transform="rotate(18 52 58)" />
+      <ellipse cx="40" cy="50" rx="13" ry="6" fill="#E0533A" transform="rotate(-6 40 50)" />
+      <path d="M30 50h20M16 62l20-4M44 62l18-6" stroke="#8A4A1A" strokeWidth="2" strokeLinecap="round" />
+    </g>
+  ),
+  'hedgehog-house': () => (
+    <g>
+      <path d="M8 78c0-30 14-46 32-46s32 16 32 46z" fill={WOOD} stroke={WOOD_DARK} strokeWidth="3" />
+      <path d="M14 56h52M10 68h60" stroke={WOOD_DARK} strokeWidth="2.5" />
+      <path d="M28 78V64a12 12 0 0 1 24 0v14z" fill="#4A2F18" />
+      <ellipse cx="22" cy="40" rx="10" ry="5" fill="#C8642A" transform="rotate(-30 22 40)" />
+      <ellipse cx="56" cy="38" rx="10" ry="5" fill="#F2B33D" transform="rotate(26 56 38)" />
+    </g>
+  ),
+  'spotted-stone': () => (
+    <g>
+      <ellipse cx="40" cy="62" rx="30" ry="18" fill="#E0533A" />
+      <path d="M40 44v36" stroke="#10233A" strokeWidth="3" />
+      <circle cx="26" cy="58" r="5" fill="#10233A" />
+      <circle cx="54" cy="58" r="5" fill="#10233A" />
+      <circle cx="30" cy="70" r="4" fill="#10233A" />
+      <circle cx="50" cy="70" r="4" fill="#10233A" />
+    </g>
+  ),
+  fence: () => (
+    <g fill="#FFFFFF" stroke="#8A9AA8" strokeWidth="2">
+      <rect x="4" y="50" width="72" height="7" rx="2" />
+      <rect x="4" y="64" width="72" height="7" rx="2" />
+      <path d="M10 78V40l6-8 6 8v38zM34 78V36l6-8 6 8v42zM58 78V40l6-8 6 8v38z" />
+    </g>
+  ),
+  daisies: () => (
+    <g>
+      {[14, 40, 66].map((x, k) => (
+        <g key={x} transform={`translate(${x} ${k === 1 ? 34 : 46})`}>
+          <path d={`M0 6V${k === 1 ? 44 : 32}`} stroke={LEAF} strokeWidth="4" strokeLinecap="round" />
+          <g fill="#FFFFFF" stroke="#D5DADF" strokeWidth="1">
+            <ellipse cx="0" cy="-8" rx="4" ry="7" />
+            <ellipse cx="0" cy="8" rx="4" ry="7" />
+            <ellipse cx="-8" cy="0" rx="7" ry="4" />
+            <ellipse cx="8" cy="0" rx="7" ry="4" />
+          </g>
+          <circle r="5" fill="#FFC93C" />
+        </g>
+      ))}
+    </g>
+  ),
+  lavender: () => (
+    <g>
+      {[22, 40, 58].map((x, k) => {
+        const top = k === 1 ? 24 : 34;
+        return (
+          <g key={x}>
+            <path d={`M40 78Q${x} 60 ${x} ${top}`} stroke={LEAF} strokeWidth="3" fill="none" />
+            {[0, 1, 2, 3].map((d) => (
+              <ellipse key={d} cx={x} cy={top + d * 7} rx="4.5" ry="4" fill={d % 2 ? '#7A4FB5' : '#9B76D1'} />
+            ))}
+          </g>
+        );
+      })}
+    </g>
+  ),
+  sunflower: () => (
+    <g>
+      <path d="M40 78V36" stroke={LEAF} strokeWidth="5" strokeLinecap="round" />
+      <ellipse cx="30" cy="60" rx="10" ry="5" fill={LEAF_LIGHT} transform="rotate(-30 30 60)" />
+      <ellipse cx="50" cy="66" rx="10" ry="5" fill={LEAF_LIGHT} transform="rotate(30 50 66)" />
+      <g fill="#FFC93C">
+        {Array.from({ length: 10 }, (_, k) => (
+          <ellipse key={k} cx="40" cy="12" rx="5" ry="9" transform={`rotate(${k * 36} 40 26)`} />
+        ))}
+      </g>
+      <circle cx="40" cy="26" r="9" fill="#8A5A3B" />
+    </g>
+  ),
+  arch: () => (
+    <g>
+      <path d="M12 78V40a28 28 0 0 1 56 0v38" fill="none" stroke={LEAF} strokeWidth="7" />
+      <g fill="#F4A3C4">
+        <circle cx="12" cy="52" r="5" />
+        <circle cx="16" cy="28" r="5" />
+        <circle cx="30" cy="15" r="5" />
+        <circle cx="50" cy="15" r="5" />
+        <circle cx="64" cy="28" r="5" />
+        <circle cx="68" cy="52" r="5" />
+      </g>
+      <g fill="#FFC93C">
+        <circle cx="12" cy="66" r="4" />
+        <circle cx="40" cy="12" r="4" />
+        <circle cx="68" cy="66" r="4" />
+      </g>
+    </g>
+  ),
+  feeder: () => (
+    <g>
+      <path d="M38 78V54h4v24z" fill={WOOD_DARK} />
+      <path d="M18 44h44l-4 10H22z" fill={WOOD} />
+      <path d="M22 30v14M58 30v14" stroke={WOOD_DARK} strokeWidth="3" />
+      <path d="M14 30l26-14 26 14z" fill="#E0533A" />
+      <g fill="#F3D2A8">
+        <ellipse cx="32" cy="42" rx="2" ry="3" />
+        <ellipse cx="40" cy="40" rx="2" ry="3" />
+        <ellipse cx="48" cy="42" rx="2" ry="3" />
+      </g>
+    </g>
+  ),
+  birdbath: () => (
+    <g>
+      <path d="M32 78l4-30h8l4 30z" fill={STONE} />
+      <path d="M10 44c0 8 14 12 30 12s30-4 30-12z" fill={STONE} />
+      <ellipse cx="40" cy="44" rx="30" ry="6" fill={WATER} />
+      <path d="M28 44h10" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
+    </g>
+  ),
+  birdhouse: () => (
+    <g>
+      <path d="M38 78V54h4v24z" fill={WOOD_DARK} />
+      <path d="M22 54V30l18-14 18 14v24z" fill="#F2B33D" />
+      <path d="M16 32l24-20 24 20" fill="none" stroke="#E0533A" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="40" cy="36" r="7" fill="#4A2F18" />
+      <path d="M40 48v4" stroke={WOOD_DARK} strokeWidth="3" strokeLinecap="round" />
+    </g>
+  ),
+  reeds: () => (
+    <g>
+      <path d="M24 78V30M40 78V20M56 78V34" stroke="#6E8F3A" strokeWidth="4" strokeLinecap="round" />
+      <rect x="20" y="28" width="8" height="18" rx="4" fill="#8A5A3B" />
+      <rect x="36" y="18" width="8" height="20" rx="4" fill="#8A5A3B" />
+      <rect x="52" y="32" width="8" height="16" rx="4" fill="#8A5A3B" />
+      <path d="M32 78Q30 56 18 48M48 78Q52 60 66 54" stroke={LEAF_LIGHT} strokeWidth="3.5" fill="none" strokeLinecap="round" />
+    </g>
+  ),
+  'stepping-stones': () => (
+    <g fill={STONE} stroke="#8A9AA8" strokeWidth="2">
+      <ellipse cx="16" cy="72" rx="13" ry="6" />
+      <ellipse cx="40" cy="62" rx="12" ry="5.5" />
+      <ellipse cx="64" cy="72" rx="13" ry="6" />
+    </g>
+  ),
+  pond: () => (
+    <g>
+      <ellipse cx="40" cy="66" rx="38" ry="13" fill={STONE} />
+      <ellipse cx="40" cy="65" rx="33" ry="10" fill={WATER} />
+      <path d="M44 63a9 5 0 1 0 2-5l-6 4z" fill={LEAF_LIGHT} />
+      <circle cx="22" cy="64" r="4" fill="#F4A3C4" />
+      <path d="M26 70h10" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
+    </g>
+  ),
+  pinecone: () => (
+    <g>
+      <path d="M40 18v8" stroke="#5E3A22" strokeWidth="3" strokeLinecap="round" />
+      <path d="M40 76c-12 0-18-14-18-28 0-12 8-22 18-22s18 10 18 22c0 14-6 28-18 28z" fill="#8A5A3B" />
+      <path d="M26 42l14 8 14-8M24 54l16 9 16-9M28 66l12 7 12-7" stroke="#5E3A22" strokeWidth="3" fill="none" strokeLinejoin="round" />
+    </g>
+  ),
+  stump: () => (
+    <g>
+      <path d="M14 78l4-34h44l4 34z" fill={WOOD} />
+      <path d="M26 78V52M42 78V50M56 78V54" stroke={WOOD_DARK} strokeWidth="2.5" />
+      <ellipse cx="40" cy="44" rx="22" ry="7" fill="#E9C08A" />
+      <ellipse cx="40" cy="44" rx="12" ry="3.5" fill="none" stroke={WOOD} strokeWidth="2" />
+    </g>
+  ),
+  swing: () => (
+    <g>
+      <path d="M10 78L18 10M70 78L62 10M14 12h52" stroke={WOOD_DARK} strokeWidth="5" strokeLinecap="round" />
+      <path d="M30 12v44M50 12v44" stroke="#8A9AA8" strokeWidth="2.5" />
+      <rect x="24" y="54" width="32" height="7" rx="3" fill="#E0533A" />
+    </g>
+  )
+};
+
+/** A decoration a visitor left in the Kiskert, drawn in an 80 × 80 box. */
+export function DecorArt({ id, size = 80, className = '' }: { id: DecorId; size?: number; className?: string }) {
+  const Art = DECOR[id];
+  return (
+    <svg aria-hidden="true" className={`decor-art ${className}`} width={size} height={size} viewBox="0 0 80 80">
+      <Art />
     </svg>
   );
 }

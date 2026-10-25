@@ -151,6 +151,46 @@ const PARENTS: { title: string; text: string; tone: string; icon: ReactNode }[] 
   }
 ];
 
+// "Miért Kalandka?": the name as a little story, short enough to read aloud to a child.
+const STORY: { title: string; text: string; tone: string; art: ReactNode }[] = [
+  {
+    title: 'A nagy kalandok néha túl nagyok.',
+    text: 'Egy egész hegy, egy egész erdő… az sok egyszerre egy kis felfedezőnek.',
+    tone: 'drop',
+    art: (
+      <svg width="150" height="92" viewBox="0 0 220 130" fill="none">
+        <path d="M10 130 90 20l40 50 25-25 55 85Z" fill="#9fb6cf" />
+        <path d="m90 20 18 25-10-4-8 10-8-9-9 4Z" fill="#ffffff" />
+        <circle cx="40" cy="116" r="8" fill="var(--leaf)" />
+      </svg>
+    )
+  },
+  { title: 'Ezért kicsiben kezdjük.', text: 'Egy kis feladat, egy kis bátorság, egy kis siker. Lépésről lépésre.', tone: 'good', art: <Sprout /> },
+  {
+    title: 'Minden sziget egy kis kaland.',
+    text: 'Csepi a Számkertben, Csavar a Műhelyben vár. Bármelyik szigetre evezhetsz, amelyikhez épp kedved van.',
+    tone: 'sky',
+    art: (
+      <>
+        <Csepi mood="smile" width={56} />
+        <Csavar mood="smile" width={56} />
+      </>
+    )
+  },
+  {
+    title: 'Sok kis kalandból lesz a nagy felfedező.',
+    text: 'Minden jó megoldás egy mag vagy egy csavar, és mind megmarad. Holnap jöhet a következő kaland.',
+    tone: 'sun',
+    art: (
+      <>
+        <Seed size={26} />
+        <Seed size={26} />
+        <Seed size={26} />
+      </>
+    )
+  }
+];
+
 /** Staggers the hero's entrance (see .landing__in in landing.css). */
 const delay = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties;
 
@@ -333,6 +373,52 @@ function Sheets({ onOpen }: { onOpen: (age: AgeBand) => void }) {
           </div>
         </div>
         <SheetPreviews />
+      </div>
+    </section>
+  );
+}
+
+/** Why the name: kaland + -ka, then the same idea as a four-step story. */
+function NameStory() {
+  return (
+    <section className="landing__section landing__section--soft" aria-labelledby="l-name">
+      <div className="landing__wrap landing__name">
+        <p className="landing__tag landing__reveal">Miért Kalandka?</p>
+        <h2 id="l-name" className="landing__reveal">
+          Mert minden napba belefér egy kis kaland.
+        </h2>
+        <div className="landing__name-sum landing__reveal" role="group" aria-label="kaland meg -ka, az Kalandka">
+          <div className="landing__name-part">
+            <b>kaland</b>
+            <span>valami új és izgalmas, amit még nem próbáltál</span>
+          </div>
+          <span className="landing__name-op" aria-hidden="true">
+            +
+          </span>
+          <div className="landing__name-part">
+            <b className="landing__name-ka">-ka</b>
+            <span>a becéző kis végződés: kicsivé és kedvessé teszi a szót</span>
+          </div>
+          <span className="landing__name-op" aria-hidden="true">
+            =
+          </span>
+          <div className="landing__name-part landing__name-part--whole">
+            <KalandkaWordmark size={40} color="#ffffff" accent="#9fd3ef" />
+            <span>egy kis kaland, pont akkora, amekkora neked való</span>
+          </div>
+        </div>
+        <ol className="landing__story">
+          {STORY.map((s, i) => (
+            <li key={s.title} className="landing__reveal">
+              <span className={`landing__story-art landing__story-art--${s.tone}`} aria-hidden="true">
+                {s.art}
+              </span>
+              <span className="landing__story-step">{i + 1}.</span>
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );
@@ -526,6 +612,8 @@ export function Landing({ onStart }: { onStart: (kid: KidDraft) => void }) {
               </div>
             </div>
           </section>
+
+          <NameStory />
 
           <section className="landing__section" aria-labelledby="l-worlds">
             <div className="landing__wrap">
