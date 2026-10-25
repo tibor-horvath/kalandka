@@ -280,6 +280,25 @@ function SheetPreviews() {
   );
 }
 
+/** The paper way in, right under the start button: one tap on an age opens that age's sheets. */
+function HeroSheets({ onOpen, className = '', style }: { onOpen: (age: AgeBand) => void; className?: string; style?: CSSProperties }) {
+  return (
+    <div className={`landing__hero-sheets ${className}`} style={style} role="group" aria-labelledby="l-hero-sheets">
+      <p id="l-hero-sheets">
+        <PrinterIcon />
+        Inkább papíron? Nyomtatható feladatlapok:
+      </p>
+      <div className="landing__ages">
+        {AGE_BANDS.map((a) => (
+          <button key={a} type="button" className="landing__age" onClick={() => onOpen(a)}>
+            {a === '7+' ? '7' : a} éves
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** Every game on paper, at the starting level for the age picked here; no child needs to be named first. */
 function Sheets({ onOpen }: { onOpen: (age: AgeBand) => void }) {
   const [age, setAge] = useState<AgeBand>('6');
@@ -487,7 +506,8 @@ export function Landing({ onStart }: { onStart: (kid: KidDraft) => void }) {
                   nehézsége pedig észrevétlenül alkalmazkodik hozzájuk.
                 </p>
                 <StartButton onStart={ask} className="landing__in" style={delay(360)} />
-                <ul className="landing__highlights landing__in" style={delay(440)}>
+                <HeroSheets onOpen={setSheetsFor} className="landing__in" style={delay(440)} />
+                <ul className="landing__highlights landing__in" style={delay(520)}>
                   {HIGHLIGHTS.map((h) => (
                     <li key={h}>
                       <Check />

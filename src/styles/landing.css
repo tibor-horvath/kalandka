@@ -92,6 +92,10 @@
 .landing__sheets { background: #fff6d6; border-radius: 32px; padding: clamp(24px, 5vw, 52px); display: flex; flex-wrap: wrap; gap: 36px; align-items: center; }
 .landing__sheets-text { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .landing__tag--sun { color: #6b5310; }
+/* The same sheets, offered by age right under the hero's start button. */
+.landing__hero-sheets { display: flex; flex-direction: column; gap: 10px; padding: 14px 20px 16px; border-radius: 20px; background: #fff6d6; }
+.landing__hero-sheets p { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-size: 19px; line-height: 1.2; color: #6b5310; }
+.landing__hero-sheets svg { flex: none; }
 .landing__sheets-lead { font-size: 18px; max-width: 34em; color: #4d3d0c; }
 .landing__ages { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .landing__ages > span { font-weight: 800; color: #4d3d0c; margin-right: 4px; }
