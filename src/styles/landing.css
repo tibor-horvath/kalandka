@@ -161,6 +161,9 @@
 .landing__foot { background: var(--ink); color: #d6e4ee; padding: 36px 16px; }
 .landing__foot .landing__wrap { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; justify-content: space-between; }
 .landing__foot-brand { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; }
+.landing__foot-link { border: none; background: none; padding: 4px 0; color: #d6e4ee; font: inherit; font-size: 15px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.landing__foot-link:hover { color: #ffffff; }
+.landing__foot-link:focus-visible { outline: 3px solid #f3f1ea; outline-offset: 3px; border-radius: 4px; }
 .landing__badge { display: block; border-radius: 12px; line-height: 0; }
 .landing__badge img { display: block; }
 .landing__badge:focus-visible { outline: 3px solid #f3f1ea; outline-offset: 3px; }

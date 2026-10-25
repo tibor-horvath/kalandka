@@ -8,6 +8,7 @@ import { KidFields, type KidDraft } from '../components/KidFields';
 import { KalandkaIcon, KalandkaWordmark } from '../components/ui';
 import { promptInstall, useInstallState } from '../lib/install';
 import { AGE_BANDS, AVATAR_IDS, type AgeBand } from '../state/profiles';
+import { LegalPage } from './parents/LegalPage';
 
 const PrintArea = lazy(async () => ({ default: (await import('./PrintArea')).PrintArea }));
 
@@ -545,9 +546,44 @@ function FirstKid({ onCreate, onCancel }: { onCreate: (kid: KidDraft) => void; o
   );
 }
 
+/** The privacy notice and operator details, open to any visitor in the same calm adult space as the sheets: no gate, it is for grown-ups. */
+function LegalSheet({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div className="pa pa--print" role="dialog" aria-modal="true" aria-label="Adatkezelés és impresszum">
+      <header className="pa-printbar">
+        <div className="pa-nav__brand">
+          <KalandkaIcon size={44} />
+          <div>
+            <div className="pa-nav__title">Jogi információk</div>
+            <div className="pa-nav__sub">Kalandka · adatkezelés és impresszum</div>
+          </div>
+        </div>
+        <button type="button" className="pa-nav__back" onClick={onClose} autoFocus>
+          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 5l-7 7 7 7" />
+          </svg>
+          Vissza
+        </button>
+      </header>
+      <main className="pa-main">
+        <LegalPage />
+      </main>
+    </div>
+  );
+}
+
 export function Landing({ onStart }: { onStart: (kid: KidDraft) => void }) {
   const [asking, setAsking] = useState(false);
   const [sheetsFor, setSheetsFor] = useState<AgeBand | null>(null);
+  const [legal, setLegal] = useState(false);
   const installed = useInstallState() === 'installed';
   const ask = () => setAsking(true);
 
@@ -714,6 +750,9 @@ export function Landing({ onStart }: { onStart: (kid: KidDraft) => void }) {
             <div className="landing__foot-brand">
               <KalandkaWordmark size={24} color="#ffffff" accent="#9fd3ef" />
               <p>Gondolkodós játékok 5–7 éveseknek</p>
+              <button type="button" className="landing__foot-link" onClick={() => setLegal(true)}>
+                Adatkezelés és impresszum
+              </button>
             </div>
             {/* The maker's badge, kept in public/badge so it works offline like the rest of the app. */}
             <a className="landing__badge" href="https://tiborhorvath.dev" lang="hu" target="_blank" rel="noopener">
@@ -728,6 +767,12 @@ export function Landing({ onStart }: { onStart: (kid: KidDraft) => void }) {
           <Suspense fallback={null}>
             <PrintArea guestAge={sheetsFor} onClose={() => setSheetsFor(null)} />
           </Suspense>
+        </div>
+      )}
+
+      {legal && (
+        <div className="landing__print">
+          <LegalSheet onClose={() => setLegal(false)} />
         </div>
       )}
     </>
