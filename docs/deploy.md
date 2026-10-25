@@ -111,22 +111,36 @@ az staticwebapp environment delete -n kalandka --environment-name preview
 
 ## Custom domain
 
-The domain is registered at Rackhost, which also hosts its DNS.
+The site answers on `www.kalandka.hu` and `kalandka.hu`, which fill both custom domain slots of the Free tier.
+The domain is registered at Rackhost, but its DNS is hosted on Cloudflare (Free plan): the nameservers at Rackhost are `chin.ns.cloudflare.com` and `yadiel.ns.cloudflare.com`, so DNS changes are made only in the Cloudflare dashboard.
+Rackhost's own DNS editor has no effect while those nameservers are set.
+
+Records in Cloudflare:
+
+| Type | Name | Content | Proxy status |
+| --- | --- | --- | --- |
+| CNAME | `www` | default hostname (`<random-name>.azurestaticapps.net`) | DNS only |
+| CNAME | `@` | default hostname | DNS only |
+| TXT | `@` | Azure's validation token for `kalandka.hu` | — |
+
+Keep both CNAMEs on **DNS only** (grey cloud). With Cloudflare's proxy on, traffic no longer reaches Azure directly and the free certificate can fail to renew.
+Keep the TXT record too; Azure may check it again when it renews the apex certificate.
 
 **Subdomain (`www.kalandka.hu`):**
 
-1. At the DNS provider, add a CNAME from `www` to the default hostname (without `https://`). Remove any A record on `www` first; a name cannot have both.
+1. In Cloudflare, add the `www` CNAME above.
 2. Wait until it resolves (`nslookup www.kalandka.hu`).
 3. Redeploy the Bicep (`az deployment group create -g kalandka-rg -f infra/main.bicep`); `customDomain` defaults to `www.kalandka.hu`. Azure validates the CNAME and issues the certificate (can take a few minutes up to an hour).
 
-**Apex domain (e.g. `kalandka.hu`):** needs TXT validation, which the Bicep file does not do. Add it with the CLI:
+**Apex domain (`kalandka.hu`):** needs TXT validation, which the Bicep file does not do. Add it with the CLI:
 
 ```bash
 az staticwebapp hostname set -n kalandka --hostname kalandka.hu --validation-method dns-txt-token --no-wait
 az staticwebapp hostname show -n kalandka --hostname kalandka.hu --query validationToken -o tsv
 ```
 
-Put the token in a TXT record at `kalandka.hu`, then point the apex at the site with an ALIAS/ANAME record (or an A record to the IP shown in the portal under Custom domains).
+Put the token in the TXT record, then add the `@` CNAME. DNS does not allow a CNAME on the apex, so Cloudflare flattens it: it resolves the default hostname itself and answers with Azure's addresses.
+Static Web Apps offers no stable A record for this site, and Rackhost's DNS supports neither ALIAS records nor CNAME flattening; that is why the DNS is on Cloudflare.
 
 **Link previews:** the Open Graph tags in `index.html` need the public origin to give crawlers absolute URLs. Set the `SITE_URL` repository variable (Settings → Secrets and variables → Actions → Variables, e.g. `https://www.kalandka.hu`); CI passes it to the build. Locally, put it in the environment or a `.env` file; without it the tags use root-relative paths, which some sites (Facebook) ignore.
 
@@ -161,6 +175,6 @@ This deletes the site and its custom domain bindings. DNS records at your provid
 | Tablets still show the old version | They have not been online and opened the app since the deploy (an app kept open checks at most every five minutes); or `sw.js` was cached by a proxy. Check its `cache-control` header is `no-cache`. |
 | `deploy` fails with an auth error | Token was reset or belongs to another site. Fetch it again with `az staticwebapp secrets list` and update the `AZURE_STATIC_WEB_APPS_API_TOKEN` secret of the `production` environment. |
 | Deploy job fails with "deployment_token was not provided" | The secret is missing, or was added at repo level under another name. It must be called `AZURE_STATIC_WEB_APPS_API_TOKEN`, in the `production` environment or the repo. |
-| Custom domain stuck in "Validating" | DNS record not yet visible, or a CNAME used for an apex domain. |
+| Custom domain stuck in "Validating" | DNS record not yet visible, the record is proxied (orange cloud) in Cloudflare, or the apex TXT record is missing. |
 | Fonts, icons or sounds missing offline | Their file type is not in `workbox.globPatterns` in `vite.config.ts`. The build prints how many files it precached (`precache N entries`). |
 | Home-screen icon wrong or blank | PNG icons are generated from `public/icon.svg` at build time by `pwa-assets.config.ts`; edit the SVG, not the PNGs. |
