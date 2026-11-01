@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { KidChip, MapButton, ParentsButton, PrintButton, VoiceButton } from '../../components/hub';
 import { Island, useLeave, type Place, type RewardPlace } from '../../components/island';
-import { Bolt, CodeArt, Gear, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../../components/robot';
+import { Bolt, CodeArt, FixArt, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../../components/robot';
 import { MyRobot } from '../../components/robotParts';
 import { useForm } from '../../components/Stage';
 import { StickerPop } from '../../components/StickerPop';
@@ -13,14 +13,8 @@ import { useProgress } from '../../state/progress';
 import { markStickerSeen, newStickers } from '../../state/rewards';
 import { boltBalance, canBuyAnything, newFriend, secondRobotNew } from '../../state/robotParts';
 
-export type RobotGameId = 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code';
+export type RobotGameId = 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code' | 'fix';
 
-/** Machines Csavar is still building: shown asleep, each with what it will teach. With the games they fill seven places, so Robotépítő is the eighth. */
-const COMING = [
-  { name: 'Hibakereső', skill: 'Hiba a programban' }
-];
-
-const NOTICE_MS = 5000;
 /** The greeting without a name: one child on the device, or an online voice. */
 const HELLO = 'Szia! Jó, hogy itt vagy a műhelyben!';
 
@@ -46,8 +40,6 @@ export function RobotHome({
   const phone = useForm() !== 'tablet';
   const [leaving, leaveForMap] = useLeave(onMap);
   const shared = profiles.kids.length > 1;
-  const [notice, setNotice] = useState<string | null>(null);
-  const noticeTimer = useRef<number | null>(null);
   // A Robotút sticker earned in the game is celebrated here, one at a time.
   const sticker = newStickers(progress, 'robot')[0] ?? null;
   const balance = boltBalance(progress);
@@ -61,9 +53,6 @@ export function RobotHome({
 
   useEffect(() => {
     if (!sticker) sayIntro();
-    return () => {
-      if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
-    };
     // Runs once per visit.
   }, []);
 
@@ -79,20 +68,13 @@ export function RobotHome({
     onWorkshop();
   };
 
-  const tapComing = (name: string) => {
-    const text = `A ${name} még készül. Ezen még dolgozom!`;
-    setNotice(text);
-    speak(`${text} Addig játsszunk a Robotúttal!`);
-    if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
-    noticeTimer.current = window.setTimeout(() => setNotice(null), NOTICE_MS);
-  };
-
   const levelIdx = ladderOf(progress, 'path').level;
   const sortIdx = ladderOf(progress, 'sort').level;
   const scaleIdx = ladderOf(progress, 'scale').level;
   const seqIdx = ladderOf(progress, 'seq').level;
   const mirrorIdx = ladderOf(progress, 'mirror').level;
   const codeIdx = ladderOf(progress, 'code').level;
+  const fixIdx = ladderOf(progress, 'fix').level;
   const workshopBadge = newFriend(progress) ? 'Barát jött!' : secondRobotNew(progress) ? 'Új robot!' : canBuyAnything(progress) ? 'Építhetsz!' : null;
   /** A machine's badge: new until first solved, then the level the child is on. */
   const machineBadge = (solved: number, level: number) => (solved === 0 ? 'Új gép!' : `${level + 1}. szint`);
@@ -112,22 +94,7 @@ export function RobotHome({
     { id: 'seq', name: 'Mintagép', label: 'Mintagép – mi jön a sorban?', badge: machineBadge(progress.seqSolved, seqIdx), art: <SeqArt />, onOpen: () => open('seq') },
     { id: 'mirror', name: 'Tükörgép', label: 'Tükörgép – hol a tükörkép?', badge: machineBadge(progress.mirrorSolved, mirrorIdx), art: <MirrorArt />, onOpen: () => open('mirror') },
     { id: 'code', name: 'Kódzár', label: 'Kódzár – nyisd ki a ládát a kóddal', badge: machineBadge(progress.codeSolved, codeIdx), art: <CodeArt />, onOpen: () => open('code') },
-    ...COMING.map((m) => ({
-      id: m.name,
-      name: m.name,
-      label: `${m.name}: még készül`,
-      art: <Gear />,
-      locked: {
-        skill: (
-          <>
-            {m.skill}
-            <span className="plot__soon"> · hamarosan</span>
-          </>
-        ),
-        hint: 'hamarosan',
-        onTap: () => tapComing(m.name)
-      }
-    }))
+    { id: 'fix', name: 'Hibakereső', label: 'Hibakereső – keresd meg a hibás kártyát', badge: machineBadge(progress.fixSolved, fixIdx), art: <FixArt />, onOpen: () => open('fix') }
   ];
   const reward: RewardPlace = {
     label: 'Robotépítő – építsd meg a saját robotodat',
@@ -160,13 +127,13 @@ export function RobotHome({
       </header>
 
       <div className="home-guide">
-        <GuideBubble guide="csavar" mood={notice ? 'think' : 'cheer'} csepiWidth={80}>
+        <GuideBubble guide="csavar" mood="cheer" csepiWidth={80}>
           <div className="bubble__row">
             <div>
-              <div className="bubble__kicker">{notice ? 'Hamarosan' : greeting}</div>
-              <h1 className="bubble__title">{notice ?? question}</h1>
+              <div className="bubble__kicker">{greeting}</div>
+              <h1 className="bubble__title">{question}</h1>
             </div>
-            <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => (notice ? speak(notice) : sayIntro())}>
+            <RoundButton label="Meghallgatom újra" tint="blue" onClick={sayIntro}>
               <SpeakerIcon />
             </RoundButton>
           </div>

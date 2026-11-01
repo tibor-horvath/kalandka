@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../components/art';
 import { Csepi } from '../components/Csepi';
-import { Csavar, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../components/robot';
+import { CodeArt, Csavar, FixArt, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../components/robot';
 import { DotFace } from '../components/seeds';
 import { Avatar } from '../components/avatars';
 import { KidFields, type KidDraft } from '../components/KidFields';
@@ -83,7 +83,9 @@ const ROBOT_GAMES: [string, string, ReactNode][] = [
   ['Válogatógép', 'Csoportosítás és szabálykeresés.', <SortArt />],
   ['Mérleg', 'Több, kevesebb és az egyensúly fogalma.', <ScaleArt />],
   ['Mintagép', 'Összetettebb minták és szabályok felismerése.', <SeqArt />],
-  ['Tükörgép', 'Tükrözés és szimmetria a gyakorlatban.', <MirrorArt />]
+  ['Tükörgép', 'Tükrözés és szimmetria a gyakorlatban.', <MirrorArt />],
+  ['Kódzár', 'Jelek, kódok és a kódtábla olvasása.', <CodeArt />],
+  ['Hibakereső', 'A hibás kártya megtalálása és kijavítása a programban.', <FixArt />]
 ];
 
 const HIGHLIGHTS = ['Internet nélkül is működik', 'Nincs szükség fiókra', 'Minden adat a készüléken marad'];
@@ -354,7 +356,7 @@ function Sheets({ onOpen }: { onOpen: (age: AgeBand) => void }) {
           </p>
           <h2 id="l-sheets-title">Nyomtatható feladatlapok percek alatt</h2>
           <p className="landing__sheets-lead">
-            Mind a tizenkét játékunk kinyomtatható A4-es feladatlapként – regisztráció és profil nélkül, akár most rögtön. Csak válaszd ki, hány éves a gyerek, és máris a neki megfelelő
+            Mind a tizennégy játékunk kinyomtatható A4-es feladatlapként – regisztráció és profil nélkül, akár most rögtön. Csak válaszd ki, hány éves a gyerek, és máris a neki megfelelő
             szintű feladatok nyílnak meg. A lapokat úgy terveztük, hogy fekete-fehér nyomtatón is tökéletesen olvashatók legyenek.
           </p>
           <div className="landing__ages" role="radiogroup" aria-labelledby="l-sheets-age">
@@ -661,7 +663,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
           <section className="landing__section" aria-labelledby="l-worlds">
             <div className="landing__wrap">
               <h2 id="l-worlds" className="landing__reveal">
-                Két sziget, tizenkét játék
+                Két sziget, tizennégy játék
               </h2>
               <p className="landing__intro landing__reveal">Nincsenek lezárt világok, a gyerekek szabadon evezhetnek bármelyik szigetre. Az app mindig ott nyílik meg, ahol legutóbb jártak.</p>
               <div className="landing__worlds">

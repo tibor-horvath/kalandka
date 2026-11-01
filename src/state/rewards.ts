@@ -8,6 +8,7 @@ import { PLANTS } from '../games/water/logic';
 import { PATH_LEVELS } from '../games/robot/path';
 import { SCALE_LEVELS } from '../games/robot/scale';
 import { CODE_LEVELS } from '../games/robot/code';
+import { FIX_LEVELS } from '../games/robot/fix';
 import { MIRROR_LEVELS } from '../games/robot/mirror';
 import { SEQ_LEVELS } from '../games/robot/seq';
 import { SORT_LEVELS } from '../games/robot/sort';
@@ -502,7 +503,8 @@ export const STICKER_GAMES: StickerGame[] = [
   { id: 'scale', name: 'Mérleg', color: '#F2B33D', ink: '#10233A', world: 'robot' },
   { id: 'seq', name: 'Mintagép', color: '#2E5FA8', ink: '#FFFFFF', world: 'robot' },
   { id: 'mirror', name: 'Tükörgép', color: '#7FE9F0', ink: '#10233A', world: 'robot' },
-  { id: 'code', name: 'Kódzár', color: '#C98F4E', ink: '#10233A', world: 'robot' }
+  { id: 'code', name: 'Kódzár', color: '#C98F4E', ink: '#10233A', world: 'robot' },
+  { id: 'fix', name: 'Hibakereső', color: '#D9741A', ink: '#FFFFFF', world: 'robot' }
 ];
 
 /** Robotút stickers: a course solved on a level (the first solved course of that level and on). */
@@ -526,6 +528,10 @@ const mirrorPassed = (name: string) => (p: Progress) => ladderOf(p, 'mirror').so
 /** Kódzár stickers: a round solved on a level. */
 const codeLevel = (name: string) => CODE_LEVELS.findIndex((l) => l.name === name);
 const codePassed = (name: string) => (p: Progress) => ladderOf(p, 'code').solvedTop >= codeLevel(name);
+
+/** Hibakereső stickers: a round solved on a level. */
+const fixLevel = (name: string) => FIX_LEVELS.findIndex((l) => l.name === name);
+const fixPassed = (name: string) => (p: Progress) => ladderOf(p, 'fix').solvedTop >= fixLevel(name);
 
 /** Méhecske levels that close a number range: the last level up to 5, up to 10, and round tens. */
 const ADD_PAST_5 = ADD_LEVELS.findIndex((l) => l.name === '10-ig, gyűjtéssel');
@@ -586,6 +592,11 @@ export const STICKERS: Sticker[] = [
   { id: 'code-dots', game: 'code', mark: '•3', label: 'Pöttykód', praise: 'A pöttyökből számot csinálsz!', earned: codePassed('Pöttykód') },
   { id: 'code-send', game: 'code', mark: '→●', label: 'Üzenetküldő', praise: 'Titkos üzenetet küldtél Kutyabotnak!', earned: codePassed('Üzenet'), set: 1 },
   { id: 'code-crack', game: 'code', mark: '?', label: 'Kódfejtő', praise: 'Kitaláltad a letakart jelet!', earned: codePassed('Hiányzó jel'), set: 1 },
+  { id: 'fix-first', game: 'fix', mark: '↑✓', label: 'Első javítás', praise: 'Megjavítottad az első programot!', earned: (p) => p.fixSolved >= 1 },
+  { id: 'fix-crates', game: 'fix', mark: '▣', label: 'Dobozkerülő', praise: 'A dobozok között is megtalálod a hibát!', earned: fixPassed('Dobozok között') },
+  { id: 'fix-times', game: 'fix', mark: '×3', label: 'Számjavító', praise: 'Már a rossz számot is kijavítod!', earned: fixPassed('Rossz szám') },
+  { id: 'fix-turn', game: 'fix', mark: '↰', label: 'Fordulójavító', praise: 'A fordulós programban is megtalálod a hibát!', earned: fixPassed('Fordulós hiba'), set: 1 },
+  { id: 'fix-two', game: 'fix', mark: '!!', label: 'Dupla javítás', praise: 'Két hibát is megtaláltál egy programban!', earned: fixPassed('Két hiba'), set: 1 },
   { id: 'kiskert-gift', game: 'kiskert', mark: '1', label: 'Első ajándék', praise: 'Megajándékoztad az első lakót a kertedben!', earned: (p) => decorCount(p) >= 1 },
   { id: 'kiskert-all', game: 'kiskert', mark: '6', label: 'Minden lakónak', praise: 'Mind a hat lakó kapott tőled ajándékot!', earned: (p) => VISITORS.every((v) => giftsOf(p, v.id) >= 1) },
   { id: 'kiskert-done', game: 'kiskert', mark: '18', label: 'Kész a kert', praise: 'Kész a kert! Minden lakó megkapta az ajándékát.', earned: gardenDone },

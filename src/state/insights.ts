@@ -4,6 +4,7 @@ import { LEARN_MAX } from '../games/learn/logic';
 import { SHAPE_ORDER } from '../games/patterns/logic';
 import { POTS_LEVELS } from '../games/pots/logic';
 import { CODE_LEVELS } from '../games/robot/code';
+import { FIX_LEVELS } from '../games/robot/fix';
 import { MIRROR_LEVELS } from '../games/robot/mirror';
 import { PATH_LEVELS } from '../games/robot/path';
 import { SCALE_LEVELS } from '../games/robot/scale';
@@ -133,6 +134,12 @@ const GAMES: GameText[] = [
     level: (p) => levelName(CODE_LEVELS, ladderOf(p, 'code').level),
     hard: 'A legutóbbi körökben többször is rossz gombot nyomott, vagy Csavar mutatta meg a kódot.',
     home: 'Találjatok ki titkos jeleket: a piros kocka azt jelenti, ugorj, a kék, hogy guggolj. Ő olvassa a kódot!'
+  },
+  {
+    id: 'fix', world: 'robot', name: 'Hibakereső', where: 'A Hibakeresőben', unit: 'kör',
+    level: (p) => levelName(FIX_LEVELS, ladderOf(p, 'fix').level),
+    hard: 'A legutóbbi körökben többször is jó kártyára koppintott, vagy Csavar mutatta meg a hibát.',
+    home: 'Adj neki rossz utasítást az ajtóig, például egy lépéssel többet: ő keresse meg, hol csúszott el!'
   }
 ];
 

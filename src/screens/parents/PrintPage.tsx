@@ -24,7 +24,8 @@ const TILES: Record<PrintId, { glyph: string; tile: string }> = {
   scale: { glyph: '=', tile: 'pa-tile--sun' },
   seq: { glyph: 'AB?', tile: 'pa-tile--blue' },
   mirror: { glyph: '•|•', tile: 'pa-tile--sky' },
-  code: { glyph: '●→?', tile: 'pa-tile--sand' }
+  code: { glyph: '●→?', tile: 'pa-tile--sand' },
+  fix: { glyph: '↑✗', tile: 'pa-tile--pink' }
 };
 
 /** "az 5 éves", "a 6 éves", "a 7 éves": the age a visitor picked on the landing page, with its article. */

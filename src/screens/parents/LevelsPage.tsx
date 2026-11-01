@@ -17,7 +17,8 @@ const ABOUT: Record<string, { skill: string; mode: string; glyph: string; tile: 
   scale: { skill: 'több, kevesebb, egyenlő', mode: '5 kör után magától lép', glyph: '=', tile: 'pa-tile--sun' },
   seq: { skill: 'mintázatok, szabályok', mode: '5 kör után magától lép', glyph: 'AB?', tile: 'pa-tile--blue' },
   mirror: { skill: 'tükrözés, szimmetria', mode: '5 kör után magától lép', glyph: '•|•', tile: 'pa-tile--sky' },
-  code: { skill: 'jelek és kódok', mode: '5 kör után magától lép', glyph: '●→?', tile: 'pa-tile--sand' }
+  code: { skill: 'jelek és kódok', mode: '5 kör után magától lép', glyph: '●→?', tile: 'pa-tile--sand' },
+  fix: { skill: 'hibakeresés a programban', mode: '5 kör után magától lép', glyph: '↑✗', tile: 'pa-tile--pink' }
 };
 
 export function LevelsPage() {

@@ -99,6 +99,9 @@ export interface Puzzle {
   solution: Card[];
 }
 
+/** What it takes to run a program: the floor, not the level it came from. */
+export type Course = Pick<Puzzle, 'cols' | 'rows' | 'start' | 'goals' | 'crates' | 'energy'>;
+
 const key = (c: Cell) => `${c.x},${c.y}`;
 const same = (a: Cell, b: Cell) => a.x === b.x && a.y === b.y;
 
@@ -159,7 +162,7 @@ export function collect(goals: Cell[], at: Cell, before: number[]): number[] {
 }
 
 /** Runs a program from the start. The robot stops as soon as it has reached every battery, or when its charge is used up. */
-export function run(p: Puzzle, cards: Card[]): RunResult {
+export function run(p: Course, cards: Card[]): RunResult {
   let pose = p.start;
   let collected: number[] = [];
   const frames: RunFrame[] = [];
@@ -229,7 +232,7 @@ export function shortest(p: Pick<Puzzle, 'cols' | 'rows' | 'crates' | 'start' | 
 }
 
 /** Cells the robot passes through on a program, start included: the dotted way for "Mutasd az utat!". */
-export function routeCells(p: Puzzle, cards: Card[]): Cell[] {
+export function routeCells(p: Course, cards: Card[]): Cell[] {
   const cells: Cell[] = [p.start];
   for (const f of run(p, cards).frames) if (!same(f.pose, cells.at(-1)!)) cells.push({ x: f.pose.x, y: f.pose.y });
   return cells;

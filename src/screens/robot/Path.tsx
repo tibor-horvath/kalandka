@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { CELL, FRAME_H, FRAME_W, FloorCrates, FloorRobot, FloorTiles, useRover } from '../../components/floor';
 import { LevelMeter, LevelUpCard, useLevelUp } from '../../components/LevelMeter';
 import { FitBox } from '../../components/FitBox';
-import { Battery, Bolt, CmdIcon, Crate, Rover } from '../../components/robot';
+import { Battery, Bolt, CmdIcon } from '../../components/robot';
 import { BackIcon, GuideBubble, NextIcon, PlayIcon, RoundButton, SpeakerIcon } from '../../components/ui';
 import {
   ARROWS,
@@ -26,29 +27,19 @@ import {
   startFeedback,
   step,
   stepCount,
-  type Block,
   type Card,
   type Cell,
   type Cmd,
-  type Dir,
   type PathFeedback,
-  type Pose,
 } from '../../games/robot/path';
 import { speak } from '../../lib/speech';
-import { buzz, chime, fanfare, popBubble, powerDown, thud } from '../../lib/sound';
+import { buzz, chime, fanfare, popBubble, powerDown } from '../../lib/sound';
 import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
 import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
 
-/** One floor tile, in board units. */
-const CELL = 100;
-/** The board's frame on the tablet: the largest course (6 × 5) fits it. */
-const FRAME_W = 6 * CELL + 40;
-const FRAME_H = 5 * CELL + 40;
 /** Time per robot step while a program runs: room to turn first, then drive. */
 const STEP_MS = 600;
-/** When a step turns the robot and moves it, it turns on the spot for this long before driving. */
-const TURN_MS = 260;
 /** After a bump or a short program, the robot rests a moment, then rolls back to the start. */
 const BACK_MS = 1300;
 /** How long the dotted way stays on the floor. */
@@ -56,15 +47,9 @@ const ROUTE_MS = 3600;
 /** Out of charge, in ms from the moment it runs out: the robot sputters and dims, then the missing steps show, then back to the start. */
 const EMPTY_DOTS_MS = 1400;
 const EMPTY_BACK_MS = 3800;
-/** How long a bump plays: drive in, squash, bounce back. */
-const HIT_MS = 700;
-/** Impact sparks: angles fanned round the way back from the point of contact (0 = up). */
-const SPARKS = [-70, -35, 0, 35, 70];
 
 /** Ghost cells drawn past the battery for a plan that is too long (the chip says the rest). */
 const MAX_GHOSTS = 4;
-const DX = [0, 1, 0, -1];
-const DY = [-1, 0, 1, 0];
 
 /** Tries before Csavar offers to show the way (once per course): programs that did not get there, or bumps while stepping. */
 const OFFER_AFTER_RUNS = 2;
@@ -81,21 +66,6 @@ function Charge() {
   );
 }
 
-/** The strip of floor edge between the robot's cell and the wall it drove into (the cell outside the floor). */
-function edgeRect(outside: Cell, dir: Dir): { x: number; y: number; width: number; height: number } {
-  const x = (outside.x - DX[dir]) * CELL;
-  const y = (outside.y - DY[dir]) * CELL;
-  if (dir === 0) return { x: x + 12, y: y - 3, width: CELL - 24, height: 8 };
-  if (dir === 2) return { x: x + 12, y: y + CELL - 5, width: CELL - 24, height: 8 };
-  if (dir === 3) return { x: x - 3, y: y + 12, width: 8, height: CELL - 24 };
-  return { x: x + CELL - 5, y: y + 12, width: 8, height: CELL - 24 };
-}
-
-/** Turning the shortest way round, so the robot never spins a full circle between 270° and 0°. */
-function turnBy(from: Dir, to: Dir): number {
-  return ((((to - from + 4) % 4) + 1) % 4) - 1;
-}
-
 /** Robotút: lead the robot to its battery, first one arrow at a time, then with a whole program. */
 export function Path({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
@@ -108,13 +78,6 @@ export function Path({ onBack }: { onBack: () => void }) {
   const { level } = puzzle;
   const plan = level.mode === 'plan';
 
-  const [pose, setPose] = useState<Pose>(puzzle.start);
-  const [angle, setAngle] = useState(puzzle.start.dir * 90);
-  /** The bump playing now, if any; its id restarts the animation on every new bump. */
-  const [hit, setHit] = useState<{ id: number; dir: Dir; block: Block; at: Cell } | null>(null);
-  const hitId = useRef(0);
-  /** Delay before the robot drives, so a turn is seen before the move. */
-  const [driveDelay, setDriveDelay] = useState(0);
   const [cards, setCards] = useState<Card[]>([]);
   const [running, setRunning] = useState(false);
   const [activeCard, setActiveCard] = useState<number | null>(null);
@@ -130,7 +93,7 @@ export function Path({ onBack }: { onBack: () => void }) {
   const [collected, setCollected] = useState<number[]>([]);
   const [fb, setFb] = useState<PathFeedback>(() => startFeedback(level));
 
-  const live = useRef({ pose: puzzle.start, tries: 0, collected: [] as number[] });
+  const live = useRef({ tries: 0, collected: [] as number[] });
   const timers = useRef<number[]>([]);
   const rewarded = useRef(false);
   /** The child asked for the way (parents' notes). */
@@ -139,6 +102,8 @@ export function Path({ onBack }: { onBack: () => void }) {
   const later = (fn: () => void, ms: number) => {
     timers.current.push(window.setTimeout(fn, ms));
   };
+  const rover = useRover(puzzle.start, later);
+  const { pose, moveTo, bump } = rover;
   const say = (f: PathFeedback) => {
     setFb(f);
     speak(f.speech);
@@ -149,25 +114,6 @@ export function Path({ onBack }: { onBack: () => void }) {
     return () => timers.current.forEach((t) => window.clearTimeout(t));
     // One course per mount: App keys this screen by round.
   }, []);
-
-  const moveTo = (next: Pose) => {
-    const from = live.current.pose;
-    const turns = turnBy(from.dir, next.dir);
-    setDriveDelay(turns !== 0 && !sameCell(from, next) ? TURN_MS : 0);
-    setAngle((a) => a + turns * 90);
-    live.current.pose = next;
-    setPose(next);
-  };
-
-  /** A bump: the robot drives into what is in the way, squashes, bounces back and blinks; a crate wobbles, a wall edge flashes. */
-  const bump = (dir: Dir, block: Block) => {
-    const at = live.current.pose;
-    const id = ++hitId.current;
-    setHit({ id, dir, block, at: { x: at.x + DX[dir], y: at.y + DY[dir] } });
-    thud();
-    buzz(30);
-    later(() => setHit((h) => (h && h.id === id ? null : h)), HIT_MS);
-  };
 
   const win = () => {
     setSolved(true);
@@ -196,7 +142,7 @@ export function Path({ onBack }: { onBack: () => void }) {
   const tapArrow = (cmd: Cmd) => {
     if (solved) return;
     setRoute(null);
-    const r = step(puzzle, live.current.pose, cmd);
+    const r = step(puzzle, rover.live.current, cmd);
     moveTo(r.pose);
     if (r.bumped) {
       bump(r.pose.dir, r.bumped);
@@ -271,7 +217,7 @@ export function Path({ onBack }: { onBack: () => void }) {
 
   /** The charge is gone: power down where the robot stands, then dot the steps it still needed. */
   const runOutOfCharge = (got: number[], offer: boolean) => {
-    const at = live.current.pose;
+    const at = rover.live.current;
     const goals = puzzle.goals.filter((_, i) => !got.includes(i));
     const course = { ...puzzle, start: at, goals };
     const cmds = shortest(course, level.moves) ?? [];
@@ -295,8 +241,7 @@ export function Path({ onBack }: { onBack: () => void }) {
     setWrongCard(null);
     setRunning(true);
     // Always from the start: a new try is a new run of the whole program.
-    live.current.pose = puzzle.start;
-    setPose(puzzle.start);
+    moveTo(puzzle.start);
     setCollected([]);
     setUsed(0);
     const result = run(puzzle, cards);
@@ -340,7 +285,7 @@ export function Path({ onBack }: { onBack: () => void }) {
   const showRoute = () => {
     if (running || solved) return;
     // Stepping: from where the robot stands, to the batteries still waiting.
-    const from = plan ? puzzle.start : live.current.pose;
+    const from = plan ? puzzle.start : rover.live.current;
     const goals = plan ? puzzle.goals : puzzle.goals.filter((_, i) => !live.current.collected.includes(i));
     const course = { ...puzzle, start: from, goals };
     const cmds = shortest(course, level.moves);
@@ -356,23 +301,11 @@ export function Path({ onBack }: { onBack: () => void }) {
 
   const boardW = puzzle.cols * CELL;
   const boardH = puzzle.rows * CELL;
-  const robotX = pose.x * CELL;
-  const robotY = pose.y * CELL;
   const palette = level.moves === 'absolute' ? ARROWS : TURNS;
   const planned = stepCount(cards);
   const over = puzzle.energy === null ? 0 : Math.max(0, planned - puzzle.energy);
   const charge = puzzle.energy ?? 0;
   const chip = over ? 'Túl hosszú' : `${charge - (running || empty ? used : planned)} marad`;
-  const sideways = pose.dir === 1 || pose.dir === 3;
-  const facing = {
-    '--jx': `${DX[pose.dir] * 12}px`,
-    '--jy': `${DY[pose.dir] * 12}px`,
-    // Squash flat against what it hit: thinner along the way it drives, wider across.
-    '--sx': sideways ? 0.86 : 1.1,
-    '--sy': sideways ? 1.1 : 0.86
-  } as CSSProperties;
-  // The edge of the floor that flashes when the robot drives into the wall.
-  const wallEdge = hit && hit.block === 'wall' ? edgeRect(hit.at, hit.dir) : null;
 
   return (
     <div className="screen screen--path world--robot">
@@ -403,11 +336,7 @@ export function Path({ onBack }: { onBack: () => void }) {
                 role="img"
                 aria-label={`Pálya: ${puzzle.cols} × ${puzzle.rows} mező, ${puzzle.crates.length} doboz. A robot a(z) ${pose.x + 1}. oszlopban, ${pose.y + 1}. sorban áll. ${puzzle.goals.map((g) => `Elem: ${g.x + 1}. oszlop, ${g.y + 1}. sor.`).join(' ')}`}
               >
-                {Array.from({ length: puzzle.cols * puzzle.rows }, (_, i) => {
-                  const x = i % puzzle.cols;
-                  const y = Math.floor(i / puzzle.cols);
-                  return <rect key={i} x={x * CELL + 3} y={y * CELL + 3} width={CELL - 6} height={CELL - 6} rx="14" className={`path-tile${(x + y) % 2 ? ' is-alt' : ''}`} />;
-                })}
+                <FloorTiles cols={puzzle.cols} rows={puzzle.rows} />
                 {sameCell(pose, puzzle.start) && !solved && (
                   <rect x={puzzle.start.x * CELL + 10} y={puzzle.start.y * CELL + 10} width={CELL - 20} height={CELL - 20} rx="12" className="path-start" />
                 )}
@@ -419,17 +348,7 @@ export function Path({ onBack }: { onBack: () => void }) {
                   missingCells.map((c, i) => (
                     <circle key={`m${c.x},${c.y}`} cx={c.x * CELL + CELL / 2} cy={c.y * CELL + CELL / 2} r="12" className="path-missing" style={{ animationDelay: `${i * 0.15}s` }} />
                   ))}
-                {puzzle.crates.map((c) => {
-                  const struck = hit && hit.block === 'crate' && sameCell(hit.at, c);
-                  return (
-                    <g key={`${c.x},${c.y}`} transform={`translate(${c.x * CELL} ${c.y * CELL})`}>
-                      <g key={struck ? hit.id : 'still'} className={struck ? 'path-crate is-hit' : 'path-crate'}>
-                        <Crate />
-                      </g>
-                    </g>
-                  );
-                })}
-                {wallEdge && <rect key={hit!.id} {...wallEdge} rx="4" className="path-wallhit" />}
+                <FloorCrates crates={puzzle.crates} hit={rover.hit} />
                 {puzzle.goals.map((g, i) => {
                   const got = solved || collected.includes(i);
                   return (
@@ -439,27 +358,7 @@ export function Path({ onBack }: { onBack: () => void }) {
                   );
                 })}
               </svg>
-              {/* The robot is an HTML layer over the floor: turning and driving animate the same in every browser. */}
-              <div
-                className={`path-robot${hit ? ' is-hit' : ''}${solved ? ' is-happy' : ''}${empty ? ' is-empty' : ''}`}
-                style={{ width: CELL, height: CELL, transform: `translate(${robotX}px, ${robotY}px)`, transitionDelay: `${driveDelay}ms` }}
-                aria-hidden="true"
-              >
-                {/* Sag layer: the sputter jolts along the way the robot faces, then it leans over. */}
-                <div key={hit ? `hit${hit.id}` : 'sag'} className="path-robot__sag" style={facing}>
-                  <div className="path-robot__turn" style={{ transform: `rotate(${angle}deg)` }}>
-                    <svg width={CELL} height={CELL} viewBox="0 0 100 100">
-                      <Rover />
-                    </svg>
-                  </div>
-                </div>
-                {hit && (
-                  <span key={`sparks${hit.id}`} className="path-sparks" style={{ left: CELL / 2 + DX[hit.dir] * 46, top: CELL / 2 + DY[hit.dir] * 46 }}>
-                    {SPARKS.map((a) => (
-                      <span key={a} className="path-spark" style={{ '--a': `${hit.dir * 90 + 180 + a}deg` } as CSSProperties} />
-                    ))}
-                  </span>
-                )}
+              <FloorRobot rover={rover} happy={solved} empty={empty}>
                 {empty && (
                   <>
                     <span className="path-puff" style={{ left: 38, width: 18, height: 18, animationDelay: '0.3s', '--dx': '-10px' } as CSSProperties} />
@@ -473,7 +372,7 @@ export function Path({ onBack }: { onBack: () => void }) {
                     </span>
                   </>
                 )}
-              </div>
+              </FloorRobot>
             </div>
             {solved && (
               <div className="path-win" role="status">

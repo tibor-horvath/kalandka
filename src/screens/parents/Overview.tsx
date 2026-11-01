@@ -8,6 +8,7 @@ import { LEARN_MAX } from '../../games/learn/logic';
 import { TRACE_ORDER, buildTraceRound } from '../../games/trace/logic';
 import { PATH_LEVELS } from '../../games/robot/path';
 import { SCALE_LEVELS } from '../../games/robot/scale';
+import { FIX_LEVELS } from '../../games/robot/fix';
 import { MIRROR_LEVELS } from '../../games/robot/mirror';
 import { CODE_LEVELS } from '../../games/robot/code';
 import { SEQ_LEVELS } from '../../games/robot/seq';
@@ -145,6 +146,12 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
       name: 'Kódzár',
       detail: `${progress.codeSolved} kör · ${at('code', CODE_LEVELS)}`,
       share: levelShare('code')
+    },
+    {
+      world: 'robot',
+      name: 'Hibakereső',
+      detail: `${progress.fixSolved} kör · ${at('fix', FIX_LEVELS)}`,
+      share: levelShare('fix')
     }
   ];
 

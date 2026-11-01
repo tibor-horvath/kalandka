@@ -38,7 +38,7 @@ describe('notes per game', () => {
   it('has a note for every game', () => {
     expect(gameNotes(DEFAULT_PROGRESS, DAY).map((n) => n.game)).toEqual([
       'Számvetés', 'Locsolás', 'Virágsor', 'Magvillantás', 'Mézút', 'Méhecske', 'Cserépbarátok',
-      'Robotút', 'Válogatógép', 'Mérleg', 'Mintagép', 'Tükörgép', 'Kódzár'
+      'Robotút', 'Válogatógép', 'Mérleg', 'Mintagép', 'Tükörgép', 'Kódzár', 'Hibakereső'
     ]);
   });
 

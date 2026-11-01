@@ -111,6 +111,9 @@ export interface Progress {
   /** Kódzár round: which one comes next, and how many were done. */
   codeRound: number;
   codeSolved: number;
+  /** Hibakereső round: which one comes next, and how many were done. */
+  fixRound: number;
+  fixSolved: number;
   /** Bolts spent in Robotépítő; the balance is bolts − boltsSpent. */
   boltsSpent: number;
   /** Robot parts bought (see state/robotParts.ts); the starting parts are always owned. */
@@ -205,6 +208,8 @@ export const DEFAULT_PROGRESS: Progress = {
   mirrorSolved: 0,
   codeRound: 0,
   codeSolved: 0,
+  fixRound: 0,
+  fixSolved: 0,
   boltsSpent: 0,
   robotOwned: [],
   robotLook: {},

@@ -184,20 +184,6 @@ export function PathArt() {
   );
 }
 
-/** A gear, for the machines still being built in Robotműhely. */
-export function Gear({ size = 52, color = '#9FB3C8' }: { size?: number; color?: string }) {
-  const teeth = Array.from({ length: 8 }, (_, i) => i * 45);
-  return (
-    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 48 48">
-      {teeth.map((a) => (
-        <rect key={a} x="20" y="2" width="8" height="10" rx="2" fill={color} transform={`rotate(${a} 24 24)`} />
-      ))}
-      <circle cx="24" cy="24" r="15" fill={color} />
-      <circle cx="24" cy="24" r="6" fill="#FFFFFF" />
-    </svg>
-  );
-}
-
 // ---------- Válogatógép ----------
 
 /** Part colours, each with a darker edge; light yellow, mid red and dark blue differ in lightness too. */
@@ -573,6 +559,25 @@ export function CodeSign({ sign, textured = false }: { sign: Sign; textured?: bo
         </text>
       );
   }
+}
+
+/** Hibakereső's tile on the Robotműhely home screen: a row of program cards, one of them wrong, under a magnifying glass. */
+export function FixArt() {
+  const card = (x: number, wrong: boolean, turn: number) => (
+    <g transform={`translate(${x} 22)`}>
+      <rect width="72" height="72" rx="14" fill={wrong ? '#FFF1E0' : '#E4F4F3'} stroke={wrong ? '#D9741A' : ROBOT_TEAL} strokeWidth="5" />
+      <path d="M36 54 V20 M22 33 L36 19 L50 33" transform={`rotate(${turn} 36 36)`} fill="none" stroke={wrong ? '#D9741A' : ROBOT_TEAL} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+    </g>
+  );
+  return (
+    <svg aria-hidden="true" className="fix-art" width="200" height="83" viewBox="0 0 300 124">
+      {card(28, false, 90)}
+      {card(114, true, 180)}
+      {card(200, false, 0)}
+      <circle cx="150" cy="58" r="50" fill="none" stroke="#3E5872" strokeWidth="9" />
+      <path d="M186 94 L212 118" stroke="#3E5872" strokeWidth="13" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 /** Kódzár's tile on the Robotműhely home screen: a crate with a code lock, two lamps and a slot. */
