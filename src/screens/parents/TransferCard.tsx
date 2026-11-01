@@ -1,6 +1,6 @@
-import qrcode from 'qrcode-generator';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Avatar } from '../../components/avatars';
+import { QrCode } from '../../components/QrCode';
 import { MAX_KIDS, kidName, useProfiles, type Kid, type Profiles } from '../../state/profiles';
 import { collect, isComplete, merge, packPieces, unpack, type Collected } from '../../state/transfer';
 
@@ -88,7 +88,8 @@ function SendPanel({ onClose }: { onClose: () => void }) {
             Az új eszközön nyisd meg a <b>Szülői sarok → Beállítások</b> oldalt, koppints a <b>Fogadás erre az eszközre</b> gombra, és olvasd be
             {total > 1 ? ' a kódokat sorban. Ha az új eszköz jelzi, hogy megvan, lapozz a következőre.' : ' ezt a kódot.'}
           </p>
-          <QrCode bytes={pieces[at]} label={total > 1 ? `${at + 1}. kód a ${total}-ből` : 'Átköltözési kód'} />
+          {/* The default byte encoder keeps each char code's low byte, so a "binary string" passes the bytes through. */}
+          <QrCode data={String.fromCharCode(...pieces[at])} correction="L" className="pa-transfer__qr" label={total > 1 ? `${at + 1}. kód a ${total}-ből` : 'Átköltözési kód'} />
           {total > 1 && (
             <div className="pa-transfer__pager">
               <button type="button" className="pa-btn pa-btn--quiet" disabled={at === 0} onClick={() => setAt(at - 1)}>
@@ -113,27 +114,6 @@ function SendPanel({ onClose }: { onClose: () => void }) {
         </button>
       </div>
     </div>
-  );
-}
-
-/** A QR code in byte mode, drawn as one SVG path with the white margin readers need. */
-function QrCode({ bytes, label }: { bytes: Uint8Array; label: string }) {
-  const { size, path } = useMemo(() => {
-    const qr = qrcode(0, 'L');
-    // The default byte encoder keeps each char code's low byte, so a "binary string" passes the bytes through.
-    qr.addData(String.fromCharCode(...bytes), 'Byte');
-    qr.make();
-    const n = qr.getModuleCount();
-    let d = '';
-    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (qr.isDark(y, x)) d += `M${x + 4} ${y + 4}h1v1h-1z`;
-    return { size: n + 8, path: d };
-  }, [bytes]);
-
-  return (
-    <svg className="pa-transfer__qr" role="img" aria-label={label} viewBox={`0 0 ${size} ${size}`} shapeRendering="crispEdges">
-      <rect width={size} height={size} fill="#ffffff" />
-      <path d={path} fill="#000000" />
-    </svg>
   );
 }
 

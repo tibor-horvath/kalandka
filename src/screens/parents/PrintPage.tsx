@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { MAX_PAGES, PRINT_SHEETS, buildPages, saveChoice, savedChoice, sheetFor, tasksPerPage, type PrintChoice } from '../../print/catalog';
+import { MAX_PAGES, PRINT_SHEETS, buildPages, pageRef, saveChoice, savedChoice, sheetFor, tasksPerPage, type PrintChoice } from '../../print/catalog';
+import { linkUrl } from '../../print/link';
 import { DENSITIES, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
 import { useProfiles, type AgeBand } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
@@ -35,7 +36,7 @@ function theAge(age: AgeBand): string {
 
 function pagesOf(s: PrintSpec<unknown>, c: PrintChoice, answers: boolean): ReactNode[] {
   return buildPages(s, c).map((p, i) => (
-    <Sheet key={i} spec={s} level={c.level} grid={p.grid} tasks={p.tasks} answers={answers} footer={c.pages > 1 ? `${i + 1}/${c.pages}. lap` : ''} />
+    <Sheet key={i} spec={s} level={c.level} grid={p.grid} tasks={p.tasks} answers={answers} footer={c.pages > 1 ? `${i + 1}/${c.pages}. lap` : ''} link={linkUrl(pageRef(s, c, i))} />
   ));
 }
 
@@ -200,7 +201,7 @@ function GameSheet({ id, kidId, guestAge, onBack }: { id: PrintId; kidId: string
             )}
           </div>
           <p className="pa-muted">
-            A megoldások csak itt, a képernyőn látszanak, a kinyomtatott lapon nincsenek. A Kalandka megjegyzi az utoljára választott feladatokat, így később is ellenőrizhetitek.
+            A megoldások a kinyomtatott lapon nincsenek, csak a képernyőn látszanak: a lap QR-kódját telefonnal beolvasva bármikor megnézhetitek őket.
           </p>
         </div>
 

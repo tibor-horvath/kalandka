@@ -72,6 +72,7 @@ function SeedOutline({ x, y, rx, filled }: { x: number; y: number; rx: number; f
 
 const learn = spec<number>({
   id: 'learn',
+  rev: 1,
   world: 'garden',
   game: 'Számvetés',
   levels: ['1-től', '6-tól', '11-től', '16-tól'],
@@ -122,6 +123,7 @@ function DropOutline({ x, y, filled }: { x: number; y: number; filled: boolean }
 
 const water = spec<Plant>({
   id: 'water',
+  rev: 1,
   world: 'garden',
   game: 'Locsolás',
   levels: ['2–10 csepp (egy tízes keret)', '11–20 csepp (két tízes keret)'],
@@ -167,6 +169,7 @@ interface PatternTask {
 
 const patterns = spec<PatternTask>({
   id: 'patterns',
+  rev: 1,
   world: 'garden',
   game: 'Virágsor',
   levels: ['AB – két virág váltakozik', 'ABC – három virág', 'AAB – kettő-egy', 'ABB – egy-kettő', 'Hiányzik a sorból (vegyes)'],
@@ -230,6 +233,7 @@ const patterns = spec<PatternTask>({
 
 const flash = spec<FlashRound>({
   id: 'flash',
+  rev: 1,
   world: 'garden',
   game: 'Magvillantás',
   levels: FLASH_LEVELS.map((l) => l.name),
@@ -263,6 +267,7 @@ const DIGIT_FREE = (r: AddRound) => r.level.answers === 'dots';
 
 const add = spec<AddRound>({
   id: 'add',
+  rev: 1,
   world: 'garden',
   game: 'Méhecske',
   levels: ADD_LEVELS.map((l) => l.name),
@@ -410,6 +415,7 @@ interface TraceTask {
 
 const trace = spec<TraceTask>({
   id: 'trace',
+  rev: 1,
   world: 'garden',
   game: 'Mézút',
   levels: TRACE_LEVELS,
@@ -461,6 +467,7 @@ const trace = spec<TraceTask>({
 
 const pots = spec<PotsRound>({
   id: 'pots',
+  rev: 1,
   world: 'garden',
   game: 'Cserépbarátok',
   levels: POTS_LEVELS.map((l) => l.name),
