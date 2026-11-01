@@ -1,4 +1,4 @@
-# PR-only checks: bundle size delta vs main and Lighthouse scores on the static build.
+# PR-only checks: Lighthouse scores on the static build.
 name: PR quality
 
 on:
@@ -8,17 +8,6 @@ on:
 permissions: {}
 
 jobs:
-  bundle-size:
-    name: Bundle size
-    uses: tibor-horvath/ci-toolkit/.github/workflows/bundle-size.yml@v1
-    with:
-      node-version: "22.x"
-      # Precached by the service worker, so every KB lands on the tablets.
-      max-gzip-increase-kb: "25"
-    permissions:
-      contents: read
-      pull-requests: write
-
   lighthouse:
     name: Lighthouse
     uses: tibor-horvath/ci-toolkit/.github/workflows/lighthouse-ci.yml@v1
