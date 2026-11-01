@@ -142,7 +142,7 @@ export function ParentArea({ start = 'overview', onClose, onAbout }: { start?: P
           <KalandkaIcon size={44} />
           <div>
             <div className="pa-nav__title">Szülői sarok</div>
-            <div className="pa-nav__sub">Kalandka · Számkertész</div>
+            <div className="pa-nav__sub">Kalandka</div>
           </div>
         </div>
         {PAGES.map((p) => (

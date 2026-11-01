@@ -98,7 +98,8 @@ A new version is downloaded in the background, and only the files whose content 
 The new version takes over only on the home screen: the app reloads into it two seconds after the child is back in the garden, never during a game or in the parents' corner.
 A tablet that stays offline keeps the old version until it is next online.
 
-To check a release: open the site, then in the browser's dev tools under Application → Service workers confirm the new worker is active, or compare the `index-*.js` file name in Network with the one in `dist/assets/`.
+To check a release: open **Szülői sarok → Beállítások**; the version is at the bottom of the page.
+For more detail, in the browser's dev tools under Application → Service workers confirm the new worker is active, or compare the `index-*.js` file name in Network with the one in `dist/assets/`.
 
 ## Trying a build before release
 

@@ -1,4 +1,5 @@
 import { useState, useSyncExternalStore } from 'react';
+import { version } from '../../../package.json';
 import { disableBiometric, enrollBiometric, useBiometric } from '../../lib/biometric';
 import { promptInstall, useInstallState } from '../../lib/install';
 import { hungarianVoices, onVoicesChanged, speak, type Speaker } from '../../lib/speech';
@@ -133,6 +134,8 @@ export function SettingsPage({ onLegal }: { onLegal: () => void }) {
           </div>
         )}
       </section>
+
+      <p className="pa-muted">Verzió: {version}</p>
     </div>
   );
 }
