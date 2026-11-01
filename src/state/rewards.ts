@@ -1,10 +1,8 @@
 import { ADD_LEVELS } from '../games/add/logic';
 import { LEVELS as FLASH_LEVELS } from '../games/flash/logic';
 import { LEARN_MAX } from '../games/learn/logic';
-import { SHAPE_ORDER } from '../games/patterns/logic';
 import { POTS_LEVELS } from '../games/pots/logic';
 import { TRACE_ORDER } from '../games/trace/logic';
-import { PLANTS } from '../games/water/logic';
 import { PATH_LEVELS } from '../games/robot/path';
 import { SCALE_LEVELS } from '../games/robot/scale';
 import { CODE_LEVELS } from '../games/robot/code';
@@ -562,11 +560,11 @@ export const STICKERS: Sticker[] = [
   { id: 'learn-10', game: 'learn', mark: '1–10', label: 'Ismerem 10-ig', praise: 'Már tízig ismered a számokat!', earned: (p) => p.learnSolved >= 10 },
   { id: 'learn-20', game: 'learn', mark: '1–20', label: 'Ismerem 20-ig', praise: 'Már húszig ismered a számokat!', earned: (p) => p.learnSolved >= LEARN_MAX },
   { id: 'water-1', game: 'water', mark: '1', label: 'Első virág', praise: 'Kinőtt az első virágod!', earned: (p) => p.garden.length >= 1 },
-  { id: 'water-10', game: 'water', mark: '10', label: 'Tízes keret', praise: 'Minden virágot meglocsoltál tízig!', earned: (p) => p.garden.length >= PLANTS.length },
-  { id: 'water-20', game: 'water', mark: '20', label: 'Két keret', praise: 'Már húsz cseppig locsolsz!', earned: (p) => p.garden.length >= PLANTS.length * 2 },
+  { id: 'water-10', game: 'water', mark: '10', label: 'Tízes keret', praise: 'Minden virágot meglocsoltál tízig!', earned: (p) => ladderOf(p, 'water').reached >= 2 },
+  { id: 'water-20', game: 'water', mark: '20', label: 'Két keret', praise: 'Már húsz cseppig locsolsz!', earned: (p) => ladderOf(p, 'water').solvedTop >= 2 },
   { id: 'patterns-ab', game: 'patterns', mark: 'AB', label: 'Kettes sor', praise: 'Folytattad az első virágsort!', earned: (p) => p.patternsSolved >= 1 },
-  { id: 'patterns-abc', game: 'patterns', mark: 'ABC', label: 'Hármas sor', praise: 'Már a hármas sort is folytatod!', earned: (p) => p.patternsSolved >= 2 },
-  { id: 'patterns-all', game: 'patterns', mark: 'AAB', label: 'Minden minta', praise: 'Mind a négy virágmintát kitaláltad!', earned: (p) => p.patternsSolved >= SHAPE_ORDER.length },
+  { id: 'patterns-abc', game: 'patterns', mark: 'ABC', label: 'Hármas sor', praise: 'Már a hármas sort is folytatod!', earned: (p) => ladderOf(p, 'patterns').solvedTop >= 1 },
+  { id: 'patterns-all', game: 'patterns', mark: 'AAB', label: 'Minden minta', praise: 'Mind a négy virágmintát kitaláltad!', earned: (p) => ladderOf(p, 'patterns').reached >= 3 },
   { id: 'flash-3', game: 'flash', mark: '3', label: 'Egy pillantás', praise: 'Egy pillantásra látod, hány mag van!', earned: (p) => ladderOf(p, 'flash').reached >= 1 },
   { id: 'flash-5', game: 'flash', mark: '5', label: 'Öt mag', praise: 'Már öt magot is egy pillantásra látsz!', earned: (p) => ladderOf(p, 'flash').reached >= FLASH_LEVELS.length - 1 },
   { id: 'flash-10', game: 'flash', mark: '10', label: 'Tíz mag', praise: 'Már tíz magot is egy pillantásra látsz!', earned: (p) => ladderOf(p, 'flash').reached >= FLASH_LEVELS.length },
@@ -574,10 +572,10 @@ export const STICKERS: Sticker[] = [
   { id: 'add-10', game: 'add', mark: '+10', label: 'Adok 10-ig', praise: 'Már tízig adsz össze és veszel el!', earned: addReached(ADD_PAST_10) },
   { id: 'add-100', game: 'add', mark: '100', label: 'Százig', praise: 'Már a százas számokkal is számolsz!', earned: addReached(ADD_HUNDRED) },
   { id: 'trace-5', game: 'trace', mark: '1–5', label: 'Írom 5-ig', praise: 'Már ötig írod a számokat!', earned: (p) => p.traceSolved >= 5 },
-  { id: 'trace-9', game: 'trace', mark: '6–9', label: 'Írom 9-ig', praise: 'Már kilencig írod a számokat!', earned: (p) => p.traceSolved >= 9 },
-  { id: 'trace-0', game: 'trace', mark: '0', label: 'Minden szám', praise: 'Minden számot meg tudsz írni!', earned: (p) => p.traceSolved >= TRACE_ORDER.length },
+  { id: 'trace-9', game: 'trace', mark: '6–9', label: 'Írom 9-ig', praise: 'Már kilencig írod a számokat!', earned: (p) => p.traceSolved >= 9 && ladderOf(p, 'trace').solvedTop >= 1 },
+  { id: 'trace-0', game: 'trace', mark: '0', label: 'Minden szám', praise: 'Minden számot meg tudsz írni!', earned: (p) => ladderOf(p, 'trace').reached >= 2 },
   { id: 'trace-fade', game: 'trace', mark: '5', label: 'Halvány út', praise: 'Már halvány úton is írod a számokat!', earned: (p) => p.traceFadedSolved >= 5, set: 1 },
-  { id: 'trace-memory', game: 'trace', mark: '0–9', label: 'Fejből írom', praise: 'Minden számot emlékezetből írsz!', earned: (p) => p.traceFadedSolved >= TRACE_ORDER.length, set: 1 },
+  { id: 'trace-memory', game: 'trace', mark: '0–9', label: 'Fejből írom', praise: 'Minden számot emlékezetből írsz!', earned: (p) => p.traceFadedSolved >= TRACE_ORDER.length && ladderOf(p, 'trace').solvedTop >= 3, set: 1 },
   { id: 'pots-5', game: 'pots', mark: '5', label: 'Öt barátai', praise: 'Ismered az öt barátait!', earned: (p) => ladderOf(p, 'pots').reached >= 1 },
   { id: 'pots-10', game: 'pots', mark: '10', label: 'Tíz barátai', praise: 'Ismered a tíz barátait!', earned: (p) => ladderOf(p, 'pots').reached >= 2 },
   { id: 'path-first', game: 'path', mark: '1', label: 'Első út', praise: 'Elvezetted a robotot az elemhez!', earned: (p) => p.pathSolved >= 1 },

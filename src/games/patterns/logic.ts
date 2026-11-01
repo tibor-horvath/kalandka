@@ -53,19 +53,45 @@ export function periodOf(shape: ShapeKey): number {
   return shape === 'AB' ? 2 : 3;
 }
 
+function rowOf(shape: ShapeKey, kinds: FlowerKind[], gap: number): PatternRound {
+  const sequence = SHAPES[shape].map((slot) => kinds[slot]);
+  const shown = sequence.map((k, i) => (i === gap ? null : k));
+  return { shape, sequence, shown, gap, answer: sequence[gap] };
+}
+
 /**
  * Rounds cycle through the four shapes, and each full cycle swaps which flowers fill them.
  * The first lap asks what comes next; after that the missing flower moves into the row.
+ * The printed sheets are built from this, so the same round must keep giving the same row.
  */
 export function buildRound(round: number): PatternRound {
   const r = Math.max(0, Math.floor(round));
   const lap = Math.floor(r / SHAPE_ORDER.length);
-  const shape = SHAPE_ORDER[r % SHAPE_ORDER.length];
-  const kinds = PERMUTATIONS[lap % PERMUTATIONS.length];
-  const sequence = SHAPES[shape].map((slot) => kinds[slot]);
   const gap = lap === 0 ? 5 : MIDDLE_GAPS[(r + lap) % MIDDLE_GAPS.length];
-  const shown = sequence.map((k, i) => (i === gap ? null : k));
-  return { shape, sequence, shown, gap, answer: sequence[gap] };
+  return rowOf(SHAPE_ORDER[r % SHAPE_ORDER.length], PERMUTATIONS[lap % PERMUTATIONS.length], gap);
+}
+
+export interface PatternLevel {
+  /** Shown to parents. */
+  name: string;
+  shapes: readonly ShapeKey[];
+  /** The missing flower is inside the row instead of at its end. */
+  inside: boolean;
+}
+
+export const PATTERN_LEVELS: PatternLevel[] = [
+  { name: 'Két virág', shapes: ['AB'], inside: false },
+  { name: 'Három virág', shapes: ['ABC'], inside: false },
+  { name: 'Kettő-egy, egy-kettő', shapes: ['AAB', 'ABB'], inside: false },
+  { name: 'Hiányzó virág', shapes: SHAPE_ORDER, inside: true }
+];
+
+/** The row of a round on a level of the ladder. */
+export function buildLevelRound(level: number, round: number): PatternRound {
+  const r = Math.max(0, Math.floor(round));
+  const { shapes, inside } = PATTERN_LEVELS[level];
+  if (inside) return buildRound(SHAPE_ORDER.length + r);
+  return rowOf(shapes[r % shapes.length], PERMUTATIONS[r % PERMUTATIONS.length], 5);
 }
 
 export function isEndGap(round: PatternRound): boolean {

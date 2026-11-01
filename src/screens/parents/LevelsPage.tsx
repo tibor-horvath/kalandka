@@ -7,8 +7,9 @@ import { Check, WorldGroup } from './controls';
 /** Short skill and progress mode per game, shown under its name. */
 const ABOUT: Record<string, { skill: string; mode: string; glyph: string; tile: string }> = {
   learn: { skill: 'számok 1–20', mode: 'Sorban halad 20-ig', glyph: '12', tile: 'pa-tile--blue' },
-  water: { skill: 'számolás', mode: 'Az első kör után magától nehezedik', glyph: '10', tile: 'pa-tile--sky' },
-  patterns: { skill: 'mintázatok', mode: 'A minták körbejárnak', glyph: 'AB', tile: 'pa-tile--pink' },
+  water: { skill: 'számolás', mode: '4 jó virág után magától lép', glyph: '10', tile: 'pa-tile--sky' },
+  patterns: { skill: 'mintázatok', mode: '4 jó válasz után magától lép', glyph: 'AB', tile: 'pa-tile--pink' },
+  trace: { skill: 'számírás', mode: '5 szám után magától lép', glyph: '1–5', tile: 'pa-tile--sun' },
   flash: { skill: 'mennyiség ránézésre', mode: '4 jó válasz után magától lép', glyph: '5', tile: 'pa-tile--sand' },
   add: { skill: 'összeadás és kivonás', mode: 'Csepi ajánl, a gyerek dönt', glyph: '+', tile: 'pa-tile--sun' },
   pots: { skill: 'tízes barátok', mode: '5 jó válasz után magától lép', glyph: '3+7', tile: 'pa-tile--pink' },

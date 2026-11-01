@@ -4,6 +4,7 @@ import {
   BOX_W,
   STEP,
   TOLERANCE,
+  TRACE_LEVELS,
   TRACE_ORDER,
   arrowPoints,
   buildTraceRound,
@@ -53,18 +54,27 @@ describe('digit trails', () => {
     expect(two).toEqual([4, 5, 7]);
   });
 
-  it('the first lap goes 1 to 9, then 0, on the full trail', () => {
-    expect(buildTraceRound(0).digit).toBe(1);
-    expect(buildTraceRound(8).digit).toBe(9);
-    expect(buildTraceRound(9).digit).toBe(0);
-    for (let r = 0; r < TRACE_ORDER.length; r++) expect(buildTraceRound(r).faded).toBe(false);
+  it('the full-trail levels go 1 to 5, then 6 to 9 and 0, in writing order', () => {
+    expect([0, 1, 2, 3, 4].map((n) => buildTraceRound(0, n).digit)).toEqual([1, 2, 3, 4, 5]);
+    expect([0, 1, 2, 3, 4].map((n) => buildTraceRound(1, n).digit)).toEqual([6, 7, 8, 9, 0]);
+    expect(buildTraceRound(0, 5).digit).toBe(1);
+    expect(buildTraceRound(0, 0).faded).toBe(false);
+    expect(buildTraceRound(1, 0).faded).toBe(false);
   });
 
-  it('later laps fade the trail and mix every digit, without repeating one across laps', () => {
-    for (let lap = 1; lap < 6; lap++) {
-      const rounds = TRACE_ORDER.map((_, i) => buildTraceRound(lap * TRACE_ORDER.length + i));
+  it('the faded levels mix the same digits on a faint trail', () => {
+    for (const level of [2, 3]) {
+      const half = TRACE_LEVELS[level - 2].digits;
+      const rounds = half.map((_, n) => buildTraceRound(level, n));
       expect(rounds.every((r) => r.faded)).toBe(true);
-      expect(rounds.map((r) => r.digit).sort()).toEqual([...TRACE_ORDER].sort());
+      expect(rounds.map((r) => r.digit).sort()).toEqual([...half].sort());
+      expect(rounds.map((r) => r.digit)).not.toEqual(half);
+    }
+  });
+
+  it('printed laps mix every digit, without repeating one across laps', () => {
+    for (let lap = 1; lap < 6; lap++) {
+      expect([...lapOrder(lap)].sort()).toEqual([...TRACE_ORDER].sort());
       expect(lapOrder(lap)).not.toEqual(TRACE_ORDER);
       expect(lapOrder(lap)[0]).not.toBe(lapOrder(lap - 1).at(-1));
     }
@@ -81,7 +91,7 @@ describe('digit trails', () => {
   });
 
   it('Csepi talks about the faded trail', () => {
-    const r = buildTraceRound(TRACE_ORDER.length);
+    const r = buildTraceRound(2, 0);
     expect(startFeedback(r).text).toContain('halvány');
     expect(doneFeedback(r.digit, true).text).toContain('Emlékezetből');
   });

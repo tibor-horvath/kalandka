@@ -5,7 +5,7 @@ import { useProgress } from '../../state/progress';
 import { BONUS_OPTIONS, addBonus, lastSevenDays, playedToday, remainingSeconds, today } from '../../state/screenTime';
 import { ADD_LEVELS } from '../../games/add/logic';
 import { LEARN_MAX } from '../../games/learn/logic';
-import { TRACE_ORDER, buildTraceRound } from '../../games/trace/logic';
+import { TRACE_LEVELS } from '../../games/trace/logic';
 import { PATH_LEVELS } from '../../games/robot/path';
 import { SCALE_LEVELS } from '../../games/robot/scale';
 import { FIX_LEVELS } from '../../games/robot/fix';
@@ -15,8 +15,8 @@ import { SEQ_LEVELS } from '../../games/robot/seq';
 import { SORT_LEVELS } from '../../games/robot/sort';
 import { POTS_LEVELS } from '../../games/pots/logic';
 import { LEVELS as FLASH_LEVELS } from '../../games/flash/logic';
-import { SHAPE_ORDER } from '../../games/patterns/logic';
-import { PLANTS } from '../../games/water/logic';
+import { PATTERN_LEVELS } from '../../games/patterns/logic';
+import { WATER_LEVELS } from '../../games/water/logic';
 import { WORLDS, type WorldId } from '../../state/worlds';
 import type { ParentPage } from './ParentArea';
 import { WorldGroup } from './controls';
@@ -87,22 +87,21 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
     {
       world: 'garden',
       name: 'Locsolás',
-      detail: `${progress.garden.length} virág · ${progress.waterRound >= PLANTS.length ? '11–20' : '2–10'} csepp`,
+      detail: `${progress.garden.length} virág · ${at('water', WATER_LEVELS)}`,
       share: levelShare('water')
     },
     {
       world: 'garden',
       name: 'Virágsor',
-      detail: `${progress.patternsSolved} sor · ${SHAPE_ORDER[progress.patternRound % SHAPE_ORDER.length]} minta`,
+      detail: `${progress.patternsSolved} sor · ${at('patterns', PATTERN_LEVELS)}`,
       share: levelShare('patterns')
     },
     { world: 'garden', name: 'Magvillantás', detail: at('flash', FLASH_LEVELS), share: levelShare('flash') },
     {
       world: 'garden',
       name: 'Mézút',
-      detail: `${progress.traceSolved} leírt szám${progress.traceFadedSolved ? ` (${progress.traceFadedSolved} halvány úton)` : ''} · következő: ${buildTraceRound(progress.traceRound).digit}`,
-      // First lap on the full trail, then the faded lap.
-      share: Math.min(1, (Math.min(progress.traceSolved - progress.traceFadedSolved, TRACE_ORDER.length) + progress.traceFadedSolved) / (2 * TRACE_ORDER.length))
+      detail: `${progress.traceSolved} leírt szám · ${at('trace', TRACE_LEVELS)}`,
+      share: levelShare('trace')
     },
     {
       world: 'garden',

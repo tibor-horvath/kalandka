@@ -42,6 +42,28 @@ export function plantForRound(round: number): Plant {
   return { ...plant, target: 11 + ((r * 7) % 10) };
 }
 
+export interface WaterLevel {
+  /** Shown to parents. */
+  name: string;
+  min: number;
+  max: number;
+}
+
+export const WATER_LEVELS: WaterLevel[] = [
+  { name: '2–5 csepp', min: 2, max: 5 },
+  { name: '6–10 csepp', min: 6, max: 10 },
+  { name: '11–20 csepp', min: 11, max: 20 }
+];
+
+/** The plant of a round on a level of the ladder: the plants with that many drops, or any plant with 11–20. */
+export function plantForLevel(level: number, round: number): Plant {
+  const r = Math.max(0, Math.floor(round));
+  const { min, max } = WATER_LEVELS[level];
+  if (min > 10) return plantForRound(PLANTS.length + r);
+  const pool = PLANTS.filter((p) => p.target >= min && p.target <= max);
+  return pool[r % pool.length];
+}
+
 export type WaterStatus = 'under' | 'done' | 'over';
 
 export function statusOf(count: number, target: number): WaterStatus {

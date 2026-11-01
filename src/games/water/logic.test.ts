@@ -1,9 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { PLANTS, addDrop, feedback, growth, introSpeech, plantForRound, removeDrop, slotKinds, statusOf } from './logic';
+import { PLANTS, WATER_LEVELS, addDrop, feedback, growth, introSpeech, plantForLevel, plantForRound, removeDrop, slotKinds, statusOf } from './logic';
 
 const bluebell = PLANTS[0];
 
 describe('watering game', () => {
+  it('keeps every plant of a level within its drops, and gets to all nine plants', () => {
+    WATER_LEVELS.forEach(({ min, max }, level) => {
+      for (let round = 0; round < 40; round++) {
+        const { target } = plantForLevel(level, round);
+        expect(target).toBeGreaterThanOrEqual(min);
+        expect(target).toBeLessThanOrEqual(max);
+      }
+    });
+    const met = new Set([0, 1].flatMap((level) => Array.from({ length: 9 }, (_, round) => plantForLevel(level, round).id)));
+    expect(met.size).toBe(PLANTS.length);
+  });
+
   it('knows when the plant has enough water', () => {
     expect(statusOf(5, 6)).toBe('under');
     expect(statusOf(6, 6)).toBe('done');

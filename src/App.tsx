@@ -300,8 +300,8 @@ function Game() {
         {screen === 'workshop' && <Workshop onBack={() => go('home')} onAlbum={() => openAlbum('workshop')} />}
         {screen === 'album' && <Album key={albumFrom} world={albumFrom === 'workshop' ? 'robot' : 'garden'} onBack={() => go(albumFrom)} />}
         {screen === 'learn' && <Learn key={progress.learnRound} onBack={() => go('home')} />}
-        {screen === 'water' && <Water onBack={() => go('home')} />}
-        {screen === 'patterns' && <Patterns onBack={() => go('home')} />}
+        {screen === 'water' && <Water key={progress.waterRound} onBack={() => go('home')} />}
+        {screen === 'patterns' && <Patterns key={progress.patternRound} onBack={() => go('home')} />}
         {screen === 'flash' && <Flash key={progress.flashRound} onBack={() => go('home')} />}
         {screen === 'add' && <Add key={progress.addRound} onBack={() => go('home')} />}
         {screen === 'trace' && <Trace key={progress.traceRound} onBack={() => go('home')} />}

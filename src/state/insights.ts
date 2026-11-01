@@ -1,7 +1,7 @@
 import { ADD_LEVELS } from '../games/add/logic';
 import { LEVELS as FLASH_LEVELS } from '../games/flash/logic';
 import { LEARN_MAX } from '../games/learn/logic';
-import { SHAPE_ORDER } from '../games/patterns/logic';
+import { PATTERN_LEVELS } from '../games/patterns/logic';
 import { POTS_LEVELS } from '../games/pots/logic';
 import { CODE_LEVELS } from '../games/robot/code';
 import { FIX_LEVELS } from '../games/robot/fix';
@@ -10,8 +10,8 @@ import { PATH_LEVELS } from '../games/robot/path';
 import { SCALE_LEVELS } from '../games/robot/scale';
 import { SEQ_LEVELS } from '../games/robot/seq';
 import { SORT_LEVELS } from '../games/robot/sort';
-import { TRACE_ORDER } from '../games/trace/logic';
-import { PLANTS } from '../games/water/logic';
+import { TRACE_LEVELS } from '../games/trace/logic';
+import { WATER_LEVELS } from '../games/water/logic';
 import { LADDER_RULES, ladderOf, type LadderGame } from './ladder';
 import type { Progress } from './progress';
 import { recentMarks, type LoggedGame } from './taskLog';
@@ -65,13 +65,13 @@ const levelName = (levels: { name: string }[], i: number) => levels[Math.min(lev
 const GAMES: GameText[] = [
   {
     id: 'water', world: 'garden', name: 'Locsolás', where: 'A Locsolásban', unit: 'növény',
-    level: (p) => (p.waterRound >= PLANTS.length ? '11–20 csepp' : '2–10 csepp'),
+    level: (p) => levelName(WATER_LEVELS, ladderOf(p, 'water').level),
     hard: 'Többször is túlöntözte a növényt, mielőtt kijött a pontos szám.',
     home: 'Töltsetek egy pohárba pontosan annyi kanál vizet, amennyit kitaláltok.'
   },
   {
     id: 'patterns', world: 'garden', name: 'Virágsor', where: 'A Virágsorban', unit: 'sor',
-    level: (p) => (p.patternRound >= SHAPE_ORDER.length ? 'Hiányzó virág' : 'Mi jön ezután?'),
+    level: (p) => levelName(PATTERN_LEVELS, ladderOf(p, 'patterns').level),
     hard: 'A legutóbbi soroknál többször is mellényúlt, mielőtt megtalálta a jó virágot.',
     home: 'Rakjatok sort kanálból és villából, és kérdezd meg, mi jön ezután.'
   },
@@ -83,7 +83,7 @@ const GAMES: GameText[] = [
   },
   {
     id: 'trace', world: 'garden', name: 'Mézút', where: 'A Mézútban', unit: 'számjegy',
-    level: (p) => (p.traceRound >= TRACE_ORDER.length ? 'Halvány út' : 'Mézes út'),
+    level: (p) => levelName(TRACE_LEVELS, ladderOf(p, 'trace').level),
     hard: 'Több számjegynél letért az útról, vagy megkérte Csepit, hogy mutassa meg.',
     home: 'Írjatok számokat ujjal lisztbe, homokba vagy a párás ablakra.'
   },

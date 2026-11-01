@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { LADDER_RULES, afterSolve, ladderMeter, ladderOf, startAt, type Ladder, type LadderRule } from './ladder';
+import { buildTraceRound } from '../games/trace/logic';
+import { LADDER_RULES, afterSolve, ladderMeter, ladderOf, placeAt, startAt, type Ladder, type LadderRule } from './ladder';
 import { DEFAULT_PROGRESS } from './progress';
 
 const rule: LadderRule = { levels: 4, up: 4, down: 2, cooldown: 3 };
@@ -90,5 +91,39 @@ describe('saves from before the ladders', () => {
       level: 4, streak: 2, helpRun: 1, solvedTop: 4
     });
     expect(ladderOf(DEFAULT_PROGRESS, 'add').solvedTop).toBe(-1);
+  });
+
+  it('keeps Locsolás on the drops its plants had reached', () => {
+    const at = (waterRound: number) => ladderOf({ ...DEFAULT_PROGRESS, waterRound }, 'water');
+    expect(at(0)).toMatchObject({ level: 0, solvedTop: -1 });
+    expect(at(5)).toMatchObject({ level: 1, solvedTop: 1 });
+    expect(at(9)).toMatchObject({ level: 2, reached: 2, solvedTop: 1 });
+    expect(at(10)).toMatchObject({ level: 2, solvedTop: 2 });
+  });
+
+  it('keeps Virágsor on the shape it had reached, and in the row once the first lap was done', () => {
+    const at = (patternRound: number) => ladderOf({ ...DEFAULT_PROGRESS, patternRound }, 'patterns').level;
+    expect([0, 1, 2, 3, 4, 30].map(at)).toEqual([0, 1, 2, 2, 3, 3]);
+  });
+
+  it('keeps Mézút on the same half of the digits and the same trail, at the same digit', () => {
+    const at = (traceRound: number) => ladderOf({ ...DEFAULT_PROGRESS, traceRound }, 'trace');
+    expect([0, 4, 5, 9, 10, 15, 22].map((r) => at(r).level)).toEqual([0, 0, 1, 1, 2, 3, 2]);
+    expect(buildTraceRound(at(7).level, at(7).sinceChange).digit).toBe(8);
+  });
+});
+
+describe('placing a new child by age', () => {
+  it('starts on the level with the ones below counted as done', () => {
+    expect(placeAt(ladderOf(DEFAULT_PROGRESS, 'sort'), 3)).toMatchObject({ level: 3, reached: 3, solvedTop: 2 });
+  });
+
+  it('leaves room to step down, unlike a level a parent set', () => {
+    let l = placeAt(ladderOf(DEFAULT_PROGRESS, 'sort'), 3);
+    for (let i = 0; i < 3; i++) l = afterSolve(l, rule, true).ladder;
+    expect(l.level).toBe(2);
+    let set = startAt(ladderOf(DEFAULT_PROGRESS, 'sort'), 3);
+    for (let i = 0; i < 3; i++) set = afterSolve(set, rule, true).ladder;
+    expect(set.level).toBe(3);
   });
 });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ADD_LEVELS } from '../games/add/logic';
+import { ladderOf } from './ladder';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
 import {
   BEDS,
@@ -217,9 +218,24 @@ describe('stickers', () => {
 
   it('gives the faded-trail stickers only for digits written on a faded trail', () => {
     const ids = (p: Progress) => earnedStickers(p).map((s) => s.id).filter((id) => id.startsWith('trace'));
-    expect(ids({ ...DEFAULT_PROGRESS, traceSolved: 30 })).toEqual(['trace-5', 'trace-9', 'trace-0']);
-    expect(ids({ ...DEFAULT_PROGRESS, traceSolved: 15, traceFadedSolved: 5 })).toContain('trace-fade');
-    expect(ids({ ...DEFAULT_PROGRESS, traceSolved: 20, traceFadedSolved: 10 })).toContain('trace-memory');
+    expect(ids({ ...DEFAULT_PROGRESS, traceSolved: 30, traceRound: 30 })).toEqual(['trace-5', 'trace-9', 'trace-0']);
+    expect(ids({ ...DEFAULT_PROGRESS, traceSolved: 15, traceRound: 15, traceFadedSolved: 5 })).toContain('trace-fade');
+    expect(ids({ ...DEFAULT_PROGRESS, traceSolved: 20, traceRound: 20, traceFadedSolved: 10 })).toContain('trace-memory');
+  });
+
+  it('keeps skill stickers for the skill, however many tasks a child repeated on an easier level', () => {
+    const ids = (p: Progress) => earnedStickers(p).map((s) => s.id);
+    // A child who stays on 1–5, on two shapes, or on small plants has solved plenty but has not done the rest yet.
+    const stayed = { ...DEFAULT_PROGRESS, traceSolved: 40, patternsSolved: 40, garden: Array<string>(40).fill('tulipan') };
+    expect(ids(stayed)).toEqual(['water-1', 'patterns-ab', 'trace-5']);
+    const up: Progress = { ...stayed, ladders: { water: { ...ladderOf(stayed, 'water'), level: 2, reached: 2, solvedTop: 2 }, patterns: { ...ladderOf(stayed, 'patterns'), level: 3, reached: 3, solvedTop: 3 } } };
+    expect(ids(up)).toEqual(expect.arrayContaining(['water-10', 'water-20', 'patterns-abc', 'patterns-all']));
+  });
+
+  it('leaves the stickers of a save from before these ladders in place', () => {
+    const ids = (p: Progress) => earnedStickers(p).map((s) => s.id);
+    const old = { ...DEFAULT_PROGRESS, waterRound: 18, garden: Array<string>(18).fill('tulipan'), patternRound: 4, patternsSolved: 4, traceRound: 20, traceSolved: 20, traceFadedSolved: 10 };
+    expect(ids(old)).toEqual(['water-1', 'water-10', 'water-20', 'patterns-ab', 'patterns-abc', 'patterns-all', 'trace-5', 'trace-9', 'trace-0', 'trace-fade', 'trace-memory']);
   });
 
   it('finds the Méhecske levels they are tied to', () => {
@@ -228,7 +244,7 @@ describe('stickers', () => {
 
   it('earns nothing on a fresh start and steps up with progress', () => {
     expect(earnedStickers(DEFAULT_PROGRESS)).toEqual([]);
-    const p = { ...DEFAULT_PROGRESS, traceSolved: 9 };
+    const p = { ...DEFAULT_PROGRESS, traceSolved: 9, traceRound: 9 };
     expect(earnedStickers(p).map((s) => s.id)).toEqual(['trace-5', 'trace-9']);
   });
 
