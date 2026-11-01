@@ -23,8 +23,13 @@ export interface PageRef {
 /** What an address says: a page, a link from a newer app than this one, or something that is not a link of ours. */
 export type ReadLink = { kind: 'page'; ref: PageRef } | { kind: 'newer' } | { kind: 'bad' };
 
+/** A page's name: in its link, and in `Progress.pagesDone` once a grown-up marks it done. Starts with the game's id. */
+export function pageKey(r: PageRef): string {
+  return `${r.id}.${r.rev}.${r.level}.${DENSITY_CODES[r.density]}.${r.batch}.${r.page}`;
+}
+
 export function linkHash(r: PageRef): string {
-  return `#lap${FORMAT}=${r.id}.${r.rev}.${r.level}.${DENSITY_CODES[r.density]}.${r.batch}.${r.page}`;
+  return `#lap${FORMAT}=${pageKey(r)}`;
 }
 
 /** The whole address for the QR code. */

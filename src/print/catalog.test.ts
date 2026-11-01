@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROGRESS } from '../state/progress';
+import { markPageDone, pagesDoneIn } from '../state/rewards';
 import { PRINT_SHEETS, buildPages, openLink, pageRef, sheetFor, tasksPerPage } from './catalog';
-import { linkHash, readLink } from './link';
+import { linkHash, pageKey, readLink } from './link';
 import REVISIONS from './revisions.json';
 import { DENSITIES, MAX_PAGES } from './sheet';
 
@@ -76,6 +77,13 @@ describe('answer links', () => {
   it('fits a version 4 code on the real address, so the printed square stays about 20 mm', () => {
     const longest = PRINT_SHEETS.map((s) => `https://www.kalandka.hu/${linkHash(pageRef(s, { level: 9, density: 'normal', pages: 5, batch: 999_999 }, 4))}`);
     for (const url of longest) expect(url.length, url).toBeLessThanOrEqual(62);
+  });
+
+  it('counts a finished page of every game in that game’s world', () => {
+    for (const s of PRINT_SHEETS) {
+      const key = pageKey(pageRef(s, { level: 0, density: 'normal', pages: 1, batch: 1 }, 0));
+      expect(pagesDoneIn(markPageDone(DEFAULT_PROGRESS, key), s.world), s.id).toBe(1);
+    }
   });
 
   it('sees through links it did not print', () => {

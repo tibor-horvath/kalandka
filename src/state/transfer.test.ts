@@ -31,6 +31,12 @@ function throughQr(piece: Uint8Array): Uint8Array {
 const scanAll = (pieces: Uint8Array[], order = pieces.map((_, i) => i)) => order.reduce<Collected | null>((c, i) => collect(c, pieces[i]), null);
 
 describe('transfer', () => {
+  it('carries the pages a grown-up marked done, so a child cannot earn them twice', async () => {
+    const s = applyUpdate(family(), 'b', (p) => ({ ...p, pagesDone: ['code.1.2.n.7.0'] }));
+    const back = await unpack(scanAll(toPieces(await pack(s)))!);
+    expect(progressOf(back!, 'b').pagesDone).toEqual(['code.1.2.n.7.0']);
+  });
+
   it('carries every child, their progress, stickers and levels, and the device settings', async () => {
     const s = family();
     const c = scanAll(toPieces(await pack(s)));

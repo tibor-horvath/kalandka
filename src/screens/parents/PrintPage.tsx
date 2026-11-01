@@ -1,10 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { MAX_PAGES, PRINT_SHEETS, buildPages, pageRef, saveChoice, savedChoice, sheetFor, tasksPerPage, type PrintChoice } from '../../print/catalog';
-import { linkUrl } from '../../print/link';
+import { linkUrl, pageKey } from '../../print/link';
 import { DENSITIES, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
 import { useProfiles, type AgeBand } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
+import { markPageDone, pagesDoneIn } from '../../state/rewards';
 import { WORLDS } from '../../state/worlds';
 import { WorldGroup } from './controls';
 
@@ -92,8 +93,39 @@ function Stepper({ label, value, dots, onStep, atMin, atMax }: { label: string; 
   );
 }
 
+/** The grown-up marks the pages the child finished: the pages of the printout chosen here. Each counts once, towards the Feladatlapok stickers. */
+function DonePages({ s, choice }: { s: PrintSpec<unknown>; choice: PrintChoice }) {
+  const { progress, update } = useProgress();
+  return (
+    <section className="pa-card ps-done">
+      <h2 className="pa-h2">Kész lapok</h2>
+      <p className="pa-muted">Ha a gyerek befejezett egy lapot, jelöld meg itt. Mindkét világban matrica jár az első, az ötödik és a tizenötödik kész lapért.</p>
+      <div className="pa-row">
+        {Array.from({ length: choice.pages }, (_, i) => {
+          const key = pageKey(pageRef(s, choice, i));
+          const done = progress.pagesDone.includes(key);
+          const name = choice.pages > 1 ? `${i + 1}. lap` : 'A lap';
+          return (
+            <button key={key} type="button" className={`pa-btn${done ? ' pa-btn--go' : ''}`} disabled={done} onClick={() => update((p) => markPageDone(p, key))}>
+              {done && (
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12.5l4.5 4.5L19 7.5" />
+                </svg>
+              )}
+              {name} {done ? 'kész' : 'megjelölése'}
+            </button>
+          );
+        })}
+      </div>
+      <p className="pa-muted" aria-live="polite">
+        Ebben a világban eddig <b>{pagesDoneIn(progress, s.world)}</b> kész lap.
+      </p>
+    </section>
+  );
+}
+
 /** One game's sheet: level, size and pages, a preview, the answers (on the tablet only) and the print button. */
-function GameSheet({ id, kidId, guestAge, onBack }: { id: PrintId; kidId: string; guestAge?: AgeBand; onBack: () => void }) {
+function GameSheet({ id, kidId, guestAge, canMark, onBack }: { id: PrintId; kidId: string; guestAge?: AgeBand; canMark?: boolean; onBack: () => void }) {
   const { progress } = useProgress();
   const { profiles } = useProfiles();
   const s = sheetFor(id);
@@ -203,6 +235,7 @@ function GameSheet({ id, kidId, guestAge, onBack }: { id: PrintId; kidId: string
           <p className="pa-muted">
             A megoldások a kinyomtatott lapon nincsenek, csak a képernyőn látszanak: a lap QR-kódját telefonnal beolvasva bármikor megnézhetitek őket.
           </p>
+          {canMark && <DonePages s={s} choice={choice} />}
         </div>
 
         <div className="ps-side">
@@ -223,12 +256,15 @@ function GameSheet({ id, kidId, guestAge, onBack }: { id: PrintId; kidId: string
   );
 }
 
-/** Printable sheets: every game on paper, for play without a device. In the parents' corner, and open to all from "Ki játszik?" and the home screens (PrintArea). */
-export function PrintPage({ kidId, guestAge }: { kidId: string; guestAge?: AgeBand }) {
+/**
+ * Printable sheets: every game on paper, for play without a device. In the parents' corner, and open to all from "Ki játszik?" and the home screens (PrintArea).
+ * `canMark` only behind the parents' gate: marking a page earns stickers, so a child must not reach it.
+ */
+export function PrintPage({ kidId, guestAge, canMark }: { kidId: string; guestAge?: AgeBand; canMark?: boolean }) {
   const { progress } = useProgress();
   const [open, setOpen] = useState<PrintId | null>(null);
 
-  if (open) return <GameSheet key={`${kidId}-${open}`} id={open} kidId={kidId} guestAge={guestAge} onBack={() => setOpen(null)} />;
+  if (open) return <GameSheet key={`${kidId}-${open}`} id={open} kidId={kidId} guestAge={guestAge} canMark={canMark} onBack={() => setOpen(null)} />;
 
   return (
     <div className="pa-page">
