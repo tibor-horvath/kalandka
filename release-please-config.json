@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "5cb627d0ded4798665b31f8f8fd9107f0b99871f",
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "kalandka",
+      "include-component-in-tag": false,
+      "release-as": "1.0.0",
+      "changelog-sections": [
+        { "type": "feat", "section": "Added" },
+        { "type": "fix", "section": "Fixed" },
+        { "type": "refactor", "section": "Changed" },
+        { "type": "perf", "section": "Changed" },
+        { "type": "docs", "section": "Documentation", "hidden": true },
+        { "type": "ci", "section": "Continuous Integration", "hidden": true },
+        { "type": "build", "section": "Build System", "hidden": true },
+        { "type": "test", "section": "Tests", "hidden": true },
+        { "type": "style", "section": "Styles", "hidden": true },
+        { "type": "chore", "section": "Miscellaneous", "hidden": true }
+      ]
+    }
+  }
+}

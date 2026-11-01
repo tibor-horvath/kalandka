@@ -1,5 +1,6 @@
 # Build and test on every push to main and every PR, plus a secret scan of the new commits.
-# Pushes to main (and manual runs on main) then deploy the tested build to Azure Static Web Apps.
+# Pushes to main then update the release PR; merging that PR cuts a release, and only a release
+# (or a manual run on main) deploys the tested build to Azure Static Web Apps.
 name: CI
 
 on:
@@ -34,11 +35,36 @@ jobs:
     permissions:
       contents: read
 
-  deploy:
-    name: Deploy to production
-    # Only main is deployed; PRs stop after the checks above.
+  release:
+    name: Release
+    # Only main is released; PRs stop after the checks above.
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: [node, secrets]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Queue, never cancel: stopping mid-run could leave a tag without a release.
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+    steps:
+      # Opens or updates the release PR; once that PR is merged, tags vX.Y.Z and cuts a GitHub release.
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  deploy:
+    name: Deploy to production
+    # A push to main only reaches production as part of a release; a manual run redeploys main as it is.
+    if: needs.release.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
+    needs: [node, secrets, release]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:

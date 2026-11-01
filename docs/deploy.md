@@ -2,7 +2,7 @@
 
 Kalandka is a static PWA: `npm run build` produces `dist/`, and that folder is all there is to host.
 It runs on **Azure Static Web Apps** (Free tier), created from [`infra/main.bicep`](../infra/main.bicep) and filled with the Static Web Apps CLI.
-Every push to `main` is built, tested and deployed by GitHub Actions (`.github/workflows/ci.yml`); see [CI](../README.md#ci).
+Every push to `main` is built and tested by GitHub Actions (`.github/workflows/ci.yml`), and only a release is deployed; see [CI](../README.md#ci).
 Manual deploys with the SWA CLI still work for previews and emergencies.
 
 ## What gets created
@@ -52,7 +52,9 @@ az account set --subscription "<subscription name or id>"
    In the GitHub repo, open Settings → Environments, create an environment named `production`, and add the value as the secret `AZURE_STATIC_WEB_APPS_API_TOKEN`.
    Optionally restrict the environment to the `main` branch, or add required reviewers to approve each deploy.
 
-4. Push to `main` (or run the CI workflow by hand on `main`) to deploy.
+4. In the GitHub repo, open Settings → Actions → General and turn on **Allow GitHub Actions to create and approve pull requests**, so the release PR can be opened.
+
+5. Run the CI workflow by hand on `main` to deploy.
 
 ### Bicep parameters
 
@@ -69,9 +71,12 @@ Re-running the deployment is safe; it only changes what differs.
 
 ## Releasing a new version
 
-Merge to `main`. The `CI` workflow builds and tests, then the **Deploy to production** job uploads that same `dist/` to the site.
+Merging to `main` does not change the live site. The `CI` workflow builds and tests the commit, then [release-please](https://github.com/googleapis/release-please) opens a release PR, or updates the one already open, with the next version number and the changelog.
+Only `feat`, `fix`, `refactor` and `perf` commits appear in the changelog; a release PR is not opened for the other types on their own.
+
+To release, merge the release PR. Its `CI` run tags `vX.Y.Z`, creates the GitHub release, and the **Deploy to production** job uploads the `dist/` from that run to the site.
 The job only runs when the build, tests and secret scan passed, and the run page links the live URL.
-To redeploy without a new commit, run the `CI` workflow from the Actions tab on `main`.
+To redeploy `main` without a release, run the `CI` workflow from the Actions tab on `main`. That also ships anything merged since the last release.
 
 By hand, from a local checkout:
 
@@ -146,10 +151,10 @@ Static Web Apps offers no stable A record for this site, and Rackhost's DNS supp
 
 ## Rolling back
 
-Quickest: revert the bad commit on `main`; the pipeline deploys the result.
+Quickest: revert the bad commit on `main`, then merge the release PR that follows; the pipeline deploys the result.
 
-Within 7 days (the build artifact's retention), you can also open the last good `CI` run on `main` in the Actions tab and re-run its **Deploy to production** job, which uploads that run's build again.
-The next push to `main` deploys over it, so revert the bad commit too.
+Within 7 days (the build artifact's retention), you can also open the last good release's `CI` run on `main` in the Actions tab and re-run its **Deploy to production** job, which uploads that run's build again.
+The next release deploys over it, so revert the bad commit too.
 
 Or by hand: check out the last good commit, build and deploy it:
 
