@@ -135,11 +135,28 @@ export function digitShape(digit: number): DigitShape {
 
 export interface TraceRound extends DigitShape {
   /**
-   * Halvány út: from the second lap on the trail fades to faint dots and a few arrows, with no lane
-   * or honey drops, so the child writes the digit from memory. Following the finger stays just as forgiving.
+   * Halvány út: the trail fades to faint dots and a few arrows, with no lane or honey drops,
+   * so the child writes the digit from memory. Following the finger stays just as forgiving.
    */
   faded: boolean;
 }
+
+export interface TraceLevel {
+  /** Shown to parents. */
+  name: string;
+  digits: number[];
+  faded: boolean;
+}
+
+const FIRST_HALF = TRACE_ORDER.slice(0, 5);
+const SECOND_HALF = TRACE_ORDER.slice(5);
+
+export const TRACE_LEVELS: TraceLevel[] = [
+  { name: '1–5, mézes út', digits: FIRST_HALF, faded: false },
+  { name: '6–0, mézes út', digits: SECOND_HALF, faded: false },
+  { name: '1–5, halvány út', digits: [3, 1, 5, 2, 4], faded: true },
+  { name: '6–0, halvány út', digits: [8, 0, 6, 9, 7], faded: true }
+];
 
 /** A fixed shuffle of TRACE_ORDER for each lap after the first, never repeating the last digit of the lap before. */
 export function lapOrder(lap: number): number[] {
@@ -156,10 +173,10 @@ export function lapOrder(lap: number): number[] {
   return order;
 }
 
-export function buildTraceRound(round: number): TraceRound {
-  const r = Math.max(0, Math.floor(round));
-  const lap = Math.floor(r / TRACE_ORDER.length);
-  return { ...digitShape(lapOrder(lap)[r % TRACE_ORDER.length]), faded: lap > 0 };
+/** The digit after `done` digits on a level: a level always starts from its first digit, and goes round them all. */
+export function buildTraceRound(level: number, done: number): TraceRound {
+  const { digits, faded } = TRACE_LEVELS[level];
+  return { ...digitShape(digits[Math.max(0, Math.floor(done)) % digits.length]), faded };
 }
 
 /** Where a faded trail shows a direction arrow: a couple per stroke, away from the start and end. */

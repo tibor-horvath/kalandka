@@ -5,7 +5,6 @@ import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
 import { DotFace } from '../components/seeds';
 import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import {
-  TRACE_ORDER,
   BOX_H,
   BOX_W,
   GRAB_THE_BEE,
@@ -28,7 +27,7 @@ import {
 } from '../games/trace/logic';
 import { speak } from '../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../lib/sound';
-import { evenLevels, levelMeter } from '../state/levelMeter';
+import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../state/ladder';
 import { useProgress } from '../state/progress';
 import { logTask } from '../state/taskLog';
 
@@ -89,11 +88,15 @@ function TrailArrow({ at, angle }: { at: Pt; angle: number }) {
 
 /**
  * Mézút: lead the bee along the dotted honey trail to write a digit. No failure: off the trail the bee waits.
- * From the second lap the trail is faded (Halvány út) and the see-through bee only comes when asked or after a quiet spell.
+ * On the upper levels the trail is faded (Halvány út) and the see-through bee only comes when asked or after a quiet spell.
  */
 export function Trace({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  const shape = useMemo(() => buildTraceRound(progress.traceRound), [progress.traceRound]);
+  // The ladder when this digit started: the digit keeps its level even after its win steps up or down.
+  const [startLadder] = useState(() => ladderOf(progress, 'trace'));
+  /** This digit's win on the ladder: the meter shows it, and it may step up or down. */
+  const [step, setStep] = useState<LadderStep | null>(null);
+  const shape = useMemo(() => buildTraceRound(startLadder.level, startLadder.sinceChange), [startLadder]);
   const drops = useMemo(() => shape.strokes.map(checkpoints), [shape]);
   const multi = shape.strokes.length > 1;
 
@@ -211,8 +214,11 @@ export function Trace({ onBack }: { onBack: () => void }) {
     if (!rewarded.current) {
       rewarded.current = true;
       const helped = askedWay.current || strayTalks.current >= 2;
+      const s = afterSolve(startLadder, LADDER_RULES.trace, helped);
+      setStep(s);
+      if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
       update((p) =>
-        logTask({ ...p, seeds: p.seeds + 1, traceSolved: p.traceSolved + 1, traceFadedSolved: p.traceFadedSolved + (shape.faded ? 1 : 0) }, 'trace', helped)
+        withLadder(logTask({ ...p, seeds: p.seeds + 1, traceSolved: p.traceSolved + 1, traceFadedSolved: p.traceFadedSolved + (shape.faded ? 1 : 0) }, 'trace', helped), 'trace', s.ladder)
       );
     }
   };
@@ -284,8 +290,7 @@ export function Trace({ onBack }: { onBack: () => void }) {
 
   // App keys this screen by round, so the next digit remounts with fresh state.
   const next = () => update((p) => ({ ...p, traceRound: p.traceRound + 1 }));
-  // Half a lap of digits per level: 1–5 and 6–0 with the full trail, then both halves faded.
-  const meter = levelMeter(progress.traceRound, evenLevels(4, TRACE_ORDER.length / 2), done);
+  const meter = ladderMeter(startLadder, LADDER_RULES.trace, step);
   const levelUp = useLevelUp(meter, next);
 
   const guide = strayed && !done ? pts.slice(idx, idx + GUIDE_AHEAD) : null;
@@ -300,7 +305,7 @@ export function Trace({ onBack }: { onBack: () => void }) {
         </RoundButton>
         <div className="topbar__title">
           <h1 className="screen-title">Mézút</h1>
-          <LevelMeter meter={meter} world="garden" justSolved={done} />
+          <LevelMeter meter={meter} world="garden" justSolved={done && !step?.helped} />
         </div>
         <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
           <SpeakerIcon />

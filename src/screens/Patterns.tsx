@@ -2,30 +2,31 @@ import { useEffect, useRef, useState } from 'react';
 import { PatternFlower } from '../components/art';
 import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
 import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { CHOICES, FLOWER_LABELS, SHAPE_ORDER, buildRound, hintFeedback, isEndGap, screenTitle, solvedFeedback, startFeedback, type FlowerKind } from '../games/patterns/logic';
+import { CHOICES, FLOWER_LABELS, buildLevelRound, hintFeedback, isEndGap, screenTitle, solvedFeedback, startFeedback, type FlowerKind } from '../games/patterns/logic';
 import { speak } from '../lib/speech';
-import { evenLevels, levelMeter } from '../state/levelMeter';
+import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../state/ladder';
 import { useProgress } from '../state/progress';
 import { logTask } from '../state/taskLog';
 
 export function Patterns({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  const roundNo = progress.patternRound;
-  const round = buildRound(roundNo);
+  // The ladder when this row started: the row keeps its level even after its win steps up or down.
+  const [startLadder] = useState(() => ladderOf(progress, 'patterns'));
+  const [round] = useState(() => buildLevelRound(startLadder.level, progress.patternRound));
   const [picked, setPicked] = useState<FlowerKind | null>(null);
   const [wrong, setWrong] = useState<FlowerKind | null>(null);
   const [misses, setMisses] = useState(0);
-  const rewarded = useRef<number | null>(null);
+  /** This row's win on the ladder: the meter shows it, and it may step up or down. */
+  const [step, setStep] = useState<LadderStep | null>(null);
+  const rewarded = useRef(false);
 
   const solved = picked === round.answer;
   const fb = solved ? solvedFeedback() : wrong ? hintFeedback(round, misses) : startFeedback(round);
 
   useEffect(() => {
-    setPicked(null);
-    setWrong(null);
-    setMisses(0);
-    speak(startFeedback(buildRound(roundNo)).speech);
-  }, [roundNo]);
+    speak(startFeedback(round).speech);
+    // One row per mount: App keys this screen by round.
+  }, []);
 
   const pick = (kind: FlowerKind) => {
     if (solved) return;
@@ -33,9 +34,13 @@ export function Patterns({ onBack }: { onBack: () => void }) {
       setPicked(kind);
       setWrong(null);
       speak(solvedFeedback().speech);
-      if (rewarded.current !== roundNo) {
-        rewarded.current = roundNo;
-        update((p) => logTask({ ...p, seeds: p.seeds + 1, patternsSolved: p.patternsSolved + 1 }, 'patterns', misses > 0));
+      if (!rewarded.current) {
+        rewarded.current = true;
+        const helped = misses > 0;
+        const s = afterSolve(startLadder, LADDER_RULES.patterns, helped);
+        setStep(s);
+        if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
+        update((p) => withLadder(logTask({ ...p, seeds: p.seeds + 1, patternsSolved: p.patternsSolved + 1 }, 'patterns', helped), 'patterns', s.ladder));
       }
     } else {
       const m = misses + 1;
@@ -46,8 +51,7 @@ export function Patterns({ onBack }: { onBack: () => void }) {
   };
 
   const next = () => update((p) => ({ ...p, patternRound: p.patternRound + 1 }));
-  // Two levels: the first lap of shapes asks what comes next, later laps hide a flower inside the row.
-  const meter = levelMeter(roundNo, evenLevels(2, SHAPE_ORDER.length), solved);
+  const meter = ladderMeter(startLadder, LADDER_RULES.patterns, step);
   const levelUp = useLevelUp(meter, next);
   const slots: (FlowerKind | null)[] = round.shown.map((k, i) => (i === round.gap && solved ? round.answer : k));
   const gapLabel = isEndGap(round) ? 'Kérdőjel: ide jön a következő virág' : 'Kérdőjel: ide hiányzik egy virág';
@@ -62,7 +66,7 @@ export function Patterns({ onBack }: { onBack: () => void }) {
         </RoundButton>
         <div className="topbar__title">
           <h1 className="screen-title">{screenTitle(round)}</h1>
-          <LevelMeter meter={meter} world="garden" justSolved={solved} />
+          <LevelMeter meter={meter} world="garden" justSolved={solved && !step?.helped} />
         </div>
         <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
           <SpeakerIcon />

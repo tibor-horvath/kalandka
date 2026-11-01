@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { PLANTS } from '../games/water/logic';
+import { ladderOf, placeAt, withLadder, type LadderGame } from './ladder';
 import { DEFAULT_PROGRESS, ProgressContext, readProgress, type Progress, type Update } from './progress';
+import { markEarnedSeen } from './rewards';
 
 // Several children can play on one device. Each child has a profile (name, figure, age) and their own
 // progress: garden, seeds, levels and screen time. Csepi's voice, the sounds and the evening rest
@@ -73,11 +74,26 @@ export function progressOf(s: Profiles, id: string): Progress {
   return { ...DEFAULT_PROGRESS, ...s.progress[id], ...s.shared };
 }
 
+/**
+ * Where a child of this age starts on each ladder (0-based; a game left out starts at the bottom). On the low
+ * side on purpose: a level too easy is climbed in a few tasks, while starting too high means failing first.
+ */
+export const AGE_LEVELS: Record<Exclude<AgeBand, '5'>, Partial<Record<LadderGame, number>>> = {
+  '6': { water: 1, patterns: 1, flash: 1, add: 2, sort: 1, scale: 1 },
+  '7+': { water: 2, patterns: 2, trace: 2, flash: 2, add: 5, pots: 1, path: 2, sort: 3, scale: 2, seq: 2, mirror: 1, code: 2, fix: 1 }
+};
+
+function placed(p: Progress, levels: Partial<Record<LadderGame, number>>): Progress {
+  const games = Object.entries(levels) as [LadderGame, number][];
+  // Levels below the starting one count as done, but the child did not play for them: no sticker celebration.
+  return markEarnedSeen(games.reduce((q, [game, level]) => withLadder(q, game, placeAt(ladderOf(q, game), level)), p));
+}
+
 /** Starting levels for a new child of this age. */
 export function startingProgress(age: AgeBand | null): Progress {
-  if (age === '6') return { ...DEFAULT_PROGRESS, learnRound: 5 };
+  if (age === '6') return placed({ ...DEFAULT_PROGRESS, learnRound: 5 }, AGE_LEVELS['6']);
   // Everything is open from the start, so Csepi says hello instead of announcing unlocks.
-  if (age === '7+') return { ...DEFAULT_PROGRESS, learnRound: 10, waterRound: PLANTS.length, unlockAll: true, flashAnnounced: true, addAnnounced: true };
+  if (age === '7+') return placed({ ...DEFAULT_PROGRESS, learnRound: 10, unlockAll: true, flashAnnounced: true, addAnnounced: true }, AGE_LEVELS['7+']);
   return DEFAULT_PROGRESS;
 }
 

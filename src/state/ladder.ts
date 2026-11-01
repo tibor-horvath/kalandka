@@ -1,5 +1,6 @@
 import { ADD_LEVELS, clampLevel } from '../games/add/logic';
 import { FLASH_ROUNDS_PER_LEVEL, LEVELS as FLASH_LEVELS } from '../games/flash/logic';
+import { PATTERN_LEVELS, SHAPE_ORDER } from '../games/patterns/logic';
 import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL } from '../games/pots/logic';
 import { CODE_LEVELS, CODE_ROUNDS_PER_LEVEL } from '../games/robot/code';
 import { FIX_LEVELS, FIX_ROUNDS_PER_LEVEL } from '../games/robot/fix';
@@ -8,6 +9,8 @@ import { PATH_LEVELS, PATH_ROUNDS_PER_LEVEL } from '../games/robot/path';
 import { SCALE_LEVELS, SCALE_ROUNDS_PER_LEVEL } from '../games/robot/scale';
 import { SEQ_LEVELS, SEQ_ROUNDS_PER_LEVEL } from '../games/robot/seq';
 import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL } from '../games/robot/sort';
+import { TRACE_LEVELS, TRACE_ORDER } from '../games/trace/logic';
+import { PLANTS, WATER_LEVELS } from '../games/water/logic';
 import type { LevelMeterState } from './levelMeter';
 import type { Progress } from './progress';
 
@@ -16,7 +19,7 @@ import type { Progress } from './progress';
 // needed help and it quietly steps down. The level is kept apart from the solved counts, so stepping
 // down never takes a sticker, a seed or a bolt away.
 
-export type LadderGame = 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code' | 'fix';
+export type LadderGame = 'water' | 'patterns' | 'trace' | 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code' | 'fix';
 
 export interface LadderRule {
   levels: number;
@@ -30,9 +33,13 @@ export interface LadderRule {
 
 /**
  * One task is one answer in the garden games and one round in the workshop, where a round holds two
- * to four tasks and the level can only change between rounds.
+ * to four tasks and the level can only change between rounds. Mézút's row is one level's digits, so a
+ * child steps up only after writing every one of them.
  */
 export const LADDER_RULES: Record<LadderGame, LadderRule> = {
+  water: { levels: WATER_LEVELS.length, up: 4, down: 3, cooldown: 3 },
+  patterns: { levels: PATTERN_LEVELS.length, up: 4, down: 3, cooldown: 3 },
+  trace: { levels: TRACE_LEVELS.length, up: TRACE_LEVELS[0].digits.length, down: 3, cooldown: 3 },
   flash: { levels: FLASH_LEVELS.length, up: 4, down: 3, cooldown: 3 },
   add: { levels: ADD_LEVELS.length, up: 5, down: 3, cooldown: 3 },
   pots: { levels: POTS_LEVELS.length, up: 5, down: 3, cooldown: 3 },
@@ -83,6 +90,13 @@ const LEGACY: Partial<Record<LadderGame, { rounds: number; solved: (p: Progress)
   fix: { rounds: FIX_ROUNDS_PER_LEVEL, solved: (p) => p.fixSolved }
 };
 
+/** Games that walked a fixed order before their ladder: which level each round of that order belongs to. */
+const ROUND_LEVELS: Partial<Record<LadderGame, { round: (p: Progress) => number; level: (round: number) => number }>> = {
+  water: { round: (p) => p.waterRound, level: (r) => (r >= PLANTS.length ? 2 : r >= 4 ? 1 : 0) },
+  patterns: { round: (p) => p.patternRound, level: (r) => (r >= SHAPE_ORDER.length ? 3 : Math.min(2, r)) },
+  trace: { round: (p) => p.traceRound, level: (r) => (r >= TRACE_ORDER.length ? 2 : 0) + (r % TRACE_ORDER.length >= LADDER_RULES.trace.up ? 1 : 0) }
+};
+
 const fresh = (level = 0): Ladder => ({ level, floor: 0, streak: 0, helpRun: 0, sinceChange: 0, lastChange: null, reached: level, solvedTop: -1 });
 
 /**
@@ -95,6 +109,16 @@ function legacyLadder(p: Progress, game: LadderGame): Ladder {
   if (game === 'add') {
     const level = clampLevel(p.addLevel);
     return { ...fresh(level), streak: Math.min(rule.up - 1, p.addStreak), helpRun: p.addMisses, solvedTop: p.addSolved > 0 ? level : -1 };
+  }
+  const walked = ROUND_LEVELS[game];
+  if (walked) {
+    const round = Math.max(0, walked.round(p));
+    return {
+      ...fresh(walked.level(round)),
+      // Mézút picks its digit by this count, so the child carries on from the same digit.
+      sinceChange: game === 'trace' ? round % rule.up : 0,
+      solvedTop: round > 0 ? walked.level(round - 1) : -1
+    };
   }
   const { rounds, solved: of } = LEGACY[game]!;
   const solved = Math.max(0, of(p));
@@ -163,6 +187,14 @@ export function startAt(l: Ladder, level: number): Ladder {
     reached: Math.max(l.reached, level),
     solvedTop: Math.max(l.solvedTop, level - 1)
   };
+}
+
+/**
+ * A new child's level, guessed from their age: like a parent's starting level, but it is only a guess,
+ * so the child can still step down from it.
+ */
+export function placeAt(l: Ladder, level: number): Ladder {
+  return { ...startAt(l, level), floor: 0 };
 }
 
 /** Solves a task in `game` for this progress: the new ladder in place, and what happened. */

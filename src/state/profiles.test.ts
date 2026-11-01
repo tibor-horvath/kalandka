@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { PLANTS } from '../games/water/logic';
+import { ADD_LEVELS } from '../games/add/logic';
+import { PRINT_SHEETS } from '../print/catalog';
+import { LADDER_RULES, ladderOf, type LadderGame } from './ladder';
 import { DEFAULT_PROGRESS } from './progress';
-import { MAX_KIDS, addKid, applyUpdate, editKid, firstKid, freeAvatars, fromProgress, parseProfiles, progressOf, removeKid, setActive, startingProgress } from './profiles';
+import { newStickers } from './rewards';
+import { AGE_BANDS, MAX_KIDS, addKid, applyUpdate, editKid, firstKid, freeAvatars, fromProgress, parseProfiles, progressOf, removeKid, setActive, startingProgress } from './profiles';
 
 const two = () => addKid(fromProgress(DEFAULT_PROGRESS, 'a'), { name: 'Lili', avatar: 'ladybug', age: '5' }, 'b');
 
@@ -62,8 +65,33 @@ describe('profiles', () => {
     expect(startingProgress('6').learnRound).toBe(5);
     const big = startingProgress('7+');
     expect(big.unlockAll).toBe(true);
-    expect(big.waterRound).toBe(PLANTS.length);
+    expect(ladderOf(big, 'water').level).toBe(2);
     expect(progressOf(addKid(fromProgress(DEFAULT_PROGRESS, 'a'), { name: 'Bence', avatar: 'frog', age: '7+' }, 'c'), 'c').unlockAll).toBe(true);
+  });
+
+  it('starts older children higher on every ladder, never above the top and never with a floor', () => {
+    for (const game of Object.keys(LADDER_RULES) as LadderGame[]) {
+      const six = ladderOf(startingProgress('6'), game);
+      const seven = ladderOf(startingProgress('7+'), game);
+      expect(seven.level, game).toBeLessThan(LADDER_RULES[game].levels);
+      expect(seven.level, game).toBeGreaterThanOrEqual(six.level);
+      expect(six.floor + seven.floor, game).toBe(0);
+    }
+    expect(startingProgress('7+').ladders.add).toMatchObject({ level: ADD_LEVELS.findIndex((l) => l.name === '10-ig, továbbszámolással') });
+  });
+
+  it('does not celebrate stickers for levels the child was only placed on', () => {
+    for (const age of ['6', '7+'] as const) expect(newStickers(startingProgress(age))).toEqual([]);
+  });
+
+  it('opens the printed sheets at a level that exists, for every age', () => {
+    for (const age of [null, ...AGE_BANDS]) {
+      for (const s of PRINT_SHEETS) {
+        const level = s.current(startingProgress(age));
+        expect(level, `${age} ${s.id}`).toBeGreaterThanOrEqual(0);
+        expect(level, `${age} ${s.id}`).toBeLessThan(s.levels.length);
+      }
+    }
   });
 
   it('gives each child a different figure and stops at one per figure', () => {

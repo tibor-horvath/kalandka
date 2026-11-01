@@ -3,8 +3,8 @@ import { buildAddRound } from '../games/add/logic';
 import { ladderOf } from './ladder';
 import { buildFlashRound } from '../games/flash/logic';
 import { buildLearnRound } from '../games/learn/logic';
-import { buildRound } from '../games/patterns/logic';
-import { plantForRound } from '../games/water/logic';
+import { buildLevelRound } from '../games/patterns/logic';
+import { plantForLevel } from '../games/water/logic';
 import { LEVEL_SETTINGS } from './levels';
 import { DEFAULT_PROGRESS, migrate } from './progress';
 
@@ -25,8 +25,9 @@ describe('per-game level settings', () => {
 
   it('changes what the game actually serves', () => {
     expect(buildLearnRound(setting('learn').apply(DEFAULT_PROGRESS, 10).learnRound).count).toBe(11);
-    expect(plantForRound(setting('water').apply(DEFAULT_PROGRESS, 9).waterRound).target).toBeGreaterThan(10);
-    expect(buildRound(setting('patterns').apply(DEFAULT_PROGRESS, 1).patternRound).shape).toBe('ABC');
+    expect(plantForLevel(ladderOf(setting('water').apply(DEFAULT_PROGRESS, 2), 'water').level, 0).target).toBeGreaterThan(10);
+    expect(buildLevelRound(ladderOf(setting('patterns').apply(DEFAULT_PROGRESS, 1), 'patterns').level, 0).shape).toBe('ABC');
+    expect(ladderOf(setting('trace').apply(DEFAULT_PROGRESS, 2), 'trace')).toMatchObject({ level: 2, floor: 2 });
     const flash = setting('flash').apply(DEFAULT_PROGRESS, 3);
     expect(buildFlashRound(0, ladderOf(flash, 'flash').level).count).toBeGreaterThanOrEqual(6);
     const add = setting('add').apply({ ...DEFAULT_PROGRESS, addStreak: 3 }, 12);

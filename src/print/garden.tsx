@@ -127,7 +127,7 @@ const water = spec<Plant>({
   world: 'garden',
   game: 'Locsolás',
   levels: ['2–10 csepp (egy tízes keret)', '11–20 csepp (két tízes keret)'],
-  current: (p) => (p.waterRound >= PLANTS.length ? 1 : 0),
+  current: (p) => (ladderOf(p, 'water').level >= 2 ? 1 : 0),
   grid: (level, d) => (level === 0 ? pickGrid(d, [2, 3], [2, 4], [3, 5]) : pickGrid(d, [2, 2], [2, 3], [3, 4])),
   ask: () => 'Színezz ki pont annyi cseppet, amennyit a virág kér!',
   tip: () => 'Olvassa fel a virág számát. Ha túl sokat színez, nem baj: számolják meg együtt, mennyi lett.',
@@ -173,7 +173,8 @@ const patterns = spec<PatternTask>({
   world: 'garden',
   game: 'Virágsor',
   levels: ['AB – két virág váltakozik', 'ABC – három virág', 'AAB – kettő-egy', 'ABB – egy-kettő', 'Hiányzik a sorból (vegyes)'],
-  current: (p) => (p.patternRound >= SHAPE_ORDER.length ? SHAPE_ORDER.length : p.patternRound % SHAPE_ORDER.length),
+  // The third level of the ladder holds AAB and ABB, which have a sheet each.
+  current: (p) => [0, 1, 2, SHAPE_ORDER.length][ladderOf(p, 'patterns').level],
   grid: (_, d) => pickGrid(d, [1, 6], [1, 8], [2, 10]),
   ask: (level) => (level < SHAPE_ORDER.length ? 'Melyik virág jön ezután? Karikázd be!' : 'Melyik virág hiányzik a sorból? Karikázd be!'),
   tip: (level) =>
@@ -419,7 +420,7 @@ const trace = spec<TraceTask>({
   world: 'garden',
   game: 'Mézút',
   levels: TRACE_LEVELS,
-  current: (p) => (p.traceRound >= TRACE_ORDER.length ? 2 : p.traceRound % TRACE_ORDER.length >= 5 ? 1 : 0),
+  current: (p) => Math.min(2, ladderOf(p, 'trace').level),
   grid: (_, d) => pickGrid(d, [1, 4], [1, 5], [1, 7]),
   ask: (level) =>
     level === 0

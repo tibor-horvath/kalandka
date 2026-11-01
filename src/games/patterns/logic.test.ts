@@ -1,7 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { buildRound, hintFeedback, periodOf, screenTitle } from './logic';
+import { PATTERN_LEVELS, buildLevelRound, buildRound, hintFeedback, isEndGap, periodOf, screenTitle } from './logic';
 
 describe('flower pattern game', () => {
+  it('serves only its own shapes on a level, with the gap at the end until the last level', () => {
+    PATTERN_LEVELS.forEach(({ shapes, inside }, level) => {
+      const rounds = Array.from({ length: 12 }, (_, i) => buildLevelRound(level, i));
+      expect([...new Set(rounds.map((r) => r.shape))].sort()).toEqual([...shapes].sort());
+      for (const r of rounds) {
+        expect(isEndGap(r)).toBe(!inside);
+        expect(r.sequence[r.gap]).toBe(r.answer);
+      }
+    });
+  });
+
+  it('varies the flowers from row to row on a one-shape level', () => {
+    const rows = [0, 1, 2].map((i) => buildLevelRound(0, i).sequence.join());
+    expect(new Set(rows).size).toBe(3);
+  });
+
   it('builds an AB round first', () => {
     const r = buildRound(0);
     expect(r.shape).toBe('AB');

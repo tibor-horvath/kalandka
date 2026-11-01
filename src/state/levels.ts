@@ -2,7 +2,7 @@ import { ADD_LEVELS } from '../games/add/logic';
 import { LEVELS as FLASH_LEVELS } from '../games/flash/logic';
 import { LEARN_MAX } from '../games/learn/logic';
 import { POTS_LEVELS } from '../games/pots/logic';
-import { SHAPE_ORDER } from '../games/patterns/logic';
+import { PATTERN_LEVELS } from '../games/patterns/logic';
 import { PATH_LEVELS } from '../games/robot/path';
 import { SCALE_LEVELS } from '../games/robot/scale';
 import { CODE_LEVELS } from '../games/robot/code';
@@ -10,7 +10,8 @@ import { FIX_LEVELS } from '../games/robot/fix';
 import { MIRROR_LEVELS } from '../games/robot/mirror';
 import { SEQ_LEVELS } from '../games/robot/seq';
 import { SORT_LEVELS } from '../games/robot/sort';
-import { PLANTS } from '../games/water/logic';
+import { TRACE_LEVELS } from '../games/trace/logic';
+import { WATER_LEVELS } from '../games/water/logic';
 import { ladderOf, startAt, withLadder } from './ladder';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';
@@ -25,7 +26,7 @@ export interface LevelOption {
 }
 
 export interface LevelSetting {
-  id: 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code' | 'fix';
+  id: 'learn' | 'water' | 'patterns' | 'trace' | 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code' | 'fix';
   world: WorldId;
   game: string;
   hint: string;
@@ -40,13 +41,6 @@ const LEARN_STARTS: LevelOption[] = [
   { value: 10, label: '11-től' },
   { value: 15, label: '16-tól' }
 ];
-
-const PATTERN_LABELS: Record<string, string> = {
-  AB: 'AB – két virág váltakozik',
-  ABC: 'ABC – három virág váltakozik',
-  AAB: 'AAB – kettő-egy',
-  ABB: 'ABB – egy-kettő'
-};
 
 export const LEVEL_SETTINGS: LevelSetting[] = [
   {
@@ -65,22 +59,28 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
     id: 'water',
     world: 'garden',
     game: 'Locsolás',
-    hint: 'Hány cseppet kér egy virág.',
-    options: [
-      { value: 0, label: '2–10 csepp (egy tízes keret)' },
-      { value: PLANTS.length, label: '11–20 csepp (két tízes keret)' }
-    ],
-    current: (p) => (p.waterRound >= PLANTS.length ? PLANTS.length : 0),
-    apply: (p, v) => ({ ...p, waterRound: v === 0 ? 0 : Math.max(p.waterRound, PLANTS.length) })
+    hint: '4 jó virág egymás után: nehezebb szint, 3 túlöntözött egymás után: könnyebb (kannával lehet túlönteni). Ez alá nem lép vissza.',
+    options: WATER_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
+    current: (p) => ladderOf(p, 'water').level,
+    apply: (p, v) => withLadder(p, 'water', startAt(ladderOf(p, 'water'), v))
   },
   {
     id: 'patterns',
     world: 'garden',
     game: 'Virágsor',
-    hint: 'Ezzel a mintával indul, aztán körbejárnak.',
-    options: SHAPE_ORDER.map((shape, i) => ({ value: i, label: PATTERN_LABELS[shape] })),
-    current: (p) => p.patternRound % SHAPE_ORDER.length,
-    apply: (p, v) => ({ ...p, patternRound: v })
+    hint: '4 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
+    options: PATTERN_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
+    current: (p) => ladderOf(p, 'patterns').level,
+    apply: (p, v) => withLadder(p, 'patterns', startAt(ladderOf(p, 'patterns'), v))
+  },
+  {
+    id: 'trace',
+    world: 'garden',
+    game: 'Mézút',
+    hint: 'A szint minden száma segítség nélkül egymás után: nehezebb szint, 3 nehéz szám egymás után: könnyebb. Ez alá nem lép vissza.',
+    options: TRACE_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
+    current: (p) => ladderOf(p, 'trace').level,
+    apply: (p, v) => withLadder(p, 'trace', startAt(ladderOf(p, 'trace'), v))
   },
   {
     id: 'flash',
