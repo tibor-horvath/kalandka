@@ -21,9 +21,11 @@ import {
   earnedStickers,
   grownCount,
   markEarnedSeen,
+  markPageDone,
   markStickerSeen,
   newStickers,
   newVisitor,
+  pagesDoneIn,
   plant,
   seedBalance
 } from './rewards';
@@ -147,7 +149,7 @@ describe('stickers', () => {
   });
 
   it('keeps each world’s stickers to its own album page and home screen', () => {
-    expect(STICKER_GAMES.filter((g) => g.world === 'robot').map((g) => g.id)).toEqual(['path', 'sort', 'scale', 'seq', 'mirror', 'code', 'fix']);
+    expect(STICKER_GAMES.filter((g) => g.world === 'robot').map((g) => g.id)).toEqual(['path', 'sort', 'scale', 'seq', 'mirror', 'code', 'fix', 'paper-robot']);
     const p = { ...DEFAULT_PROGRESS, learnSolved: 5, pathSolved: 1 };
     expect(newStickers(p, 'garden').map((s) => s.id)).toEqual(['learn-5']);
     expect(newStickers(p, 'robot').map((s) => s.id)).toEqual(['path-first']);
@@ -250,5 +252,29 @@ describe('stickers', () => {
     expect(seedBalance(old)).toBe(12);
     const current = readProgress({ learnSolved: 10, stickersSeen: [] });
     expect(newStickers(current).map((s) => s.id)).toEqual(['learn-5', 'learn-10']);
+  });
+
+  it('gives Feladatlapok stickers for pages marked done, on the page’s own world', () => {
+    const pages = (game: string, n: number) => Array.from({ length: n }, (_, i) => `${game}.1.0.n.7.${i}`);
+    const mark = (keys: string[]) => keys.reduce(markPageDone, DEFAULT_PROGRESS);
+    const paper = (keys: string[]) => earnedStickers(mark(keys)).map((s) => s.id);
+    expect(paper(pages('learn', 1))).toEqual(['paper-garden-1']);
+    expect(paper(pages('code', 1))).toEqual(['paper-robot-1']);
+    expect(paper(pages('learn', 4))).toEqual(['paper-garden-1']);
+    expect(paper([...pages('learn', 3), ...pages('water', 2)])).toEqual(['paper-garden-1', 'paper-garden-5']);
+    expect(paper(pages('fix', 15))).toEqual(['paper-robot-1', 'paper-robot-5', 'paper-robot-15']);
+    expect(newStickers(mark(pages('code', 1)), 'robot').map((s) => s.id)).toEqual(['paper-robot-1']);
+    expect(newStickers(mark(pages('code', 1)), 'garden')).toEqual([]);
+  });
+
+  it('counts a marked page once, and changes nothing else', () => {
+    const once = markPageDone(DEFAULT_PROGRESS, 'learn.1.0.n.7.0');
+    expect(markPageDone(once, 'learn.1.0.n.7.0')).toBe(once);
+    expect(pagesDoneIn(once, 'garden')).toBe(1);
+    expect(once).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['learn.1.0.n.7.0'] });
+  });
+
+  it('starts older saves with no pages done', () => {
+    expect(readProgress({ seeds: 3 }).pagesDone).toEqual([]);
   });
 });

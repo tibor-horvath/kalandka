@@ -39,7 +39,17 @@
 .ps-foot { display: flex; align-items: center; gap: 2.5mm; padding-top: 1.5mm; border-top: 0.3mm solid #d6e4ee; font-size: 8.5pt; color: #4a5e70; }
 .ps-foot > svg { flex: none; width: 5.5mm; height: 5.5mm; margin-right: -1mm; }
 .ps-foot__site { font-weight: 800; color: #1f6fc0; }
-.ps-foot__level { margin-left: auto; }
+/* The key is to the QR code's left, the grown-up's corner of the page, away from the child's work. */
+.ps-foot__key { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 0.5mm; white-space: nowrap; }
+.ps-foot__key b { color: #10233a; }
+.ps-foot > .ps-foot__qr { flex: none; display: block; margin: 0; }
+
+/* The Megoldások page from a sheet's QR code: a list to read on a phone, not a shrunken A4 page. Fixed like .landing__print: it stands outside the stage, whose clip would hide .pa::before. */
+.ps-answers-page { position: fixed; inset: 0; }
+.ps-answers { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ps-answer { position: relative; min-width: 0; padding: 34px 12px 12px; border-radius: 16px; background: #ffffff; }
+.ps-answer .ps-num { left: 12px; top: 8px; font-size: 18px; }
+.ps-answer .ps-svg { height: auto; }
 
 /* Feladatlapok: the print pages opened without the gate, under a bar instead of the parents' menu. */
 .pa--print { flex-direction: column; }
@@ -63,6 +73,8 @@
 .ps-seg .pa-seg__btn { height: auto; min-height: 60px; padding: 6px 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; line-height: 1.15; }
 .ps-seg .pa-seg__btn small { font-size: 13px; font-weight: 700; opacity: 0.8; }
 .ps-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+/* A marked page stays fully visible: that it is done is the point of the button. */
+.ps-done .pa-btn:disabled { opacity: 1; }
 .ps-preview { display: flex; flex-direction: column; gap: 14px; }
 .ps-preview__page { overflow: hidden; border-radius: 6px; background: #ffffff; box-shadow: 0 2px 10px rgba(16, 35, 58, 0.16); }
 .is-phone .ps-layout { grid-template-columns: minmax(0, 1fr); }
@@ -108,6 +120,7 @@
   .pa--print .ps-seg .pa-seg__btn small { font-size: 12px; }
   .pa--print .ps-side .pa-seg--pill { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pa--print .ps-side .pa-seg--pill .pa-seg__btn { min-width: 0; }
+  .pa--print .ps-answers { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Paper: only the sheets, one per page. */

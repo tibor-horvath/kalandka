@@ -84,6 +84,7 @@ function FloorPic({ p, children }: { p: Course; children?: ReactNode }) {
 
 const path = spec<Puzzle>({
   id: 'path',
+  rev: 1,
   world: 'robot',
   game: 'Robotút',
   levels: PATH_LEVELS.map((l) => l.name),
@@ -200,6 +201,7 @@ function SortBoard({ r, answers }: { r: SortRound; answers: boolean }) {
 
 const sort = spec<SortTask>({
   id: 'sort',
+  rev: 1,
   world: 'robot',
   game: 'Válogatógép',
   colorKey: () => true,
@@ -331,6 +333,7 @@ function ScaleBoard({ t, equal, answers }: { t: ScaleTask; equal: boolean; answe
 
 const scale = spec<{ t: ScaleTask; equal: boolean }>({
   id: 'scale',
+  rev: 1,
   world: 'robot',
   game: 'Mérleg',
   levels: SCALE_LEVELS.map((l) => l.name),
@@ -364,6 +367,7 @@ function SeqItem({ item }: { item: Item }) {
 
 const seq = spec<SeqTask>({
   id: 'seq',
+  rev: 1,
   world: 'robot',
   game: 'Mintagép',
   // Towers are one colour; every other row has coloured parts or arrows.
@@ -467,6 +471,7 @@ function MirrorBoard({ task, answers }: { task: Exclude<MirrorTask, { mode: 'pic
 
 const mirror = spec<MirrorTask>({
   id: 'mirror',
+  rev: 1,
   world: 'robot',
   game: 'Tükörgép',
   // Only the coloured pictures ask for a colour; the other boards are one colour.
@@ -614,6 +619,7 @@ function PicLegend() {
 
 const code = spec<CodeTask>({
   id: 'code',
+  rev: 1,
   world: 'robot',
   game: 'Kódzár',
   // Lamps are on every sheet but the dice one, in the code or in the answer.
@@ -711,6 +717,7 @@ function FixBoard({ task, answers }: { task: FixTask; answers: boolean }) {
 
 const fix = spec<FixTask>({
   id: 'fix',
+  rev: 1,
   world: 'robot',
   game: 'Hibakereső',
   levels: FIX_LEVELS.map((l) => l.name),

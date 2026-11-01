@@ -197,7 +197,7 @@ export function ParentArea({ start = 'overview', onClose, onAbout }: { start?: P
             {page === 'overview' && <Overview onGo={setPage} />}
             {page === 'time' && <TimePage />}
             {page === 'levels' && <LevelsPage />}
-            {page === 'print' && <PrintPage kidId={shownId} />}
+            {page === 'print' && <PrintPage kidId={shownId} canMark />}
             {page === 'settings' && <SettingsPage onLegal={() => setPage('legal')} />}
           </KidScope>
         )}

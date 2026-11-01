@@ -43,7 +43,7 @@ export function LegalPage() {
 
         <h3 className="pa-h3">2. Az eszközön tárolt adatok</h3>
         <p className="pa-legal">
-          A gyerekek profilja (becenév, választott figura, korcsoport), a játékok haladása, a matricák, a képernyőidő-napló és a szülői beállítások{' '}
+          A gyerekek profilja (becenév, választott figura, korcsoport), a játékok haladása, a kész feladatlapok, a matricák, a képernyőidő-napló és a szülői beállítások{' '}
           <b>csak ezen az eszközön</b>, a böngésző helyi tárhelyén tárolódnak. Ezeket az adatokat semmilyen szerverre nem küldjük el, mi nem
           látjuk és nem férünk hozzájuk. Az alkalmazás megkéri a böngészőt, hogy tárhely szűkösség esetén se törölje ezeket az adatokat.
         </p>

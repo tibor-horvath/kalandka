@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from 'react';
+import { QrCode } from '../components/QrCode';
 import { Lamp, TextureContext } from '../components/robot';
 import { KalandkaIcon, KalandkaWordmark } from '../components/ui';
 import type { Color } from '../games/robot/sort';
@@ -37,6 +38,11 @@ export interface TaskRequest {
 
 export interface PrintSpec<T> {
   id: PrintId;
+  /**
+   * Goes up whenever this game's sheets change, so the QR code on an older page says its answers are gone
+   * rather than showing the answers to other tasks. catalog.test.ts fails if the tasks change and this does not.
+   */
+  rev: number;
   world: WorldId;
   game: string;
   /** Level names, easiest first. */
@@ -194,17 +200,21 @@ export function siteAddress(): string {
   return `${window.location.host}${import.meta.env.BASE_URL}`.replace(/\/+$/, '');
 }
 
-/** One A4 page: name line, the instruction, a line for the grown-up, and the tasks in a grid. `footer` says which page of the printout this is. */
-export function Sheet({ spec, level, grid, tasks, answers, footer }: { spec: PrintSpec<unknown>; level: number; grid: Grid; tasks: unknown[]; answers: boolean; footer: string }) {
+/** Pattern ids of a sheet's own: the preview and the printed copy each use theirs (see TextureContext). */
+function useTextures() {
+  const uid = `ps-tex-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  return { ids: { red: `${uid}-red`, blue: `${uid}-blue` }, value: { red: `url(#${uid}-red)`, blue: `url(#${uid}-blue)`, yellow: null } };
+}
+
+/** One A4 page: name line, the instruction, a line for the grown-up, and the tasks in a grid. `footer` says which page of the printout this is, `link` where its answers are. */
+export function Sheet({ spec, level, grid, tasks, answers, footer, link }: { spec: PrintSpec<unknown>; level: number; grid: Grid; tasks: unknown[]; answers: boolean; footer: string; link: string }) {
   const [cols, rows] = grid;
   const { Task } = spec;
-  // Pattern ids of this sheet's own: the preview and the printed copy each use theirs (see TextureContext).
-  const uid = `ps-tex-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
-  const textures = { red: `url(#${uid}-red)`, blue: `url(#${uid}-blue)`, yellow: null };
+  const textures = useTextures();
   return (
-    <TextureContext.Provider value={textures}>
+    <TextureContext.Provider value={textures.value}>
       <section className={`ps-sheet ps-sheet--${spec.world}`}>
-        <Textures red={`${uid}-red`} blue={`${uid}-blue`} />
+        <Textures {...textures.ids} />
         {/* The header names the task; the brand stands once, in the footer. */}
         <header className="ps-head">
           <div className="ps-head__text">
@@ -250,9 +260,33 @@ export function Sheet({ spec, level, grid, tasks, answers, footer }: { spec: Pri
           <KalandkaWordmark size={15} />
           <span className="ps-foot__site">{siteAddress()}</span>
           <span className="ps-foot__about">Gondolkodtató játékok 5–7 éveseknek</span>
-          <span className="ps-foot__level">{footer}</span>
+          <span className="ps-foot__key">
+            <b>Megoldások: olvasd be telefonnal</b>
+            {footer}
+          </span>
+          {/* Half a millimetre a square reads from a home printer; M survives a crayon mark. */}
+          <QrCode data={link} correction="M" moduleMm={0.5} className="ps-foot__qr" label="QR-kód a lap megoldásaihoz" />
         </footer>
       </section>
+    </TextureContext.Provider>
+  );
+}
+
+/** One page's tasks solved, in the page's numbering, to read on a phone beside the paper. */
+export function AnswerList({ spec, tasks }: { spec: PrintSpec<unknown>; tasks: unknown[] }) {
+  const { Task } = spec;
+  const textures = useTextures();
+  return (
+    <TextureContext.Provider value={textures.value}>
+      <Textures {...textures.ids} />
+      <ol className="ps-answers">
+        {tasks.map((t, i) => (
+          <li key={i} className="ps-answer">
+            <span className="ps-num">{i + 1}.</span>
+            <Task task={t} answers />
+          </li>
+        ))}
+      </ol>
     </TextureContext.Provider>
   );
 }

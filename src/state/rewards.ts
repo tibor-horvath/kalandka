@@ -463,8 +463,8 @@ export function gardenDone(p: Progress): boolean {
 
 // ---------- stickers ----------
 
-/** The Kiskert's own album row, next to the games. */
-export type StickerGameId = GameId | RobotGameId | 'kiskert';
+/** The Kiskert's own album row and each world's row for finished paper sheets, next to the games. */
+export type StickerGameId = GameId | RobotGameId | 'kiskert' | 'paper-garden' | 'paper-robot';
 
 export interface Sticker {
   id: string;
@@ -488,24 +488,42 @@ export interface StickerGame {
   world: WorldId;
 }
 
-/** Album order and each game's sticker colour (light ones carry dark ink). */
+/** Album order and each game's sticker colour (light ones carry dark ink). Soft hyphens keep long names whole in the album's narrow columns. */
 export const STICKER_GAMES: StickerGame[] = [
   { id: 'learn', name: 'Számvetés', color: '#2E86DE', ink: '#FFFFFF', world: 'garden' },
   { id: 'water', name: 'Locsolás', color: '#9FCDF3', ink: '#10233A', world: 'garden' },
   { id: 'patterns', name: 'Virágsor', color: '#F4A3C4', ink: '#10233A', world: 'garden' },
-  { id: 'flash', name: 'Magvillantás', color: '#8A5A3B', ink: '#FFFFFF', world: 'garden' },
+  { id: 'flash', name: 'Mag­villantás', color: '#8A5A3B', ink: '#FFFFFF', world: 'garden' },
   { id: 'add', name: 'Méhecske', color: '#FFC93C', ink: '#10233A', world: 'garden' },
   { id: 'trace', name: 'Mézút', color: '#D9741A', ink: '#FFFFFF', world: 'garden' },
-  { id: 'pots', name: 'Cserépbarátok', color: '#2F7D32', ink: '#FFFFFF', world: 'garden' },
+  { id: 'pots', name: 'Cserép­barátok', color: '#2F7D32', ink: '#FFFFFF', world: 'garden' },
   { id: 'kiskert', name: 'Kiskert', color: '#7A4FB5', ink: '#FFFFFF', world: 'garden' },
+  { id: 'paper-garden', name: 'Feladat­lapok', color: '#F3E3B3', ink: '#10233A', world: 'garden' },
   { id: 'path', name: 'Robotút', color: '#138A86', ink: '#FFFFFF', world: 'robot' },
   { id: 'sort', name: 'Válogatógép', color: '#5E7184', ink: '#FFFFFF', world: 'robot' },
   { id: 'scale', name: 'Mérleg', color: '#F2B33D', ink: '#10233A', world: 'robot' },
   { id: 'seq', name: 'Mintagép', color: '#2E5FA8', ink: '#FFFFFF', world: 'robot' },
   { id: 'mirror', name: 'Tükörgép', color: '#7FE9F0', ink: '#10233A', world: 'robot' },
   { id: 'code', name: 'Kódzár', color: '#C98F4E', ink: '#10233A', world: 'robot' },
-  { id: 'fix', name: 'Hibakereső', color: '#D9741A', ink: '#FFFFFF', world: 'robot' }
+  { id: 'fix', name: 'Hibakereső', color: '#D9741A', ink: '#FFFFFF', world: 'robot' },
+  { id: 'paper-robot', name: 'Feladat­lapok', color: '#D5DEE6', ink: '#10233A', world: 'robot' }
 ];
+
+/** Pages done from this world's games: a sticker waits on the page's own world, like the game's. */
+export function pagesDoneIn(p: Progress, world: WorldId): number {
+  return p.pagesDone.filter((key) => STICKER_GAMES.find((g) => g.id === key.split('.')[0])?.world === world).length;
+}
+
+/**
+ * A grown-up saw the page finished. It counts once, for finishing, never for how many answers were right,
+ * and it changes no level. There is no taking it back: a sticker that has been stuck in stays.
+ */
+export function markPageDone(p: Progress, key: string): Progress {
+  return p.pagesDone.includes(key) ? p : { ...p, pagesDone: [...p.pagesDone, key] };
+}
+
+/** Feladatlapok stickers: pages done in a world. */
+const pagesIn = (world: WorldId, count: number) => (p: Progress) => pagesDoneIn(p, world) >= count;
 
 /** Robotút stickers: a course solved on a level (the first solved course of that level and on). */
 const pathLevel = (name: string) => PATH_LEVELS.findIndex((l) => l.name === name);
@@ -600,7 +618,13 @@ export const STICKERS: Sticker[] = [
   { id: 'kiskert-gift', game: 'kiskert', mark: '1', label: 'Első ajándék', praise: 'Megajándékoztad az első lakót a kertedben!', earned: (p) => decorCount(p) >= 1 },
   { id: 'kiskert-all', game: 'kiskert', mark: '6', label: 'Minden lakónak', praise: 'Mind a hat lakó kapott tőled ajándékot!', earned: (p) => VISITORS.every((v) => giftsOf(p, v.id) >= 1) },
   { id: 'kiskert-done', game: 'kiskert', mark: '18', label: 'Kész a kert', praise: 'Kész a kert! Minden lakó megkapta az ajándékát.', earned: gardenDone },
-  { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => ladderOf(p, 'pots').reached >= POTS_LEVELS.length }
+  { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => ladderOf(p, 'pots').reached >= POTS_LEVELS.length },
+  { id: 'paper-garden-1', game: 'paper-garden', mark: '1', label: 'Első lap', praise: 'Kész az első feladatlapod!', earned: pagesIn('garden', 1) },
+  { id: 'paper-garden-5', game: 'paper-garden', mark: '5', label: 'Öt lap', praise: 'Már öt feladatlapot befejeztél!', earned: pagesIn('garden', 5) },
+  { id: 'paper-garden-15', game: 'paper-garden', mark: '15', label: 'Tizenöt lap', praise: 'Már tizenöt feladatlapot befejeztél!', earned: pagesIn('garden', 15) },
+  { id: 'paper-robot-1', game: 'paper-robot', mark: '1', label: 'Első lap', praise: 'Kész az első feladatlapod!', earned: pagesIn('robot', 1) },
+  { id: 'paper-robot-5', game: 'paper-robot', mark: '5', label: 'Öt lap', praise: 'Már öt feladatlapot befejeztél!', earned: pagesIn('robot', 5) },
+  { id: 'paper-robot-15', game: 'paper-robot', mark: '15', label: 'Tizenöt lap', praise: 'Már tizenöt feladatlapot befejeztél!', earned: pagesIn('robot', 15) }
 ];
 
 export function gameOf(s: Sticker): StickerGame {

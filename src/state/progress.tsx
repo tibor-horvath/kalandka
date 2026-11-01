@@ -27,6 +27,8 @@ export interface Progress {
   gifts: Partial<Record<VisitorId, number>>;
   /** Stickers already celebrated; the rest of the earned ones get the sticker animation. */
   stickersSeen: string[];
+  /** Printed pages a grown-up marked done, each once (see pageKey in print/link.ts); they earn the Feladatlapok stickers. */
+  pagesDone: string[];
   /** Plant ids grown in the watering game, oldest first. */
   garden: string[];
   waterRound: number;
@@ -153,6 +155,7 @@ export const DEFAULT_PROGRESS: Progress = {
   visitorsSeen: 0,
   gifts: {},
   stickersSeen: [],
+  pagesDone: [],
   garden: [],
   waterRound: 0,
   patternRound: 0,

@@ -1,9 +1,10 @@
-import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { KidDraft } from './components/KidFields';
 import { Oops } from './components/Oops';
 import { PageMotion } from './components/PageMotion';
 import { Stage } from './components/Stage';
 import { setSoundEnabled } from './lib/sound';
+import { readLink } from './print/link';
 import { applyUpdate, useUpdateWaiting } from './lib/update';
 import { setSpeaker, setSpeechEnabled, setSpeechRate, setVoiceChoice, speak, stopSpeaking } from './lib/speech';
 import { Add } from './screens/Add';
@@ -48,6 +49,7 @@ type Parents = 'closed' | 'gate' | 'open' | 'print';
 const loadParentArea = () => import('./screens/parents/ParentArea');
 const ParentArea = lazy(async () => ({ default: (await loadParentArea()).ParentArea }));
 const PrintArea = lazy(async () => ({ default: (await import('./screens/PrintArea')).PrintArea }));
+const Answers = lazy(async () => ({ default: (await import('./screens/Answers')).Answers }));
 
 /** The game lives at /jatek (the installed app starts there); every other address is the landing page. */
 const GAME_PATH = '/jatek';
@@ -333,11 +335,34 @@ function Game() {
 }
 
 export default function App() {
+  const [hash, setHash] = useState(() => window.location.hash);
+  const link = useMemo(() => readLink(hash), [hash]);
+
+  // Scanning a second sheet can land in the page that is already open.
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  const closeAnswers = () => {
+    window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+    setHash('');
+  };
+
   return (
     <Oops>
-      <ProfilesProvider>
-        <Game />
-      </ProfilesProvider>
+      {link ? (
+        <div className="ps-answers-page">
+          <Suspense fallback={null}>
+            <Answers link={link} onClose={closeAnswers} />
+          </Suspense>
+        </div>
+      ) : (
+        <ProfilesProvider>
+          <Game />
+        </ProfilesProvider>
+      )}
     </Oops>
   );
 }
