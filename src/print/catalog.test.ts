@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROGRESS } from '../state/progress';
 import { markPageDone, pagesDoneIn } from '../state/rewards';
 import { PRINT_SHEETS, buildPages, openLink, pageRef, sheetFor, tasksPerPage } from './catalog';
-import { linkHash, pageKey, readLink } from './link';
+import { linkHash, pageKey, readLink, readScanned } from './link';
 import REVISIONS from './revisions.json';
 import { DENSITIES, MAX_PAGES } from './sheet';
 
@@ -82,8 +82,18 @@ describe('answer links', () => {
   it('counts a finished page of every game in that game’s world', () => {
     for (const s of PRINT_SHEETS) {
       const key = pageKey(pageRef(s, { level: 0, density: 'normal', pages: 1, batch: 1 }, 0));
-      expect(pagesDoneIn(markPageDone(DEFAULT_PROGRESS, key), s.world), s.id).toBe(1);
+      expect(pagesDoneIn(markPageDone(DEFAULT_PROGRESS, key, 1), s.world), s.id).toBe(1);
     }
+  });
+
+  it('opens a scanned sheet with the very tasks printed on it, from any copy of the app', () => {
+    for (const s of PRINT_SHEETS) {
+      const choice = { level: s.levels.length - 1, density: 'normal' as const, pages: 3, batch: 4242 };
+      const opened = openLink(readScanned(`https://www.kalandka.hu/${linkHash(pageRef(s, choice, 2))}`)!);
+      expect(opened.kind === 'page' && opened.tasks, s.id).toEqual(buildPages(s, choice)[2].tasks);
+    }
+    expect(readScanned('https://example.com/')).toBeNull();
+    expect(readScanned('WIFI:S:otthon;;')).toBeNull();
   });
 
   it('sees through links it did not print', () => {

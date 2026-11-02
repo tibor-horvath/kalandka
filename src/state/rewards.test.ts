@@ -272,7 +272,7 @@ describe('stickers', () => {
 
   it('gives Feladatlapok stickers for pages marked done, on the page’s own world', () => {
     const pages = (game: string, n: number) => Array.from({ length: n }, (_, i) => `${game}.1.0.n.7.${i}`);
-    const mark = (keys: string[]) => keys.reduce(markPageDone, DEFAULT_PROGRESS);
+    const mark = (keys: string[]) => keys.reduce((p, key) => markPageDone(p, key, 1), DEFAULT_PROGRESS);
     const paper = (keys: string[]) => earnedStickers(mark(keys)).map((s) => s.id);
     expect(paper(pages('learn', 1))).toEqual(['paper-garden-1']);
     expect(paper(pages('code', 1))).toEqual(['paper-robot-1']);
@@ -283,11 +283,12 @@ describe('stickers', () => {
     expect(newStickers(mark(pages('code', 1)), 'garden')).toEqual([]);
   });
 
-  it('counts a marked page once, and changes nothing else', () => {
-    const once = markPageDone(DEFAULT_PROGRESS, 'learn.1.0.n.7.0');
-    expect(markPageDone(once, 'learn.1.0.n.7.0')).toBe(once);
+  it('counts a marked page once, and pays only a seed or bolt per task of its world', () => {
+    const once = markPageDone(DEFAULT_PROGRESS, 'learn.1.0.n.7.0', 8);
+    expect(markPageDone(once, 'learn.1.0.n.7.0', 8)).toBe(once);
     expect(pagesDoneIn(once, 'garden')).toBe(1);
-    expect(once).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['learn.1.0.n.7.0'] });
+    expect(once).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['learn.1.0.n.7.0'], seeds: 8 });
+    expect(markPageDone(DEFAULT_PROGRESS, 'code.1.0.b.3.1', 4)).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['code.1.0.b.3.1'], bolts: 4 });
   });
 
   it('starts older saves with no pages done', () => {

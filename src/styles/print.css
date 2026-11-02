@@ -50,6 +50,15 @@
 .ps-answer { position: relative; min-width: 0; padding: 34px 12px 12px; border-radius: 16px; background: #ffffff; }
 .ps-answer .ps-num { left: 12px; top: 8px; font-size: 18px; }
 .ps-answer .ps-svg { height: auto; }
+/* Ticking a task off while checking the paper: a green frame and a filled check, so the checked ones stand out at a glance. */
+.ps-answer { border: 3px solid transparent; }
+.ps-answer.is-ticked { border-color: var(--pa-good); }
+.ps-answer__tick { position: absolute; right: 8px; top: 6px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--pa-line); background: #ffffff; color: transparent; cursor: pointer; }
+.ps-answer.is-ticked .ps-answer__tick { border-color: var(--pa-good); background: var(--pa-good); color: #ffffff; }
+.ps-answer--tick { padding-top: 54px; }
+/* Other right answers: a soft green box above the answers, so a good route drawn another way is not marked wrong. */
+.ps-others { margin: 0; padding: 12px 16px; border-radius: 14px; background: #edf7e8; color: var(--pa-ink); }
+.ps-others b { color: var(--pa-good); }
 
 /* Feladatlapok: the print pages opened without the gate, under a bar instead of the parents' menu. */
 .pa--print { flex-direction: column; }

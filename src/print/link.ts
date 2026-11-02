@@ -49,3 +49,9 @@ export function readLink(hash: string): ReadLink | null {
   // Only the spelling we print counts, so "#lap01=" or "007" cannot stand for a page.
   return linkHash(ref) === hash ? { kind: 'page', ref } : { kind: 'bad' };
 }
+
+/** Reads a code scanned in the app: the whole printed address. Only its # part counts, so pages printed from any copy of Kalandka are read. */
+export function readScanned(text: string): ReadLink | null {
+  const at = text.indexOf('#');
+  return at < 0 ? null : readLink(text.slice(at));
+}

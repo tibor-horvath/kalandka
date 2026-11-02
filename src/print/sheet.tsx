@@ -54,6 +54,11 @@ export interface PrintSpec<T> {
   ask: (level: number) => string;
   /** A line for the grown-up: how to help on this level. */
   tip: (level: number) => string;
+  /**
+   * When more than one answer is right on this level, which ones count: the answers show only one of them.
+   * Shown with the answers, so a grown-up does not mark a good route or another set of seeds wrong.
+   */
+  others?: (level: number) => string | null;
   /** Pictures that explain the answer cards, shown beside the instruction. */
   legend?: (level: number) => ReactNode;
   /** Colour is part of the task: the sheet shows which texture stands for which colour, for black-and-white printers. */
@@ -273,7 +278,17 @@ export function Sheet({ spec, level, grid, tasks, answers, footer, link }: { spe
 }
 
 /** One page's tasks solved, in the page's numbering, to read on a phone beside the paper. */
-export function AnswerList({ spec, tasks }: { spec: PrintSpec<unknown>; tasks: unknown[] }) {
+/** The line beside the answers when other answers are right too; nothing when the drawn answer is the only one. */
+export function OtherAnswers({ spec, level }: { spec: PrintSpec<unknown>; level: number }) {
+  const text = spec.others?.(level);
+  return text ? (
+    <p className="pa-muted ps-others">
+      <b>Más megoldás is jó.</b> {text}
+    </p>
+  ) : null;
+}
+
+export function AnswerList({ spec, tasks, ticked, onTick }: { spec: PrintSpec<unknown>; tasks: unknown[]; ticked?: boolean[]; onTick?: (i: number) => void }) {
   const { Task } = spec;
   const textures = useTextures();
   return (
@@ -281,8 +296,15 @@ export function AnswerList({ spec, tasks }: { spec: PrintSpec<unknown>; tasks: u
       <Textures {...textures.ids} />
       <ol className="ps-answers">
         {tasks.map((t, i) => (
-          <li key={i} className="ps-answer">
+          <li key={i} className={`ps-answer${onTick ? ' ps-answer--tick' : ''}${ticked?.[i] ? ' is-ticked' : ''}`}>
             <span className="ps-num">{i + 1}.</span>
+            {onTick && (
+              <button type="button" className="ps-answer__tick" aria-pressed={!!ticked?.[i]} aria-label={`${i + 1}. feladat ellenőrizve`} onClick={() => onTick(i)}>
+                <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12.5l4.5 4.5L19 7.5" />
+                </svg>
+              </button>
+            )}
             <Task task={t} answers />
           </li>
         ))}
