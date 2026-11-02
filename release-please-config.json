@@ -6,7 +6,6 @@
       "release-type": "node",
       "package-name": "kalandka",
       "include-component-in-tag": false,
-      "release-as": "1.0.0",
       "changelog-sections": [
         { "type": "feat", "section": "Added" },
         { "type": "fix", "section": "Fixed" },
