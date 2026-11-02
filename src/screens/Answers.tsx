@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { KalandkaIcon } from '../components/ui';
 import { restartApp } from '../lib/update';
 import { openLink } from '../print/catalog';
 import type { ReadLink } from '../print/link';
-import { AnswerList } from '../print/sheet';
+import { AnswerList, OtherAnswers } from '../print/sheet';
 import { WORLDS } from '../state/worlds';
 
 /**
@@ -13,6 +13,8 @@ import { WORLDS } from '../state/worlds';
  */
 export function Answers({ link, onClose }: { link: ReadLink; onClose: () => void }) {
   const opened = useMemo(() => openLink(link), [link]);
+  // Ticks only help check the paper here; nothing is saved. A page is marked done in the app, where the child's progress is.
+  const [ticked, setTicked] = useState<boolean[]>([]);
 
   useEffect(() => {
     const title = document.title;
@@ -48,7 +50,11 @@ export function Answers({ link, onClose }: { link: ReadLink; onClose: () => void
                   </p>
                 </div>
               </header>
-              <AnswerList spec={opened.spec} tasks={opened.tasks} />
+              <p className="pa-muted">
+                Pipáld ki a feladatokat, ahogy átnézed őket. A kész lapot a gyerek eszközén jelöld meg: <b>Szülői sarok → Nyomtatás → Lap beolvasása</b>, és matrica jár érte.
+              </p>
+              <OtherAnswers spec={opened.spec} level={opened.ref.level} />
+              <AnswerList spec={opened.spec} tasks={opened.tasks} ticked={ticked} onTick={(i) => setTicked((t) => Object.assign([...t], { [i]: !t[i] }))} />
             </>
           ) : (
             <section className="pa-card" role="status">

@@ -512,12 +512,20 @@ export function pagesDoneIn(p: Progress, world: WorldId): number {
   return p.pagesDone.filter((key) => STICKER_GAMES.find((g) => g.id === key.split('.')[0])?.world === world).length;
 }
 
+/** What a finished page of `tasks` tasks pays: a seed or a bolt for each, like a solved task in its world's games. */
+export function pageReward(key: string, tasks: number): { seeds: number; bolts: number } {
+  const world = STICKER_GAMES.find((g) => g.id === key.split('.')[0])?.world;
+  return { seeds: world === 'garden' ? tasks : 0, bolts: world === 'robot' ? tasks : 0 };
+}
+
 /**
  * A grown-up saw the page finished. It counts once, for finishing, never for how many answers were right,
- * and it changes no level. There is no taking it back: a sticker that has been stuck in stays.
+ * and it changes no level. It pays `pageReward` for its `tasks`. There is no taking it back: a sticker that has been stuck in stays.
  */
-export function markPageDone(p: Progress, key: string): Progress {
-  return p.pagesDone.includes(key) ? p : { ...p, pagesDone: [...p.pagesDone, key] };
+export function markPageDone(p: Progress, key: string, tasks: number): Progress {
+  if (p.pagesDone.includes(key)) return p;
+  const pay = pageReward(key, tasks);
+  return { ...p, pagesDone: [...p.pagesDone, key], seeds: p.seeds + pay.seeds, bolts: p.bolts + pay.bolts };
 }
 
 /** Feladatlapok stickers: pages done in a world. */

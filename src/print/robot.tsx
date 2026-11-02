@@ -103,6 +103,12 @@ const path = spec<Puzzle>({
     return `Rajzold be az utat, aztán rajzold a kártyákra, merre menjen a robot!${turn}${two}${repeat}`;
   },
   tip: () => 'Lépjenek végig együtt az ujjukkal a rácson. Ha elakad, kezdje újra a robottól: a javítás is a játék része.',
+  others: (level) => {
+    const l = PATH_LEVELS[level];
+    const goal = l.batteries === 2 ? 'mindkét elemet felszedi' : 'eljut az elemhez';
+    const cards = l.mode === 'plan' ? ', és a kártyák kiférnek a helyekre' : '';
+    return `A rajzolt út a legrövidebb, de minden út jó, amelyen a robot nem megy át dobozon, és ${goal}${cards}. Lépjenek végig rajta együtt.`;
+  },
   legend: (level) => {
     const l = PATH_LEVELS[level];
     if (l.mode === 'step') return null;
@@ -350,6 +356,10 @@ const scale = spec<{ t: ScaleTask; equal: boolean }>({
     if (l.mode === 'compare') return 'Számolják meg a súlyokat mindkét oldalon: amelyik oldalon több van, az megy le.';
     if (l.mode === 'balance') return l.twos ? 'Számolják meg a bal oldalt; a széles súly kettőnek számít. A jobb oldalon is ugyanannyi legyen.' : 'Számolják meg a bal oldalt: a jobb oldalon is ugyanannyi legyen.';
     return l.secret ? 'A láda a mellette álló súlyokkal együtt annyit nyom, mint a jobb oldal. Ami a bal oldalon a súlyokból hiányzik, annyit nyom a láda.' : 'Számolják meg mindkét oldalt: mennyivel van több a bal oldalon?';
+  },
+  others: (level) => {
+    const l = SCALE_LEVELS[level];
+    return l.mode === 'balance' && l.twos ? 'A rajzon csupa kis súly van, de széles súlyok is jók: a széles kettőnek számít, csak a két oldal legyen egyforma.' : null;
   },
   tasks: (req) => flatTasks(req, (r) => buildScaleRound(req.level, r).tasks.map((t) => ({ t, equal: !!SCALE_LEVELS[req.level].equal }))),
   Task: ({ task, answers }) => <ScaleBoard t={task.t} equal={task.equal} answers={answers} />

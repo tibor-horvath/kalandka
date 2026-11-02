@@ -2,12 +2,13 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { createPortal } from 'react-dom';
 import { MAX_PAGES, PRINT_SHEETS, buildPages, pageRef, saveChoice, savedChoice, sheetFor, tasksPerPage, type PrintChoice } from '../../print/catalog';
 import { linkUrl, pageKey } from '../../print/link';
-import { DENSITIES, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
+import { DENSITIES, OtherAnswers, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
 import { useProfiles, type AgeBand } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
 import { markPageDone, pagesDoneIn } from '../../state/rewards';
 import { WORLDS } from '../../state/worlds';
 import { WorldGroup } from './controls';
+import { ScanSheet } from './ScanSheet';
 
 /** Width of an A4 sheet in CSS pixels (210 mm); the preview scales it to its column. */
 const SHEET_PX = 793.7;
@@ -99,14 +100,14 @@ function DonePages({ s, choice }: { s: PrintSpec<unknown>; choice: PrintChoice }
   return (
     <section className="pa-card ps-done">
       <h2 className="pa-h2">Kész lapok</h2>
-      <p className="pa-muted">Ha a gyerek befejezett egy lapot, jelöld meg itt. Mindkét világban matrica jár az első, az ötödik és a tizenötödik kész lapért.</p>
+      <p className="pa-muted">Ha a gyerek befejezett egy lapot, jelöld meg itt. Minden feladatáért egy mag (a Robotműhelyben csavar) jár, mint a játékban, és mindkét világban matrica az első, az ötödik és a tizenötödik kész lapért.</p>
       <div className="pa-row">
         {Array.from({ length: choice.pages }, (_, i) => {
           const key = pageKey(pageRef(s, choice, i));
           const done = progress.pagesDone.includes(key);
           const name = choice.pages > 1 ? `${i + 1}. lap` : 'A lap';
           return (
-            <button key={key} type="button" className={`pa-btn${done ? ' pa-btn--go' : ''}`} disabled={done} onClick={() => update((p) => markPageDone(p, key))}>
+            <button key={key} type="button" className={`pa-btn${done ? ' pa-btn--go' : ''}`} disabled={done} onClick={() => update((p) => markPageDone(p, key, tasksPerPage(s, choice.level, choice.density)))}>
               {done && (
                 <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12.5l4.5 4.5L19 7.5" />
@@ -247,6 +248,7 @@ function GameSheet({ id, kidId, guestAge, canMark, onBack }: { id: PrintId; kidI
               Megoldások
             </button>
           </div>
+          {answers && <OtherAnswers spec={s} level={choice.level} />}
           <Preview>{pagesOf(s, choice, answers)}</Preview>
         </div>
       </div>
@@ -263,7 +265,9 @@ function GameSheet({ id, kidId, guestAge, canMark, onBack }: { id: PrintId; kidI
 export function PrintPage({ kidId, guestAge, canMark }: { kidId: string; guestAge?: AgeBand; canMark?: boolean }) {
   const { progress } = useProgress();
   const [open, setOpen] = useState<PrintId | null>(null);
+  const [scanning, setScanning] = useState(false);
 
+  if (scanning && canMark) return <ScanSheet kidId={kidId} onBack={() => setScanning(false)} />;
   if (open) return <GameSheet key={`${kidId}-${open}`} id={open} kidId={kidId} guestAge={guestAge} canMark={canMark} onBack={() => setOpen(null)} />;
 
   return (
@@ -278,6 +282,21 @@ export function PrintPage({ kidId, guestAge, canMark }: { kidId: string; guestAg
           </p>
         </div>
       </header>
+      {canMark && (
+        <section className="pa-card">
+          <h2 className="pa-h2">Kész lap megjelölése</h2>
+          <p className="pa-muted">Ha a gyerek befejezett egy feladatlapot, olvasd be a QR-kódját: megnézheted a megoldásokat, és a kész lapért matrica jár.</p>
+          <div className="pa-row">
+            <button type="button" className="pa-btn" onClick={() => setScanning(true)}>
+              <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" />
+                <path d="M8 12h8" />
+              </svg>
+              Lap beolvasása
+            </button>
+          </div>
+        </section>
+      )}
       {WORLDS.map((w) => (
         <WorldGroup key={w.id} world={w} heading="h2">
           <div className="pa-levels">

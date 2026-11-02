@@ -80,6 +80,7 @@ const learn = spec<number>({
   grid: (_, d) => pickGrid(d, [1, 4], [1, 5], [1, 7]),
   ask: () => 'Nézd meg a számot, és színezz ki pont ennyi magot!',
   tip: () => 'Mondják ki együtt a számot, és számolják meg hangosan a magokat, mindegyikre rábökve.',
+  others: () => 'Bármelyik magokat kiszínezheti, csak az számít, hogy pont annyi legyen.',
   reshuffles: () => false,
   tasks: (req) => {
     const start = LEARN_STARTS[req.level];
@@ -131,6 +132,7 @@ const water = spec<Plant>({
   grid: (level, d) => (level === 0 ? pickGrid(d, [2, 3], [2, 4], [3, 5]) : pickGrid(d, [2, 2], [2, 3], [3, 4])),
   ask: () => 'Színezz ki pont annyi cseppet, amennyit a virág kér!',
   tip: () => 'Olvassa fel a virág számát. Ha túl sokat színez, nem baj: számolják meg együtt, mennyi lett.',
+  others: () => 'Bármelyik cseppeket kiszínezheti, csak az számít, hogy pont annyi legyen.',
   tasks: (req) =>
     Array.from({ length: req.count }, (_, i) => {
       const r = roundOf(req, i);
@@ -285,6 +287,7 @@ const add = spec<AddRound>({
     const count = l.strategy === 'on' ? 'A kosáron álló számtól számoljanak tovább, minden virágra rábökve.' : 'Számolhatnak ujjal: minden virágra rá lehet bökni.';
     return l.bundles ? `${count} Egy csokor tíz virág.` : count;
   },
+  others: (level) => (ADD_LEVELS[level].strategy === 'take' ? 'Bármelyik virágokat áthúzhatja, csak az számít, hogy annyit, amennyit a méhecske elvisz.' : null),
   tasks: (req) => Array.from({ length: req.count }, (_, i) => buildAddRound(roundOf(req, i), req.level)),
   Task: ({ task: r, answers }) => {
     const take = r.level.strategy === 'take';
