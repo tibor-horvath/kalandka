@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/tibor-horvath/kalandka/compare/v1.3.0...v1.4.0) (2026-11-03)
+
+
+### Added
+
+* implement modal component and enhance accessibility features ([#18](https://github.com/tibor-horvath/kalandka/issues/18)) ([2c17eab](https://github.com/tibor-horvath/kalandka/commit/2c17eab20a3f15b0f42b11e2e00ba90a58232d24))
+
 ## [1.3.0](https://github.com/tibor-horvath/kalandka/compare/v1.2.0...v1.3.0) (2026-11-03)
 
 
