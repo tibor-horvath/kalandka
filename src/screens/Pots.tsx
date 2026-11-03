@@ -1,16 +1,15 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { RoundFlower, SmallPot } from '../components/art';
 import { FitBox } from '../components/FitBox';
-import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
+import { useLadderRound } from '../components/ladderRound';
+import { GameShell } from '../components/GameShell';
 import { DotFace, MiniSprout } from '../components/seeds';
-import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { DoneTick, GuideBubble, NextIcon } from '../components/ui';
 import { askFeedback, boxSize, buildPotsRound, countedFeedback, potCells, revealFeedback, rightFeedback } from '../games/pots/logic';
 import { numberCount } from '../lib/numbers';
 import { fanfare, popBubble } from '../lib/sound';
 import { speak } from '../lib/speech';
-import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../state/ladder';
 import { useProgress } from '../state/progress';
-import { logTask } from '../state/taskLog';
 
 type Phase = 'ask' | 'reveal' | 'solved';
 
@@ -19,11 +18,9 @@ const REVEAL_STEP_S = 0.55;
 
 /** Cserépbarátok: some pots flower; how many more fill the box? Tapping an empty pot counts it. */
 export function Pots({ onBack }: { onBack: () => void }) {
-  const { progress, update } = useProgress();
-  // The ladder when this round started: the round keeps its level even after its win steps up or down.
-  const [startLadder] = useState(() => ladderOf(progress, 'pots'));
-  const [round] = useState(() => buildPotsRound(progress.potsRound, startLadder.level));
-  const [step, setStep] = useState<LadderStep | null>(null);
+  const { progress } = useProgress();
+  const { level, win, meter, levelUp } = useLadderRound('pots');
+  const [round] = useState(() => buildPotsRound(progress.potsRound, level));
   const box = boxSize(round.total);
   const cells = potCells(round.total);
   const [phase, setPhase] = useState<Phase>('ask');
@@ -31,7 +28,6 @@ export function Pots({ onBack }: { onBack: () => void }) {
   const [counted, setCounted] = useState<number[]>([]);
   const [tappedByChild, setTappedByChild] = useState(0);
   const [wrong, setWrong] = useState<number | null>(null);
-  const rewarded = useRef(false);
 
   useEffect(() => {
     speak(askFeedback(round).speech);
@@ -62,13 +58,7 @@ export function Pots({ onBack }: { onBack: () => void }) {
       setWrong(null);
       fanfare();
       speak(rightFeedback(round).speech);
-      if (!rewarded.current) {
-        rewarded.current = true;
-        const s = afterSolve(startLadder, LADDER_RULES.pots, wrong !== null);
-        setStep(s);
-        if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
-        update((p) => withLadder(logTask({ ...p, seeds: p.seeds + 1, potsSolved: p.potsSolved + 1 }, 'pots', s.helped), 'pots', s.ladder));
-      }
+      win(wrong !== null);
     } else {
       setWrong(n);
       setPhase('reveal');
@@ -78,27 +68,18 @@ export function Pots({ onBack }: { onBack: () => void }) {
     }
   };
 
-  // App keys this screen by round, so the next round remounts with fresh state.
-  const next = () => update((p) => ({ ...p, potsRound: p.potsRound + 1 }));
-  const meter = ladderMeter(startLadder, LADDER_RULES.pots, step);
-  const levelUp = useLevelUp(meter, next);
 
   return (
-    <div className="screen screen--flash screen--pots">
-      <div className="meadow" aria-hidden="true" />
-
-      <header className="topbar topbar--meter">
-        <RoundButton label="Vissza a kertbe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <div className="topbar__title">
-          <h1 className="screen-title">Hány virág kell még?</h1>
-          <LevelMeter meter={meter} world="garden" justSolved={phase === 'solved'} />
-        </div>
-        <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
-          <SpeakerIcon />
-        </RoundButton>
-      </header>
+    <GameShell
+      game="pots"
+      className="screen--flash screen--pots"
+      title="Hány virág kell még?"
+      meter={meter}
+      justSolved={phase === 'solved'}
+      levelUp={levelUp}
+      onBack={onBack}
+      onReplay={() => speak(fb.speech)}
+    >
 
       <FitBox className="seedbed-box" width={box.width} height={box.height}>
         <div className="potbox" style={{ width: box.width, height: box.height }}>
@@ -166,7 +147,6 @@ export function Pots({ onBack }: { onBack: () => void }) {
         )}
       </div>
 
-      {levelUp.open && <LevelUpCard meter={meter} world="garden" onNext={levelUp.finish} />}
-    </div>
+    </GameShell>
   );
 }

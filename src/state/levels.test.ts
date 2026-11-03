@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { buildAddRound } from '../games/add/logic';
-import { ladderOf } from './ladder';
+import { LADDER_RULES, ladderOf } from './ladder';
 import { buildFlashRound } from '../games/flash/logic';
 import { buildLearnRound } from '../games/learn/logic';
 import { buildLevelRound } from '../games/patterns/logic';
 import { plantForLevel } from '../games/water/logic';
-import { LEVEL_SETTINGS } from './levels';
+import { LADDER_GAMES, type LadderGame } from './games';
+import { LEVEL_SETTINGS, ladderHint, ladderStepLine } from './levels';
 import { DEFAULT_PROGRESS, migrate } from './progress';
 
 const setting = (id: string) => LEVEL_SETTINGS.find((s) => s.id === id)!;
@@ -52,5 +53,32 @@ describe('per-game level settings', () => {
       expect(next.seeds).toBe(7);
       expect(next.garden).toEqual(['tulipan']);
     }
+  });
+
+  it('says in its hint exactly how the ladder steps', () => {
+    // The parents' corner read these before the hints came from LADDER_RULES; a changed rule changes its hint.
+    const before: Record<LadderGame, string> = {
+      water: '4 jó virág egymás után: nehezebb szint, 3 túlöntözött egymás után: könnyebb (kannával lehet túlönteni). Ez alá nem lép vissza.',
+      patterns: '4 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
+      trace: 'A szint minden száma segítség nélkül egymás után: nehezebb szint, 3 nehéz szám egymás után: könnyebb. Ez alá nem lép vissza.',
+      flash: '4 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
+      add: '5 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
+      pots: '5 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
+      path: 'Robotműhely. 4 jó pálya egymás után: nehezebb szint, 2 nehéz pálya egymás után: könnyebb. Ez alá nem lép vissza.',
+      sort: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
+      scale: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
+      seq: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
+      mirror: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
+      code: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
+      fix: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
+    };
+    for (const game of LADDER_GAMES) expect(ladderHint(game)).toBe(before[game]);
+  });
+
+  it('names the step-up count the ladder really uses on the levels page', () => {
+    expect(ladderStepLine('water')).toBe('4 jó virág után magától lép');
+    expect(ladderStepLine('trace')).toBe('5 szám után magától lép');
+    expect(ladderStepLine('path')).toBe('4 jó pálya után magától lép');
+    for (const game of LADDER_GAMES) expect(ladderStepLine(game)).toMatch(new RegExp(`^${LADDER_RULES[game].up} `));
   });
 });

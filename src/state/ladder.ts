@@ -11,15 +11,16 @@ import { SEQ_LEVELS, SEQ_ROUNDS_PER_LEVEL } from '../games/robot/seq';
 import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL } from '../games/robot/sort';
 import { TRACE_LEVELS, TRACE_ORDER } from '../games/trace/logic';
 import { PLANTS, WATER_LEVELS } from '../games/water/logic';
+import { roundOf, solvedOf, type LadderGame } from './games';
 import type { LevelMeterState } from './levelMeter';
 import type { Progress } from './progress';
+
+export type { LadderGame };
 
 // The difficulty ladder shared by the games that have levels. The level follows the child on its own:
 // enough tasks in a row without help and it steps up (with the level-up card), enough in a row that
 // needed help and it quietly steps down. The level is kept apart from the solved counts, so stepping
 // down never takes a sticker, a seed or a bolt away.
-
-export type LadderGame = 'water' | 'patterns' | 'trace' | 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code' | 'fix';
 
 export interface LadderRule {
   levels: number;
@@ -31,25 +32,44 @@ export interface LadderRule {
   cooldown: number;
 }
 
+/** Each levelled game's levels, easiest first; only their names are read here. */
+export const LADDER_LEVELS: Record<LadderGame, readonly { name: string }[]> = {
+  water: WATER_LEVELS,
+  patterns: PATTERN_LEVELS,
+  trace: TRACE_LEVELS,
+  flash: FLASH_LEVELS,
+  add: ADD_LEVELS,
+  pots: POTS_LEVELS,
+  path: PATH_LEVELS,
+  sort: SORT_LEVELS,
+  scale: SCALE_LEVELS,
+  seq: SEQ_LEVELS,
+  mirror: MIRROR_LEVELS,
+  code: CODE_LEVELS,
+  fix: FIX_LEVELS
+};
+
+const rule = (game: LadderGame, up: number, down: number): LadderRule => ({ levels: LADDER_LEVELS[game].length, up, down, cooldown: 3 });
+
 /**
  * One task is one answer in the garden games and one round in the workshop, where a round holds two
  * to four tasks and the level can only change between rounds. Mézút's row is one level's digits, so a
  * child steps up only after writing every one of them.
  */
 export const LADDER_RULES: Record<LadderGame, LadderRule> = {
-  water: { levels: WATER_LEVELS.length, up: 4, down: 3, cooldown: 3 },
-  patterns: { levels: PATTERN_LEVELS.length, up: 4, down: 3, cooldown: 3 },
-  trace: { levels: TRACE_LEVELS.length, up: TRACE_LEVELS[0].digits.length, down: 3, cooldown: 3 },
-  flash: { levels: FLASH_LEVELS.length, up: 4, down: 3, cooldown: 3 },
-  add: { levels: ADD_LEVELS.length, up: 5, down: 3, cooldown: 3 },
-  pots: { levels: POTS_LEVELS.length, up: 5, down: 3, cooldown: 3 },
-  path: { levels: PATH_LEVELS.length, up: 4, down: 2, cooldown: 3 },
-  sort: { levels: SORT_LEVELS.length, up: 4, down: 2, cooldown: 3 },
-  scale: { levels: SCALE_LEVELS.length, up: 4, down: 2, cooldown: 3 },
-  seq: { levels: SEQ_LEVELS.length, up: 4, down: 2, cooldown: 3 },
-  mirror: { levels: MIRROR_LEVELS.length, up: 4, down: 2, cooldown: 3 },
-  code: { levels: CODE_LEVELS.length, up: 4, down: 2, cooldown: 3 },
-  fix: { levels: FIX_LEVELS.length, up: 4, down: 2, cooldown: 3 }
+  water: rule('water', 4, 3),
+  patterns: rule('patterns', 4, 3),
+  trace: rule('trace', TRACE_LEVELS[0].digits.length, 3),
+  flash: rule('flash', 4, 3),
+  add: rule('add', 5, 3),
+  pots: rule('pots', 5, 3),
+  path: rule('path', 4, 2),
+  sort: rule('sort', 4, 2),
+  scale: rule('scale', 4, 2),
+  seq: rule('seq', 4, 2),
+  mirror: rule('mirror', 4, 2),
+  code: rule('code', 4, 2),
+  fix: rule('fix', 4, 2)
 };
 
 export interface Ladder {
@@ -78,23 +98,24 @@ export interface LadderStep {
   helped: boolean;
 }
 
-const LEGACY: Partial<Record<LadderGame, { rounds: number; solved: (p: Progress) => number }>> = {
-  flash: { rounds: FLASH_ROUNDS_PER_LEVEL, solved: (p) => p.flashSolved },
-  pots: { rounds: POTS_ROUNDS_PER_LEVEL, solved: (p) => p.potsSolved },
-  path: { rounds: PATH_ROUNDS_PER_LEVEL, solved: (p) => p.pathSolved },
-  sort: { rounds: SORT_ROUNDS_PER_LEVEL, solved: (p) => p.sortSolved },
-  scale: { rounds: SCALE_ROUNDS_PER_LEVEL, solved: (p) => p.scaleSolved },
-  seq: { rounds: SEQ_ROUNDS_PER_LEVEL, solved: (p) => p.seqSolved },
-  mirror: { rounds: MIRROR_ROUNDS_PER_LEVEL, solved: (p) => p.mirrorSolved },
-  code: { rounds: CODE_ROUNDS_PER_LEVEL, solved: (p) => p.codeSolved },
-  fix: { rounds: FIX_ROUNDS_PER_LEVEL, solved: (p) => p.fixSolved }
+/** Games whose level used to be every N solved rounds. */
+const ROUNDS_PER_LEVEL: Partial<Record<LadderGame, number>> = {
+  flash: FLASH_ROUNDS_PER_LEVEL,
+  pots: POTS_ROUNDS_PER_LEVEL,
+  path: PATH_ROUNDS_PER_LEVEL,
+  sort: SORT_ROUNDS_PER_LEVEL,
+  scale: SCALE_ROUNDS_PER_LEVEL,
+  seq: SEQ_ROUNDS_PER_LEVEL,
+  mirror: MIRROR_ROUNDS_PER_LEVEL,
+  code: CODE_ROUNDS_PER_LEVEL,
+  fix: FIX_ROUNDS_PER_LEVEL
 };
 
 /** Games that walked a fixed order before their ladder: which level each round of that order belongs to. */
-const ROUND_LEVELS: Partial<Record<LadderGame, { round: (p: Progress) => number; level: (round: number) => number }>> = {
-  water: { round: (p) => p.waterRound, level: (r) => (r >= PLANTS.length ? 2 : r >= 4 ? 1 : 0) },
-  patterns: { round: (p) => p.patternRound, level: (r) => (r >= SHAPE_ORDER.length ? 3 : Math.min(2, r)) },
-  trace: { round: (p) => p.traceRound, level: (r) => (r >= TRACE_ORDER.length ? 2 : 0) + (r % TRACE_ORDER.length >= LADDER_RULES.trace.up ? 1 : 0) }
+const ROUND_LEVELS: Partial<Record<LadderGame, (round: number) => number>> = {
+  water: (r) => (r >= PLANTS.length ? 2 : r >= 4 ? 1 : 0),
+  patterns: (r) => (r >= SHAPE_ORDER.length ? 3 : Math.min(2, r)),
+  trace: (r) => (r >= TRACE_ORDER.length ? 2 : 0) + (r % TRACE_ORDER.length >= LADDER_RULES.trace.up ? 1 : 0)
 };
 
 const fresh = (level = 0): Ladder => ({ level, floor: 0, streak: 0, helpRun: 0, sinceChange: 0, lastChange: null, reached: level, solvedTop: -1 });
@@ -112,16 +133,16 @@ function legacyLadder(p: Progress, game: LadderGame): Ladder {
   }
   const walked = ROUND_LEVELS[game];
   if (walked) {
-    const round = Math.max(0, walked.round(p));
+    const round = Math.max(0, roundOf(p, game));
     return {
-      ...fresh(walked.level(round)),
+      ...fresh(walked(round)),
       // Mézút picks its digit by this count, so the child carries on from the same digit.
       sinceChange: game === 'trace' ? round % rule.up : 0,
-      solvedTop: round > 0 ? walked.level(round - 1) : -1
+      solvedTop: round > 0 ? walked(round - 1) : -1
     };
   }
-  const { rounds, solved: of } = LEGACY[game]!;
-  const solved = Math.max(0, of(p));
+  const rounds = ROUNDS_PER_LEVEL[game]!;
+  const solved = Math.max(0, solvedOf(p, game));
   const passed = Math.floor(solved / rounds);
   const level = Math.min(top, passed);
   return {
@@ -195,12 +216,6 @@ export function startAt(l: Ladder, level: number): Ladder {
  */
 export function placeAt(l: Ladder, level: number): Ladder {
   return { ...startAt(l, level), floor: 0 };
-}
-
-/** Solves a task in `game` for this progress: the new ladder in place, and what happened. */
-export function solveIn(p: Progress, game: LadderGame, helped: boolean): { progress: Progress; step: LadderStep } {
-  const step = afterSolve(ladderOf(p, game), LADDER_RULES[game], helped);
-  return { progress: withLadder(p, game, step.ladder), step };
 }
 
 /**

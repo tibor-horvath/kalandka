@@ -85,8 +85,6 @@ function FloorPic({ p, children }: { p: Course; children?: ReactNode }) {
 const path = spec<Puzzle>({
   id: 'path',
   rev: 1,
-  world: 'robot',
-  game: 'Robotút',
   levels: PATH_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'path').level,
   grid: (level, d) => {
@@ -208,8 +206,6 @@ function SortBoard({ r, answers }: { r: SortRound; answers: boolean }) {
 const sort = spec<SortTask>({
   id: 'sort',
   rev: 1,
-  world: 'robot',
-  game: 'Válogatógép',
   colorKey: () => true,
   levels: SORT_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'sort').level,
@@ -340,8 +336,6 @@ function ScaleBoard({ t, equal, answers }: { t: ScaleTask; equal: boolean; answe
 const scale = spec<{ t: ScaleTask; equal: boolean }>({
   id: 'scale',
   rev: 1,
-  world: 'robot',
-  game: 'Mérleg',
   levels: SCALE_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'scale').level,
   grid: (_, d) => pickGrid(d, [2, 3], [2, 4], [3, 5]),
@@ -378,8 +372,6 @@ function SeqItem({ item }: { item: Item }) {
 const seq = spec<SeqTask>({
   id: 'seq',
   rev: 1,
-  world: 'robot',
-  game: 'Mintagép',
   // Towers are one colour; every other row has coloured parts or arrows.
   colorKey: (level) => SEQ_LEVELS[level].kind !== 'grow',
   levels: SEQ_LEVELS.map((l) => l.name),
@@ -482,8 +474,6 @@ function MirrorBoard({ task, answers }: { task: Exclude<MirrorTask, { mode: 'pic
 const mirror = spec<MirrorTask>({
   id: 'mirror',
   rev: 1,
-  world: 'robot',
-  game: 'Tükörgép',
   // Only the coloured pictures ask for a colour; the other boards are one colour.
   colorKey: (level) => MIRROR_LEVELS[level].kind === 'paint' || MIRROR_LEVELS[level].kind === 'fix',
   levels: MIRROR_LEVELS.map((l) => l.name),
@@ -630,8 +620,6 @@ function PicLegend() {
 const code = spec<CodeTask>({
   id: 'code',
   rev: 1,
-  world: 'robot',
-  game: 'Kódzár',
   // Lamps are on every sheet but the dice one, in the code or in the answer.
   colorKey: (level) => CODE_LEVELS[level].kind !== 'dots',
   levels: CODE_LEVELS.map((l) => l.name),
@@ -728,8 +716,6 @@ function FixBoard({ task, answers }: { task: FixTask; answers: boolean }) {
 const fix = spec<FixTask>({
   id: 'fix',
   rev: 1,
-  world: 'robot',
-  game: 'Hibavadász',
   levels: FIX_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'fix').level,
   grid: (level, d) => {

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LevelMeter, LevelUpCard, useLevelUp } from '../../components/LevelMeter';
+import { useLadderRound, WinCard } from '../../components/ladderRound';
+import { GameShell } from '../../components/GameShell';
 import { FitBox } from '../../components/FitBox';
 import { useForm } from '../../components/Stage';
-import { Bolt, Crate, WeightBlock } from '../../components/robot';
-import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../../components/ui';
+import { Crate, WeightBlock } from '../../components/robot';
+import { GuideBubble } from '../../components/ui';
 import {
   BALANCE_MAX,
   FULL_FEEDBACK,
@@ -30,9 +31,8 @@ import {
 } from '../../games/robot/scale';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble, thud } from '../../lib/sound';
-import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
-import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
+import { ROUND_HELP_AFTER } from '../../state/taskLog';
 
 // The scale, in board units.
 const BOARD_H = 440;
@@ -463,19 +463,15 @@ function ChooseTaskView({ task, say, onDone, later }: TaskProps<ChooseTask>) {
 
 /** Mérleg: weigh, compare and balance on Csavar's scale. */
 export function Scale({ onBack }: { onBack: () => void }) {
-  const { progress, update } = useProgress();
-  // The ladder when this round started: the round keeps its level even after its win steps up or down.
-  const [startLadder] = useState(() => ladderOf(progress, 'scale'));
-  const levelIndex = startLadder.level;
-  /** This round's win on the ladder: the meter shows it, and it may step up or down. */
-  const [step, setStep] = useState<LadderStep | null>(null);
+  const { progress } = useProgress();
+  const [solved, setSolved] = useState(false);
+  // The meter fills when the round's last line is over and the win card shows.
+  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('scale', { showStep: solved });
   const round = useMemo(() => buildScaleRound(levelIndex, progress.scaleRound), [levelIndex, progress.scaleRound]);
   const { level, tasks } = round;
   const [at, setAt] = useState(0);
   const [taskDone, setTaskDone] = useState(false);
-  const [solved, setSolved] = useState(false);
   const [fb, setFb] = useState<ScaleFeedback>(() => startFeedback(level, tasks[0]));
-  const rewarded = useRef(false);
   const timers = useRef<number[]>([]);
 
   /** Corrections Csavar gave this round; enough of them and the round needed help (parents' notes). */
@@ -506,14 +502,7 @@ export function Scale({ onBack }: { onBack: () => void }) {
         setSolved(true);
         setFb(solvedFeedback());
       }, NEXT_TASK_MS);
-      if (!rewarded.current) {
-        rewarded.current = true;
-        const helped = oops.current >= ROUND_HELP_AFTER;
-        const s = afterSolve(startLadder, LADDER_RULES.scale, helped);
-        setStep(s);
-        if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
-        update((p) => withLadder(logTask({ ...p, bolts: p.bolts + 1, scaleSolved: p.scaleSolved + 1 }, 'scale', helped), 'scale', s.ladder));
-      }
+      solve(oops.current >= ROUND_HELP_AFTER);
       return;
     }
     chime();
@@ -527,26 +516,18 @@ export function Scale({ onBack }: { onBack: () => void }) {
 
   const task = tasks[at];
   const props = { level, say, onDone: done, later };
-  const next = () => update((p) => ({ ...p, scaleRound: p.scaleRound + 1 }));
-  const meter = ladderMeter(startLadder, LADDER_RULES.scale, solved ? step : null);
-  const levelUp = useLevelUp(meter, next);
 
   return (
-    <div className="screen screen--scale world--robot">
-      <div className="floor" aria-hidden="true" />
-
-      <header className="topbar topbar--meter">
-        <RoundButton label="Vissza a műhelybe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <div className="topbar__title">
-          <h1 className="screen-title">Mérleg</h1>
-          <LevelMeter meter={meter} world="robot" justSolved={solved} />
-        </div>
-        <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
-          <SpeakerIcon />
-        </RoundButton>
-      </header>
+    <GameShell
+      game="scale"
+      className="screen--scale"
+      title="Mérleg"
+      meter={meter}
+      justSolved={solved}
+      levelUp={levelUp}
+      onBack={onBack}
+      onReplay={() => speak(fb.speech)}
+    >
 
       <div className="scale-guide">
         <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
@@ -568,19 +549,9 @@ export function Scale({ onBack }: { onBack: () => void }) {
       </div>
 
       {solved && (
-        <div className="path-win sort-win" role="status">
-          <span className="path-win__rays" aria-hidden="true" />
-          <span className="path-win__title">Kész!</span>
-          <span className="path-win__reward">
-            +1 <Bolt size={34} /> csavar
-          </span>
-          <button type="button" className="big-btn big-btn--robot" onClick={levelUp.advance}>
-            Következő kör <NextIcon />
-          </button>
-        </div>
+        <WinCard onNext={levelUp.advance} />
       )}
 
-      {levelUp.open && <LevelUpCard meter={meter} world="robot" onNext={levelUp.finish} />}
-    </div>
+    </GameShell>
   );
 }

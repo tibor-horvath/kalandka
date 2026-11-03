@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { CELL, FRAME_H, FRAME_W, FloorCrates, FloorRobot, FloorTiles, useRover } from '../../components/floor';
-import { LevelMeter, LevelUpCard, useLevelUp } from '../../components/LevelMeter';
+import { useLadderRound, WinCard } from '../../components/ladderRound';
+import { GameShell } from '../../components/GameShell';
 import { FitBox } from '../../components/FitBox';
-import { Battery, Bolt, CmdIcon } from '../../components/robot';
-import { BackIcon, GuideBubble, NextIcon, PlayIcon, RoundButton, SpeakerIcon } from '../../components/ui';
+import { Battery, CmdIcon } from '../../components/robot';
+import { GuideBubble, PlayIcon } from '../../components/ui';
 import {
   ARROWS,
   CMD_LABELS,
@@ -34,9 +35,8 @@ import {
 } from '../../games/robot/path';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble, powerDown } from '../../lib/sound';
-import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
-import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
+import { ROUND_HELP_AFTER } from '../../state/taskLog';
 
 /** Time per robot step while a program runs: room to turn first, then drive. */
 const STEP_MS = 600;
@@ -68,12 +68,8 @@ function Charge() {
 
 /** Robotút: lead the robot to its battery, first one arrow at a time, then with a whole program. */
 export function Path({ onBack }: { onBack: () => void }) {
-  const { progress, update } = useProgress();
-  // The ladder when this round started: the round keeps its level even after its win steps up or down.
-  const [startLadder] = useState(() => ladderOf(progress, 'path'));
-  const levelIndex = startLadder.level;
-  /** This round's win on the ladder: the meter shows it, and it may step up or down. */
-  const [ladderStep, setLadderStep] = useState<LadderStep | null>(null);
+  const { progress } = useProgress();
+  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('path');
   const puzzle = useMemo(() => buildPuzzle(levelIndex, progress.pathRound), [levelIndex, progress.pathRound]);
   const { level } = puzzle;
   const plan = level.mode === 'plan';
@@ -95,7 +91,6 @@ export function Path({ onBack }: { onBack: () => void }) {
 
   const live = useRef({ tries: 0, collected: [] as number[] });
   const timers = useRef<number[]>([]);
-  const rewarded = useRef(false);
   /** The child asked for the way (parents' notes). */
   const askedWay = useRef(false);
 
@@ -121,14 +116,7 @@ export function Path({ onBack }: { onBack: () => void }) {
     fanfare();
     buzz(40);
     say(solvedFeedback(level));
-    if (!rewarded.current) {
-      rewarded.current = true;
-      const helped = askedWay.current || live.current.tries >= ROUND_HELP_AFTER;
-      const s = afterSolve(startLadder, LADDER_RULES.path, helped);
-      setLadderStep(s);
-      if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
-      update((p) => withLadder(logTask({ ...p, bolts: p.bolts + 1, pathSolved: p.pathSolved + 1 }, 'path', helped), 'path', s.ladder));
-    }
+    solve(askedWay.current || live.current.tries >= ROUND_HELP_AFTER);
   };
 
   /** Counts a try that did not reach the battery; true exactly once, when it is time to offer help. */
@@ -295,9 +283,6 @@ export function Path({ onBack }: { onBack: () => void }) {
     later(() => setRoute(null), ROUTE_MS);
   };
 
-  const next = () => update((p) => ({ ...p, pathRound: p.pathRound + 1 }));
-  const meter = ladderMeter(startLadder, LADDER_RULES.path, ladderStep);
-  const levelUp = useLevelUp(meter, next);
 
   const boardW = puzzle.cols * CELL;
   const boardH = puzzle.rows * CELL;
@@ -308,21 +293,16 @@ export function Path({ onBack }: { onBack: () => void }) {
   const chip = over ? 'Túl hosszú' : `${charge - (running || empty ? used : planned)} marad`;
 
   return (
-    <div className="screen screen--path world--robot">
-      <div className="floor" aria-hidden="true" />
-
-      <header className="topbar topbar--meter">
-        <RoundButton label="Vissza a műhelybe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <div className="topbar__title">
-          <h1 className="screen-title">Robotút</h1>
-          <LevelMeter meter={meter} world="robot" justSolved={solved} />
-        </div>
-        <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
-          <SpeakerIcon />
-        </RoundButton>
-      </header>
+    <GameShell
+      game="path"
+      className="screen--path"
+      title="Robotút"
+      meter={meter}
+      justSolved={solved}
+      levelUp={levelUp}
+      onBack={onBack}
+      onReplay={() => speak(fb.speech)}
+    >
 
       <div className={`path-body${plan ? ' is-plan' : ''}`}>
         <div className="path-left">
@@ -375,16 +355,7 @@ export function Path({ onBack }: { onBack: () => void }) {
               </FloorRobot>
             </div>
             {solved && (
-              <div className="path-win" role="status">
-                <span className="path-win__rays" aria-hidden="true" />
-                <span className="path-win__title">Feltöltve!</span>
-                <span className="path-win__reward">
-                  +1 <Bolt size={34} /> csavar
-                </span>
-                <button type="button" className="big-btn big-btn--robot" onClick={levelUp.advance}>
-                  Következő pálya <NextIcon />
-                </button>
-              </div>
+              <WinCard title="Feltöltve!" next="Következő pálya" className="" onNext={levelUp.advance} />
             )}
           </div>
         </FitBox>
@@ -493,7 +464,6 @@ export function Path({ onBack }: { onBack: () => void }) {
         </div>
       </div>
 
-      {levelUp.open && <LevelUpCard meter={meter} world="robot" onNext={levelUp.finish} />}
-    </div>
+    </GameShell>
   );
 }

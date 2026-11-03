@@ -1,11 +1,12 @@
+import type { LadderGame } from './games';
 import type { Progress } from './progress';
 import { today } from './screenTime';
 
 // What the parents' notes read: the last few solved tasks per game, each with its day and whether it needed help.
 // Only for the parents' overview; nothing the child sees depends on it.
 
-/** Games whose tasks can need help. Számmagok has no wrong answers, so it is not logged. */
-export type LoggedGame = 'water' | 'patterns' | 'flash' | 'trace' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code' | 'fix';
+/** Games whose tasks can need help: the levelled ones. Számmagok has no wrong answers, so it is not logged. */
+export type LoggedGame = LadderGame;
 
 /** One solved task: its day (YYYY-MM-DD) and 1 when it needed help. Kept short, as every save carries it. */
 export interface TaskMark {

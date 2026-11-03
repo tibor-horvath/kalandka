@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { CELL, FRAME_H, FRAME_W, FloorCrates, FloorRobot, FloorTiles, useRover } from '../../components/floor';
-import { LevelMeter, LevelUpCard, useLevelUp } from '../../components/LevelMeter';
+import { useLadderRound, WinCard } from '../../components/ladderRound';
+import { GameShell } from '../../components/GameShell';
 import { FitBox } from '../../components/FitBox';
-import { Battery, Bolt, CmdIcon } from '../../components/robot';
-import { BackIcon, GuideBubble, NextIcon, PlayIcon, RoundButton, SpeakerIcon } from '../../components/ui';
+import { Battery, CmdIcon } from '../../components/robot';
+import { GuideBubble, PlayIcon } from '../../components/ui';
 import {
   ONE_MORE_FEEDBACK,
   SHOW_CARD_FEEDBACK,
@@ -26,9 +27,8 @@ import {
 import { CMD_LABELS, run, type Card, type Cell, type RunResult } from '../../games/robot/path';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../../lib/sound';
-import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
-import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
+import { ROUND_HELP_AFTER } from '../../state/taskLog';
 
 /** Time per robot step while a program runs: room to turn first, then drive. */
 const STEP_MS = 600;
@@ -41,17 +41,12 @@ const cardName = (c: Card) => `${CMD_LABELS[c.cmd]}${c.times > 1 ? `, ${c.times}
 
 /** Hibavadász: run the broken program, find the card that is to blame, put it right. */
 export function Fix({ onBack }: { onBack: () => void }) {
-  const { progress, update } = useProgress();
-  // The ladder when this round started: the round keeps its level even after its win steps up or down.
-  const [startLadder] = useState(() => ladderOf(progress, 'fix'));
-  const levelIndex = startLadder.level;
-  /** This round's win on the ladder: the meter shows it, and it may step up or down. */
-  const [step, setStep] = useState<LadderStep | null>(null);
+  const { progress } = useProgress();
+  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('fix');
   const round = useMemo(() => buildFixRound(levelIndex, progress.fixRound), [levelIndex, progress.fixRound]);
   const [taskIdx, setTaskIdx] = useState(0);
   const [fb, setFb] = useState<FixFeedback>(() => startFeedback(round.level));
   const [solved, setSolved] = useState(false);
-  const rewarded = useRef(false);
   const timers = useRef<number[]>([]);
   const later = (fn: () => void, ms: number) => {
     timers.current.push(window.setTimeout(fn, ms));
@@ -64,7 +59,7 @@ export function Fix({ onBack }: { onBack: () => void }) {
     setFb(f);
     speak(f.speech);
   };
-  const helped = () => {
+  const noteHelp = () => {
     oops.current += 1;
   };
 
@@ -92,38 +87,23 @@ export function Fix({ onBack }: { onBack: () => void }) {
     fanfare();
     buzz(40);
     say({ ...win, speech: `${right.speech} ${win.speech}` });
-    if (!rewarded.current) {
-      rewarded.current = true;
-      const needed = oops.current >= ROUND_HELP_AFTER;
-      const s = afterSolve(startLadder, LADDER_RULES.fix, needed);
-      setStep(s);
-      if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
-      update((p) => withLadder(logTask({ ...p, bolts: p.bolts + 1, fixSolved: p.fixSolved + 1 }, 'fix', needed), 'fix', s.ladder));
-    }
+    solve(oops.current >= ROUND_HELP_AFTER);
   };
 
-  const next = () => update((p) => ({ ...p, fixRound: p.fixRound + 1 }));
-  const meter = ladderMeter(startLadder, LADDER_RULES.fix, step);
-  const levelUp = useLevelUp(meter, next);
 
   return (
-    <div className="screen screen--path screen--fix world--robot">
-      <div className="floor" aria-hidden="true" />
+    <GameShell
+      game="fix"
+      className="screen--path screen--fix"
+      title="Hibavadász"
+      meter={meter}
+      justSolved={solved}
+      levelUp={levelUp}
+      onBack={onBack}
+      onReplay={() => speak(fb.speech)}
+    >
 
-      <header className="topbar topbar--meter">
-        <RoundButton label="Vissza a műhelybe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <div className="topbar__title">
-          <h1 className="screen-title">Hibavadász</h1>
-          <LevelMeter meter={meter} world="robot" justSolved={solved} />
-        </div>
-        <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
-          <SpeakerIcon />
-        </RoundButton>
-      </header>
-
-      <Task key={taskIdx} level={round.level} task={round.tasks[taskIdx]} solved={solved} say={say} helped={helped} onDone={done} later={later}>
+      <Task key={taskIdx} level={round.level} task={round.tasks[taskIdx]} solved={solved} say={say} noteHelp={noteHelp} onDone={done} later={later}>
         <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
           {fb.text}
         </GuideBubble>
@@ -135,20 +115,10 @@ export function Fix({ onBack }: { onBack: () => void }) {
       </Task>
 
       {solved && (
-        <div className="path-win sort-win" role="status">
-          <span className="path-win__rays" aria-hidden="true" />
-          <span className="path-win__title">Kész!</span>
-          <span className="path-win__reward">
-            +1 <Bolt size={34} /> csavar
-          </span>
-          <button type="button" className="big-btn big-btn--robot" onClick={levelUp.advance}>
-            Következő kör <NextIcon />
-          </button>
-        </div>
+        <WinCard onNext={levelUp.advance} />
       )}
 
-      {levelUp.open && <LevelUpCard meter={meter} world="robot" onNext={levelUp.finish} />}
-    </div>
+    </GameShell>
   );
 }
 
@@ -158,7 +128,7 @@ interface TaskProps {
   solved: boolean;
   say: (f: FixFeedback) => void;
   /** A glow or "Mutasd!" was used: it counts towards the round needing help. */
-  helped: () => void;
+  noteHelp: () => void;
   onDone: () => void;
   later: (fn: () => void, ms: number) => void;
   /** Csavar's bubble and the task dots, above the program. */
@@ -166,7 +136,7 @@ interface TaskProps {
 }
 
 /** One broken program: the floor, the cards, and what goes in the wrong card's place. */
-function Task({ level, task, solved, say, helped, onDone, later, children }: TaskProps) {
+function Task({ level, task, solved, say, noteHelp, onDone, later, children }: TaskProps) {
   const { course } = task;
   const rover = useRover(course.start, later);
   const [cards, setCards] = useState(task.program);
@@ -246,7 +216,7 @@ function Task({ level, task, solved, say, helped, onDone, later, children }: Tas
     if (!bug) {
       const m = misses + 1;
       setMisses(m);
-      if (m === SHOW_FIX_AFTER) helped();
+      if (m === SHOW_FIX_AFTER) noteHelp();
       setTried((t) => (t.includes(i) ? t : [...t, i]));
       setWrong((w) => ({ i, id: (w?.id ?? 0) + 1 }));
       buzz(30);
@@ -290,7 +260,7 @@ function Task({ level, task, solved, say, helped, onDone, later, children }: Tas
     // The robot tries the child's card: they see for themselves that it does not get there.
     const m = misses + 1;
     setMisses(m);
-    if (m === SHOW_FIX_AFTER) helped();
+    if (m === SHOW_FIX_AFTER) noteHelp();
     setTriedChoices((t) => [...t, c]);
     const before = cards;
     go(next, () => {
@@ -301,7 +271,7 @@ function Task({ level, task, solved, say, helped, onDone, later, children }: Tas
 
   const show = () => {
     if (running || finished) return;
-    helped();
+    noteHelp();
     setShowing(true);
     setSawWay(true);
     say(open === null ? SHOW_CARD_FEEDBACK : SHOW_CHOICE_FEEDBACK);

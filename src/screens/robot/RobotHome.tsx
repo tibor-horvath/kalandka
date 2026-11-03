@@ -1,48 +1,38 @@
-import { useEffect } from 'react';
-import { KidChip, MapButton, ParentsButton, PrintButton, VoiceButton } from '../../components/hub';
-import { Island, useLeave, type Place, type RewardPlace } from '../../components/island';
+import { useEffect, type ReactNode } from 'react';
+import type { Place, RewardPlace } from '../../components/island';
 import { Bolt, CodeArt, FixArt, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../../components/robot';
 import { MyRobot } from '../../components/robotParts';
-import { useForm } from '../../components/Stage';
-import { StickerPop } from '../../components/StickerPop';
-import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from '../../components/ui';
+import { WorldHub, type HubActions } from '../../components/WorldHub';
 import { speak } from '../../lib/speech';
-import { kidName, useActiveKid, useProfiles } from '../../state/profiles';
+import { gamesIn, isLadderGame, solvedOf, type GameId } from '../../state/games';
 import { ladderOf } from '../../state/ladder';
+import { kidName, useActiveKid, useProfiles } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
-import { markStickerSeen, newStickers } from '../../state/rewards';
+import { newStickers } from '../../state/rewards';
 import { boltBalance, canBuyAnything, newFriend, secondRobotNew } from '../../state/robotParts';
-
-export type RobotGameId = 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code' | 'fix';
 
 /** The greeting without a name: one child on the device, or an online voice. */
 const HELLO = 'Szia! Jó, hogy itt vagy a műhelyben!';
 
+/** Each machine's place on the island: its accessible name and picture. */
+const TILES: Partial<Record<GameId, { label: string; art: ReactNode }>> = {
+  path: { label: 'Robotút – programozd a robotot', art: <PathArt /> },
+  sort: { label: 'Válogatógép – válogasd szét a darabokat', art: <SortArt /> },
+  scale: { label: 'Mérleg – melyik a nehezebb?', art: <ScaleArt /> },
+  seq: { label: 'Mintagép – mi jön a sorban?', art: <SeqArt /> },
+  mirror: { label: 'Tükörgép – hol a tükörkép?', art: <MirrorArt /> },
+  code: { label: 'Kódzár – nyisd ki a ládát a kóddal', art: <CodeArt /> },
+  fix: { label: 'Hibavadász – keresd meg a hibás kártyát', art: <FixArt /> }
+};
+
 /** Robotműhely: Csavar's workshop, the second Kalandka world, for the bigger ones. */
-export function RobotHome({
-  onOpen,
-  onWorkshop,
-  onParents,
-  onPrint,
-  onSwitch,
-  onMap
-}: {
-  onOpen: (game: RobotGameId) => void;
-  onWorkshop: () => void;
-  onParents: () => void;
-  onPrint: () => void;
-  onSwitch: () => void;
-  onMap: () => void;
-}) {
+export function RobotHome({ onOpen, onReward, ...actions }: HubActions & { onOpen: (game: GameId) => void; onReward: () => void }) {
   const { progress, update } = useProgress();
   const { profiles } = useProfiles();
   const kid = useActiveKid();
-  const phone = useForm() !== 'tablet';
-  const [leaving, leaveForMap] = useLeave(onMap);
   const shared = profiles.kids.length > 1;
-  // A Robotút sticker earned in the game is celebrated here, one at a time.
+  // A sticker earned in a game is celebrated here, one at a time.
   const sticker = newStickers(progress, 'robot')[0] ?? null;
-  const balance = boltBalance(progress);
 
   // Aloud with an online voice Csavar leaves the name out: it would leave the device.
   const hello = shared ? `Szia, ${kidName(kid)}! Jó, hogy itt vagy a műhelyben!` : HELLO;
@@ -59,90 +49,32 @@ export function RobotHome({
   const welcomeOnce = () => {
     if (!progress.robotWelcomed) update((p) => ({ ...p, robotWelcomed: true }));
   };
-  const open = (game: RobotGameId) => {
+  const open = (game: GameId) => {
     welcomeOnce();
     onOpen(game);
   };
   const openWorkshop = () => {
     welcomeOnce();
-    onWorkshop();
+    onReward();
   };
 
-  const levelIdx = ladderOf(progress, 'path').level;
-  const sortIdx = ladderOf(progress, 'sort').level;
-  const scaleIdx = ladderOf(progress, 'scale').level;
-  const seqIdx = ladderOf(progress, 'seq').level;
-  const mirrorIdx = ladderOf(progress, 'mirror').level;
-  const codeIdx = ladderOf(progress, 'code').level;
-  const fixIdx = ladderOf(progress, 'fix').level;
-  const workshopBadge = newFriend(progress) ? 'Barát jött!' : secondRobotNew(progress) ? 'Új robot!' : canBuyAnything(progress) ? 'Építhetsz!' : null;
-  /** A machine's badge: new until first solved, then the level the child is on. */
-  const machineBadge = (solved: number, level: number) => (solved === 0 ? 'Új gép!' : `${level + 1}. szint`);
-
-  const places: Place[] = [
-    {
-      id: 'path',
-      name: 'Robotút',
-      label: 'Robotút – programozd a robotot',
-      badge: progress.pathSolved === 0 ? 'Kezdd itt!' : `${levelIdx + 1}. szint`,
-      start: progress.pathSolved === 0,
-      art: <PathArt />,
-      onOpen: () => open('path')
-    },
-    { id: 'sort', name: 'Válogatógép', label: 'Válogatógép – válogasd szét a darabokat', badge: machineBadge(progress.sortSolved, sortIdx), art: <SortArt />, onOpen: () => open('sort') },
-    { id: 'scale', name: 'Mérleg', label: 'Mérleg – melyik a nehezebb?', badge: machineBadge(progress.scaleSolved, scaleIdx), art: <ScaleArt />, onOpen: () => open('scale') },
-    { id: 'seq', name: 'Mintagép', label: 'Mintagép – mi jön a sorban?', badge: machineBadge(progress.seqSolved, seqIdx), art: <SeqArt />, onOpen: () => open('seq') },
-    { id: 'mirror', name: 'Tükörgép', label: 'Tükörgép – hol a tükörkép?', badge: machineBadge(progress.mirrorSolved, mirrorIdx), art: <MirrorArt />, onOpen: () => open('mirror') },
-    { id: 'code', name: 'Kódzár', label: 'Kódzár – nyisd ki a ládát a kóddal', badge: machineBadge(progress.codeSolved, codeIdx), art: <CodeArt />, onOpen: () => open('code') },
-    { id: 'fix', name: 'Hibavadász', label: 'Hibavadász – keresd meg a hibás kártyát', badge: machineBadge(progress.fixSolved, fixIdx), art: <FixArt />, onOpen: () => open('fix') }
-  ];
+  // The first machine is where a new child starts; every machine is new until first solved, then shows its level.
+  const places: Place[] = gamesIn('robot').map(({ id, name }, i) => {
+    const fresh = solvedOf(progress, id) === 0;
+    const level = isLadderGame(id) ? ladderOf(progress, id).level : 0;
+    const badge = fresh ? (i === 0 ? 'Kezdd itt!' : 'Új gép!') : `${level + 1}. szint`;
+    return { id, name, label: TILES[id]!.label, badge, start: i === 0 && fresh, art: TILES[id]!.art, onOpen: () => open(id) };
+  });
   const reward: RewardPlace = {
     label: 'Robotépítő – építsd meg a saját robotodat',
     name: 'Robotépítő',
     art: <MyRobot progress={progress} width={92} />,
     icon: <Bolt size={30} />,
-    count: balance,
+    count: boltBalance(progress),
     unit: 'csavar',
-    badge: workshopBadge,
+    badge: newFriend(progress) ? 'Barát jött!' : secondRobotNew(progress) ? 'Új robot!' : canBuyAnything(progress) ? 'Építhetsz!' : null,
     onClick: openWorkshop
   };
 
-  return (
-    <div className="screen screen--home screen--robot-home world--robot screen--island">
-      <header className="topbar">
-        <div className="brand">
-          <KalandkaIcon size={56} />
-          <div className="brand__text">
-            <KalandkaWordmark size={phone ? 15 : 22} accent="#0C6E6A" />
-            <div className="brand__world">Robotműhely</div>
-          </div>
-        </div>
-        <div className="topbar__right">
-          {shared && <KidChip onSwitch={onSwitch} />}
-          <MapButton onClick={leaveForMap} />
-          <VoiceButton guide="Csavar" />
-          <PrintButton onClick={onPrint} />
-          <ParentsButton onClick={onParents} />
-        </div>
-      </header>
-
-      <div className="home-guide">
-        <GuideBubble guide="csavar" mood="cheer" csepiWidth={80}>
-          <div className="bubble__row">
-            <div>
-              <div className="bubble__kicker">{greeting}</div>
-              <h1 className="bubble__title">{question}</h1>
-            </div>
-            <RoundButton label="Meghallgatom újra" tint="blue" onClick={sayIntro}>
-              <SpeakerIcon />
-            </RoundButton>
-          </div>
-        </GuideBubble>
-      </div>
-
-      <Island world="robot" places={places} reward={reward} leaving={leaving} />
-
-      {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}
-    </div>
-  );
+  return <WorldHub world="robot" places={places} reward={reward} bubble={{ kicker: greeting, title: question, mood: 'cheer' }} onReplay={sayIntro} sticker={sticker} {...actions} />;
 }

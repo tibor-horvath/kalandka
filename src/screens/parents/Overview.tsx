@@ -1,25 +1,27 @@
 import { gameNotes, insights, type Insight } from '../../state/insights';
-import { LADDER_RULES, ladderOf, upNeed, type LadderGame } from '../../state/ladder';
+import { GAME_IDS, GAMES, solvedOf, type GameId } from '../../state/games';
+import { LADDER_LEVELS, LADDER_RULES, ladderOf, upNeed, type LadderGame } from '../../state/ladder';
 import { LEVEL_SETTINGS } from '../../state/levels';
 import { useProgress } from '../../state/progress';
 import { BONUS_OPTIONS, addBonus, lastSevenDays, playedToday, remainingSeconds, today } from '../../state/screenTime';
-import { ADD_LEVELS } from '../../games/add/logic';
 import { LEARN_MAX } from '../../games/learn/logic';
-import { TRACE_LEVELS } from '../../games/trace/logic';
-import { PATH_LEVELS } from '../../games/robot/path';
-import { SCALE_LEVELS } from '../../games/robot/scale';
-import { FIX_LEVELS } from '../../games/robot/fix';
-import { MIRROR_LEVELS } from '../../games/robot/mirror';
-import { CODE_LEVELS } from '../../games/robot/code';
-import { SEQ_LEVELS } from '../../games/robot/seq';
-import { SORT_LEVELS } from '../../games/robot/sort';
-import { POTS_LEVELS } from '../../games/pots/logic';
-import { LEVELS as FLASH_LEVELS } from '../../games/flash/logic';
-import { PATTERN_LEVELS } from '../../games/patterns/logic';
-import { WATER_LEVELS } from '../../games/water/logic';
 import { WORLDS, type WorldId } from '../../state/worlds';
 import type { ParentPage } from './ParentArea';
 import { WorldGroup } from './controls';
+
+/** What each game counts on its line; the others show their level alone. */
+const COUNTED: Partial<Record<GameId, string>> = {
+  water: 'virág',
+  patterns: 'sor',
+  trace: 'leírt szám',
+  path: 'pálya',
+  sort: 'kör',
+  scale: 'kör',
+  seq: 'kör',
+  mirror: 'kör',
+  code: 'kör',
+  fix: 'kör'
+};
 
 const DATE_FMT = new Intl.DateTimeFormat('hu-HU', { month: 'long', day: 'numeric', weekday: 'long' });
 
@@ -77,82 +79,24 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
   };
   const learned = Math.min(LEARN_MAX, progress.learnSolved);
   /** "3. szint · Name", from the game's ladder. */
-  const at = (game: LadderGame, levels: { name: string }[]) => {
+  const at = (game: LadderGame) => {
     const i = ladderOf(progress, game).level;
-    return `${i + 1}. szint · ${levels[i].name}`;
+    return `${i + 1}. szint · ${LADDER_LEVELS[game][i].name}`;
   };
   const add = ladderOf(progress, 'add');
-  const games: { world: WorldId; name: string; detail: string; share: number }[] = [
-    { world: 'garden', name: 'Számmagok', detail: `${learned} / ${LEARN_MAX} szám`, share: learned / LEARN_MAX },
-    {
-      world: 'garden',
-      name: 'Locsolás',
-      detail: `${progress.garden.length} virág · ${at('water', WATER_LEVELS)}`,
-      share: levelShare('water')
-    },
-    {
-      world: 'garden',
-      name: 'Virágsor',
-      detail: `${progress.patternsSolved} sor · ${at('patterns', PATTERN_LEVELS)}`,
-      share: levelShare('patterns')
-    },
-    { world: 'garden', name: 'Villámszem', detail: at('flash', FLASH_LEVELS), share: levelShare('flash') },
-    {
-      world: 'garden',
-      name: 'Mézút',
-      detail: `${progress.traceSolved} leírt szám · ${at('trace', TRACE_LEVELS)}`,
-      share: levelShare('trace')
-    },
-    {
-      world: 'garden',
-      name: 'Méhkas',
-      detail: `${at('add', ADD_LEVELS)} · ${add.streak}/${upNeed(add, LADDER_RULES.add)} csillag`,
-      share: levelShare('add')
-    },
-    { world: 'garden', name: 'Cserépbarátok', detail: at('pots', POTS_LEVELS), share: levelShare('pots') },
-    {
-      world: 'robot',
-      name: 'Robotút',
-      detail: `${progress.pathSolved} pálya · ${at('path', PATH_LEVELS)}`,
-      share: levelShare('path')
-    },
-    {
-      world: 'robot',
-      name: 'Válogatógép',
-      detail: `${progress.sortSolved} kör · ${at('sort', SORT_LEVELS)}`,
-      share: levelShare('sort')
-    },
-    {
-      world: 'robot',
-      name: 'Mérleg',
-      detail: `${progress.scaleSolved} kör · ${at('scale', SCALE_LEVELS)}`,
-      share: levelShare('scale')
-    },
-    {
-      world: 'robot',
-      name: 'Mintagép',
-      detail: `${progress.seqSolved} kör · ${at('seq', SEQ_LEVELS)}`,
-      share: levelShare('seq')
-    },
-    {
-      world: 'robot',
-      name: 'Tükörgép',
-      detail: `${progress.mirrorSolved} kör · ${at('mirror', MIRROR_LEVELS)}`,
-      share: levelShare('mirror')
-    },
-    {
-      world: 'robot',
-      name: 'Kódzár',
-      detail: `${progress.codeSolved} kör · ${at('code', CODE_LEVELS)}`,
-      share: levelShare('code')
-    },
-    {
-      world: 'robot',
-      name: 'Hibavadász',
-      detail: `${progress.fixSolved} kör · ${at('fix', FIX_LEVELS)}`,
-      share: levelShare('fix')
-    }
-  ];
+  /** The game's line under its name: what it counted, then its level. */
+  const detail = (game: GameId): string => {
+    if (game === 'learn') return `${learned} / ${LEARN_MAX} szám`;
+    if (game === 'add') return `${at('add')} · ${add.streak}/${upNeed(add, LADDER_RULES.add)} csillag`;
+    const unit = COUNTED[game];
+    return unit ? `${solvedOf(progress, game)} ${unit} · ${at(game)}` : at(game);
+  };
+  const games = GAME_IDS.map((id) => ({
+    world: GAMES[id].world,
+    name: GAMES[id].name,
+    detail: detail(id),
+    share: id === 'learn' ? learned / LEARN_MAX : levelShare(id)
+  }));
 
   return (
     <div className="pa-page">

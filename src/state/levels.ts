@@ -1,20 +1,8 @@
-import { ADD_LEVELS } from '../games/add/logic';
-import { LEVELS as FLASH_LEVELS } from '../games/flash/logic';
 import { LEARN_MAX } from '../games/learn/logic';
-import { POTS_LEVELS } from '../games/pots/logic';
-import { PATTERN_LEVELS } from '../games/patterns/logic';
-import { PATH_LEVELS } from '../games/robot/path';
-import { SCALE_LEVELS } from '../games/robot/scale';
-import { CODE_LEVELS } from '../games/robot/code';
-import { FIX_LEVELS } from '../games/robot/fix';
-import { MIRROR_LEVELS } from '../games/robot/mirror';
-import { SEQ_LEVELS } from '../games/robot/seq';
-import { SORT_LEVELS } from '../games/robot/sort';
-import { TRACE_LEVELS } from '../games/trace/logic';
-import { WATER_LEVELS } from '../games/water/logic';
-import { ladderOf, startAt, withLadder } from './ladder';
+import { GAMES, LADDER_GAMES, type GameId, type LadderGame } from './games';
+import { LADDER_LEVELS, LADDER_RULES, ladderOf, startAt, withLadder } from './ladder';
 import type { Progress } from './progress';
-import type { WorldId } from './worlds';
+import { WORLDS, type WorldId } from './worlds';
 
 // Per-game level settings for the parents' corner.
 // Each setting reads the game's current level from progress and writes a new starting point;
@@ -26,7 +14,7 @@ export interface LevelOption {
 }
 
 export interface LevelSetting {
-  id: 'learn' | 'water' | 'patterns' | 'trace' | 'flash' | 'add' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code' | 'fix';
+  id: GameId;
   world: WorldId;
   game: string;
   hint: string;
@@ -42,134 +30,70 @@ const LEARN_STARTS: LevelOption[] = [
   { value: 15, label: '16-tól' }
 ];
 
-export const LEVEL_SETTINGS: LevelSetting[] = [
-  {
-    id: 'learn',
-    world: 'garden',
-    game: 'Számmagok',
-    hint: 'Innen tanulja sorban a számokat, 20-ig.',
-    options: LEARN_STARTS,
-    current: (p) => {
-      const r = p.learnRound % LEARN_MAX;
-      return [...LEARN_STARTS].reverse().find((o) => r >= o.value)!.value;
-    },
-    apply: (p, v) => ({ ...p, learnRound: v })
+const learn: LevelSetting = {
+  id: 'learn',
+  world: GAMES.learn.world,
+  game: GAMES.learn.name,
+  hint: 'Innen tanulja sorban a számokat, 20-ig.',
+  options: LEARN_STARTS,
+  current: (p) => {
+    const r = p.learnRound % LEARN_MAX;
+    return [...LEARN_STARTS].reverse().find((o) => r >= o.value)!.value;
   },
-  {
-    id: 'water',
-    world: 'garden',
-    game: 'Locsolás',
-    hint: '4 jó virág egymás után: nehezebb szint, 3 túlöntözött egymás után: könnyebb (kannával lehet túlönteni). Ez alá nem lép vissza.',
-    options: WATER_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'water').level,
-    apply: (p, v) => withLadder(p, 'water', startAt(ladderOf(p, 'water'), v))
-  },
-  {
-    id: 'patterns',
-    world: 'garden',
-    game: 'Virágsor',
-    hint: '4 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
-    options: PATTERN_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'patterns').level,
-    apply: (p, v) => withLadder(p, 'patterns', startAt(ladderOf(p, 'patterns'), v))
-  },
-  {
-    id: 'trace',
-    world: 'garden',
-    game: 'Mézút',
-    hint: 'A szint minden száma segítség nélkül egymás után: nehezebb szint, 3 nehéz szám egymás után: könnyebb. Ez alá nem lép vissza.',
-    options: TRACE_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'trace').level,
-    apply: (p, v) => withLadder(p, 'trace', startAt(ladderOf(p, 'trace'), v))
-  },
-  {
-    id: 'flash',
-    world: 'garden',
-    game: 'Villámszem',
-    hint: '4 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
-    options: FLASH_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'flash').level,
-    apply: (p, v) => withLadder(p, 'flash', startAt(ladderOf(p, 'flash'), v))
-  },
-  {
-    id: 'add',
-    world: 'garden',
-    game: 'Méhkas',
-    hint: '5 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
-    options: ADD_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'add').level,
-    apply: (p, v) => withLadder(p, 'add', startAt(ladderOf(p, 'add'), v))
-  },
-  {
-    id: 'pots',
-    world: 'garden',
-    game: 'Cserépbarátok',
-    hint: '5 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
-    options: POTS_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'pots').level,
-    apply: (p, v) => withLadder(p, 'pots', startAt(ladderOf(p, 'pots'), v))
-  },
-  {
-    id: 'path',
-    world: 'robot',
-    game: 'Robotút',
-    hint: 'Robotműhely. 4 jó pálya egymás után: nehezebb szint, 2 nehéz pálya egymás után: könnyebb. Ez alá nem lép vissza.',
-    options: PATH_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'path').level,
-    apply: (p, v) => withLadder(p, 'path', startAt(ladderOf(p, 'path'), v))
-  },
-  {
-    id: 'sort',
-    world: 'robot',
-    game: 'Válogatógép',
-    hint: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
-    options: SORT_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'sort').level,
-    apply: (p, v) => withLadder(p, 'sort', startAt(ladderOf(p, 'sort'), v))
-  },
-  {
-    id: 'scale',
-    world: 'robot',
-    game: 'Mérleg',
-    hint: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
-    options: SCALE_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'scale').level,
-    apply: (p, v) => withLadder(p, 'scale', startAt(ladderOf(p, 'scale'), v))
-  },
-  {
-    id: 'seq',
-    world: 'robot',
-    game: 'Mintagép',
-    hint: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
-    options: SEQ_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'seq').level,
-    apply: (p, v) => withLadder(p, 'seq', startAt(ladderOf(p, 'seq'), v))
-  },
-  {
-    id: 'mirror',
-    world: 'robot',
-    game: 'Tükörgép',
-    hint: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
-    options: MIRROR_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'mirror').level,
-    apply: (p, v) => withLadder(p, 'mirror', startAt(ladderOf(p, 'mirror'), v))
-  },
-  {
-    id: 'code',
-    world: 'robot',
-    game: 'Kódzár',
-    hint: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
-    options: CODE_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'code').level,
-    apply: (p, v) => withLadder(p, 'code', startAt(ladderOf(p, 'code'), v))
-  },
-  {
-    id: 'fix',
-    world: 'robot',
-    game: 'Hibavadász',
-    hint: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
-    options: FIX_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
-    current: (p) => ladderOf(p, 'fix').level,
-    apply: (p, v) => withLadder(p, 'fix', startAt(ladderOf(p, 'fix'), v))
-  }
-];
+  apply: (p, v) => ({ ...p, learnRound: v })
+};
+
+/** How the hint names a task the child solved alone, and one that needed help. */
+interface StepWords {
+  good: string;
+  hard: string;
+  /** Said in place of "N good tasks": Mézút steps up after a level's whole row of digits. */
+  upAll?: string;
+  /** Explains what "needing help" means where it is not obvious. */
+  note?: string;
+}
+
+const STEP_WORDS: Record<LadderGame, StepWords> = {
+  water: { good: 'jó virág', hard: 'túlöntözött', note: 'kannával lehet túlönteni' },
+  patterns: { good: 'jó válasz', hard: 'nehéz feladat' },
+  trace: { good: 'szám', hard: 'nehéz szám', upAll: 'A szint minden száma segítség nélkül' },
+  flash: { good: 'jó válasz', hard: 'nehéz feladat' },
+  add: { good: 'jó válasz', hard: 'nehéz feladat' },
+  pots: { good: 'jó válasz', hard: 'nehéz feladat' },
+  path: { good: 'jó pálya', hard: 'nehéz pálya' },
+  sort: { good: 'jó kör', hard: 'nehéz kör' },
+  scale: { good: 'jó kör', hard: 'nehéz kör' },
+  seq: { good: 'jó kör', hard: 'nehéz kör' },
+  mirror: { good: 'jó kör', hard: 'nehéz kör' },
+  code: { good: 'jó kör', hard: 'nehéz kör' },
+  fix: { good: 'jó kör', hard: 'nehéz kör' }
+};
+
+/** The ladder's own numbers, so the hint never drifts from what the game does. Workshop hints name their world. */
+export function ladderHint(game: LadderGame): string {
+  const { up, down } = LADDER_RULES[game];
+  const words = STEP_WORDS[game];
+  const world = GAMES[game].world === 'robot' ? `${WORLDS.find((w) => w.id === 'robot')!.name}. ` : '';
+  const upText = words.upAll ?? `${up} ${words.good}`;
+  const note = words.note ? ` (${words.note})` : '';
+  return `${world}${upText} egymás után: nehezebb szint, ${down} ${words.hard} egymás után: könnyebb${note}. Ez alá nem lép vissza.`;
+}
+
+/** The short line under the game's name: how many tasks without help step it up. */
+export function ladderStepLine(game: LadderGame): string {
+  return `${LADDER_RULES[game].up} ${STEP_WORDS[game].good} után magától lép`;
+}
+
+function ladderSetting(game: LadderGame): LevelSetting {
+  return {
+    id: game,
+    world: GAMES[game].world,
+    game: GAMES[game].name,
+    hint: ladderHint(game),
+    options: LADDER_LEVELS[game].map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
+    current: (p) => ladderOf(p, game).level,
+    apply: (p, v) => withLadder(p, game, startAt(ladderOf(p, game), v))
+  };
+}
+
+export const LEVEL_SETTINGS: LevelSetting[] = [learn, ...LADDER_GAMES.map(ladderSetting)];

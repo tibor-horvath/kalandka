@@ -1,18 +1,6 @@
-import { ADD_LEVELS } from '../games/add/logic';
-import { LEVELS as FLASH_LEVELS } from '../games/flash/logic';
 import { LEARN_MAX } from '../games/learn/logic';
-import { PATTERN_LEVELS } from '../games/patterns/logic';
-import { POTS_LEVELS } from '../games/pots/logic';
-import { CODE_LEVELS } from '../games/robot/code';
-import { FIX_LEVELS } from '../games/robot/fix';
-import { MIRROR_LEVELS } from '../games/robot/mirror';
-import { PATH_LEVELS } from '../games/robot/path';
-import { SCALE_LEVELS } from '../games/robot/scale';
-import { SEQ_LEVELS } from '../games/robot/seq';
-import { SORT_LEVELS } from '../games/robot/sort';
-import { TRACE_LEVELS } from '../games/trace/logic';
-import { WATER_LEVELS } from '../games/water/logic';
-import { LADDER_RULES, ladderOf, type LadderGame } from './ladder';
+import { GAMES } from './games';
+import { LADDER_LEVELS, LADDER_RULES, ladderOf } from './ladder';
 import type { Progress } from './progress';
 import { recentMarks, type LoggedGame } from './taskLog';
 import type { WorldId } from './worlds';
@@ -43,13 +31,10 @@ const HARD_RUN = 3;
 
 interface GameText {
   id: LoggedGame;
-  world: WorldId;
-  name: string;
   /** Where something happens ("A Virágsorban"), for the tip title. */
   where: string;
   /** What one solved task is called: feladat, kör, pálya… */
   unit: string;
-  level: (p: Progress) => string;
   /** What needing help looks like in this game. */
   hard: string;
   home: string;
@@ -60,84 +45,71 @@ export function article(word: string): 'a' | 'az' {
   return /^[aáeéiíoóöőuúüű]/i.test(word) || /^(1(?!\d)|5)/.test(word) ? 'az' : 'a';
 }
 
-const levelName = (levels: { name: string }[], i: number) => levels[Math.min(levels.length - 1, i)].name;
+const levelName = (levels: readonly { name: string }[], i: number) => levels[Math.min(levels.length - 1, i)].name;
 
-const GAMES: GameText[] = [
+const GAME_TEXTS: GameText[] = [
   {
-    id: 'water', world: 'garden', name: 'Locsolás', where: 'A Locsolásban', unit: 'növény',
-    level: (p) => levelName(WATER_LEVELS, ladderOf(p, 'water').level),
+    id: 'water', where: 'A Locsolásban', unit: 'növény',
     hard: 'Többször is túlöntözte a növényt, mielőtt kijött a pontos szám.',
     home: 'Töltsetek egy pohárba pontosan annyi kanál vizet, amennyit kitaláltok.'
   },
   {
-    id: 'patterns', world: 'garden', name: 'Virágsor', where: 'A Virágsorban', unit: 'sor',
-    level: (p) => levelName(PATTERN_LEVELS, ladderOf(p, 'patterns').level),
+    id: 'patterns', where: 'A Virágsorban', unit: 'sor',
     hard: 'A legutóbbi soroknál többször is mellényúlt, mielőtt megtalálta a jó virágot.',
     home: 'Rakjatok sort kanálból és villából, és kérdezd meg, mi jön ezután.'
   },
   {
-    id: 'flash', world: 'garden', name: 'Villámszem', where: 'A Villámszemben', unit: 'feladat',
-    level: (p) => levelName(FLASH_LEVELS, ladderOf(p, 'flash').level),
+    id: 'flash', where: 'A Villámszemben', unit: 'feladat',
     hard: 'Gyakran kéri újra a magokat, vagy egyenként számolja meg őket.',
     home: 'Dobókockával: mondja meg, hány pötty van, számolás nélkül.'
   },
   {
-    id: 'trace', world: 'garden', name: 'Mézút', where: 'A Mézútban', unit: 'számjegy',
-    level: (p) => levelName(TRACE_LEVELS, ladderOf(p, 'trace').level),
+    id: 'trace', where: 'A Mézútban', unit: 'számjegy',
     hard: 'Több számjegynél letért az útról, vagy megkérte Csepit, hogy mutassa meg.',
     home: 'Írjatok számokat ujjal lisztbe, homokba vagy a párás ablakra.'
   },
   {
-    id: 'add', world: 'garden', name: 'Méhkas', where: 'A Méhkasban', unit: 'feladat',
-    level: (p) => levelName(ADD_LEVELS, ladderOf(p, 'add').level),
+    id: 'add', where: 'A Méhkasban', unit: 'feladat',
     hard: 'Az utolsó feladatoknál többször kért segítséget.',
     home: 'Közös számolás az ujjakon vagy kanalakkal sokat segít.'
   },
   {
-    id: 'pots', world: 'garden', name: 'Cserépbarátok', where: 'A Cserépbarátokban', unit: 'kör',
-    level: (p) => levelName(POTS_LEVELS, ladderOf(p, 'pots').level),
+    id: 'pots', where: 'A Cserépbarátokban', unit: 'kör',
     hard: 'Gyakran kellett, hogy Csepi együtt számolja vele az üres cserepeket.',
     home: 'Két kéz, tíz ujj: mutass fel néhányat, hány hiányzik a tízhez?'
   },
   {
-    id: 'path', world: 'robot', name: 'Robotút', where: 'A Robotútban', unit: 'pálya',
-    level: (p) => levelName(PATH_LEVELS, ladderOf(p, 'path').level),
+    id: 'path', where: 'A Robotútban', unit: 'pálya',
     hard: 'A legutóbbi pályákon többször nekiment valaminek, vagy megnézte az utat.',
     home: 'Legyél te a robot: ő mondja el lépésenként, hogyan jutsz el az ajtótól a konyháig.'
   },
   {
-    id: 'sort', world: 'robot', name: 'Válogatógép', where: 'A Válogatógépben', unit: 'kör',
-    level: (p) => levelName(SORT_LEVELS, ladderOf(p, 'sort').level),
+    id: 'sort', where: 'A Válogatógépben', unit: 'kör',
     hard: 'A legutóbbi körökben többször is rossz dobozba tette az alkatrészt.',
     home: 'Válogassátok szét a zoknikat előbb szín, aztán méret szerint.'
   },
   {
-    id: 'scale', world: 'robot', name: 'Mérleg', where: 'A Mérlegnél', unit: 'kör',
-    level: (p) => levelName(SCALE_LEVELS, ladderOf(p, 'scale').level),
+    id: 'scale', where: 'A Mérlegnél', unit: 'kör',
     hard: 'Többször is Csavar segített megszámolni a két oldalt.',
     home: 'Egy vállfa két végére akasszatok zacskót, és tegyetek bele ugyanannyi kupakot.'
   },
   {
-    id: 'seq', world: 'robot', name: 'Mintagép', where: 'A Mintagépben', unit: 'kör',
-    level: (p) => levelName(SEQ_LEVELS, ladderOf(p, 'seq').level),
+    id: 'seq', where: 'A Mintagépben', unit: 'kör',
     hard: 'A legutóbbi körökben többször is rossz kártyát választott a hézagba.',
     home: 'Tapsoljatok mintát: taps, taps, dobbantás – és ő folytatja.'
   },
   {
-    id: 'mirror', world: 'robot', name: 'Tükörgép', where: 'A Tükörgépben', unit: 'kör',
-    level: (p) => levelName(MIRROR_LEVELS, ladderOf(p, 'mirror').level),
+    id: 'mirror', where: 'A Tükörgépben', unit: 'kör',
     hard: 'A legutóbbi körökben többször is rossz helyre tette a lámpát.',
     home: 'Tegyetek egy kézitükröt a rajz mellé: mi kerül a másik oldalra?'
   },
   {
-    id: 'code', world: 'robot', name: 'Kódzár', where: 'A Kódzárnál', unit: 'kör',
-    level: (p) => levelName(CODE_LEVELS, ladderOf(p, 'code').level),
+    id: 'code', where: 'A Kódzárnál', unit: 'kör',
     hard: 'A legutóbbi körökben többször is rossz gombot nyomott, vagy Csavar mutatta meg a kódot.',
     home: 'Találjatok ki titkos jeleket: a piros kocka azt jelenti, ugorj, a kék, hogy guggolj. Ő olvassa a kódot!'
   },
   {
-    id: 'fix', world: 'robot', name: 'Hibavadász', where: 'A Hibavadásznál', unit: 'kör',
-    level: (p) => levelName(FIX_LEVELS, ladderOf(p, 'fix').level),
+    id: 'fix', where: 'A Hibavadásznál', unit: 'kör',
     hard: 'A legutóbbi körökben többször is jó kártyára koppintott, vagy Csavar mutatta meg a hibát.',
     home: 'Adj neki rossz utasítást az ajtóig, például egy lépéssel többet: ő keresse meg, hol csúszott el!'
   }
@@ -145,7 +117,7 @@ const GAMES: GameText[] = [
 
 function learnNote(p: Progress): Insight {
   const learned = Math.min(LEARN_MAX, p.learnSolved);
-  const base = { game: 'Számmagok', world: 'garden' as const };
+  const base = { game: GAMES.learn.name, world: GAMES.learn.world };
   if (learned === 0) {
     return { ...base, tone: 'none', title: 'Még nem kezdte el.', short: 'Még nem kezdte el.', text: 'Itt ismerkedik meg a számokkal 1-től 20-ig, időnyomás nélkül.' };
   }
@@ -161,16 +133,17 @@ function learnNote(p: Progress): Insight {
 
 function gameNote(p: Progress, g: GameText, day: string): Insight {
   const marks = recentMarks(p, g.id, day);
-  const base = { game: g.name, world: g.world };
-  const level = g.level(p);
-  const ladder = g.id in LADDER_RULES ? ladderOf(p, g.id as LadderGame) : null;
+  const { name, world } = GAMES[g.id];
+  const base = { game: name, world };
+  const ladder = ladderOf(p, g.id);
+  const level = levelName(LADDER_LEVELS[g.id], ladder.level);
 
   // The game stepped back on its own a little while ago: say so, and that it climbs again by itself.
-  if (ladder?.lastChange === 'down' && ladder.sinceChange < 2 * LADDER_RULES[g.id as LadderGame].up) {
+  if (ladder.lastChange === 'down' && ladder.sinceChange < 2 * LADDER_RULES[g.id].up) {
     return {
       ...base,
       tone: 'tip',
-      title: `A ${g.name} visszalépett ${article(level)} „${level}” szintre.`,
+      title: `A ${name} visszalépett ${article(level)} „${level}” szintre.`,
       short: 'Visszalépett gyakorolni.',
       text: 'Néhány nehezebb feladat után a játék magától könnyebbet ad. Ha újra megy, magától lép vissza.',
       home: g.home
@@ -200,7 +173,7 @@ function gameNote(p: Progress, g: GameText, day: string): Insight {
 
 /** One note per game, Számkertész first, in the order of the games on the home screens. */
 export function gameNotes(p: Progress, day: string): Insight[] {
-  return [learnNote(p), ...GAMES.map((g) => gameNote(p, g, day))];
+  return [learnNote(p), ...GAME_TEXTS.map((g) => gameNote(p, g, day))];
 }
 
 /**

@@ -6,6 +6,7 @@
 // (a move to a new device does not carry it; the new device turns it on for itself).
 
 import { useEffect, useSyncExternalStore } from 'react';
+import { readKey, removeKeys, writeKey } from './storage';
 
 const KEY = 'kalandka.unlock.v1';
 /** Flags byte of the authenticator data: bit 2 is "user verified" (fingerprint, face or device PIN). */
@@ -37,23 +38,16 @@ export function userVerified(authData: ArrayBuffer): boolean {
 
 function savedId(): string | null {
   if (stored === undefined) {
-    try {
-      stored = localStorage.getItem(KEY);
-    } catch {
-      stored = null;
-    }
+    stored = readKey(KEY) ?? null;
   }
   return stored;
 }
 
 function save(id: string | null): void {
   stored = id;
-  try {
-    if (id) localStorage.setItem(KEY, id);
-    else localStorage.removeItem(KEY);
-  } catch {
-    // Blocked storage: it works until the app is closed.
-  }
+  // Blocked storage: it works until the app is closed.
+  if (id) writeKey(KEY, id);
+  else removeKeys(KEY);
   notify();
 }
 

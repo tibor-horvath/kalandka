@@ -10,8 +10,7 @@ import { FIX_LEVELS } from '../games/robot/fix';
 import { MIRROR_LEVELS } from '../games/robot/mirror';
 import { SEQ_LEVELS } from '../games/robot/seq';
 import { SORT_LEVELS } from '../games/robot/sort';
-import type { GameId } from '../screens/Home';
-import type { RobotGameId } from '../screens/robot/RobotHome';
+import { GAMES, type GameId } from './games';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';
 import { ladderOf } from './ladder';
@@ -462,7 +461,7 @@ export function gardenDone(p: Progress): boolean {
 // ---------- stickers ----------
 
 /** The Kiskert's own album row and each world's row for finished paper sheets, next to the games. */
-export type StickerGameId = GameId | RobotGameId | 'kiskert' | 'paper-garden' | 'paper-robot';
+export type StickerGameId = GameId | 'kiskert' | 'paper-garden' | 'paper-robot';
 
 export interface Sticker {
   id: string;
@@ -486,24 +485,29 @@ export interface StickerGame {
   world: WorldId;
 }
 
+/** A game's album row: its name and world from the game list; `name` only to hyphenate a long one. */
+function gameRow(id: GameId, color: string, ink: string, name = GAMES[id].name): StickerGame {
+  return { id, name, color, ink, world: GAMES[id].world };
+}
+
 /** Album order and each game's sticker colour (light ones carry dark ink). Soft hyphens keep long names whole in the album's narrow columns. */
 export const STICKER_GAMES: StickerGame[] = [
-  { id: 'learn', name: 'Számmagok', color: '#2E86DE', ink: '#FFFFFF', world: 'garden' },
-  { id: 'water', name: 'Locsolás', color: '#9FCDF3', ink: '#10233A', world: 'garden' },
-  { id: 'patterns', name: 'Virágsor', color: '#F4A3C4', ink: '#10233A', world: 'garden' },
-  { id: 'flash', name: 'Mag­villantás', color: '#8A5A3B', ink: '#FFFFFF', world: 'garden' },
-  { id: 'add', name: 'Méhkas', color: '#FFC93C', ink: '#10233A', world: 'garden' },
-  { id: 'trace', name: 'Mézút', color: '#D9741A', ink: '#FFFFFF', world: 'garden' },
-  { id: 'pots', name: 'Cserép­barátok', color: '#2F7D32', ink: '#FFFFFF', world: 'garden' },
+  gameRow('learn', '#2E86DE', '#FFFFFF'),
+  gameRow('water', '#9FCDF3', '#10233A'),
+  gameRow('patterns', '#F4A3C4', '#10233A'),
+  gameRow('flash', '#8A5A3B', '#FFFFFF'),
+  gameRow('add', '#FFC93C', '#10233A'),
+  gameRow('trace', '#D9741A', '#FFFFFF'),
+  gameRow('pots', '#2F7D32', '#FFFFFF', 'Cserép­barátok'),
   { id: 'kiskert', name: 'Kiskert', color: '#7A4FB5', ink: '#FFFFFF', world: 'garden' },
   { id: 'paper-garden', name: 'Feladat­lapok', color: '#F3E3B3', ink: '#10233A', world: 'garden' },
-  { id: 'path', name: 'Robotút', color: '#138A86', ink: '#FFFFFF', world: 'robot' },
-  { id: 'sort', name: 'Válogatógép', color: '#5E7184', ink: '#FFFFFF', world: 'robot' },
-  { id: 'scale', name: 'Mérleg', color: '#F2B33D', ink: '#10233A', world: 'robot' },
-  { id: 'seq', name: 'Mintagép', color: '#2E5FA8', ink: '#FFFFFF', world: 'robot' },
-  { id: 'mirror', name: 'Tükörgép', color: '#7FE9F0', ink: '#10233A', world: 'robot' },
-  { id: 'code', name: 'Kódzár', color: '#C98F4E', ink: '#10233A', world: 'robot' },
-  { id: 'fix', name: 'Hibavadász', color: '#D9741A', ink: '#FFFFFF', world: 'robot' },
+  gameRow('path', '#138A86', '#FFFFFF'),
+  gameRow('sort', '#5E7184', '#FFFFFF'),
+  gameRow('scale', '#F2B33D', '#10233A'),
+  gameRow('seq', '#2E5FA8', '#FFFFFF'),
+  gameRow('mirror', '#7FE9F0', '#10233A'),
+  gameRow('code', '#C98F4E', '#10233A'),
+  gameRow('fix', '#D9741A', '#FFFFFF'),
   { id: 'paper-robot', name: 'Feladat­lapok', color: '#D5DEE6', ink: '#10233A', world: 'robot' }
 ];
 

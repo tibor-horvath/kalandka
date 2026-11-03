@@ -73,8 +73,6 @@ function SeedOutline({ x, y, rx, filled }: { x: number; y: number; rx: number; f
 const learn = spec<number>({
   id: 'learn',
   rev: 1,
-  world: 'garden',
-  game: 'Számmagok',
   levels: ['1-től', '6-tól', '11-től', '16-tól'],
   current: (p) => LEARN_STARTS.filter((s) => (p.learnRound % 20) + 1 >= s).length - 1,
   grid: (_, d) => pickGrid(d, [1, 4], [1, 5], [1, 7]),
@@ -125,8 +123,6 @@ function DropOutline({ x, y, filled }: { x: number; y: number; filled: boolean }
 const water = spec<Plant>({
   id: 'water',
   rev: 1,
-  world: 'garden',
-  game: 'Locsolás',
   levels: ['2–10 csepp (egy tízes keret)', '11–20 csepp (két tízes keret)'],
   current: (p) => (ladderOf(p, 'water').level >= 2 ? 1 : 0),
   grid: (level, d) => (level === 0 ? pickGrid(d, [2, 3], [2, 4], [3, 5]) : pickGrid(d, [2, 2], [2, 3], [3, 4])),
@@ -172,8 +168,6 @@ interface PatternTask {
 const patterns = spec<PatternTask>({
   id: 'patterns',
   rev: 1,
-  world: 'garden',
-  game: 'Virágsor',
   levels: ['AB – két virág váltakozik', 'ABC – három virág', 'AAB – kettő-egy', 'ABB – egy-kettő', 'Hiányzik a sorból (vegyes)'],
   // The third level of the ladder holds AAB and ABB, which have a sheet each.
   current: (p) => [0, 1, 2, SHAPE_ORDER.length][ladderOf(p, 'patterns').level],
@@ -237,8 +231,6 @@ const patterns = spec<PatternTask>({
 const flash = spec<FlashRound>({
   id: 'flash',
   rev: 1,
-  world: 'garden',
-  game: 'Villámszem',
   levels: FLASH_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'flash').level,
   grid: (_, d) => pickGrid(d, [2, 4], [3, 4], [4, 5]),
@@ -271,8 +263,6 @@ const DIGIT_FREE = (r: AddRound) => r.level.answers === 'dots';
 const add = spec<AddRound>({
   id: 'add',
   rev: 1,
-  world: 'garden',
-  game: 'Méhkas',
   levels: ADD_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'add').level,
   grid: (level, d) => (ADD_LEVELS[level].bundles ? pickGrid(d, [1, 5], [2, 5], [2, 7]) : pickGrid(d, [2, 3], [2, 5], [3, 6])),
@@ -420,8 +410,6 @@ interface TraceTask {
 const trace = spec<TraceTask>({
   id: 'trace',
   rev: 1,
-  world: 'garden',
-  game: 'Mézút',
   levels: TRACE_LEVELS,
   current: (p) => Math.min(2, ladderOf(p, 'trace').level),
   grid: (_, d) => pickGrid(d, [1, 4], [1, 5], [1, 7]),
@@ -472,8 +460,6 @@ const trace = spec<TraceTask>({
 const pots = spec<PotsRound>({
   id: 'pots',
   rev: 1,
-  world: 'garden',
-  game: 'Cserépbarátok',
   levels: POTS_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'pots').level,
   grid: (level, d) => (POTS_LEVELS[level].total === 5 ? pickGrid(d, [2, 4], [2, 5], [3, 7]) : pickGrid(d, [2, 3], [2, 4], [3, 5])),

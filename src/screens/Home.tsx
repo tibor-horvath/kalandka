@@ -1,23 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../components/art';
-import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from '../components/ui';
-import { KidChip, MapButton, ParentsButton, PrintButton, VoiceButton } from '../components/hub';
-import { Island, useLeave, type Place, type RewardPlace } from '../components/island';
+import type { Place, RewardPlace } from '../components/island';
 import { DotFace } from '../components/seeds';
 import { PlantIcon } from '../components/garden';
-import { StickerPop } from '../components/StickerPop';
-import { useForm } from '../components/Stage';
-import { UNLOCK_ADD_AFTER, addLockedSpeech } from '../games/add/logic';
-import { UNLOCK_FLASH_AFTER, flashLockedSpeech } from '../games/learn/logic';
-import { UNLOCK_POTS_AFTER, potsLockedSpeech } from '../games/pots/logic';
+import { WorldHub, type HubActions, type HubBubble } from '../components/WorldHub';
+import { addLockedSpeech } from '../games/add/logic';
+import { flashLockedSpeech } from '../games/learn/logic';
+import { potsLockedSpeech } from '../games/pots/logic';
 import { speak } from '../lib/speech';
-import type { Mood } from '../lib/types';
-import { kidName, useActiveKid, useProfiles } from '../state/profiles';
-import { useProgress } from '../state/progress';
-import { PLANT_OPTIONS, canMakeAnything, emptyBeds, markStickerSeen, newStickers, newVisitor, seedBalance } from '../state/rewards';
+import { gamesIn, solvedOf, type GameId } from '../state/games';
 import { ladderOf } from '../state/ladder';
-
-export type GameId = 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'trace' | 'pots';
+import { kidName, useActiveKid, useProfiles } from '../state/profiles';
+import { useProgress, type Progress } from '../state/progress';
+import { PLANT_OPTIONS, canMakeAnything, emptyBeds, newStickers, newVisitor, seedBalance } from '../state/rewards';
+import { isOpen, markAnnounced, nextToAnnounce, numbersLeft, unlockOf, type Unlock } from '../state/unlocks';
 
 function TrailArt() {
   return (
@@ -60,11 +56,8 @@ const NOTICE_MS = 6000;
 /** The greeting without a name: one child on the device, or an online voice. */
 const HELLO = 'Szia, de jó, hogy itt vagy!';
 
-interface Notice {
-  kicker: string;
-  title: string;
-  mood: Mood;
-}
+/** What Csepi's bubble shows instead of the greeting for a while: an unlock or a sleeping game's hint. */
+type Notice = HubBubble;
 
 function SeedTrio() {
   return (
@@ -86,27 +79,82 @@ function KiskertArt() {
   );
 }
 
-export function Home({
-  onOpen,
-  onGarden,
-  onParents,
-  onPrint,
-  onSwitch,
-  onMap
-}: {
-  onOpen: (game: GameId) => void;
-  onGarden: () => void;
-  onParents: () => void;
-  onPrint: () => void;
-  onSwitch: () => void;
-  onMap: () => void;
-}) {
+/** A garden game's place on the island: its picture, label and badge. */
+interface Tile {
+  label: string;
+  art: ReactNode;
+  badge: (p: Progress) => string | null;
+}
+
+const isNew = (game: GameId) => (p: Progress) => (solvedOf(p, game) === 0 ? 'Új!' : null);
+
+const TILES: Partial<Record<GameId, Tile>> = {
+  learn: {
+    label: 'Számmagok – ismerkedés a számokkal',
+    art: (
+      <span className="plot__learn">
+        <span className="plot__learn-num">3</span>
+        <DotFace n={3} size={44} />
+      </span>
+    ),
+    badge: (p) => (solvedOf(p, 'learn') === 0 ? 'Kezdd itt!' : null)
+  },
+  water: { label: 'Locsolás – számolós játék', art: <Sprout />, badge: () => 'Szomjas!' },
+  patterns: {
+    label: 'Virágsor – mintázatos játék',
+    art: (
+      <span className="plot__trio plot__trio--flowers">
+        <PatternFlower kind="tulip" width={44} />
+        <PatternFlower kind="sun" width={44} />
+        <PatternFlower kind="star" width={44} />
+      </span>
+    ),
+    badge: isNew('patterns')
+  },
+  flash: { label: 'Villámszem – hány darab játék', art: <SeedTrio />, badge: isNew('flash') },
+  add: { label: 'Méhkas – összeadós játék', art: <BeeArt />, badge: (p) => (solvedOf(p, 'add') === 0 ? 'Új!' : `${ladderOf(p, 'add').level + 1}. szint`) },
+  trace: { label: 'Mézút – számírás a méhecskével', art: <TrailArt />, badge: isNew('trace') },
+  pots: { label: 'Cserépbarátok – tízes barátok játék', art: <PotsArt />, badge: isNew('pots') }
+};
+
+/** What Csepi says about a game that opens later: once it opened, and when it is tapped while still asleep. */
+interface UnlockText {
+  opened: string;
+  openedSpeech: string;
+  asleep: string;
+  /** The skill named on the sleeping place; none says when it opens instead. */
+  skill?: string;
+  lockedSpeech: (learned: number) => string;
+}
+
+const UNLOCK_TEXT: Partial<Record<GameId, UnlockText>> = {
+  flash: {
+    opened: 'Kinyílt a Villámszem!',
+    openedSpeech: 'Nézd! Kinyílt egy új kertrész: a Villámszem!',
+    asleep: 'Ez a kertrész még alszik.',
+    lockedSpeech: flashLockedSpeech
+  },
+  add: {
+    opened: 'Kinyílt a Méhkas!',
+    openedSpeech: 'Nézd! Kinyílt a Méhkas. A méhecske segít összeadni a virágokat!',
+    asleep: 'A méhecske még alszik.',
+    skill: 'Összeadás',
+    lockedSpeech: addLockedSpeech
+  },
+  pots: {
+    opened: 'Kinyíltak a Cserépbarátok!',
+    openedSpeech: 'Nézd! Kinyílt egy új kertrész: a Cserépbarátok. Töltsük meg a cserepeket virággal!',
+    asleep: 'Ez a kertrész még alszik.',
+    skill: 'Tízes barátok',
+    lockedSpeech: potsLockedSpeech
+  }
+};
+
+export function Home({ onOpen, onReward, ...actions }: HubActions & { onOpen: (game: GameId) => void; onReward: () => void }) {
   const { progress, update } = useProgress();
   const { profiles } = useProfiles();
   const kid = useActiveKid();
   const shared = profiles.kids.length > 1;
-  const phone = useForm() !== 'tablet';
-  const [leaving, leaveForMap] = useLeave(onMap);
   const [notice, setNotice] = useState<Notice | null>(null);
   const noticeTimer = useRef<number | null>(null);
   // A sticker earned in a game is celebrated here, one at a time, the earliest first.
@@ -115,10 +163,6 @@ export function Home({
   const canPlantNow = balance >= Math.min(...PLANT_OPTIONS.map((o) => o.cost)) && emptyBeds(progress).length > 0;
   const visitorWaiting = newVisitor(progress) !== null;
 
-  const learned = progress.learnSolved;
-  const flashOpen = progress.unlockAll || learned >= UNLOCK_FLASH_AFTER;
-  const addOpen = progress.unlockAll || learned >= UNLOCK_ADD_AFTER;
-  const potsOpen = progress.unlockAll || learned >= UNLOCK_POTS_AFTER;
   // On a shared device Csepi greets each child by name, except aloud with an online voice (the name would leave the device).
   const hello = shared ? `Szia, ${kidName(kid)}! De jó, hogy itt vagy!` : HELLO;
   const greeting = progress.welcomed ? hello : 'Szia, én Csepi vagyok!';
@@ -135,15 +179,11 @@ export function Home({
 
   useEffect(() => {
     // Announce one newly opened game per visit, the earliest first.
-    if (flashOpen && !progress.flashAnnounced) {
-      update((p) => ({ ...p, flashAnnounced: true }));
-      showNotice({ kicker: 'Nézd, mi történt!', title: 'Kinyílt a Villámszem!', mood: 'cheer' }, 'Nézd! Kinyílt egy új kertrész: a Villámszem!', true);
-    } else if (addOpen && !progress.addAnnounced) {
-      update((p) => ({ ...p, addAnnounced: true }));
-      showNotice({ kicker: 'Nézd, mi történt!', title: 'Kinyílt a Méhkas!', mood: 'cheer' }, 'Nézd! Kinyílt a Méhkas. A méhecske segít összeadni a virágokat!', true);
-    } else if (potsOpen && !progress.potsAnnounced) {
-      update((p) => ({ ...p, potsAnnounced: true }));
-      showNotice({ kicker: 'Nézd, mi történt!', title: 'Kinyíltak a Cserépbarátok!', mood: 'cheer' }, 'Nézd! Kinyílt egy új kertrész: a Cserépbarátok. Töltsük meg a cserepeket virággal!', true);
+    const opened = nextToAnnounce(progress);
+    if (opened) {
+      const text = UNLOCK_TEXT[opened.game]!;
+      update((p) => markAnnounced(p, opened));
+      showNotice({ kicker: 'Nézd, mi történt!', title: text.opened, mood: 'cheer', tone: 'good' }, text.openedSpeech, true);
     } else if (!sticker) {
       sayGreeting();
     }
@@ -153,76 +193,34 @@ export function Home({
     // Runs once per visit to the home screen.
   }, []);
 
-  const open = (game: GameId) => {
+  const welcomeOnce = () => {
     if (!progress.welcomed) update((p) => ({ ...p, welcomed: true }));
+  };
+  const open = (game: GameId) => {
+    welcomeOnce();
     onOpen(game);
   };
-
-  const tapFlashLocked = () => {
-    const left = UNLOCK_FLASH_AFTER - learned;
-    showNotice({ kicker: 'Ez a kertrész még alszik.', title: `Ismerj meg még ${left} számot!`, mood: 'think' }, flashLockedSpeech(learned));
-  };
-  const tapAddLocked = () => {
-    const left = UNLOCK_ADD_AFTER - learned;
-    showNotice({ kicker: 'A méhecske még alszik.', title: `Ismerj meg még ${left} számot!`, mood: 'think' }, addLockedSpeech(learned));
-  };
-  const tapPotsLocked = () => {
-    const left = UNLOCK_POTS_AFTER - learned;
-    showNotice({ kicker: 'Ez a kertrész még alszik.', title: `Ismerj meg még ${left} számot!`, mood: 'think' }, potsLockedSpeech(learned));
-  };
   const openGarden = () => {
-    if (!progress.welcomed) update((p) => ({ ...p, welcomed: true }));
-    onGarden();
+    welcomeOnce();
+    onReward();
   };
 
-  const places: Place[] = [
-    {
-      id: 'learn',
-      name: 'Számmagok',
-      label: 'Számmagok – ismerkedés a számokkal',
-      badge: progress.learnSolved === 0 ? 'Kezdd itt!' : null,
-      start: progress.learnSolved === 0,
-      art: (
-        <span className="plot__learn">
-          <span className="plot__learn-num">3</span>
-          <DotFace n={3} size={44} />
-        </span>
-      ),
-      onOpen: () => open('learn')
-    },
-    { id: 'water', name: 'Locsolás', label: 'Locsolás – számolós játék', badge: 'Szomjas!', art: <Sprout />, onOpen: () => open('water') },
-    {
-      id: 'patterns',
-      name: 'Virágsor',
-      label: 'Virágsor – mintázatos játék',
-      badge: progress.patternsSolved === 0 ? 'Új!' : null,
-      art: (
-        <span className="plot__trio plot__trio--flowers">
-          <PatternFlower kind="tulip" width={44} />
-          <PatternFlower kind="sun" width={44} />
-          <PatternFlower kind="star" width={44} />
-        </span>
-      ),
-      onOpen: () => open('patterns')
-    },
-    flashOpen
-      ? { id: 'flash', name: 'Villámszem', label: 'Villámszem – hány darab játék', badge: progress.flashSolved === 0 ? 'Új!' : null, art: <SeedTrio />, onOpen: () => open('flash') }
-      : { id: 'flash', name: 'Villámszem', label: 'Villámszem: még zárva', art: <SeedTrio />, locked: { skill: `Még ${UNLOCK_FLASH_AFTER - learned} szám, és kinyílik`, hint: `még ${UNLOCK_FLASH_AFTER - learned} szám`, onTap: tapFlashLocked } },
-    addOpen
-      ? {
-          id: 'add',
-          name: 'Méhkas',
-          label: 'Méhkas – összeadós játék',
-          badge: progress.addSolved === 0 ? 'Új!' : `${ladderOf(progress, 'add').level + 1}. szint`,
-          art: <BeeArt />,
-          onOpen: () => open('add')
-        }
-      : { id: 'add', name: 'Méhkas', label: 'Méhkas: még zárva', art: <BeeArt />, locked: { skill: `Összeadás · még ${UNLOCK_ADD_AFTER - learned} szám`, hint: `még ${UNLOCK_ADD_AFTER - learned} szám`, onTap: tapAddLocked } },
-    { id: 'trace', name: 'Mézút', label: 'Mézút – számírás a méhecskével', badge: progress.traceSolved === 0 ? 'Új!' : null, art: <TrailArt />, onOpen: () => open('trace') },
-    potsOpen
-      ? { id: 'pots', name: 'Cserépbarátok', label: 'Cserépbarátok – tízes barátok játék', badge: progress.potsSolved === 0 ? 'Új!' : null, art: <PotsArt />, onOpen: () => open('pots') }
-      : { id: 'pots', name: 'Cserépbarátok', label: 'Cserépbarátok: még zárva', art: <PotsArt />, locked: { skill: `Tízes barátok · még ${UNLOCK_POTS_AFTER - learned} szám`, hint: `még ${UNLOCK_POTS_AFTER - learned} szám`, onTap: tapPotsLocked } }
-  ];
+  const asleep = (u: Unlock): NonNullable<Place['locked']> => {
+    const text = UNLOCK_TEXT[u.game]!;
+    const left = numbersLeft(progress, u);
+    return {
+      skill: text.skill ? `${text.skill} · még ${left} szám` : `Még ${left} szám, és kinyílik`,
+      hint: `még ${left} szám`,
+      onTap: () => showNotice({ kicker: text.asleep, title: `Ismerj meg még ${left} számot!`, mood: 'think' }, text.lockedSpeech(progress.learnSolved))
+    };
+  };
+
+  const places: Place[] = gamesIn('garden').map(({ id, name }) => {
+    const tile = TILES[id]!;
+    const u = unlockOf(id);
+    if (u && !isOpen(progress, id)) return { id, name, label: `${name}: még zárva`, art: tile.art, locked: asleep(u) };
+    return { id, name, label: tile.label, badge: tile.badge(progress), start: id === 'learn' && solvedOf(progress, id) === 0, art: tile.art, onOpen: () => open(id) };
+  });
   const reward: RewardPlace = {
     label: 'Kiskertem – ültess a magjaidból',
     name: 'Kiskertem',
@@ -234,45 +232,8 @@ export function Home({
     onClick: openGarden
   };
 
-  const bubble = notice ?? { kicker: greeting, title: question, mood: 'cheer' as Mood };
+  const bubble: HubBubble = notice ?? { kicker: greeting, title: question, mood: 'cheer' };
   const replay = () => (notice ? speak(`${notice.kicker} ${notice.title}`) : sayGreeting());
 
-  return (
-    <div className="screen screen--home screen--island">
-      <header className="topbar">
-        <div className="brand">
-          <KalandkaIcon size={56} />
-          <div className="brand__text">
-            <KalandkaWordmark size={phone ? 15 : 22} />
-            <div className="brand__world">Számkertész</div>
-          </div>
-        </div>
-        <div className="topbar__right">
-          {shared && <KidChip onSwitch={onSwitch} />}
-          <MapButton onClick={leaveForMap} />
-          <VoiceButton />
-          <PrintButton onClick={onPrint} />
-          <ParentsButton onClick={onParents} />
-        </div>
-      </header>
-
-      <div className="home-guide">
-        <GuideBubble mood={bubble.mood} tone={notice?.mood === 'cheer' ? 'good' : 'plain'} csepiWidth={80}>
-          <div className="bubble__row">
-            <div>
-              <div className="bubble__kicker">{bubble.kicker}</div>
-              <h1 className="bubble__title">{bubble.title}</h1>
-            </div>
-            <RoundButton label="Meghallgatom újra" tint="blue" onClick={replay}>
-              <SpeakerIcon />
-            </RoundButton>
-          </div>
-        </GuideBubble>
-      </div>
-
-      <Island world="garden" places={places} reward={reward} leaving={leaving} />
-
-      {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}
-    </div>
-  );
+  return <WorldHub world="garden" places={places} reward={reward} bubble={bubble} onReplay={replay} sticker={sticker} {...actions} />;
 }
