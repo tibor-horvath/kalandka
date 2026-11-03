@@ -128,9 +128,10 @@ export function Trace({ onBack }: { onBack: () => void }) {
   /** A see-through bee flies the rest of the current stroke once, to show the way. */
   const runDemo = () => {
     stopDemo();
-    const { strokeNo: s, idx: from } = live.current;
+    const { strokeNo: s, idx: from, dragging } = live.current;
     const trail = shape.strokes[s];
-    if (!trail) return;
+    // Not over a child already leading the bee: the demo could outlive the stroke it shows.
+    if (!trail || dragging) return;
     const t0 = performance.now();
     const tick = (now: number) => {
       const i = from + Math.floor(((now - t0) / 1000) * (DEMO_SPEED / STEP));
@@ -183,6 +184,8 @@ export function Trace({ onBack }: { onBack: () => void }) {
   };
 
   const finishStroke = () => {
+    // The demo's sample index belongs to the stroke just finished; on a shorter next stroke it would point past its end.
+    stopDemo();
     const next = live.current.strokeNo + 1;
     live.current = { strokeNo: next, idx: 0, dragging: false };
     setStrokeNo(next);
@@ -241,7 +244,8 @@ export function Trace({ onBack }: { onBack: () => void }) {
   };
 
   const onDown = (e: PointerEvent<SVGSVGElement>) => {
-    if (done) return;
+    // The ref, not just the render: a second finger can land before the last stroke's render.
+    if (done || live.current.strokeNo >= shape.strokes.length) return;
     const at = toTrail(e);
     if (!at) return;
     stopDemo();
