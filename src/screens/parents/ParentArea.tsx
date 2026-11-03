@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Avatar } from '../../components/avatars';
+import { useModal } from '../../components/Modal';
 import { KalandkaIcon } from '../../components/ui';
 import { KidScope, kidName, useProfiles } from '../../state/profiles';
 import { KidsPage } from './KidsPage';
@@ -126,6 +127,7 @@ export function ParentArea({ start = 'overview', onClose, onAbout }: { start?: P
   const [viewId, setViewId] = useState(profiles.activeId);
   const shownId = profiles.kids.some((k) => k.id === viewId) ? viewId : profiles.activeId;
   const [scrolled, setScrolled] = useState(false);
+  const modal = useModal<HTMLDivElement>();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -136,7 +138,7 @@ export function ParentArea({ start = 'overview', onClose, onAbout }: { start?: P
   }, [onClose]);
 
   return (
-    <div className="pa">
+    <div className="pa" ref={modal}>
       <nav className="pa-nav" aria-label="Szülői sarok">
         <div className="pa-nav__brand">
           <KalandkaIcon size={44} />

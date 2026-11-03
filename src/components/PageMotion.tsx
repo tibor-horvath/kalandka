@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 
 const SLIDE_MS = 320;
 const FADE_MS = 120;
@@ -34,6 +34,19 @@ export function PageMotion({ page, depth, children }: { page: string; depth: num
       { duration: SLIDE_MS, easing: EASING }
     );
     // `page` is the trigger; `depth` is read from the same render.
+  }, [page]);
+
+  // Focus starts on the new page's heading, not lost on the old page that just went away, unless the page already
+  // moved it (a popup's autoFocus). The first page keeps the browser's own start.
+  const shown = useRef(false);
+  useEffect(() => {
+    const first = !shown.current;
+    shown.current = true;
+    const root = el.current;
+    if (first || !root || root.contains(document.activeElement)) return;
+    const target = root.querySelector<HTMLElement>('h1') ?? root.querySelector<HTMLElement>('h2') ?? root;
+    if (!target.hasAttribute('tabindex')) target.tabIndex = -1;
+    target.focus({ preventScroll: true });
   }, [page]);
 
   return (

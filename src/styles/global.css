@@ -38,6 +38,8 @@ body {
 }
 button { font: inherit; color: inherit; }
 button:focus-visible { outline: 4px solid var(--drop-deep); outline-offset: 3px; }
+/* Headings and popups that only take focus from the code (a new page, a popup opening): no ring, nothing to press. */
+[tabindex="-1"]:focus { outline: none; }
 h1, h2, p { margin: 0; }
 
 /* ---------- stage ---------- */

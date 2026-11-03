@@ -5,6 +5,7 @@ import { CodeArt, Csavar, FixArt, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt 
 import { DotFace } from '../components/seeds';
 import { Avatar } from '../components/avatars';
 import { KidFields, type KidDraft } from '../components/KidFields';
+import { useModal } from '../components/Modal';
 import { KalandkaIcon, KalandkaWordmark } from '../components/ui';
 import { promptInstall, useInstallState } from '../lib/install';
 import { AGE_BANDS, AVATAR_IDS, type AgeBand } from '../state/profiles';
@@ -571,6 +572,7 @@ function Install() {
 function FirstKid({ onCreate, onCancel }: { onCreate: (kid: KidDraft) => void; onCancel: () => void }) {
   const [draft, setDraft] = useState<KidDraft>({ name: '', avatar: 'frog', age: null });
   const [missingName, setMissingName] = useState(false);
+  const modal = useModal<HTMLFormElement>();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -592,6 +594,7 @@ function FirstKid({ onCreate, onCancel }: { onCreate: (kid: KidDraft) => void; o
   return (
     <div className="landing__modal" onClick={(e) => e.target === e.currentTarget && onCancel()}>
       <form
+        ref={modal}
         className="landing__dialog"
         role="dialog"
         aria-modal="true"
@@ -634,6 +637,7 @@ function FirstKid({ onCreate, onCancel }: { onCreate: (kid: KidDraft) => void; o
 
 /** The privacy notice and operator details, open to any visitor in the same calm adult space as the sheets: no gate, it is for grown-ups. */
 function LegalSheet({ onClose }: { onClose: () => void }) {
+  const modal = useModal<HTMLDivElement>();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -643,7 +647,7 @@ function LegalSheet({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <div className="pa pa--print" role="dialog" aria-modal="true" aria-label="Adatkezelés és impresszum">
+    <div ref={modal} className="pa pa--print" role="dialog" aria-modal="true" aria-label="Adatkezelés és impresszum">
       <header className="pa-printbar">
         <div className="pa-nav__brand">
           <KalandkaIcon size={44} />

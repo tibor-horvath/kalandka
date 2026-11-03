@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Csepi } from '../components/Csepi';
 import { LockIcon } from '../components/ui';
+import { useModal } from '../components/Modal';
 import { speak } from '../lib/speech';
 
 const DAY_REST = {
@@ -20,13 +21,14 @@ const EVENING_REST = {
  */
 export function Rest({ evening = false, onParents, onSwitch }: { evening?: boolean; onParents: () => void; onSwitch?: () => void }) {
   const copy = evening ? EVENING_REST : DAY_REST;
+  const modal = useModal<HTMLDivElement>();
 
   useEffect(() => {
     speak(copy.speech);
   }, [copy.speech]);
 
   return (
-    <div className="rest" role="dialog" aria-modal="true" aria-labelledby="rest-title">
+    <div ref={modal} className="rest" role="dialog" aria-modal="true" aria-labelledby="rest-title">
       <svg className="rest__moon" aria-hidden="true" width="120" height="120" viewBox="0 0 120 120">
         <path d="M78 14 A48 48 0 1 0 106 78 A38 38 0 1 1 78 14 Z" fill="#FFE08A" />
         <circle cx="24" cy="30" r="3" fill="#FFFFFF" />

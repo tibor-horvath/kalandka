@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { speak } from '../lib/speech';
 import type { LevelMeterState } from '../state/levelMeter';
+import { useModal } from './Modal';
 import { NextIcon } from './ui';
 
 type World = 'garden' | 'robot';
@@ -82,6 +83,7 @@ export function useLevelUp(meter: LevelMeterState, next: () => void) {
 export function LevelUpCard({ meter, world, onNext }: { meter: LevelMeterState; world: World; onNext: () => void }) {
   const button = useRef<HTMLButtonElement>(null);
   const Icon = world === 'robot' ? MeterBolt : MeterFlower;
+  const modal = useModal<HTMLDivElement>();
 
   useEffect(() => {
     speak('Új szint! Ügyes vagy!');
@@ -89,7 +91,7 @@ export function LevelUpCard({ meter, world, onNext }: { meter: LevelMeterState; 
   }, []);
 
   return (
-    <div className="level-up" role="dialog" aria-modal="true" aria-labelledby="level-up-title">
+    <div ref={modal} className="level-up" role="dialog" aria-modal="true" aria-labelledby="level-up-title">
       <div className="level-up__card">
         <Stairs level={meter.level + 1} levels={meter.levels} />
         <h2 id="level-up-title" className="level-up__title">
