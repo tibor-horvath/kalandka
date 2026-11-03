@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/tibor-horvath/kalandka/compare/v1.2.0...v1.3.0) (2026-11-03)
+
+
+### Added
+
+* improve header and footer ([#16](https://github.com/tibor-horvath/kalandka/issues/16)) ([34ea4c1](https://github.com/tibor-horvath/kalandka/commit/34ea4c1bee50cdd56199a612033038448753fc46))
+
 ## [1.2.0](https://github.com/tibor-horvath/kalandka/compare/v1.1.0...v1.2.0) (2026-11-03)
 
 
