@@ -64,8 +64,9 @@ export function registerUpdates(): void {
       if (!reg) return;
       registration = reg;
       watch(reg);
-      // Registering already made the browser look for a new version.
-      let lastCheck = Date.now();
+      // Opening the page does not reliably make the browser look for a new version (in Chromium, F5 kept
+      // showing the old one for minutes): look once now, then at most every five minutes.
+      let lastCheck = 0;
       const check = () => {
         if (waiting || reg.installing || !navigator.onLine || document.visibilityState !== 'visible') return;
         if (Date.now() - lastCheck < CHECK_EVERY_MS) return;
@@ -73,6 +74,7 @@ export function registerUpdates(): void {
         // update() rejects when the server is unreachable; the next check tries again.
         reg.update().catch(() => {});
       };
+      check();
       // Poll more often than the limit so a check is never much more than five minutes late; `check` throttles it.
       window.setInterval(check, CHECK_EVERY_MS / 4);
       // Reopening an app left in the background does not reload the page, so the browser
