@@ -100,7 +100,7 @@ const ROUND_LEVELS: Partial<Record<LadderGame, { round: (p: Progress) => number;
 const fresh = (level = 0): Ladder => ({ level, floor: 0, streak: 0, helpRun: 0, sinceChange: 0, lastChange: null, reached: level, solvedTop: -1 });
 
 /**
- * The ladder of a save from before the ladders: levels used to be every N solved rounds, and Méhecske kept
+ * The ladder of a save from before the ladders: levels used to be every N solved rounds, and Méhkas kept
  * its own level and counters. The child stays exactly where they were, with the same stickers.
  */
 function legacyLadder(p: Progress, game: LadderGame): Ladder {

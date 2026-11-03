@@ -62,7 +62,7 @@ function NumberCard(n: number, w: number, h: number, dots: boolean) {
   );
 }
 
-// ---------- Számvetés ----------
+// ---------- Számmagok ----------
 
 const LEARN_STARTS = [1, 6, 11, 16];
 
@@ -74,7 +74,7 @@ const learn = spec<number>({
   id: 'learn',
   rev: 1,
   world: 'garden',
-  game: 'Számvetés',
+  game: 'Számmagok',
   levels: ['1-től', '6-tól', '11-től', '16-tól'],
   current: (p) => LEARN_STARTS.filter((s) => (p.learnRound % 20) + 1 >= s).length - 1,
   grid: (_, d) => pickGrid(d, [1, 4], [1, 5], [1, 7]),
@@ -232,13 +232,13 @@ const patterns = spec<PatternTask>({
   )
 });
 
-// ---------- Magvillantás ----------
+// ---------- Villámszem ----------
 
 const flash = spec<FlashRound>({
   id: 'flash',
   rev: 1,
   world: 'garden',
-  game: 'Magvillantás',
+  game: 'Villámszem',
   levels: FLASH_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'flash').level,
   grid: (_, d) => pickGrid(d, [2, 4], [3, 4], [4, 5]),
@@ -264,7 +264,7 @@ const flash = spec<FlashRound>({
   )
 });
 
-// ---------- Méhecske ----------
+// ---------- Méhkas ----------
 
 const DIGIT_FREE = (r: AddRound) => r.level.answers === 'dots';
 
@@ -272,7 +272,7 @@ const add = spec<AddRound>({
   id: 'add',
   rev: 1,
   world: 'garden',
-  game: 'Méhecske',
+  game: 'Méhkas',
   levels: ADD_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'add').level,
   grid: (level, d) => (ADD_LEVELS[level].bundles ? pickGrid(d, [1, 5], [2, 5], [2, 7]) : pickGrid(d, [2, 3], [2, 5], [3, 6])),

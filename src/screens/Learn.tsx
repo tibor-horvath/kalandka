@@ -14,7 +14,7 @@ import { useProgress } from '../state/progress';
 
 const LEARN_BLOCK = 5;
 
-/** Számvetés: tap every seed, Csepi counts, then the number is named. No timer. */
+/** Számmagok: tap every seed, Csepi counts, then the number is named. No timer. */
 export function Learn({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
   const [round] = useState(() => buildLearnRound(progress.learnRound));

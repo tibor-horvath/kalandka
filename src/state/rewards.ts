@@ -488,11 +488,11 @@ export interface StickerGame {
 
 /** Album order and each game's sticker colour (light ones carry dark ink). Soft hyphens keep long names whole in the album's narrow columns. */
 export const STICKER_GAMES: StickerGame[] = [
-  { id: 'learn', name: 'Számvetés', color: '#2E86DE', ink: '#FFFFFF', world: 'garden' },
+  { id: 'learn', name: 'Számmagok', color: '#2E86DE', ink: '#FFFFFF', world: 'garden' },
   { id: 'water', name: 'Locsolás', color: '#9FCDF3', ink: '#10233A', world: 'garden' },
   { id: 'patterns', name: 'Virágsor', color: '#F4A3C4', ink: '#10233A', world: 'garden' },
   { id: 'flash', name: 'Mag­villantás', color: '#8A5A3B', ink: '#FFFFFF', world: 'garden' },
-  { id: 'add', name: 'Méhecske', color: '#FFC93C', ink: '#10233A', world: 'garden' },
+  { id: 'add', name: 'Méhkas', color: '#FFC93C', ink: '#10233A', world: 'garden' },
   { id: 'trace', name: 'Mézút', color: '#D9741A', ink: '#FFFFFF', world: 'garden' },
   { id: 'pots', name: 'Cserép­barátok', color: '#2F7D32', ink: '#FFFFFF', world: 'garden' },
   { id: 'kiskert', name: 'Kiskert', color: '#7A4FB5', ink: '#FFFFFF', world: 'garden' },
@@ -503,7 +503,7 @@ export const STICKER_GAMES: StickerGame[] = [
   { id: 'seq', name: 'Mintagép', color: '#2E5FA8', ink: '#FFFFFF', world: 'robot' },
   { id: 'mirror', name: 'Tükörgép', color: '#7FE9F0', ink: '#10233A', world: 'robot' },
   { id: 'code', name: 'Kódzár', color: '#C98F4E', ink: '#10233A', world: 'robot' },
-  { id: 'fix', name: 'Hibakereső', color: '#D9741A', ink: '#FFFFFF', world: 'robot' },
+  { id: 'fix', name: 'Hibavadász', color: '#D9741A', ink: '#FFFFFF', world: 'robot' },
   { id: 'paper-robot', name: 'Feladat­lapok', color: '#D5DEE6', ink: '#10233A', world: 'robot' }
 ];
 
@@ -553,11 +553,11 @@ const mirrorPassed = (name: string) => (p: Progress) => ladderOf(p, 'mirror').so
 const codeLevel = (name: string) => CODE_LEVELS.findIndex((l) => l.name === name);
 const codePassed = (name: string) => (p: Progress) => ladderOf(p, 'code').solvedTop >= codeLevel(name);
 
-/** Hibakereső stickers: a round solved on a level. */
+/** Hibavadász stickers: a round solved on a level. */
 const fixLevel = (name: string) => FIX_LEVELS.findIndex((l) => l.name === name);
 const fixPassed = (name: string) => (p: Progress) => ladderOf(p, 'fix').solvedTop >= fixLevel(name);
 
-/** Méhecske levels that close a number range: the last level up to 5, up to 10, and round tens. */
+/** Méhkas levels that close a number range: the last level up to 5, up to 10, and round tens. */
 const ADD_PAST_5 = ADD_LEVELS.findIndex((l) => l.name === '10-ig, gyűjtéssel');
 const ADD_PAST_10 = ADD_LEVELS.findIndex((l) => l.name === '20-ig');
 const ADD_HUNDRED = ADD_LEVELS.findIndex((l) => l.name === 'Kerek tízesek 100-ig');

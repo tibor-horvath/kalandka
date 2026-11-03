@@ -2,7 +2,7 @@ import type { Mood, Tone } from '../../lib/types';
 import { rng } from '../flash/layout';
 import { ARROWS, MAX_TIMES, TURNS, fold, routeCells, run, shortest, type Card, type Cell, type Cmd, type Course, type Dir, type PathLevel, type Pose } from './path';
 
-// Hibakereső: the robot's program is already laid out, but it does not reach the battery. The child runs it,
+// Hibavadász: the robot's program is already laid out, but it does not reach the battery. The child runs it,
 // watches where it goes astray, taps the card that is to blame and puts it right, and the robot sets off again.
 // First one arrow is wrong on a dotted way (for 5-year-olds), then the dots go, then a card is one too many,
 // a card repeats the wrong number of times, a turn is wrong, and last two cards are wrong in one program.

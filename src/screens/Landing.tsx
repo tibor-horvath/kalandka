@@ -20,7 +20,7 @@ const PrintArea = lazy(async () => ({ default: (await import('./PrintArea')).Pri
 // Each game with a small copy of its art from the home screens, so the grown-up recognises it there.
 const GARDEN_GAMES: [string, string, ReactNode][] = [
   [
-    'Számvetés',
+    'Számmagok',
     'Ismerkedés a számokkal 1-től 20-ig.',
     <>
       <span className="landing__game-num">3</span>
@@ -48,7 +48,7 @@ const GARDEN_GAMES: [string, string, ReactNode][] = [
     </>
   ],
   [
-    'Magvillantás',
+    'Villámszem',
     'Mennyiségek felismerése egyetlen pillantás alatt.',
     <>
       <Seed size={22} />
@@ -57,7 +57,7 @@ const GARDEN_GAMES: [string, string, ReactNode][] = [
     </>
   ],
   [
-    'Méhecske',
+    'Méhkas',
     'Összeadás és kivonás 100-ig.',
     <>
       <Bee width={40} />
@@ -85,7 +85,7 @@ const ROBOT_GAMES: [string, string, ReactNode][] = [
   ['Mintagép', 'Összetettebb minták és szabályok felismerése.', <SeqArt />],
   ['Tükörgép', 'Tükrözés és szimmetria a gyakorlatban.', <MirrorArt />],
   ['Kódzár', 'Jelek, kódok és a kódtábla olvasása.', <CodeArt />],
-  ['Hibakereső', 'A hibás kártya megtalálása és kijavítása a programban.', <FixArt />]
+  ['Hibavadász', 'A hibás kártya megtalálása és kijavítása a programban.', <FixArt />]
 ];
 
 const HIGHLIGHTS = ['Internet nélkül is működik', 'Nincs szükség fiókra', 'Minden adat a készüléken marad'];
@@ -260,7 +260,7 @@ function SheetPreviews() {
   return (
     <div className="landing__sheets-art" aria-hidden="true">
       <div className="landing__paper landing__paper--left">
-        <b>Számvetés</b>
+        <b>Számmagok</b>
         <small>Hány pötty van? Írd a négyzetbe!</small>
         <svg viewBox="0 0 124 150" fill="none" stroke="currentColor" strokeWidth="1.5">
           {[2, 54, 106].map((y) => [2, 66].map((x) => <rect key={`${x}-${y}`} x={x} y={y} width="56" height={y === 106 ? 42 : 44} rx="6" />))}

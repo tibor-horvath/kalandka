@@ -26,7 +26,7 @@ import {
 
 const LIMITS = [5, 5, 5, 10, 10, 10, 19, 19, 18, 18, 100, 50, 99, 59, 98, 58];
 
-describe('Méhecske (addition)', () => {
+describe('Méhkas (addition)', () => {
   it('keeps every sum inside its level, with a fair set of answers', () => {
     ADD_LEVELS.forEach((level, li) => {
       for (let round = 0; round < 120; round++) {
@@ -202,6 +202,6 @@ describe('Méhecske (addition)', () => {
     expect(questionFeedback(t, 1).speech).toBe('Még egy virágot vigyen el!');
     expect(questionFeedback(t, 2).speech).toBe('Hány virág maradt?');
     expect(tourFeedback(t).text).not.toMatch(/rossz|hiba/i);
-    expect(addLockedSpeech(8)).toBe('Ez a kertrész még alszik. Ismerj meg még két számot a Számvetésben, és kinyílik!');
+    expect(addLockedSpeech(8)).toBe('Ez a kertrész még alszik. Ismerj meg még két számot a Számmagokban, és kinyílik!');
   });
 });

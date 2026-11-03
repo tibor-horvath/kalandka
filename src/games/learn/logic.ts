@@ -2,11 +2,11 @@ import { article, numberAttr, numberCount } from '../../lib/numbers';
 import type { Mood, Tone } from '../../lib/types';
 import { layoutSeeds, rng, type SeedPos } from '../flash/layout';
 
-// Számvetés: meet the numbers 1–20 in order. No timer: tap each seed, Csepi counts,
+// Számmagok: meet the numbers 1–20 in order. No timer: tap each seed, Csepi counts,
 // then the numeral, its dots and its word appear.
 
 export const LEARN_MAX = 20;
-/** Magvillantás opens once the child has met 1–5 here. */
+/** Villámszem opens once the child has met 1–5 here. */
 export const UNLOCK_FLASH_AFTER = 5;
 
 export interface LearnRound {
@@ -50,8 +50,8 @@ export function learnedFeedback(count: number): LearnFeedback {
   };
 }
 
-/** Csepi's line when the locked Magvillantás card is tapped. */
+/** Csepi's line when the locked Villámszem card is tapped. */
 export function flashLockedSpeech(learned: number): string {
   const left = Math.max(1, UNLOCK_FLASH_AFTER - learned);
-  return `Ez a kertrész még alszik. Ismerj meg még ${numberAttr(left)} számot a Számvetésben, és kinyílik!`;
+  return `Ez a kertrész még alszik. Ismerj meg még ${numberAttr(left)} számot a Számmagokban, és kinyílik!`;
 }

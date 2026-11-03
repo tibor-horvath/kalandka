@@ -35,16 +35,16 @@ export interface Progress {
   patternRound: number;
   patternsSolved: number;
   learnRound: number;
-  /** Numbers met in Számvetés; 5 opens Magvillantás. */
+  /** Numbers met in Számmagok; 5 opens Villámszem. */
   learnSolved: number;
   flashRound: number;
   addRound: number;
   addSolved: number;
-  /** Méhecske's level and counters from before the ladders; read once into ladders.add (see ladder.ts). */
+  /** Méhkas's level and counters from before the ladders; read once into ladders.add (see ladder.ts). */
   addLevel: number;
   addStreak: number;
   addMisses: number;
-  /** Which Méhecske ladder addLevel indexes into; older saves are migrated on load. */
+  /** Which Méhkas ladder addLevel indexes into; older saves are migrated on load. */
   addLevelsVersion: number;
   addAnnounced: boolean;
   flashSolved: number;
@@ -57,7 +57,7 @@ export interface Progress {
   /** Cserépbarátok rounds solved; every five move up a level (see POTS_LEVELS); parents can set it. */
   potsSolved: number;
   potsAnnounced: boolean;
-  /** Csepi has announced that Magvillantás opened. */
+  /** Csepi has announced that Villámszem opened. */
   flashAnnounced: boolean;
   voice: boolean;
   /** Pops, chimes and the light vibration while tracing. */
@@ -113,7 +113,7 @@ export interface Progress {
   /** Kódzár round: which one comes next, and how many were done. */
   codeRound: number;
   codeSolved: number;
-  /** Hibakereső round: which one comes next, and how many were done. */
+  /** Hibavadász round: which one comes next, and how many were done. */
   fixRound: number;
   fixSolved: number;
   /** Bolts spent in Robotépítő; the balance is bolts − boltsSpent. */

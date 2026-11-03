@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { article, buildLearnRound, flashLockedSpeech, learnedFeedback } from './logic';
 
-describe('Számvetés', () => {
+describe('Számmagok', () => {
   it('teaches 1 to 20 in order, then starts again', () => {
     expect(Array.from({ length: 21 }, (_, r) => buildLearnRound(r).count)).toEqual([...Array.from({ length: 20 }, (_, i) => i + 1), 1]);
   });
@@ -33,7 +33,7 @@ describe('Számvetés', () => {
     expect(article('három')).toBe('a');
   });
 
-  it('tells how many numbers are left before Magvillantás opens', () => {
-    expect(flashLockedSpeech(3)).toBe('Ez a kertrész még alszik. Ismerj meg még két számot a Számvetésben, és kinyílik!');
+  it('tells how many numbers are left before Villámszem opens', () => {
+    expect(flashLockedSpeech(3)).toBe('Ez a kertrész még alszik. Ismerj meg még két számot a Számmagokban, és kinyílik!');
   });
 });

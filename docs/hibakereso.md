@@ -1,4 +1,4 @@
-# Hibakereső: design
+# Hibavadász: design
 
 The seventh and last Robotműhely machine (skill: *Hiba a programban*). The robot's program is already laid out, but it does not reach the battery. The child runs it, watches where it goes astray, taps the card to blame and puts it right. Where Robotút asks for a program, this asks the child to read one.
 

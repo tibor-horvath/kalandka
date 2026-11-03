@@ -239,7 +239,7 @@ h1, h2, p { margin: 0; }
   .done-tick, .done-tick path { animation-delay: 0s !important; }
 }
 
-/* ---------- Magvillantás ---------- */
+/* ---------- Villámszem ---------- */
 .plot__trio--seeds { gap: 10px; align-items: center; margin-bottom: 6px; }
 .seedbed { position: relative; margin: 34px auto 0; border-radius: 36px; background: var(--soil); box-shadow: inset 0 -10px 0 #6f4630; overflow: hidden; }
 .seedbed__seed { position: absolute; line-height: 0; animation: pop 0.25s cubic-bezier(.34, 1.56, .64, 1); }
@@ -283,7 +283,7 @@ h1, h2, p { margin: 0; }
 .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .tally__dot:nth-child(5):not(:last-child) { margin-right: 22px; }
 
-/* ---------- Méhecske (addition) ---------- */
+/* ---------- Méhkas (addition) ---------- */
 .equation { display: flex; align-items: center; gap: 18px; height: 76px; padding: 0 32px; background: var(--paper); border-radius: 38px; font-size: 56px; font-weight: 800; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
 .equation__a { color: #c2185b; }
 .equation__b { color: var(--drop-deep); }
@@ -426,7 +426,7 @@ h1, h2, p { margin: 0; }
 @keyframes bee-wait { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-4px) rotate(-6deg); } 75% { transform: translateY(-4px) rotate(6deg); } }
 @keyframes bee-happy { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.25) rotate(-12deg); } }
 
-/* Méhecske gather and take levels: flowers walk to their new bed, carried ones wait under the hive, answers start as dots. */
+/* Méhkas gather and take levels: flowers walk to their new bed, carried ones wait under the hive, answers start as dots. */
 /* Carried flowers hang under the bee: same timing as .bee, tilted and lifted while in the air, then set down. */
 .add-flower { transition: left 0.55s ease-in-out, top 0.55s ease-in-out, transform 0.25s ease-out; }
 .add-flower.is-flying { z-index: 2; transform: translate(-50%, -62%) rotate(-10deg) scale(0.9); }

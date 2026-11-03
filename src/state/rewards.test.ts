@@ -191,7 +191,7 @@ describe('stickers', () => {
     expect(ids(999)).toEqual(['mirror-first', 'mirror-picture', 'mirror-flat', 'mirror-pick', 'mirror-fix']);
   });
 
-  it('gives a Hibakereső sticker for the first round solved on its level', () => {
+  it('gives a Hibavadász sticker for the first round solved on its level', () => {
     const ids = (fixSolved: number) => earnedStickers({ ...DEFAULT_PROGRESS, fixSolved }).map((s) => s.id);
     expect(ids(0)).toEqual([]);
     expect(ids(1)).toEqual(['fix-first']);
@@ -238,7 +238,7 @@ describe('stickers', () => {
     expect(ids(old)).toEqual(['water-1', 'water-10', 'water-20', 'patterns-ab', 'patterns-abc', 'patterns-all', 'trace-5', 'trace-9', 'trace-0', 'trace-fade', 'trace-memory']);
   });
 
-  it('finds the Méhecske levels they are tied to', () => {
+  it('finds the Méhkas levels they are tied to', () => {
     for (const name of ['10-ig, gyűjtéssel', '20-ig', 'Kerek tízesek 100-ig']) expect(ADD_LEVELS.some((l) => l.name === name)).toBe(true);
   });
 

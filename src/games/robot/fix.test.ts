@@ -15,7 +15,7 @@ const repaired = (t: FixTask): Card[] => {
   return t.level.kind === 'extra' ? cards.filter((_, i) => i !== t.bugs[0].at) : cards;
 };
 
-describe('Hibakereső tasks', () => {
+describe('Hibavadász tasks', () => {
   it('are the same for the same level and round', () => {
     expect(buildFixRound(2, 7)).toEqual(buildFixRound(2, 7));
     expect(buildFixRound(2, 7)).not.toEqual(buildFixRound(2, 8));
@@ -91,7 +91,7 @@ describe('Hibakereső tasks', () => {
   });
 });
 
-describe('Csavar in Hibakereső', () => {
+describe('Csavar in Hibavadász', () => {
   it('has an opening line for every level', () => {
     for (const level of FIX_LEVELS) expect(startFeedback(level).speech).toMatch(/Indulás/);
   });

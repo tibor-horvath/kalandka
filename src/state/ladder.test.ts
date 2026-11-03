@@ -86,7 +86,7 @@ describe('saves from before the ladders', () => {
     expect(ladderOf({ ...DEFAULT_PROGRESS, potsSolved: 5 * top }, 'pots')).toMatchObject({ level: top - 1, reached: top });
   });
 
-  it('takes Méhecske’s own level and counters', () => {
+  it('takes Méhkas’s own level and counters', () => {
     expect(ladderOf({ ...DEFAULT_PROGRESS, addLevel: 4, addStreak: 2, addMisses: 1, addSolved: 9 }, 'add')).toMatchObject({
       level: 4, streak: 2, helpRun: 1, solvedTop: 4
     });

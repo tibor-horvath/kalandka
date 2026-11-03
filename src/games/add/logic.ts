@@ -2,13 +2,13 @@ import { article, capitalize, numberAttr, numberCount } from '../../lib/numbers'
 import type { Mood, Tone } from '../../lib/types';
 import { rng } from '../flash/layout';
 
-// Méhecske: addition from "3 + 2" up to "38 + 25", and taking away from "5 − 2" up to "52 − 27". Two groups, "a + b = ?", the child picks the total.
+// Méhkas: addition from "3 + 2" up to "38 + 25", and taking away from "5 − 2" up to "52 − 27". Two groups, "a + b = ?", the child picks the total.
 // The first levels are hands-on and digit-free: the child taps flowers so the bee carries them into one bed
 // (gather) or off to the hive (take), and answers with dot cards; the digit appears only after the right answer.
 // From 20 upward a bouquet (csokor) of ten flowers stands for a ten; loose flowers are the ones.
 // The bee is the helper: tap a flower or bouquet and it flies there and counts.
 
-/** Méhecske opens once the child has met all ten numbers in Számvetés (or a parent opens everything). */
+/** Méhkas opens once the child has met all ten numbers in Számmagok (or a parent opens everything). */
 export const UNLOCK_ADD_AFTER = 10;
 /** Correct answers in a row needed to move up a level. */
 
@@ -546,5 +546,5 @@ export function tourFeedback(r: AddRound): AddFeedback {
 
 export function addLockedSpeech(learned: number): string {
   const left = Math.max(1, UNLOCK_ADD_AFTER - learned);
-  return `Ez a kertrész még alszik. Ismerj meg még ${numberAttr(left)} számot a Számvetésben, és kinyílik!`;
+  return `Ez a kertrész még alszik. Ismerj meg még ${numberAttr(left)} számot a Számmagokban, és kinyílik!`;
 }

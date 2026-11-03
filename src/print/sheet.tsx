@@ -65,7 +65,7 @@ export interface PrintSpec<T> {
   colorKey?: (level: number) => boolean;
   /**
    * Whether "Új feladatok" gives other tasks on this level (yes unless said). Not for sheets that follow a fixed order,
-   * such as the numbers 1–20 in Számvetés or the digits in writing order in Mézút.
+   * such as the numbers 1–20 in Számmagok or the digits in writing order in Mézút.
    */
   reshuffles?: (level: number) => boolean;
   tasks: (req: TaskRequest) => T[];

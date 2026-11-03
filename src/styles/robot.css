@@ -957,7 +957,7 @@ button.workshop__robot { border: none; background: none; padding: 0; font: inher
 .stage--landscape .code-btn { width: 84px; height: 78px; }
 .stage--landscape .code-btn > svg { width: 56px; height: 56px; }
 
-/* ---------- Hibakereső ----------
+/* ---------- Hibavadász ----------
    Robotút's floor and program cards. The robot leaves a trail; the wrong card lifts, and its fix comes in below. */
 .fix-trail { fill: var(--oops); opacity: 0.6; }
 .path-card.is-tried { opacity: 0.55; }
