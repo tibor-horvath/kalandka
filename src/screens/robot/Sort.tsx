@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LevelMeter, LevelUpCard, useLevelUp } from '../../components/LevelMeter';
-import { BinSign, Bolt, Crate, SortPart } from '../../components/robot';
-import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../../components/ui';
+import { useLadderRound, WinCard } from '../../components/ladderRound';
+import { GameShell } from '../../components/GameShell';
+import { BinSign, Crate, SortPart } from '../../components/robot';
+import { DoneTick, GuideBubble } from '../../components/ui';
 import {
   SHOW_BIN_AFTER,
   SHOW_ODD_AFTER,
@@ -24,9 +25,8 @@ import {
 } from '../../games/robot/sort';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../../lib/sound';
-import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
-import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
+import { ROUND_HELP_AFTER } from '../../state/taskLog';
 
 /** After the odd part is found, the row stays a moment so the child sees why, then the next row comes. */
 const NEXT_ROW_MS = 2200;
@@ -43,16 +43,11 @@ function PartPic({ part, size }: { part: Part; size: number }) {
 
 /** Válogatógép: sort the parts coming down the belt into the right boxes, or find the odd one out. */
 export function Sort({ onBack }: { onBack: () => void }) {
-  const { progress, update } = useProgress();
-  // The ladder when this round started: the round keeps its level even after its win steps up or down.
-  const [startLadder] = useState(() => ladderOf(progress, 'sort'));
-  const levelIndex = startLadder.level;
-  /** This round's win on the ladder: the meter shows it, and it may step up or down. */
-  const [step, setStep] = useState<LadderStep | null>(null);
+  const { progress } = useProgress();
+  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('sort');
   const round = useMemo(() => buildRound(levelIndex, progress.sortRound), [levelIndex, progress.sortRound]);
   const [fb, setFb] = useState<SortFeedback>(() => startFeedback(round));
   const [solved, setSolved] = useState(false);
-  const rewarded = useRef(false);
   const timers = useRef<number[]>([]);
 
   /** Corrections Csavar gave this round; enough of them and the round needed help (parents' notes). */
@@ -74,36 +69,20 @@ export function Sort({ onBack }: { onBack: () => void }) {
     fanfare();
     buzz(40);
     say(f);
-    if (!rewarded.current) {
-      rewarded.current = true;
-      const helped = oops.current >= ROUND_HELP_AFTER;
-      const s = afterSolve(startLadder, LADDER_RULES.sort, helped);
-      setStep(s);
-      if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
-      update((p) => withLadder(logTask({ ...p, bolts: p.bolts + 1, sortSolved: p.sortSolved + 1 }, 'sort', helped), 'sort', s.ladder));
-    }
+    solve(oops.current >= ROUND_HELP_AFTER);
   };
 
-  const next = () => update((p) => ({ ...p, sortRound: p.sortRound + 1 }));
-  const meter = ladderMeter(startLadder, LADDER_RULES.sort, step);
-  const levelUp = useLevelUp(meter, next);
-
   return (
-    <div className="screen screen--sort world--robot">
-      <div className="floor" aria-hidden="true" />
-
-      <header className="topbar topbar--meter">
-        <RoundButton label="Vissza a műhelybe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <div className="topbar__title">
-          <h1 className="screen-title">{isOdd(round) ? 'Kakukktojás' : 'Válogatógép'}</h1>
-          <LevelMeter meter={meter} world="robot" justSolved={solved} />
-        </div>
-        <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
-          <SpeakerIcon />
-        </RoundButton>
-      </header>
+    <GameShell
+      game="sort"
+      className="screen--sort"
+      title={isOdd(round) ? 'Kakukktojás' : 'Válogatógép'}
+      meter={meter}
+      justSolved={solved}
+      levelUp={levelUp}
+      onBack={onBack}
+      onReplay={() => speak(fb.speech)}
+    >
 
       <div className="sort-guide">
         <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
@@ -117,21 +96,9 @@ export function Sort({ onBack }: { onBack: () => void }) {
         <Belt round={round} solved={solved} say={say} onWin={win} />
       )}
 
-      {solved && (
-        <div className="path-win sort-win" role="status">
-          <span className="path-win__rays" aria-hidden="true" />
-          <span className="path-win__title">Kész!</span>
-          <span className="path-win__reward">
-            +1 <Bolt size={34} /> csavar
-          </span>
-          <button type="button" className="big-btn big-btn--robot" onClick={levelUp.advance}>
-            Következő kör <NextIcon />
-          </button>
-        </div>
-      )}
+      {solved && <WinCard onNext={levelUp.advance} />}
 
-      {levelUp.open && <LevelUpCard meter={meter} world="robot" onNext={levelUp.finish} />}
-    </div>
+    </GameShell>
   );
 }
 

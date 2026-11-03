@@ -3,6 +3,7 @@ import { QrCode } from '../components/QrCode';
 import { Lamp, TextureContext } from '../components/robot';
 import { KalandkaIcon, KalandkaWordmark } from '../components/ui';
 import type { Color } from '../games/robot/sort';
+import { GAMES, type GameId } from '../state/games';
 import type { Progress } from '../state/progress';
 import { WORLDS, type WorldId } from '../state/worlds';
 
@@ -10,7 +11,8 @@ import { WORLDS, type WorldId } from '../state/worlds';
 // The tasks come from the games' own generators, so a sheet matches the child's level in the app;
 // tapping becomes circling, colouring, drawing a line or crossing out.
 
-export type PrintId = 'learn' | 'water' | 'patterns' | 'flash' | 'add' | 'trace' | 'pots' | 'path' | 'sort' | 'scale' | 'seq' | 'mirror' | 'code' | 'fix';
+/** Every game has its sheets. */
+export type PrintId = GameId;
 
 /** Fewer, bigger tasks for the little ones, or more, smaller ones on a page. */
 export type Density = 'big' | 'normal' | 'many';
@@ -74,8 +76,10 @@ export interface PrintSpec<T> {
 }
 
 /** Erases the task type so specs of different games share one list. */
-export function spec<T>(s: PrintSpec<T>): PrintSpec<unknown> {
-  return s as unknown as PrintSpec<unknown>;
+/** A game's sheets; its world and name come from the game list. */
+export function spec<T>(s: Omit<PrintSpec<T>, 'world' | 'game'>): PrintSpec<unknown> {
+  const { world, name } = GAMES[s.id];
+  return { ...s, world, game: name } as unknown as PrintSpec<unknown>;
 }
 
 /** Start round of task i on a page: different for every printout and page, the same for the same ones. */

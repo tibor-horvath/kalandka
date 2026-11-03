@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Seed } from '../components/art';
 import { FitBox } from '../components/FitBox';
-import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
+import { GameShell } from '../components/GameShell';
+import { useLevelUp } from '../components/LevelMeter';
 import { useForm } from '../components/Stage';
 import { DotFace, MiniSprout } from '../components/seeds';
-import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { GuideBubble, NextIcon } from '../components/ui';
 import { FIELD_H, FIELD_W, foldSeeds } from '../games/flash/layout';
 import { LEARN_MAX, LEARN_READY, buildLearnRound, learnedFeedback } from '../games/learn/logic';
 import { numberCount } from '../lib/numbers';
@@ -52,21 +53,16 @@ export function Learn({ onBack }: { onBack: () => void }) {
   const levelUp = useLevelUp(meter, next);
 
   return (
-    <div className="screen screen--flash screen--learn">
-      <div className="meadow" aria-hidden="true" />
-
-      <header className="topbar topbar--meter">
-        <RoundButton label="Vissza a kertbe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <div className="topbar__title">
-          <h1 className="screen-title">Számoljuk meg együtt!</h1>
-          <LevelMeter meter={meter} world="garden" justSolved={learned} />
-        </div>
-        <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
-          <SpeakerIcon />
-        </RoundButton>
-      </header>
+    <GameShell
+      game="learn"
+      className="screen--flash screen--learn"
+      title="Számoljuk meg együtt!"
+      meter={meter}
+      justSolved={learned}
+      levelUp={levelUp}
+      onBack={onBack}
+      onReplay={() => speak(fb.speech)}
+    >
 
       <FitBox className="seedbed-box" width={field.width} height={field.height}>
         <div className="seedbed" style={{ width: field.width, height: field.height }}>
@@ -117,7 +113,6 @@ export function Learn({ onBack }: { onBack: () => void }) {
         )}
       </div>
 
-      {levelUp.open && <LevelUpCard meter={meter} world="garden" onNext={levelUp.finish} />}
-    </div>
+    </GameShell>
   );
 }

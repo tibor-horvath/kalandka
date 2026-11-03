@@ -1,7 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ladderOf, placeAt, withLadder, type LadderGame } from './ladder';
+import { announceAll } from './unlocks';
 import { DEFAULT_PROGRESS, ProgressContext, readProgress, type Progress, type Update } from './progress';
 import { markEarnedSeen } from './rewards';
+import { readKey, removeKeys, writeKey } from '../lib/storage';
 
 // Several children can play on one device. Each child has a profile (name, figure, age) and their own
 // progress: garden, seeds, levels and screen time. Csepi's voice, the sounds and the evening rest
@@ -93,7 +95,7 @@ function placed(p: Progress, levels: Partial<Record<LadderGame, number>>): Progr
 export function startingProgress(age: AgeBand | null): Progress {
   if (age === '6') return placed({ ...DEFAULT_PROGRESS, learnRound: 5 }, AGE_LEVELS['6']);
   // Everything is open from the start, so Csepi says hello instead of announcing unlocks.
-  if (age === '7+') return placed({ ...DEFAULT_PROGRESS, learnRound: 10, unlockAll: true, flashAnnounced: true, addAnnounced: true }, AGE_LEVELS['7+']);
+  if (age === '7+') return placed(announceAll({ ...DEFAULT_PROGRESS, learnRound: 10, unlockAll: true }), AGE_LEVELS['7+']);
   return DEFAULT_PROGRESS;
 }
 
@@ -138,38 +140,28 @@ export function parseProfiles(raw: string | null, legacyRaw: string | null): Pro
 
 /** False on a device that has never played here (a first visit, or a private window), so the landing page shows. */
 export function hasSave(): boolean {
-  try {
-    return localStorage.getItem(KEY) !== null || localStorage.getItem(LEGACY_KEY) !== null;
-  } catch {
-    // Blocked storage forgets everything; the landing page would greet the child on every start.
-    return true;
-  }
+  const saved = readKey(KEY);
+  // Blocked storage forgets everything; the landing page would greet the child on every start.
+  if (saved === undefined) return true;
+  return saved !== null || readKey(LEGACY_KEY) !== null;
 }
 
 /** Removes every child and shared setting, so the next start is a first visit with the landing page. */
 export function forgetProfiles(): void {
-  try {
-    localStorage.removeItem(KEY);
-    localStorage.removeItem(LEGACY_KEY);
-  } catch {
-    // Blocked storage keeps nothing anyway.
-  }
+  removeKeys(KEY, LEGACY_KEY);
 }
 
 function loadProfiles(): Profiles {
   try {
-    return parseProfiles(localStorage.getItem(KEY), localStorage.getItem(LEGACY_KEY));
+    return parseProfiles(readKey(KEY) ?? null, readKey(LEGACY_KEY) ?? null);
   } catch {
     return fromProgress(DEFAULT_PROGRESS);
   }
 }
 
 function saveProfiles(s: Profiles): void {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(s));
-  } catch {
-    // Private mode or blocked storage: the game still works, it just forgets.
-  }
+  // Private mode or blocked storage: the game still works, it just forgets.
+  writeKey(KEY, JSON.stringify(s));
 }
 
 /** Applies a game's progress update to one child; device settings go to the shared part. */

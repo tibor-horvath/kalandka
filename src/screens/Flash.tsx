@@ -1,31 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { Seed } from '../components/art';
-import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
+import { useLadderRound } from '../components/ladderRound';
+import { GameShell } from '../components/GameShell';
 import { FitBox } from '../components/FitBox';
 import { useForm } from '../components/Stage';
 import { DotFace, MiniSprout } from '../components/seeds';
-import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { DoneTick, GuideBubble, NextIcon } from '../components/ui';
 import { ASK, FIELD_H, FIELD_W, READY, foldSeeds, buildFlashRound, revealFeedback, rightFeedback } from '../games/flash/logic';
 import { speak } from '../lib/speech';
-import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../state/ladder';
 import { useProgress } from '../state/progress';
-import { logTask } from '../state/taskLog';
 
 type Phase = 'ready' | 'flash' | 'ask' | 'reveal' | 'solved';
 
 /** Villámszem: ready → seeds shown → covered → child answers (peek again any time). */
 export function Flash({ onBack }: { onBack: () => void }) {
-  const { progress, update } = useProgress();
-  // The ladder when this round started: the round keeps its level even after its win steps up or down.
-  const [startLadder] = useState(() => ladderOf(progress, 'flash'));
-  const [round] = useState(() => buildFlashRound(progress.flashRound, startLadder.level));
-  const [step, setStep] = useState<LadderStep | null>(null);
+  const { progress } = useProgress();
+  const { level, win, meter, levelUp } = useLadderRound('flash');
+  const [round] = useState(() => buildFlashRound(progress.flashRound, level));
   // Portrait phones: the two groups stand one above the other, so the seeds can be bigger.
   const folded = useForm() === 'portrait' ? foldSeeds(round.seeds) : null;
   const field = folded ?? { width: FIELD_W, height: FIELD_H, seeds: round.seeds };
   const [phase, setPhase] = useState<Phase>('ready');
   const [wrong, setWrong] = useState<number | null>(null);
-  const rewarded = useRef(false);
   /** A wrong pick or "Mutasd újra!" before the answer: the task needed help. */
   const helped = useRef(false);
   const timer = useRef<number | null>(null);
@@ -53,13 +49,7 @@ export function Flash({ onBack }: { onBack: () => void }) {
       setPhase('solved');
       setWrong(null);
       speak(rightFeedback(n).speech);
-      if (!rewarded.current) {
-        rewarded.current = true;
-        const s = afterSolve(startLadder, LADDER_RULES.flash, helped.current);
-        setStep(s);
-        if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
-        update((p) => withLadder(logTask({ ...p, seeds: p.seeds + 1, flashSolved: p.flashSolved + 1 }, 'flash', s.helped), 'flash', s.ladder));
-      }
+      win(helped.current);
     } else {
       helped.current = true;
       setWrong(n);
@@ -68,30 +58,21 @@ export function Flash({ onBack }: { onBack: () => void }) {
     }
   };
 
-  // App keys this screen by round, so the next round remounts with fresh state.
-  const next = () => update((p) => ({ ...p, flashRound: p.flashRound + 1 }));
-  const meter = ladderMeter(startLadder, LADDER_RULES.flash, step);
-  const levelUp = useLevelUp(meter, next);
 
   const seedsVisible = phase === 'flash' || phase === 'reveal' || phase === 'solved';
   const answering = phase === 'ask' || phase === 'reveal';
 
   return (
-    <div className="screen screen--flash">
-      <div className="meadow" aria-hidden="true" />
-
-      <header className="topbar topbar--meter">
-        <RoundButton label="Vissza a kertbe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <div className="topbar__title">
-          <h1 className="screen-title">Hány magot láttál?</h1>
-          <LevelMeter meter={meter} world="garden" justSolved={phase === 'solved'} />
-        </div>
-        <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
-          <SpeakerIcon />
-        </RoundButton>
-      </header>
+    <GameShell
+      game="flash"
+      className="screen--flash"
+      title="Hány magot láttál?"
+      meter={meter}
+      justSolved={phase === 'solved'}
+      levelUp={levelUp}
+      onBack={onBack}
+      onReplay={() => speak(fb.speech)}
+    >
 
       <FitBox className="seedbed-box" width={field.width} height={field.height}>
         <div className="seedbed" style={{ width: field.width, height: field.height }}>
@@ -148,7 +129,6 @@ export function Flash({ onBack }: { onBack: () => void }) {
         )}
       </div>
 
-      {levelUp.open && <LevelUpCard meter={meter} world="garden" onNext={levelUp.finish} />}
-    </div>
+    </GameShell>
   );
 }

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { Bee } from '../components/art';
 import { FitBox } from '../components/FitBox';
-import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
+import { useLadderRound } from '../components/ladderRound';
+import { GameShell } from '../components/GameShell';
 import { DotFace } from '../components/seeds';
-import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { GuideBubble, NextIcon } from '../components/ui';
 import {
   BOX_H,
   BOX_W,
@@ -27,9 +28,6 @@ import {
 } from '../games/trace/logic';
 import { speak } from '../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../lib/sound';
-import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../state/ladder';
-import { useProgress } from '../state/progress';
-import { logTask } from '../state/taskLog';
 
 const PAD_X = 30;
 const PAD_Y = 22;
@@ -91,12 +89,8 @@ function TrailArrow({ at, angle }: { at: Pt; angle: number }) {
  * On the upper levels the trail is faded (Halvány út) and the see-through bee only comes when asked or after a quiet spell.
  */
 export function Trace({ onBack }: { onBack: () => void }) {
-  const { progress, update } = useProgress();
-  // The ladder when this digit started: the digit keeps its level even after its win steps up or down.
-  const [startLadder] = useState(() => ladderOf(progress, 'trace'));
-  /** This digit's win on the ladder: the meter shows it, and it may step up or down. */
-  const [step, setStep] = useState<LadderStep | null>(null);
-  const shape = useMemo(() => buildTraceRound(startLadder.level, startLadder.sinceChange), [startLadder]);
+  const { start, step, win, meter, levelUp } = useLadderRound('trace');
+  const shape = useMemo(() => buildTraceRound(start.level, start.sinceChange), [start]);
   const drops = useMemo(() => shape.strokes.map(checkpoints), [shape]);
   const multi = shape.strokes.length > 1;
 
@@ -113,7 +107,6 @@ export function Trace({ onBack }: { onBack: () => void }) {
 
   const svg = useRef<SVGSVGElement>(null);
   const live = useRef({ strokeNo: 0, idx: 0, dragging: false });
-  const rewarded = useRef(false);
   const burstId = useRef(0);
   const demoFrame = useRef<number | null>(null);
   const idleTimer = useRef<number | null>(null);
@@ -135,9 +128,10 @@ export function Trace({ onBack }: { onBack: () => void }) {
   /** A see-through bee flies the rest of the current stroke once, to show the way. */
   const runDemo = () => {
     stopDemo();
-    const { strokeNo: s, idx: from } = live.current;
+    const { strokeNo: s, idx: from, dragging } = live.current;
     const trail = shape.strokes[s];
-    if (!trail) return;
+    // Not over a child already leading the bee: the demo could outlive the stroke it shows.
+    if (!trail || dragging) return;
     const t0 = performance.now();
     const tick = (now: number) => {
       const i = from + Math.floor(((now - t0) / 1000) * (DEMO_SPEED / STEP));
@@ -190,6 +184,8 @@ export function Trace({ onBack }: { onBack: () => void }) {
   };
 
   const finishStroke = () => {
+    // The demo's sample index belongs to the stroke just finished; on a shorter next stroke it would point past its end.
+    stopDemo();
     const next = live.current.strokeNo + 1;
     live.current = { strokeNo: next, idx: 0, dragging: false };
     setStrokeNo(next);
@@ -211,16 +207,7 @@ export function Trace({ onBack }: { onBack: () => void }) {
     setFb(f);
     speak(f.speech);
     if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
-    if (!rewarded.current) {
-      rewarded.current = true;
-      const helped = askedWay.current || strayTalks.current >= 2;
-      const s = afterSolve(startLadder, LADDER_RULES.trace, helped);
-      setStep(s);
-      if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
-      update((p) =>
-        withLadder(logTask({ ...p, seeds: p.seeds + 1, traceSolved: p.traceSolved + 1, traceFadedSolved: p.traceFadedSolved + (shape.faded ? 1 : 0) }, 'trace', helped), 'trace', s.ladder)
-      );
-    }
+    win(askedWay.current || strayTalks.current >= 2, { extra: (p) => ({ ...p, traceFadedSolved: p.traceFadedSolved + (shape.faded ? 1 : 0) }) });
   };
 
   const move = (at: Pt) => {
@@ -257,7 +244,8 @@ export function Trace({ onBack }: { onBack: () => void }) {
   };
 
   const onDown = (e: PointerEvent<SVGSVGElement>) => {
-    if (done) return;
+    // The ref, not just the render: a second finger can land before the last stroke's render.
+    if (done || live.current.strokeNo >= shape.strokes.length) return;
     const at = toTrail(e);
     if (!at) return;
     stopDemo();
@@ -289,28 +277,20 @@ export function Trace({ onBack }: { onBack: () => void }) {
   };
 
   // App keys this screen by round, so the next digit remounts with fresh state.
-  const next = () => update((p) => ({ ...p, traceRound: p.traceRound + 1 }));
-  const meter = ladderMeter(startLadder, LADDER_RULES.trace, step);
-  const levelUp = useLevelUp(meter, next);
 
   const guide = strayed && !done ? pts.slice(idx, idx + GUIDE_AHEAD) : null;
 
   return (
-    <div className="screen screen--trace">
-      <div className="meadow" aria-hidden="true" />
-
-      <header className="topbar topbar--meter">
-        <RoundButton label="Vissza a kertbe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <div className="topbar__title">
-          <h1 className="screen-title">Mézút</h1>
-          <LevelMeter meter={meter} world="garden" justSolved={done && !step?.helped} />
-        </div>
-        <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
-          <SpeakerIcon />
-        </RoundButton>
-      </header>
+    <GameShell
+      game="trace"
+      className="screen--trace"
+      title="Mézút"
+      meter={meter}
+      justSolved={done && !step?.helped}
+      levelUp={levelUp}
+      onBack={onBack}
+      onReplay={() => speak(fb.speech)}
+    >
 
       <div className="trace-body">
         <FitBox className="trace-fit" width={CARD_W} height={CARD_H}>
@@ -433,7 +413,6 @@ export function Trace({ onBack }: { onBack: () => void }) {
         </div>
       </div>
 
-      {levelUp.open && <LevelUpCard meter={meter} world="garden" onNext={levelUp.finish} />}
-    </div>
+    </GameShell>
   );
 }

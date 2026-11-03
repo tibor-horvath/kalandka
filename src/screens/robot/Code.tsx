@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LevelMeter, LevelUpCard, useLevelUp } from '../../components/LevelMeter';
+import { useLadderRound, WinCard } from '../../components/ladderRound';
+import { GameShell } from '../../components/GameShell';
 import { FitBox } from '../../components/FitBox';
 import { useForm } from '../../components/Stage';
 import { Bolt, CodeSign } from '../../components/robot';
 import { FriendArt } from '../../components/robotParts';
-import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../../components/ui';
+import { GuideBubble } from '../../components/ui';
 import {
   SHOW_ANSWER_AFTER,
   SHOW_HIDDEN_AFTER,
@@ -31,9 +32,8 @@ import {
 } from '../../games/robot/code';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble, robotChirp } from '../../lib/sound';
-import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
-import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
+import { ROUND_HELP_AFTER } from '../../state/taskLog';
 
 /** After the lock opens, the open crate stays a moment so the child sees it, then the next task comes. */
 const NEXT_TASK_MS = 3000;
@@ -76,18 +76,13 @@ function KeyArrow() {
 
 /** Kódzár: read the code on the lock, press the keypad, and the crate opens. */
 export function Code({ onBack }: { onBack: () => void }) {
-  const { progress, update } = useProgress();
-  // The ladder when this round started: the round keeps its level even after its win steps up or down.
-  const [startLadder] = useState(() => ladderOf(progress, 'code'));
-  const levelIndex = startLadder.level;
-  /** This round's win on the ladder: the meter shows it, and it may step up or down. */
-  const [step, setStep] = useState<LadderStep | null>(null);
+  const { progress } = useProgress();
+  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('code');
   const round = useMemo(() => buildCodeRound(levelIndex, progress.codeRound), [levelIndex, progress.codeRound]);
   const first = progress.codeSolved === 0;
   const [taskIdx, setTaskIdx] = useState(0);
   const [fb, setFb] = useState<CodeFeedback>(() => startFeedback(round.level, round.tasks[0], first));
   const [solved, setSolved] = useState(false);
-  const rewarded = useRef(false);
   const timers = useRef<number[]>([]);
   const later = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms));
 
@@ -98,7 +93,7 @@ export function Code({ onBack }: { onBack: () => void }) {
     setFb(f);
     speak(f.speech);
   };
-  const helped = () => {
+  const noteHelp = () => {
     oops.current += 1;
   };
 
@@ -126,36 +121,21 @@ export function Code({ onBack }: { onBack: () => void }) {
     fanfare();
     buzz(40);
     say({ ...win, speech: `${right.speech} ${win.speech}` });
-    if (!rewarded.current) {
-      rewarded.current = true;
-      const needed = oops.current >= ROUND_HELP_AFTER;
-      const s = afterSolve(startLadder, LADDER_RULES.code, needed);
-      setStep(s);
-      if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
-      update((p) => withLadder(logTask({ ...p, bolts: p.bolts + 1, codeSolved: p.codeSolved + 1 }, 'code', needed), 'code', s.ladder));
-    }
+    solve(oops.current >= ROUND_HELP_AFTER);
   };
 
-  const next = () => update((p) => ({ ...p, codeRound: p.codeRound + 1 }));
-  const meter = ladderMeter(startLadder, LADDER_RULES.code, step);
-  const levelUp = useLevelUp(meter, next);
 
   return (
-    <div className="screen screen--code world--robot">
-      <div className="floor" aria-hidden="true" />
-
-      <header className="topbar topbar--meter">
-        <RoundButton label="Vissza a műhelybe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <div className="topbar__title">
-          <h1 className="screen-title">Kódzár</h1>
-          <LevelMeter meter={meter} world="robot" justSolved={solved} />
-        </div>
-        <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
-          <SpeakerIcon />
-        </RoundButton>
-      </header>
+    <GameShell
+      game="code"
+      className="screen--code"
+      title="Kódzár"
+      meter={meter}
+      justSolved={solved}
+      levelUp={levelUp}
+      onBack={onBack}
+      onReplay={() => speak(fb.speech)}
+    >
 
       <div className="seq-guide code-guide">
         <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
@@ -169,23 +149,13 @@ export function Code({ onBack }: { onBack: () => void }) {
         ))}
       </ol>
 
-      <Task key={taskIdx} level={round.level} task={round.tasks[taskIdx]} n={taskIdx} solved={solved} say={say} helped={helped} onDone={done} later={later} />
+      <Task key={taskIdx} level={round.level} task={round.tasks[taskIdx]} n={taskIdx} solved={solved} say={say} noteHelp={noteHelp} onDone={done} later={later} />
 
       {solved && (
-        <div className="path-win sort-win" role="status">
-          <span className="path-win__rays" aria-hidden="true" />
-          <span className="path-win__title">Kész!</span>
-          <span className="path-win__reward">
-            +1 <Bolt size={34} /> csavar
-          </span>
-          <button type="button" className="big-btn big-btn--robot" onClick={levelUp.advance}>
-            Következő kör <NextIcon />
-          </button>
-        </div>
+        <WinCard onNext={levelUp.advance} />
       )}
 
-      {levelUp.open && <LevelUpCard meter={meter} world="robot" onNext={levelUp.finish} />}
-    </div>
+    </GameShell>
   );
 }
 
@@ -197,13 +167,13 @@ interface TaskProps {
   solved: boolean;
   say: (f: CodeFeedback) => void;
   /** A glow or "Mutasd!" was used: it counts towards the round needing help. */
-  helped: () => void;
+  noteHelp: () => void;
   onDone: (right: CodeFeedback) => void;
   later: (fn: () => void, ms: number) => void;
 }
 
 /** One lock: the code key, the crate (or the transmitter) and the keypad. */
-function Task({ level, task, n, solved, say, helped, onDone, later }: TaskProps) {
+function Task({ level, task, n, solved, say, noteHelp, onDone, later }: TaskProps) {
   const kind = level.kind;
   const send = kind === 'send';
   const fold = useForm() === 'portrait';
@@ -268,7 +238,7 @@ function Task({ level, task, n, solved, say, helped, onDone, later }: TaskProps)
     }
     const m = misses + 1;
     setMisses(m);
-    if (m >= SHOW_ANSWER_AFTER) helped();
+    if (m >= SHOW_ANSWER_AFTER) noteHelp();
     setTried((t) => (t.includes(i) ? t : [...t, i]));
     setWrong((w) => ({ i, id: (w?.id ?? 0) + 1 }));
     setPreview(s);
@@ -289,7 +259,7 @@ function Task({ level, task, n, solved, say, helped, onDone, later }: TaskProps)
     }
     const m = hiddenMisses + 1;
     setHiddenMisses(m);
-    if (m >= SHOW_HIDDEN_AFTER) helped();
+    if (m >= SHOW_HIDDEN_AFTER) noteHelp();
     setHiddenTried((t) => (t.includes(i) ? t : [...t, i]));
     setHiddenWrong((w) => ({ i, id: (w?.id ?? 0) + 1 }));
     buzz(30);
@@ -297,7 +267,7 @@ function Task({ level, task, n, solved, say, helped, onDone, later }: TaskProps)
   };
 
   const show = () => {
-    helped();
+    noteHelp();
     if (!found) {
       setHiddenShow(true);
       say(noteFeedback(task));

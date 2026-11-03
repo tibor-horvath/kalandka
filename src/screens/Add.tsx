@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Basket, Bee, Bouquet, Hive, RoundFlower } from '../components/art';
 import { FitBox } from '../components/FitBox';
-import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
+import { useLadderRound } from '../components/ladderRound';
+import { GameShell } from '../components/GameShell';
 import { useForm } from '../components/Stage';
-import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { DoneTick, GuideBubble, NextIcon } from '../components/ui';
 import {
   BOX_W,
   LEFT_X,
@@ -32,8 +33,6 @@ import { numberCount } from '../lib/numbers';
 import { fanfare, popBubble } from '../lib/sound';
 import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
-import { LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../state/ladder';
-import { logTask } from '../state/taskLog';
 
 type Phase = 'ask' | 'tour' | 'solved';
 
@@ -130,10 +129,11 @@ function Dots({ n }: { n: number }) {
  * A bouquet goes as a whole ten; when fewer are needed, tapping it unties it into ten loose flowers.
  */
 export function Add({ onBack }: { onBack: () => void }) {
-  const { progress, update } = useProgress();
-  // The ladder when this sum started: the sum keeps its level even after its win steps up or down.
-  const [startLadder] = useState(() => ladderOf(progress, 'add'));
-  const [round] = useState(() => buildAddRound(progress.addRound, startLadder.level));
+  const { progress } = useProgress();
+  const [wrong, setWrong] = useState<number | null>(null);
+  // The row is the first-try streak; a wrong pick empties it at once, and a full row steps up.
+  const { level, step, win, meter, levelUp } = useLadderRound('add', { missed: wrong !== null });
+  const [round] = useState(() => buildAddRound(progress.addRound, level));
   const form = useForm();
   const countingOn = round.level.strategy === 'on';
   const gathering = round.level.strategy === 'gather';
@@ -147,10 +147,6 @@ export function Add({ onBack }: { onBack: () => void }) {
   const [fresh, setFresh] = useState<string[]>([]);
   const [visited, setVisited] = useState<AddItem[]>([]);
   const [bee, setBee] = useState(HOME);
-  const [wrong, setWrong] = useState<number | null>(null);
-  /** This sum's win on the ladder: the meter shows it, and it may step up or down. */
-  const [step, setStep] = useState<LadderStep | null>(null);
-  const rewarded = useRef(false);
   /** This task needed help (a wrong pick happened). */
   const missed = useRef(false);
   const tour = useRef<number | null>(null);
@@ -325,13 +321,9 @@ export function Add({ onBack }: { onBack: () => void }) {
       setPhase('solved');
       setWrong(null);
       celebrate();
-      const s = afterSolve(startLadder, LADDER_RULES.add, missed.current);
-      setStep(s);
+      // Csepi's own line says when the next sum gets easier.
+      const s = win(missed.current, { quiet: true });
       speak(rightFeedback(round, s.change).speech);
-      if (!rewarded.current) {
-        rewarded.current = true;
-        update((p) => withLadder(logTask({ ...p, seeds: p.seeds + 1, addSolved: p.addSolved + 1 }, 'add', s.helped), 'add', s.ladder));
-      }
     } else {
       setWrong(n);
       missed.current = true;
@@ -339,12 +331,6 @@ export function Add({ onBack }: { onBack: () => void }) {
     }
   };
 
-  // App keys this screen by round, so the next sum remounts with fresh state.
-  const next = () => update((p) => ({ ...p, addRound: p.addRound + 1 }));
-
-  // The row is the first-try streak; a wrong pick empties it at once, and a full row steps up.
-  const meter = ladderMeter(wrong !== null && !step ? { ...startLadder, streak: 0 } : startLadder, LADDER_RULES.add, step);
-  const levelUp = useLevelUp(meter, next);
 
   const isVisited = (id: string) => visited.some((v) => v.id === id);
 
@@ -354,14 +340,11 @@ export function Add({ onBack }: { onBack: () => void }) {
   const beeAt = bee === HOME ? geo.home : place(bee);
 
   return (
-    <div className="screen screen--add">
-      <div className="meadow" aria-hidden="true" />
-
-      <header className="topbar">
-        <RoundButton label="Vissza a kertbe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        {showEquation && (
+    <GameShell
+      game="add"
+      className="screen--add"
+      aside={
+        showEquation && (
           <div className={`equation${round.level.answers === 'dots' ? ' is-reveal' : ''}`} aria-label={`${round.a} ${taking ? 'mínusz' : 'meg'} ${round.b}, mennyi?`}>
             <span className="equation__a">{round.a}</span>
             <span>{taking ? '−' : '+'}</span>
@@ -369,14 +352,14 @@ export function Add({ onBack }: { onBack: () => void }) {
             <span>=</span>
             <span className={`equation__sum${phase === 'solved' ? ' is-solved' : ''}`}>{phase === 'solved' ? round.answer : '?'}</span>
           </div>
-        )}
-        <div className="topbar__right">
-          <LevelMeter meter={meter} world="garden" justSolved={phase === 'solved' && !step?.helped} />
-          <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
-            <SpeakerIcon />
-          </RoundButton>
-        </div>
-      </header>
+        )
+      }
+      meter={meter}
+      justSolved={phase === 'solved' && !step?.helped}
+      levelUp={levelUp}
+      onBack={onBack}
+      onReplay={() => speak(fb.speech)}
+    >
 
       <FitBox className="add-scene-box" width={geo.width} height={geo.height}>
         <div className={`add-scene${form === 'portrait' ? ' is-folded' : ''}`} style={{ width: geo.width, height: geo.height }}>
@@ -498,7 +481,6 @@ export function Add({ onBack }: { onBack: () => void }) {
         )}
       </div>
       )}
-      {levelUp.open && <LevelUpCard meter={meter} world="garden" onNext={levelUp.finish} />}
-    </div>
+    </GameShell>
   );
 }

@@ -1,26 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Cloud, Drop, GrowingPlant, Pot, WateringCan } from '../components/art';
-import { LevelMeter, LevelUpCard, useLevelUp } from '../components/LevelMeter';
+import { useLadderRound } from '../components/ladderRound';
+import { GameShell } from '../components/GameShell';
 import { useForm } from '../components/Stage';
-import { BackIcon, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../components/ui';
+import { GuideBubble, NextIcon } from '../components/ui';
 import { CAN_DROPS, addDrop, feedback, growth, introSpeech, maxDropsFor, plantForLevel, removeDrop, slotKinds } from '../games/water/logic';
 import { numberCount } from '../lib/numbers';
 import { speak } from '../lib/speech';
-import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../state/ladder';
 import { useProgress } from '../state/progress';
-import { logTask } from '../state/taskLog';
 
 export function Water({ onBack }: { onBack: () => void }) {
-  const { progress, update } = useProgress();
+  const { progress } = useProgress();
   // On phones Csepi talks above the scene instead of inside the panel.
   const phone = useForm() !== 'tablet';
   const round = progress.waterRound;
-  // The ladder when this plant started: the plant keeps its level even after its win steps up or down.
-  const [startLadder] = useState(() => ladderOf(progress, 'water'));
-  /** This plant's win on the ladder: the meter shows it, and it may step up or down. */
-  const [step, setStep] = useState<LadderStep | null>(null);
+  const { level, step, win, meter, levelUp } = useLadderRound('water');
   // One plant object per round: effects below key on it, so it must not change between renders.
-  const plant = useMemo(() => plantForLevel(startLadder.level, round), [startLadder.level, round]);
+  const plant = useMemo(() => plantForLevel(level, round), [level, round]);
   const [count, setCount] = useState(0);
   /** Drops currently in the air; dx spreads a can's pour so the drops don't overlap. */
   const [falling, setFalling] = useState<{ id: number; dx: number }[]>([]);
@@ -29,7 +25,6 @@ export function Water({ onBack }: { onBack: () => void }) {
   const pouring = useRef(false);
   /** Mirrors `pouring` for rendering: tilts the can while it pours. */
   const [isPouring, setIsPouring] = useState(false);
-  const rewarded = useRef<number | null>(null);
   /** This plant got too much water at some point ("Hoppá"): the task needed help. */
   const overflowed = useRef(false);
 
@@ -55,15 +50,8 @@ export function Water({ onBack }: { onBack: () => void }) {
 
   // First time this round's plant blooms: a seed and a flower for the garden.
   useEffect(() => {
-    if (done && rewarded.current !== round) {
-      rewarded.current = round;
-      const helped = overflowed.current;
-      const s = afterSolve(startLadder, LADDER_RULES.water, helped);
-      setStep(s);
-      if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
-      update((p) => withLadder(logTask({ ...p, seeds: p.seeds + 1, garden: [...p.garden, plant.id] }, 'water', helped), 'water', s.ladder));
-    }
-  }, [done, round, plant.id, update, startLadder]);
+    if (done) win(overflowed.current, { extra: (p) => ({ ...p, garden: [...p.garden, plant.id] }) });
+  }, [done]);
 
   const change = (next: number) => {
     if (next === count) return;
@@ -117,9 +105,6 @@ export function Water({ onBack }: { onBack: () => void }) {
   const remove = () => {
     if (!pouring.current) change(removeDrop(count));
   };
-  const next = () => update((p) => ({ ...p, waterRound: p.waterRound + 1 }));
-  const meter = ladderMeter(startLadder, LADDER_RULES.water, step);
-  const levelUp = useLevelUp(meter, next);
 
   const guide = (
     <GuideBubble mood={fb.mood} tone={fb.tone}>
@@ -131,18 +116,16 @@ export function Water({ onBack }: { onBack: () => void }) {
   const scale = growth(count, plant.target);
 
   return (
-    <div className="screen screen--water">
-      <div className="lawn" aria-hidden="true" />
-
-      <header className="topbar">
-        <RoundButton label="Vissza a kertbe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <LevelMeter meter={meter} world="garden" justSolved={done && !step?.helped} />
-        <RoundButton label="Meghallgatom újra" onClick={() => speak(`${introSpeech(plant)} ${fb.speech}`)}>
-          <SpeakerIcon />
-        </RoundButton>
-      </header>
+    <GameShell
+      game="water"
+      className="screen--water"
+      backdrop="lawn"
+      meter={meter}
+      justSolved={done && !step?.helped}
+      levelUp={levelUp}
+      onBack={onBack}
+      onReplay={() => speak(`${introSpeech(plant)} ${fb.speech}`)}
+    >
 
       <div className="water-body">
         {phone && <div className="water-guide">{guide}</div>}
@@ -236,7 +219,6 @@ export function Water({ onBack }: { onBack: () => void }) {
         </div>
       </div>
 
-      {levelUp.open && <LevelUpCard meter={meter} world="garden" onNext={levelUp.finish} />}
-    </div>
+    </GameShell>
   );
 }

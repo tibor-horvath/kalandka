@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { LevelMeter, LevelUpCard, useLevelUp } from '../../components/LevelMeter';
+import { useLadderRound, WinCard } from '../../components/ladderRound';
+import { GameShell } from '../../components/GameShell';
 import { FitBox } from '../../components/FitBox';
-import { Bolt, Lamp, LampGrid } from '../../components/robot';
-import { BackIcon, DoneTick, GuideBubble, NextIcon, RoundButton, SpeakerIcon } from '../../components/ui';
+import { Lamp, LampGrid } from '../../components/robot';
+import { DoneTick, GuideBubble } from '../../components/ui';
 import {
   SHOW_AFTER,
   SHOW_FAULT_AFTER,
@@ -38,9 +39,8 @@ import {
 import { COLOR_NAMES, type Color } from '../../games/robot/sort';
 import { speak } from '../../lib/speech';
 import { buzz, chime, fanfare, popBubble } from '../../lib/sound';
-import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../../state/ladder';
 import { useProgress } from '../../state/progress';
-import { logTask, ROUND_HELP_AFTER } from '../../state/taskLog';
+import { ROUND_HELP_AFTER } from '../../state/taskLog';
 
 /** After a board is finished, it stays a moment so the child sees the whole picture, then the next task comes. */
 const NEXT_TASK_MS = 3000;
@@ -73,18 +73,13 @@ function MissMark() {
 
 /** Tükörgép: light the reflections, tell a reflection from a copy, or find where the machine went wrong. */
 export function Mirror({ onBack }: { onBack: () => void }) {
-  const { progress, update } = useProgress();
-  // The ladder when this round started: the round keeps its level even after its win steps up or down.
-  const [startLadder] = useState(() => ladderOf(progress, 'mirror'));
-  const levelIndex = startLadder.level;
-  /** This round's win on the ladder: the meter shows it, and it may step up or down. */
-  const [step, setStep] = useState<LadderStep | null>(null);
+  const { progress } = useProgress();
+  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('mirror');
   const round = useMemo(() => buildMirrorRound(levelIndex, progress.mirrorRound), [levelIndex, progress.mirrorRound]);
   const first = progress.mirrorSolved === 0;
   const [taskIdx, setTaskIdx] = useState(0);
   const [fb, setFb] = useState<MirrorFeedback>(() => startFeedback(round.level, first));
   const [solved, setSolved] = useState(false);
-  const rewarded = useRef(false);
   const timers = useRef<number[]>([]);
   const later = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms));
 
@@ -118,38 +113,23 @@ export function Mirror({ onBack }: { onBack: () => void }) {
     fanfare();
     buzz(40);
     say({ ...win, speech: `${right.speech} ${win.speech}` });
-    if (!rewarded.current) {
-      rewarded.current = true;
-      const helped = oops.current >= ROUND_HELP_AFTER;
-      const s = afterSolve(startLadder, LADDER_RULES.mirror, helped);
-      setStep(s);
-      if (s.change === 'down') speak(EASIER_SPEECH, { queue: true });
-      update((p) => withLadder(logTask({ ...p, bolts: p.bolts + 1, mirrorSolved: p.mirrorSolved + 1 }, 'mirror', helped), 'mirror', s.ladder));
-    }
+    solve(oops.current >= ROUND_HELP_AFTER);
   };
 
-  const next = () => update((p) => ({ ...p, mirrorRound: p.mirrorRound + 1 }));
-  const meter = ladderMeter(startLadder, LADDER_RULES.mirror, step);
-  const levelUp = useLevelUp(meter, next);
   const task = round.tasks[taskIdx];
   const props = { n: taskIdx, solved, say, onDone: done, later };
 
   return (
-    <div className="screen screen--mirror world--robot">
-      <div className="floor" aria-hidden="true" />
-
-      <header className="topbar topbar--meter">
-        <RoundButton label="Vissza a műhelybe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <div className="topbar__title">
-          <h1 className="screen-title">{round.level.kind === 'fix' ? 'Hibás tükör' : 'Tükörgép'}</h1>
-          <LevelMeter meter={meter} world="robot" justSolved={solved} />
-        </div>
-        <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>
-          <SpeakerIcon />
-        </RoundButton>
-      </header>
+    <GameShell
+      game="mirror"
+      className="screen--mirror"
+      title={round.level.kind === 'fix' ? 'Hibás tükör' : 'Tükörgép'}
+      meter={meter}
+      justSolved={solved}
+      levelUp={levelUp}
+      onBack={onBack}
+      onReplay={() => speak(fb.speech)}
+    >
 
       <div className="seq-guide mirror-guide">
         <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
@@ -168,20 +148,10 @@ export function Mirror({ onBack }: { onBack: () => void }) {
       {task.mode === 'fix' && <FixBoard key={taskIdx} task={task} {...props} />}
 
       {solved && (
-        <div className="path-win sort-win" role="status">
-          <span className="path-win__rays" aria-hidden="true" />
-          <span className="path-win__title">Kész!</span>
-          <span className="path-win__reward">
-            +1 <Bolt size={34} /> csavar
-          </span>
-          <button type="button" className="big-btn big-btn--robot" onClick={levelUp.advance}>
-            Következő kör <NextIcon />
-          </button>
-        </div>
+        <WinCard onNext={levelUp.advance} />
       )}
 
-      {levelUp.open && <LevelUpCard meter={meter} world="robot" onNext={levelUp.finish} />}
-    </div>
+    </GameShell>
   );
 }
 

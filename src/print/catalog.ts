@@ -1,5 +1,6 @@
 import { GARDEN_SHEETS } from './garden';
 import type { PageRef, ReadLink } from './link';
+import { readJson, removeKeys, writeKey } from '../lib/storage';
 import { ROBOT_SHEETS } from './robot';
 import { MAX_PAGES, type Density, type Grid, type PrintId, type PrintSpec } from './sheet';
 
@@ -56,22 +57,12 @@ const KEY = 'kalandka-print';
 type Saved = Record<string, Partial<Record<PrintId, PrintChoice>>>;
 
 function readAll(): Saved {
-  try {
-    const raw = localStorage.getItem(KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : {};
-    return parsed && typeof parsed === 'object' ? (parsed as Saved) : {};
-  } catch {
-    return {};
-  }
+  return readJson<Saved>(KEY) as Saved;
 }
 
 /** Forgets every child's last choices, with the profiles they belong to. */
 export function forgetChoices(): void {
-  try {
-    localStorage.removeItem(KEY);
-  } catch {
-    // Blocked storage keeps nothing anyway.
-  }
+  removeKeys(KEY);
 }
 
 export function savedChoice(kidId: string, id: PrintId): PrintChoice | null {
@@ -82,11 +73,7 @@ export function savedChoice(kidId: string, id: PrintId): PrintChoice | null {
 }
 
 export function saveChoice(kidId: string, id: PrintId, c: PrintChoice): void {
-  try {
-    const all = readAll();
-    all[kidId] = { ...all[kidId], [id]: c };
-    localStorage.setItem(KEY, JSON.stringify(all));
-  } catch {
-    // Private mode or full storage: the sheet still prints, only the answers will not be remembered.
-  }
+  const all = readAll();
+  // Private mode or full storage: the sheet still prints, only the answers will not be remembered.
+  writeKey(KEY, JSON.stringify({ ...all, [kidId]: { ...all[kidId], [id]: c } }));
 }

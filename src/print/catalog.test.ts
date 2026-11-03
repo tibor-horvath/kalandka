@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { GAME_IDS } from '../state/games';
 import { DEFAULT_PROGRESS } from '../state/progress';
 import { markPageDone, pagesDoneIn } from '../state/rewards';
 import { PRINT_SHEETS, buildPages, openLink, pageRef, sheetFor, tasksPerPage } from './catalog';
@@ -8,7 +9,7 @@ import { DENSITIES, MAX_PAGES } from './sheet';
 
 describe('printable sheets', () => {
   it('has a sheet for every game', () => {
-    expect(PRINT_SHEETS.map((s) => s.id).sort()).toEqual(['add', 'code', 'fix', 'flash', 'learn', 'mirror', 'path', 'patterns', 'pots', 'scale', 'seq', 'sort', 'trace', 'water']);
+    expect(PRINT_SHEETS.map((s) => s.id).sort()).toEqual([...GAME_IDS].sort());
   });
 
   it('fills every page of every level and size', () => {

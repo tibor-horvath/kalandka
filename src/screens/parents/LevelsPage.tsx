@@ -1,25 +1,26 @@
-import { LEVEL_SETTINGS } from '../../state/levels';
+import { isLadderGame, type GameId } from '../../state/games';
+import { LEVEL_SETTINGS, ladderStepLine } from '../../state/levels';
 import { markEarnedSeen } from '../../state/rewards';
 import { useProgress } from '../../state/progress';
 import { WORLDS } from '../../state/worlds';
 import { Check, WorldGroup } from './controls';
 
-/** Short skill and progress mode per game, shown under its name. */
-const ABOUT: Record<string, { skill: string; mode: string; glyph: string; tile: string }> = {
+/** Short skill per game, shown under its name; `mode` only where the game has no ladder. */
+const ABOUT: Record<GameId, { skill: string; mode?: string; glyph: string; tile: string }> = {
   learn: { skill: 'számok 1–20', mode: 'Sorban halad 20-ig', glyph: '12', tile: 'pa-tile--blue' },
-  water: { skill: 'számolás', mode: '4 jó virág után magától lép', glyph: '10', tile: 'pa-tile--sky' },
-  patterns: { skill: 'mintázatok', mode: '4 jó válasz után magától lép', glyph: 'AB', tile: 'pa-tile--pink' },
-  trace: { skill: 'számírás', mode: '5 szám után magától lép', glyph: '1–5', tile: 'pa-tile--sun' },
-  flash: { skill: 'mennyiség ránézésre', mode: '4 jó válasz után magától lép', glyph: '5', tile: 'pa-tile--sand' },
-  add: { skill: 'összeadás és kivonás', mode: 'Csepi ajánl, a gyerek dönt', glyph: '+', tile: 'pa-tile--sun' },
-  pots: { skill: 'tízes barátok', mode: '5 jó válasz után magától lép', glyph: '3+7', tile: 'pa-tile--pink' },
-  path: { skill: 'programozás', mode: '5 pálya után magától lép', glyph: '↑→', tile: 'pa-tile--sky' },
-  sort: { skill: 'csoportosítás, szabályok', mode: '5 kör után magától lép', glyph: '●▲', tile: 'pa-tile--sand' },
-  scale: { skill: 'több, kevesebb, egyenlő', mode: '5 kör után magától lép', glyph: '=', tile: 'pa-tile--sun' },
-  seq: { skill: 'mintázatok, szabályok', mode: '5 kör után magától lép', glyph: 'AB?', tile: 'pa-tile--blue' },
-  mirror: { skill: 'tükrözés, szimmetria', mode: '5 kör után magától lép', glyph: '•|•', tile: 'pa-tile--sky' },
-  code: { skill: 'jelek és kódok', mode: '5 kör után magától lép', glyph: '●→?', tile: 'pa-tile--sand' },
-  fix: { skill: 'hibakeresés a programban', mode: '5 kör után magától lép', glyph: '↑✗', tile: 'pa-tile--pink' }
+  water: { skill: 'számolás', glyph: '10', tile: 'pa-tile--sky' },
+  patterns: { skill: 'mintázatok', glyph: 'AB', tile: 'pa-tile--pink' },
+  trace: { skill: 'számírás', glyph: '1–5', tile: 'pa-tile--sun' },
+  flash: { skill: 'mennyiség ránézésre', glyph: '5', tile: 'pa-tile--sand' },
+  add: { skill: 'összeadás és kivonás', glyph: '+', tile: 'pa-tile--sun' },
+  pots: { skill: 'tízes barátok', glyph: '3+7', tile: 'pa-tile--pink' },
+  path: { skill: 'programozás', glyph: '↑→', tile: 'pa-tile--sky' },
+  sort: { skill: 'csoportosítás, szabályok', glyph: '●▲', tile: 'pa-tile--sand' },
+  scale: { skill: 'több, kevesebb, egyenlő', glyph: '=', tile: 'pa-tile--sun' },
+  seq: { skill: 'mintázatok, szabályok', glyph: 'AB?', tile: 'pa-tile--blue' },
+  mirror: { skill: 'tükrözés, szimmetria', glyph: '•|•', tile: 'pa-tile--sky' },
+  code: { skill: 'jelek és kódok', glyph: '●→?', tile: 'pa-tile--sand' },
+  fix: { skill: 'hibakeresés a programban', glyph: '↑✗', tile: 'pa-tile--pink' }
 };
 
 export function LevelsPage() {
@@ -65,7 +66,7 @@ export function LevelsPage() {
                       <h3>{s.game}</h3>
                       <span>{about.skill}</span>
                     </div>
-                    <span className="pa-level__mode">{about.mode}</span>
+                    <span className="pa-level__mode">{about.mode ?? (isLadderGame(s.id) ? ladderStepLine(s.id) : '')}</span>
                   </div>
                   <div className="pa-stepper">
                     <button type="button" className="pa-stepper__btn" disabled={atMin} onClick={() => go(-1)} aria-label={`${s.game}: könnyebb szint`}>
