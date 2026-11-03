@@ -94,7 +94,7 @@ export function RobotHome({
     { id: 'seq', name: 'Mintagép', label: 'Mintagép – mi jön a sorban?', badge: machineBadge(progress.seqSolved, seqIdx), art: <SeqArt />, onOpen: () => open('seq') },
     { id: 'mirror', name: 'Tükörgép', label: 'Tükörgép – hol a tükörkép?', badge: machineBadge(progress.mirrorSolved, mirrorIdx), art: <MirrorArt />, onOpen: () => open('mirror') },
     { id: 'code', name: 'Kódzár', label: 'Kódzár – nyisd ki a ládát a kóddal', badge: machineBadge(progress.codeSolved, codeIdx), art: <CodeArt />, onOpen: () => open('code') },
-    { id: 'fix', name: 'Hibakereső', label: 'Hibakereső – keresd meg a hibás kártyát', badge: machineBadge(progress.fixSolved, fixIdx), art: <FixArt />, onOpen: () => open('fix') }
+    { id: 'fix', name: 'Hibavadász', label: 'Hibavadász – keresd meg a hibás kártyát', badge: machineBadge(progress.fixSolved, fixIdx), art: <FixArt />, onOpen: () => open('fix') }
   ];
   const reward: RewardPlace = {
     label: 'Robotépítő – építsd meg a saját robotodat',

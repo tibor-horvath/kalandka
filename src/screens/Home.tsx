@@ -137,10 +137,10 @@ export function Home({
     // Announce one newly opened game per visit, the earliest first.
     if (flashOpen && !progress.flashAnnounced) {
       update((p) => ({ ...p, flashAnnounced: true }));
-      showNotice({ kicker: 'Nézd, mi történt!', title: 'Kinyílt a Magvillantás!', mood: 'cheer' }, 'Nézd! Kinyílt egy új kertrész: a Magvillantás!', true);
+      showNotice({ kicker: 'Nézd, mi történt!', title: 'Kinyílt a Villámszem!', mood: 'cheer' }, 'Nézd! Kinyílt egy új kertrész: a Villámszem!', true);
     } else if (addOpen && !progress.addAnnounced) {
       update((p) => ({ ...p, addAnnounced: true }));
-      showNotice({ kicker: 'Nézd, ki jött!', title: 'Megjött a Méhecske!', mood: 'cheer' }, 'Nézd! Megjött a méhecske. Segít összeadni a virágokat!', true);
+      showNotice({ kicker: 'Nézd, mi történt!', title: 'Kinyílt a Méhkas!', mood: 'cheer' }, 'Nézd! Kinyílt a Méhkas. A méhecske segít összeadni a virágokat!', true);
     } else if (potsOpen && !progress.potsAnnounced) {
       update((p) => ({ ...p, potsAnnounced: true }));
       showNotice({ kicker: 'Nézd, mi történt!', title: 'Kinyíltak a Cserépbarátok!', mood: 'cheer' }, 'Nézd! Kinyílt egy új kertrész: a Cserépbarátok. Töltsük meg a cserepeket virággal!', true);
@@ -178,8 +178,8 @@ export function Home({
   const places: Place[] = [
     {
       id: 'learn',
-      name: 'Számvetés',
-      label: 'Számvetés – ismerkedés a számokkal',
+      name: 'Számmagok',
+      label: 'Számmagok – ismerkedés a számokkal',
       badge: progress.learnSolved === 0 ? 'Kezdd itt!' : null,
       start: progress.learnSolved === 0,
       art: (
@@ -206,18 +206,18 @@ export function Home({
       onOpen: () => open('patterns')
     },
     flashOpen
-      ? { id: 'flash', name: 'Magvillantás', label: 'Magvillantás – hány darab játék', badge: progress.flashSolved === 0 ? 'Új!' : null, art: <SeedTrio />, onOpen: () => open('flash') }
-      : { id: 'flash', name: 'Magvillantás', label: 'Magvillantás: még zárva', art: <SeedTrio />, locked: { skill: `Még ${UNLOCK_FLASH_AFTER - learned} szám, és kinyílik`, hint: `még ${UNLOCK_FLASH_AFTER - learned} szám`, onTap: tapFlashLocked } },
+      ? { id: 'flash', name: 'Villámszem', label: 'Villámszem – hány darab játék', badge: progress.flashSolved === 0 ? 'Új!' : null, art: <SeedTrio />, onOpen: () => open('flash') }
+      : { id: 'flash', name: 'Villámszem', label: 'Villámszem: még zárva', art: <SeedTrio />, locked: { skill: `Még ${UNLOCK_FLASH_AFTER - learned} szám, és kinyílik`, hint: `még ${UNLOCK_FLASH_AFTER - learned} szám`, onTap: tapFlashLocked } },
     addOpen
       ? {
           id: 'add',
-          name: 'Méhecske',
-          label: 'Méhecske – összeadós játék',
+          name: 'Méhkas',
+          label: 'Méhkas – összeadós játék',
           badge: progress.addSolved === 0 ? 'Új!' : `${ladderOf(progress, 'add').level + 1}. szint`,
           art: <BeeArt />,
           onOpen: () => open('add')
         }
-      : { id: 'add', name: 'Méhecske', label: 'Méhecske: még zárva', art: <BeeArt />, locked: { skill: `Összeadás · még ${UNLOCK_ADD_AFTER - learned} szám`, hint: `még ${UNLOCK_ADD_AFTER - learned} szám`, onTap: tapAddLocked } },
+      : { id: 'add', name: 'Méhkas', label: 'Méhkas: még zárva', art: <BeeArt />, locked: { skill: `Összeadás · még ${UNLOCK_ADD_AFTER - learned} szám`, hint: `még ${UNLOCK_ADD_AFTER - learned} szám`, onTap: tapAddLocked } },
     { id: 'trace', name: 'Mézút', label: 'Mézút – számírás a méhecskével', badge: progress.traceSolved === 0 ? 'Új!' : null, art: <TrailArt />, onOpen: () => open('trace') },
     potsOpen
       ? { id: 'pots', name: 'Cserépbarátok', label: 'Cserépbarátok – tízes barátok játék', badge: progress.potsSolved === 0 ? 'Új!' : null, art: <PotsArt />, onOpen: () => open('pots') }

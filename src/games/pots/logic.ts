@@ -5,7 +5,7 @@ import { rng } from '../flash/layout';
 // Cserépbarátok: a window box of five or ten pots, some already in bloom. How many more fill the box?
 // The child finds the number friends of five and ten ("3 and 7 make 10"); tapping the empty pots counts them.
 
-/** Cserépbarátok opens once the child has met all ten numbers in Számvetés (or a parent opens everything). */
+/** Cserépbarátok opens once the child has met all ten numbers in Számmagok (or a parent opens everything). */
 export const UNLOCK_POTS_AFTER = 10;
 export const POTS_ROUNDS_PER_LEVEL = 5;
 
@@ -167,5 +167,5 @@ export function revealFeedback(r: PotsRound): PotsFeedback {
 /** Csepi's line when the locked Cserépbarátok plot is tapped. */
 export function potsLockedSpeech(learned: number): string {
   const left = Math.max(1, UNLOCK_POTS_AFTER - learned);
-  return `Ez a kertrész még alszik. Ismerj meg még ${numberAttr(left)} számot a Számvetésben, és kinyílik!`;
+  return `Ez a kertrész még alszik. Ismerj meg még ${numberAttr(left)} számot a Számmagokban, és kinyílik!`;
 }

@@ -46,7 +46,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   {
     id: 'learn',
     world: 'garden',
-    game: 'Számvetés',
+    game: 'Számmagok',
     hint: 'Innen tanulja sorban a számokat, 20-ig.',
     options: LEARN_STARTS,
     current: (p) => {
@@ -85,7 +85,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   {
     id: 'flash',
     world: 'garden',
-    game: 'Magvillantás',
+    game: 'Villámszem',
     hint: '4 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
     options: FLASH_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
     current: (p) => ladderOf(p, 'flash').level,
@@ -94,7 +94,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   {
     id: 'add',
     world: 'garden',
-    game: 'Méhecske',
+    game: 'Méhkas',
     hint: '5 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
     options: ADD_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
     current: (p) => ladderOf(p, 'add').level,
@@ -166,7 +166,7 @@ export const LEVEL_SETTINGS: LevelSetting[] = [
   {
     id: 'fix',
     world: 'robot',
-    game: 'Hibakereső',
+    game: 'Hibavadász',
     hint: 'Robotműhely. 4 jó kör egymás után: nehezebb szint, 2 nehéz kör egymás után: könnyebb. Ez alá nem lép vissza.',
     options: FIX_LEVELS.map((l, i) => ({ value: i, label: `${i + 1}. ${l.name}` })),
     current: (p) => ladderOf(p, 'fix').level,

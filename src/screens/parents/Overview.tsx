@@ -83,7 +83,7 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
   };
   const add = ladderOf(progress, 'add');
   const games: { world: WorldId; name: string; detail: string; share: number }[] = [
-    { world: 'garden', name: 'Számvetés', detail: `${learned} / ${LEARN_MAX} szám`, share: learned / LEARN_MAX },
+    { world: 'garden', name: 'Számmagok', detail: `${learned} / ${LEARN_MAX} szám`, share: learned / LEARN_MAX },
     {
       world: 'garden',
       name: 'Locsolás',
@@ -96,7 +96,7 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
       detail: `${progress.patternsSolved} sor · ${at('patterns', PATTERN_LEVELS)}`,
       share: levelShare('patterns')
     },
-    { world: 'garden', name: 'Magvillantás', detail: at('flash', FLASH_LEVELS), share: levelShare('flash') },
+    { world: 'garden', name: 'Villámszem', detail: at('flash', FLASH_LEVELS), share: levelShare('flash') },
     {
       world: 'garden',
       name: 'Mézút',
@@ -105,7 +105,7 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
     },
     {
       world: 'garden',
-      name: 'Méhecske',
+      name: 'Méhkas',
       detail: `${at('add', ADD_LEVELS)} · ${add.streak}/${upNeed(add, LADDER_RULES.add)} csillag`,
       share: levelShare('add')
     },
@@ -148,7 +148,7 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
     },
     {
       world: 'robot',
-      name: 'Hibakereső',
+      name: 'Hibavadász',
       detail: `${progress.fixSolved} kör · ${at('fix', FIX_LEVELS)}`,
       share: levelShare('fix')
     }

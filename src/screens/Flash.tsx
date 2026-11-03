@@ -13,7 +13,7 @@ import { logTask } from '../state/taskLog';
 
 type Phase = 'ready' | 'flash' | 'ask' | 'reveal' | 'solved';
 
-/** Magvillantás: ready → seeds shown → covered → child answers (peek again any time). */
+/** Villámszem: ready → seeds shown → covered → child answers (peek again any time). */
 export function Flash({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
   // The ladder when this round started: the round keeps its level even after its win steps up or down.

@@ -26,7 +26,7 @@ Seven levels, five rounds each (`CODE_ROUNDS_PER_LEVEL = 5`), on the shared ladd
 | 2 | Hosszabb zár | 5+ | Copy 3–4 colour lamps. Repeats are allowed (piros, piros, kék) but the lamps are never all the same colour. | 3 colours | 3 |
 | 3 | Kódtábla | 5+ | The lock shows colour lamps and the keypad shows pictures. Read each lamp's picture from the 3-row key. 2–3 signs. The key stays the same for the round. | 3 pictures | 3 |
 | 4 | Új kódtábla | 6 | As level 3, but with 3–4 signs. The key is mixed up again for **every task**, so the child has to read it and can't rely on memory. The keypad gets a 4th picture that no lamp means (there are only three lamp colours). | 4 pictures | 3 |
-| 5 | Pöttykód | 6 | The code is dice faces (1–6 dots) and the keypad shows numerals. This links back to Számkertész (Magvillantás, Számvetés). A dots → digits key shows faded and lights up on "Mutasd!". | 4 numerals | 3 |
+| 5 | Pöttykód | 6 | The code is dice faces (1–6 dots) and the keypad shows numerals. This links back to Számkertész (Villámszem, Számmagok). A dots → digits key shows faded and lights up on "Mutasd!". | 4 numerals | 3 |
 | 6 | Üzenet | 6–7 | Encoding: Csavar wants to send Kutyabot a message. The message is 2–3 pictures and the keypad shows colour lamps, so the child reads the key backwards (picture → sign). The lamps travel along a wire to Kutyabot, who fetches the thing shown by the first picture. | 3 colours | 3 |
 | 7 | Hiányzó jel | 7 | One key row is covered (?). A note stuck on the crate shows an opened code with its answer, and the child picks the hidden meaning from 3 cards (first step, like Hibavadász). The row then uncovers and the child opens the lock (second step). | 3 pictures | 2 |
 
@@ -54,7 +54,7 @@ Nothing fails and nothing is red. The rules are the same as the other machines:
 
 - One bolt per finished round.
 - Stickers: **Első zár** (first round), **Kódtábla** (level 3), **Pöttykód** (level 5), then **Üzenetküldő** (level 6) and **Kódfejtő** (level 7).
-- On RobotHome, Kódzár replaces its entry in `COMING` and gets a "Új gép!" tile with a crate-and-lock picture. Hibakereső, the last machine in `COMING`, came after it (see [hibakereso.md](hibakereso.md)).
+- On RobotHome, Kódzár replaces its entry in `COMING` and gets a "Új gép!" tile with a crate-and-lock picture. Hibavadász, the last machine in `COMING`, came after it (see [hibakereso.md](hibakereso.md)).
 
 ## Printable sheet
 

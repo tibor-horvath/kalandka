@@ -1,4 +1,4 @@
-// Seed layouts shared by Számvetés and Magvillantás.
+// Seed layouts shared by Számmagok and Villámszem.
 
 export const FIELD_W = 600;
 export const FIELD_H = 280;

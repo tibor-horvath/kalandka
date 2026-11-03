@@ -244,7 +244,7 @@
 .stage--landscape .ten-frame--double .slot { height: 30px; }
 .stage--landscape .panel .big-btn { height: 48px; font-size: 18px; padding: 0 12px; }
 
-/* ---------- Méhecske ---------- */
+/* ---------- Méhkas ---------- */
 .is-phone .screen--add { display: flex; flex-direction: column; gap: 8px; }
 .is-phone .screen--add .topbar { flex: none; }
 .is-phone .equation { height: 60px; padding: 0 20px; gap: 12px; border-radius: 30px; font-size: 40px; justify-content: center; }
@@ -294,7 +294,7 @@
 .stage--landscape .choices--add .big-btn { flex-basis: 0; height: auto; min-height: 48px; padding: 0 8px; gap: 4px; font-size: 18px; }
 .stage--landscape .add-wait { height: auto; }
 
-/* ---------- Számvetés and Magvillantás (seed beds) ---------- */
+/* ---------- Számmagok and Villámszem (seed beds) ---------- */
 .is-phone .screen--flash,
 .is-phone .screen--patterns,
 .is-phone .screen--trace { display: flex; flex-direction: column; gap: 12px; }
@@ -324,7 +324,7 @@
 .is-phone .screen--patterns .choices .big-btn { flex-basis: 100%; }
 .is-phone .peek-btn { height: 48px; padding: 0 22px; border-width: 3px; border-radius: 24px; font-size: 19px; }
 
-/* Számvetés's number card: the tally while counting, then the numeral, its dots and its word. */
+/* Számmagok's number card: the tally while counting, then the numeral, its dots and its word. */
 .is-phone .number-card { min-width: 0; flex: 1 1 100%; height: auto; min-height: 112px; padding: 12px 16px; gap: 12px; flex-wrap: wrap; border-radius: 24px; box-shadow: 0 6px 0 var(--grass-deep); }
 .is-phone .number-card.is-shown { border-width: 4px; box-shadow: 0 6px 0 var(--leaf); }
 .is-phone .number-card .choice__numeral { font-size: 60px; }
@@ -340,7 +340,7 @@
 .is-phone .tally--small .tally__dot:nth-child(15):not(:last-child) { margin-right: 10px; }
 .is-phone .tally--small .tally__dot:nth-child(10):not(:last-child) { margin-right: 0; }
 
-/* Landscape Számvetés: the bed on the left; Csepi, the card and "next" on the right. */
+/* Landscape Számmagok: the bed on the left; Csepi, the card and "next" on the right. */
 .stage--landscape .screen--learn {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 260px;
@@ -366,7 +366,7 @@
 .stage--landscape .tally--small .tally__dot { width: 17px; height: 17px; }
 .stage--landscape .screen--learn .choices .big-btn { flex-basis: 100%; height: 52px; font-size: 19px; }
 
-/* Landscape Magvillantás: like Méhecske, the bed on the left and the answers down the right edge. */
+/* Landscape Villámszem: like Méhkas, the bed on the left and the answers down the right edge. */
 .stage--landscape .screen--flash:not(.screen--learn) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 140px;

@@ -76,7 +76,7 @@ const GAMES: GameText[] = [
     home: 'Rakjatok sort kanálból és villából, és kérdezd meg, mi jön ezután.'
   },
   {
-    id: 'flash', world: 'garden', name: 'Magvillantás', where: 'A Magvillantásban', unit: 'feladat',
+    id: 'flash', world: 'garden', name: 'Villámszem', where: 'A Villámszemben', unit: 'feladat',
     level: (p) => levelName(FLASH_LEVELS, ladderOf(p, 'flash').level),
     hard: 'Gyakran kéri újra a magokat, vagy egyenként számolja meg őket.',
     home: 'Dobókockával: mondja meg, hány pötty van, számolás nélkül.'
@@ -88,7 +88,7 @@ const GAMES: GameText[] = [
     home: 'Írjatok számokat ujjal lisztbe, homokba vagy a párás ablakra.'
   },
   {
-    id: 'add', world: 'garden', name: 'Méhecske', where: 'A Méhecskében', unit: 'feladat',
+    id: 'add', world: 'garden', name: 'Méhkas', where: 'A Méhkasban', unit: 'feladat',
     level: (p) => levelName(ADD_LEVELS, ladderOf(p, 'add').level),
     hard: 'Az utolsó feladatoknál többször kért segítséget.',
     home: 'Közös számolás az ujjakon vagy kanalakkal sokat segít.'
@@ -136,7 +136,7 @@ const GAMES: GameText[] = [
     home: 'Találjatok ki titkos jeleket: a piros kocka azt jelenti, ugorj, a kék, hogy guggolj. Ő olvassa a kódot!'
   },
   {
-    id: 'fix', world: 'robot', name: 'Hibakereső', where: 'A Hibakeresőben', unit: 'kör',
+    id: 'fix', world: 'robot', name: 'Hibavadász', where: 'A Hibavadásznál', unit: 'kör',
     level: (p) => levelName(FIX_LEVELS, ladderOf(p, 'fix').level),
     hard: 'A legutóbbi körökben többször is jó kártyára koppintott, vagy Csavar mutatta meg a hibát.',
     home: 'Adj neki rossz utasítást az ajtóig, például egy lépéssel többet: ő keresse meg, hol csúszott el!'
@@ -145,7 +145,7 @@ const GAMES: GameText[] = [
 
 function learnNote(p: Progress): Insight {
   const learned = Math.min(LEARN_MAX, p.learnSolved);
-  const base = { game: 'Számvetés', world: 'garden' as const };
+  const base = { game: 'Számmagok', world: 'garden' as const };
   if (learned === 0) {
     return { ...base, tone: 'none', title: 'Még nem kezdte el.', short: 'Még nem kezdte el.', text: 'Itt ismerkedik meg a számokkal 1-től 20-ig, időnyomás nélkül.' };
   }
@@ -154,7 +154,7 @@ function learnNote(p: Progress): Insight {
     tone: 'good',
     short: learned >= LEARN_MAX ? 'Minden számot ismer.' : `${learned} számot ismer.`,
     title: learned >= LEARN_MAX ? 'Minden számot ismer 20-ig.' : `${learned} számot ismer 20-ig.`,
-    text: learned >= LEARN_MAX ? 'A Számvetésben végigjárta a számokat 1-től 20-ig.' : `A Számvetésben a következő szám: ${learned + 1}.`,
+    text: learned >= LEARN_MAX ? 'A Számmagokban végigjárta a számokat 1-től 20-ig.' : `A Számmagokban a következő szám: ${learned + 1}.`,
     home: 'Számoljátok hangosan a lépcsőfokokat vagy a kanalakat a fiókban.'
   };
 }
@@ -208,8 +208,8 @@ export function gameNotes(p: Progress, day: string): Insight[] {
  * when both have something to say.
  */
 export function insights(p: Progress, day: string, max = 4): Insight[] {
-  // Számvetés only counts the numbers met; the other games say more, so its note comes last.
-  const rank = (n: Insight) => (n.tone === 'tip' ? 0 : n.game === 'Számvetés' ? 2 : 1);
+  // Számmagok only counts the numbers met; the other games say more, so its note comes last.
+  const rank = (n: Insight) => (n.tone === 'tip' ? 0 : n.game === 'Számmagok' ? 2 : 1);
   const all = gameNotes(p, day).filter((n) => n.tone !== 'none');
   const ordered = all.map((n, i) => ({ n, i })).sort((a, b) => rank(a.n) - rank(b.n) || a.i - b.i).map((x) => x.n);
 
@@ -221,7 +221,7 @@ export function insights(p: Progress, day: string, max = 4): Insight[] {
   for (const n of ordered) if (picked.length < max && !picked.includes(n)) picked.push(n);
 
   if (picked.length === 0) {
-    return [{ tone: 'tip', title: 'Kezdjétek a Számvetéssel.', short: '', text: 'Ott ismerkedik meg a számokkal 1-től 20-ig, időnyomás nélkül.' }];
+    return [{ tone: 'tip', title: 'Kezdjétek a Számmagokkal.', short: '', text: 'Ott ismerkedik meg a számokkal 1-től 20-ig, időnyomás nélkül.' }];
   }
   return picked.sort((a, b) => ordered.indexOf(a) - ordered.indexOf(b));
 }

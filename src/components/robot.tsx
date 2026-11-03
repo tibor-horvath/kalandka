@@ -561,7 +561,7 @@ export function CodeSign({ sign, textured = false }: { sign: Sign; textured?: bo
   }
 }
 
-/** Hibakereső's tile on the Robotműhely home screen: a row of program cards, one of them wrong, under a magnifying glass. */
+/** Hibavadász's tile on the Robotműhely home screen: a row of program cards, one of them wrong, under a magnifying glass. */
 export function FixArt() {
   const card = (x: number, wrong: boolean, turn: number) => (
     <g transform={`translate(${x} 22)`}>

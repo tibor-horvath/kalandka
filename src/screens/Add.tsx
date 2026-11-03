@@ -124,7 +124,7 @@ function Dots({ n }: { n: number }) {
 }
 
 /**
- * Méhecske: a + b = ? Tap flowers or bouquets and the bee counts them; pick the total.
+ * Méhkas: a + b = ? Tap flowers or bouquets and the bee counts them; pick the total.
  * Gather levels: tap the right-hand flowers first and the bee carries them into the left bed.
  * Take levels: tap b flowers and the bee carries them to the hive; then say how many are left.
  * A bouquet goes as a whole ten; when fewer are needed, tapping it unties it into ten loose flowers.

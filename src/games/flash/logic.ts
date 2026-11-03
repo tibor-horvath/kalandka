@@ -2,8 +2,8 @@ import { numberAttr, numberCount } from '../../lib/numbers';
 import type { Mood, Tone } from '../../lib/types';
 import { layoutSeeds, rng, type Layout, type SeedPos } from './layout';
 
-// Magvillantás: seeds show for a few seconds, then the child says how many (subitizing).
-// It opens once the child has met the numbers 1–5 in Számvetés.
+// Villámszem: seeds show for a few seconds, then the child says how many (subitizing).
+// It opens once the child has met the numbers 1–5 in Számmagok.
 
 export { FIELD_H, FIELD_W, diceFace, foldSeeds } from './layout';
 

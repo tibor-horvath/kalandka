@@ -3,7 +3,7 @@ import type { Block, Cell, Dir, Pose } from '../games/robot/path';
 import { buzz, thud } from '../lib/sound';
 import { Crate, Rover as RoverArt } from './robot';
 
-// The workshop floor Robotút and Hibakereső share: its tiles and crates, and the little robot driving over them.
+// The workshop floor Robotút and Hibavadász share: its tiles and crates, and the little robot driving over them.
 
 /** One floor tile, in board units. */
 export const CELL = 100;

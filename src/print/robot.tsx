@@ -676,7 +676,7 @@ const code = spec<CodeTask>({
   Task: ({ task, answers }) => <CodeLock task={task} answers={answers} />
 });
 
-// ---------- Hibakereső ----------
+// ---------- Hibavadász ----------
 
 /** A square program card: its arrow or turn, and its number where the number is the question. */
 function FixCard({ x, y, size, cmd, times, color = INK }: { x: number; y: number; size: number; cmd: Cmd; times?: number; color?: string }) {
@@ -729,7 +729,7 @@ const fix = spec<FixTask>({
   id: 'fix',
   rev: 1,
   world: 'robot',
-  game: 'Hibakereső',
+  game: 'Hibavadász',
   levels: FIX_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'fix').level,
   grid: (level, d) => {

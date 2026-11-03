@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { FIELD_H, FIELD_W, LEVELS, buildFlashRound, levelFor, revealFeedback, rightFeedback } from './logic';
 import { foldSeeds, layoutSeeds, rng } from './layout';
 
-describe('Magvillantás', () => {
+describe('Villámszem', () => {
   it('moves up a level every four solved rounds', () => {
     expect(levelFor(0)).toBe(LEVELS[0]);
     expect(levelFor(4)).toBe(LEVELS[1]);

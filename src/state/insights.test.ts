@@ -37,8 +37,8 @@ describe('task log', () => {
 describe('notes per game', () => {
   it('has a note for every game', () => {
     expect(gameNotes(DEFAULT_PROGRESS, DAY).map((n) => n.game)).toEqual([
-      'Számvetés', 'Locsolás', 'Virágsor', 'Magvillantás', 'Mézút', 'Méhecske', 'Cserépbarátok',
-      'Robotút', 'Válogatógép', 'Mérleg', 'Mintagép', 'Tükörgép', 'Kódzár', 'Hibakereső'
+      'Számmagok', 'Locsolás', 'Virágsor', 'Villámszem', 'Mézút', 'Méhkas', 'Cserépbarátok',
+      'Robotút', 'Válogatógép', 'Mérleg', 'Mintagép', 'Tükörgép', 'Kódzár', 'Hibavadász'
     ]);
   });
 
@@ -84,9 +84,9 @@ describe('notes per game', () => {
     expect(n.short).toBe('3 / 3 segítség nélkül.');
   });
 
-  it('counts the numbers met in Számvetés', () => {
-    expect(note({ ...DEFAULT_PROGRESS, learnSolved: 14 }, 'Számvetés').title).toBe('14 számot ismer 20-ig.');
-    expect(note({ ...DEFAULT_PROGRESS, learnSolved: 25 }, 'Számvetés').title).toBe('Minden számot ismer 20-ig.');
+  it('counts the numbers met in Számmagok', () => {
+    expect(note({ ...DEFAULT_PROGRESS, learnSolved: 14 }, 'Számmagok').title).toBe('14 számot ismer 20-ig.');
+    expect(note({ ...DEFAULT_PROGRESS, learnSolved: 25 }, 'Számmagok').title).toBe('Minden számot ismer 20-ig.');
   });
 });
 
@@ -94,16 +94,16 @@ describe('highlighted notes', () => {
   it('suggests where to start on a fresh profile', () => {
     const list = insights({ ...DEFAULT_PROGRESS, ...played }, DAY);
     expect(list).toHaveLength(1);
-    expect(list[0].title).toBe('Kezdjétek a Számvetéssel.');
+    expect(list[0].title).toBe('Kezdjétek a Számmagokkal.');
   });
 
-  it('puts tips first, then good news, Számvetés last', () => {
+  it('puts tips first, then good news, Számmagok last', () => {
     let p = solved('water', [false, false, false], { ...DEFAULT_PROGRESS, learnSolved: 14 });
     p = solved('patterns', [true, true, true], p);
     expect(insights(p, DAY).map((n) => [n.game, n.tone])).toEqual([
       ['Virágsor', 'tip'],
       ['Locsolás', 'good'],
-      ['Számvetés', 'good']
+      ['Számmagok', 'good']
     ]);
   });
 

@@ -39,7 +39,7 @@ const NEXT_TASK_MS = 2800;
 
 const cardName = (c: Card) => `${CMD_LABELS[c.cmd]}${c.times > 1 ? `, ${c.times}-szor` : ''}`;
 
-/** Hibakereső: run the broken program, find the card that is to blame, put it right. */
+/** Hibavadász: run the broken program, find the card that is to blame, put it right. */
 export function Fix({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
   // The ladder when this round started: the round keeps its level even after its win steps up or down.
@@ -115,7 +115,7 @@ export function Fix({ onBack }: { onBack: () => void }) {
           <BackIcon />
         </RoundButton>
         <div className="topbar__title">
-          <h1 className="screen-title">Hibakereső</h1>
+          <h1 className="screen-title">Hibavadász</h1>
           <LevelMeter meter={meter} world="robot" justSolved={solved} />
         </div>
         <RoundButton label="Meghallgatom újra" onClick={() => speak(fb.speech)}>

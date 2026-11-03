@@ -35,7 +35,7 @@ describe('per-game level settings', () => {
     expect(buildAddRound(0, ladderOf(add, 'add').level).answer).toBeGreaterThan(20);
   });
 
-  it('moves an older Méhecske save onto the new ladder once, and leaves fresh profiles at the start', () => {
+  it('moves an older Méhkas save onto the new ladder once, and leaves fresh profiles at the start', () => {
     const old = { ...DEFAULT_PROGRESS, addLevelsVersion: 1 };
     expect(migrate({ ...old, addLevel: 0, addSolved: 7 }).addLevel).toBe(2);
     expect(migrate({ ...old, addLevel: 4, addSolved: 30 }).addLevel).toBe(8);
