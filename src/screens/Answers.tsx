@@ -51,7 +51,7 @@ export function Answers({ link, onClose }: { link: ReadLink; onClose: () => void
                 </div>
               </header>
               <p className="pa-muted">
-                Pipáld ki a feladatokat, ahogy átnézed őket. A kész lapot a gyerek eszközén jelöld meg: <b>Szülői sarok → Nyomtatás → Lap beolvasása</b>, és matrica jár érte.
+                Pipáld ki a feladatokat, ahogy átnézed őket. A kész lapot a gyerkőc eszközén jelöld meg: <b>Szülői sarok → Nyomtatás → Lap beolvasása</b>, és matrica jár érte.
               </p>
               <OtherAnswers spec={opened.spec} level={opened.ref.level} />
               <AnswerList spec={opened.spec} tasks={opened.tasks} ticked={ticked} onTick={(i) => setTicked((t) => Object.assign([...t], { [i]: !t[i] }))} />

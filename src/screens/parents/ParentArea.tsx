@@ -30,7 +30,7 @@ const PAGES: { id: Exclude<ParentPage, 'legal'>; label: string; icon: ReactNode 
   },
   {
     id: 'kids',
-    label: 'Gyerekek',
+    label: 'Gyerkőcök',
     icon: (
       <>
         <circle cx="9" cy="8" r="3.5" />
@@ -99,7 +99,7 @@ export function KidSwitch({ viewId, onView, title, stuck }: { viewId: string; on
   return (
     <div className={`pa-kidbar${stuck ? ' is-stuck' : ''}`}>
       <span className="pa-kidbar__title" aria-hidden={!stuck}>{title}</span>
-      <div className="pa-kidbar__kids" role="radiogroup" aria-label="Melyik gyerek?">
+      <div className="pa-kidbar__kids" role="radiogroup" aria-label="Melyik gyerkőc?">
         {profiles.kids.map((kid) => (
           <button
             key={kid.id}

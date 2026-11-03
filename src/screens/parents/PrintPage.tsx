@@ -116,7 +116,7 @@ function DonePages({ s, choice }: { s: PrintSpec<unknown>; choice: PrintChoice }
   return (
     <section className="pa-card ps-done">
       <h2 className="pa-h2">Kész lapok</h2>
-      <p className="pa-muted">Ha a gyerek befejezett egy lapot, jelöld meg itt. Minden feladatáért egy mag (a Robotműhelyben csavar) jár, mint a játékban, és mindkét világban matrica az első, az ötödik és a tizenötödik kész lapért.</p>
+      <p className="pa-muted">Ha a gyerkőc befejezett egy lapot, jelöld meg itt. Minden feladatáért egy mag (a Robotműhelyben csavar) jár, mint a játékban, és mindkét világban matrica az első, az ötödik és a tizenötödik kész lapért.</p>
       <div className="pa-row">
         {Array.from({ length: choice.pages }, (_, i) => {
           const key = pageKey(pageRef(s, choice, i));
@@ -205,7 +205,7 @@ function ExtraSheet({ id, onBack }: { id: ExtraId; onBack: () => void }) {
               Nyomtatás
             </button>
           </div>
-          <p className="pa-muted">Vastagabb papírra nyomtatva tovább bírja. A kivágás a felnőtt dolga, a gyerek a ragasztásban segíthet.</p>
+          <p className="pa-muted">Vastagabb papírra nyomtatva tovább bírja. A kivágás a felnőtt dolga, a gyerkőc a ragasztásban segíthet.</p>
         </div>
         <div className="ps-side">
           <Preview>{[<e.Page key="page" />]}</Preview>
@@ -259,7 +259,7 @@ function GameSheet({ id, kidId, guestAge, canMark, onBack, onExtra }: { id: Prin
               onStep={(by) => change({ level: choice.level + by })}
             />
             {guestAge ? (
-              <p className="pa-muted">{choice.level === s.current(progress) ? `Ezzel a szinttel indulnak ${theAge(guestAge)} gyerekek.` : `${theAge(guestAge).replace('a', 'A')} gyerekek a(z) ${s.current(progress) + 1}. szinttel indulnak.`}</p>
+              <p className="pa-muted">{choice.level === s.current(progress) ? `Ezzel a szinttel indulnak ${theAge(guestAge)} gyerkőcök.` : `${theAge(guestAge).replace('a', 'A')} gyerkőcök a(z) ${s.current(progress) + 1}. szinttel indulnak.`}</p>
             ) : choice.level === s.current(progress) ? (
               <p className="pa-muted">Ezen a szinten tart most a játékban.</p>
             ) : (
@@ -354,15 +354,15 @@ export function PrintPage({ kidId, guestAge, canMark }: { kidId: string; guestAg
           <h1 className="pa-h1">Nyomtatás</h1>
           <p className="pa-lead">
             {guestAge
-              ? `Feladatlapok papírra, eszköz nélküli játékhoz. Minden játék a saját lapján, ${theAge(guestAge)} gyerekeknek való kezdőszinten; ceruza és zsírkréta kell hozzá.`
-              : 'Feladatlapok papírra, eszköz nélküli játékhoz. Minden játék a saját lapján, a gyerek mostani szintjén; ceruza és zsírkréta kell hozzá.'}
+              ? `Feladatlapok papírra, eszköz nélküli játékhoz. Minden játék a saját lapján, ${theAge(guestAge)} gyerkőcöknek való kezdőszinten; ceruza és zsírkréta kell hozzá.`
+              : 'Feladatlapok papírra, eszköz nélküli játékhoz. Minden játék a saját lapján, a gyerkőc mostani szintjén; ceruza és zsírkréta kell hozzá.'}
           </p>
         </div>
       </header>
       {canMark && (
         <section className="pa-card">
           <h2 className="pa-h2">Kész lap megjelölése</h2>
-          <p className="pa-muted">Ha a gyerek befejezett egy feladatlapot, olvasd be a QR-kódját: megnézheted a megoldásokat, és a kész lapért matrica jár.</p>
+          <p className="pa-muted">Ha a gyerkőc befejezett egy feladatlapot, olvasd be a QR-kódját: megnézheted a megoldásokat, és a kész lapért matrica jár.</p>
           <div className="pa-row">
             <button type="button" className="pa-btn" onClick={() => setScanning(true)}>
               <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -407,7 +407,7 @@ export function PrintPage({ kidId, guestAge, canMark }: { kidId: string; guestAg
         <h2 className="pa-h2" id="ps-extras">
           Kellékek
         </h2>
-        <p className="pa-muted">Kivágós lapok a feladatlapok mellé, minden gyereknek ugyanazok.</p>
+        <p className="pa-muted">Kivágós lapok a feladatlapok mellé, minden gyerkőcnek ugyanazok.</p>
         <div className="pa-levels">
           {EXTRAS.map((e) => (
             <button key={e.id} type="button" className="pa-level ps-game" onClick={() => setExtra(e.id)}>

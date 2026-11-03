@@ -83,6 +83,13 @@ export function registerUpdates(): void {
   });
 }
 
+/** Looks for a new version now, without waiting for the next timed check. */
+export function checkForUpdate(): void {
+  const reg = registration;
+  if (!reg || waiting || reg.installing || !navigator.onLine) return;
+  reg.update().catch(() => {});
+}
+
 /** Activates the waiting version; the page reloads into it once it has taken over. */
 export function applyUpdate(): void {
   applying = true;

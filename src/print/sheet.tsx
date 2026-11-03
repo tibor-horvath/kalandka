@@ -251,7 +251,7 @@ export function Sheet({ spec, level, grid, tasks, answers, footer, link }: { spe
           )}
         </div>
         <p className="ps-tip">
-          <b>Szülőknek:</b> {spec.tip(level)} Ha egy feladat kész, a gyerek kiszínezheti a csillagot.
+          <b>Szülőknek:</b> {spec.tip(level)} Ha egy feladat kész, a gyerkőc kiszínezheti a csillagot.
         </p>
         <div className="ps-grid" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}>
           {tasks.map((t, i) => (

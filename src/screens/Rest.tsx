@@ -41,7 +41,7 @@ export function Rest({ evening = false, onParents, onSwitch }: { evening?: boole
       <div className="rest__actions">
         {onSwitch && (
           <button type="button" className="parents-btn parents-btn--night" onClick={onSwitch}>
-            Másik gyerek játszik
+            Másik gyerkőc játszik
           </button>
         )}
         <button type="button" className="parents-btn parents-btn--night" onClick={onParents}>

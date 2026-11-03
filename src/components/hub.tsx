@@ -26,7 +26,7 @@ export function KidChip({ onSwitch }: { onSwitch: () => void }) {
       type="button"
       className="kid-chip"
       style={{ '--ring': AVATARS[kid.avatar].ring } as CSSProperties}
-      aria-label={`${kidName(kid)} játszik. Másik gyerek választása`}
+      aria-label={`${kidName(kid)} játszik. Másik gyerkőc választása`}
       onClick={onSwitch}
     >
       <Avatar id={kid.avatar} size={46} />

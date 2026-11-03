@@ -44,7 +44,7 @@ export function LevelsPage() {
                 checked={progress.unlockAll}
                 onChange={(v) => update((p) => ({ ...p, unlockAll: v }))}
                 title="Minden játék nyitva"
-                hint="Nagyobb gyerekeknek: nem kell végigjátszani a Számmagokat a többi játék előtt."
+                hint="Nagyobb gyerkőcöknek: nem kell végigjátszani a Számmagokat a többi játék előtt."
               />
             </div>
           )}

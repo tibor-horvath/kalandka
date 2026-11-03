@@ -35,13 +35,13 @@ export function TransferCard() {
                 <path d="M5 12.5l4.5 4.5L19 7.5" />
               </svg>
               <p>
-                <b>Megérkezett!</b> {[moved.added && `${moved.added} új gyerek`, moved.updated && `${moved.updated} frissített profil`].filter(Boolean).join(', ')} a
+                <b>Megérkezett!</b> {[moved.added && `${moved.added} új gyerkőc`, moved.updated && `${moved.updated} frissített profil`].filter(Boolean).join(', ')} a
                 kerttel, a matricákkal és a szintekkel együtt ezen az eszközön van.
               </p>
             </div>
           )}
           <p className="pa-muted">
-            A gyerekek profilja, kertje, matricái, szintjei és a beállítások átvihetők egy másik eszközre. A régi eszköz QR-kódot mutat, az új a
+            A gyerkőcök profilja, kertje, matricái, szintjei és a beállítások átvihetők egy másik eszközre. A régi eszköz QR-kódot mutat, az új a
             kamerájával beolvassa. Nem kell hozzá internet, és semmi nem megy át szerveren.
           </p>
           <div className="pa-row">
@@ -171,7 +171,7 @@ function ReceivePanel({ onCancel, onDone }: { onCancel: () => void; onDone: (cou
         {plan.tooMany ? (
           <>
             <p className="pa-muted">
-              Így több mint {MAX_KIDS} gyerek lenne ezen az eszközön, ennyi nem fér el. Előbb törölj egy profilt a <b>Gyerekek</b> oldalon, majd
+              Így több mint {MAX_KIDS} gyerkőc lenne ezen az eszközön, ennyi nem fér el. Előbb törölj egy profilt a <b>Gyerkőcök</b> oldalon, majd
               olvasd be újra a kódot.
             </p>
             <div>
@@ -184,13 +184,13 @@ function ReceivePanel({ onCancel, onDone }: { onCancel: () => void; onDone: (cou
           <>
             {plan.refigured.length > 0 && (
               <p className="pa-muted">
-                Új figurát kap, mert a figuráját egy érkező gyerek használja: {plan.refigured.map((k) => kidName(k)).join(', ')}.
+                Új figurát kap, mert a figuráját egy érkező gyerkőc használja: {plan.refigured.map((k) => kidName(k)).join(', ')}.
               </p>
             )}
             <div className="pa-confirm" role="alert">
               <span>
                 {plan.updated.length > 0
-                  ? 'A „frissül” jelű gyerekek itteni haladását felülírja az érkező, a többi gyerek megmarad. Ez nem vonható vissza.'
+                  ? 'A „frissül” jelű gyerkőcök itteni haladását felülírja az érkező, a többi gyerkőc megmarad. Ez nem vonható vissza.'
                   : 'Az érkező profilok a mostaniak mellé kerülnek, senki haladása nem vész el.'}
               </span>
               <button type="button" className="pa-btn pa-btn--quiet" onClick={onCancel}>
