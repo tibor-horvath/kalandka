@@ -50,7 +50,9 @@ az account set --subscription "<subscription name or id>"
    ```
 
    In the GitHub repo, open Settings → Environments, create an environment named `production`, and add the value as the secret `AZURE_STATIC_WEB_APPS_API_TOKEN`.
-   Optionally restrict the environment to the `main` branch, or add required reviewers to approve each deploy.
+   Optionally add required reviewers to approve each deploy.
+
+   Under **Deployment branches and tags**, choose *Selected branches and tags* and add `main`, so only `main` can deploy.
 
 4. In the GitHub repo, open Settings → Actions → General and turn on **Allow GitHub Actions to create and approve pull requests**, so the release PR can be opened.
 

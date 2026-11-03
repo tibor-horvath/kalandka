@@ -6,6 +6,7 @@ Thank you for helping. Kalandka is a set of Hungarian thinking games for childre
 
 - For a bug, open an issue with what you did, what you expected and the device and browser.
 - For a new game, level or bigger change, open an issue first so we can agree on it before you build it.
+- For a security problem, do not open an issue: see [SECURITY.md](SECURITY.md).
 
 ## Ground rules for the games
 
