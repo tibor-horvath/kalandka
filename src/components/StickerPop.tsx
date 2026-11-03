@@ -3,6 +3,7 @@ import { chime, fanfare, popBubble } from '../lib/sound';
 import { speak } from '../lib/speech';
 import { STICKERS, gameOf, type Sticker } from '../state/rewards';
 import { StickerDisc, StickerSlot } from './garden';
+import { useModal } from './Modal';
 import { GuideBubble } from './ui';
 
 type Phase = 'measure' | 'fly' | 'landed';
@@ -24,6 +25,7 @@ export function StickerPop({ sticker, seen, onDone }: { sticker: Sticker; seen: 
   const [flight, setFlight] = useState<CSSProperties>({});
   const flyer = useRef<HTMLSpanElement>(null);
   const target = useRef<HTMLSpanElement>(null);
+  const modal = useModal<HTMLDivElement>();
 
   // Measure where the sticker lands, in stage pixels (the stage itself is scaled to the screen).
   useLayoutEffect(() => {
@@ -61,7 +63,7 @@ export function StickerPop({ sticker, seen, onDone }: { sticker: Sticker; seen: 
   };
 
   return (
-    <div className={`sticker-pop is-${phase}`} role="dialog" aria-modal="true" aria-labelledby="sticker-pop-title">
+    <div ref={modal} className={`sticker-pop is-${phase}`} role="dialog" aria-modal="true" aria-labelledby="sticker-pop-title">
       <h2 id="sticker-pop-title" key={`t${run}`} className="sticker-pop__title">
         Új matrica!
       </h2>

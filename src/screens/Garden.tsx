@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Seed } from '../components/art';
 import { BerryIcon, CanIcon, DecorArt, DropIcon, GardenPlant, PearIcon, PlantIcon, TreatArt, VisitorArt } from '../components/garden';
+import { Modal, useModal } from '../components/Modal';
 import { BackIcon, GuideBubble, RoundButton, SpeakerIcon } from '../components/ui';
 import { chime, fanfare, popBubble } from '../lib/sound';
 import { article, capitalize, numberAttr, numberCount } from '../lib/numbers';
@@ -519,7 +520,7 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
       )}
 
       {done && !visitor && (
-        <div className="visitor-pop" role="dialog" aria-modal="true" aria-labelledby="done-title">
+        <Modal className="visitor-pop" labelledBy="done-title">
           <div className="visitor-pop__rays" aria-hidden="true" />
           <p className="visitor-pop__kicker">Minden lakó megkapta az ajándékát</p>
           <h2 id="done-title" className="visitor-pop__title">
@@ -542,11 +543,11 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
           >
             Hurrá!
           </button>
-        </div>
+        </Modal>
       )}
 
       {visitor && (
-        <div className="visitor-pop" role="dialog" aria-modal="true" aria-labelledby="visitor-title">
+        <Modal className="visitor-pop" labelledBy="visitor-title">
           <div className="visitor-pop__rays" aria-hidden="true" />
           <p className="visitor-pop__kicker">{visitor.after} növény nőtt a kertedben</p>
           <h2 id="visitor-title" className="visitor-pop__title">
@@ -558,7 +559,7 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
           <button type="button" className="big-btn" onClick={welcome} autoFocus>
             Szia, {visitor.name}!
           </button>
-        </div>
+        </Modal>
       )}
     </div>
   );
@@ -594,6 +595,7 @@ function Ingredients({ r, pears, berries, seeds }: { r: Recipe; pears: number; b
 /** Kamra: the child makes the basket's fruit (and, once the garden is full, spare seeds) into treats for the shelf. */
 function Pantry({ onClose }: { onClose: () => void }) {
   const { progress, update } = useProgress();
+  const modal = useModal<HTMLDivElement>(onClose);
   const pears = basketPears(progress);
   const berries = basketBerries(progress);
   const seeds = seedBalance(progress);
@@ -638,7 +640,7 @@ function Pantry({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="pantry" role="dialog" aria-modal="true" aria-labelledby="pantry-title">
+    <div ref={modal} className="pantry" role="dialog" aria-modal="true" aria-labelledby="pantry-title">
       <div className="pantry__card">
         <header className="pantry__top">
           <RoundButton label="Vissza a kertbe" onClick={onClose}>
@@ -729,6 +731,7 @@ function wishLine(p: Progress, id: VisitorId): string {
 /** A visitor's corner: the gift they ask for next, counted out from the shelf, and the three things they make in return. */
 function GiftCard({ id, onGive, onClose }: { id: VisitorId; onGive: () => void; onClose: () => void }) {
   const { progress } = useProgress();
+  const modal = useModal<HTMLDivElement>(onClose);
   const v = VISITORS.find((x) => x.id === id)!;
   const wish = wishOf(id);
   const n = giftSize(progress, id);
@@ -762,7 +765,7 @@ function GiftCard({ id, onGive, onClose }: { id: VisitorId; onGive: () => void; 
   };
 
   return (
-    <div className="pantry gift" role="dialog" aria-modal="true" aria-labelledby="gift-title">
+    <div ref={modal} className="pantry gift" role="dialog" aria-modal="true" aria-labelledby="gift-title">
       <div className="pantry__card">
         <header className="pantry__top">
           <RoundButton label="Vissza a kertbe" onClick={onClose}>

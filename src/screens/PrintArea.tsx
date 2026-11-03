@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { KalandkaIcon } from '../components/ui';
+import { useModal } from '../components/Modal';
 import { KidScope, startingProgress, useProfiles, type AgeBand } from '../state/profiles';
 import { ProgressContext } from '../state/progress';
 import { KidSwitch } from './parents/ParentArea';
@@ -21,6 +22,7 @@ export function PrintArea({ onClose, guestAge }: { onClose: () => void; guestAge
   const [viewId, setViewId] = useState(profiles.activeId);
   const shownId = profiles.kids.some((k) => k.id === viewId) ? viewId : profiles.activeId;
   const [scrolled, setScrolled] = useState(false);
+  const modal = useModal<HTMLDivElement>();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -31,7 +33,7 @@ export function PrintArea({ onClose, guestAge }: { onClose: () => void; guestAge
   }, [onClose]);
 
   return (
-    <div className="pa pa--print">
+    <div className="pa pa--print" ref={modal}>
       <header className="pa-printbar">
         <div className="pa-nav__brand">
           <KalandkaIcon size={44} />

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Modal } from '../../components/Modal';
 import { Bolt } from '../../components/robot';
 import { FriendArt, RobotFigure, SlotIcon, type PartMotion } from '../../components/robotParts';
 import { BackIcon, GuideBubble, RoundButton, SpeakerIcon } from '../../components/ui';
@@ -441,7 +442,7 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
       </div>
 
       {friend && (
-        <div className="visitor-pop" role="dialog" aria-modal="true" aria-labelledby="friend-title">
+        <Modal className="visitor-pop" labelledBy="friend-title">
           <div className="visitor-pop__rays" aria-hidden="true" />
           <p className="visitor-pop__kicker">
             {friend.after} új alkatrész van a {robots.length > 1 ? 'robotjaidon' : 'robotodon'}
@@ -455,11 +456,11 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
           <button type="button" className="big-btn" onClick={welcome} autoFocus>
             Szia, {friend.name}!
           </button>
-        </div>
+        </Modal>
       )}
 
       {robotArrived && (
-        <div className="visitor-pop" role="dialog" aria-modal="true" aria-labelledby="robot2-title">
+        <Modal className="visitor-pop" labelledBy="robot2-title">
           <div className="visitor-pop__rays" aria-hidden="true" />
           <p className="visitor-pop__kicker">{SECOND_ROBOT_AFTER} új alkatrész van az első robotodon</p>
           <h2 id="robot2-title" className="visitor-pop__title">
@@ -471,7 +472,7 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
           <button type="button" className="big-btn" onClick={meetSecond} autoFocus>
             Építsük meg!
           </button>
-        </div>
+        </Modal>
       )}
     </div>
   );

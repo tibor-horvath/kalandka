@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { LockIcon } from '../../components/ui';
+import { useModal } from '../../components/Modal';
 import { useBiometric, verifyBiometric } from '../../lib/biometric';
 import { gateQuestion } from '../../state/insights';
 
@@ -20,6 +21,7 @@ export function Gate({ onPass, onCancel }: { onPass: () => void; onCancel: () =>
   const asked = useRef(false);
   const firstKey = useRef<HTMLButtonElement>(null);
   const bioMode = bio.on && !useMath;
+  const modal = useModal<HTMLDivElement>();
 
   useEffect(() => {
     firstKey.current?.focus();
@@ -82,7 +84,7 @@ export function Gate({ onPass, onCancel }: { onPass: () => void; onCancel: () =>
 
   if (bioMode) {
     return (
-      <div className="gate">
+      <div className="gate" ref={modal}>
         <section className="gate__card gate__card--bio" role="dialog" aria-modal="true" aria-labelledby="gate-title">
           <span className="gate__lock" aria-hidden="true">
             <LockIcon size={28} />
@@ -110,7 +112,7 @@ export function Gate({ onPass, onCancel }: { onPass: () => void; onCancel: () =>
   }
 
   return (
-    <div className="gate">
+    <div className="gate" ref={modal}>
       <section className="gate__card" role="dialog" aria-modal="true" aria-labelledby="gate-title">
         <span className="gate__lock" aria-hidden="true">
           <LockIcon size={28} />
