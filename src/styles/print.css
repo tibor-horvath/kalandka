@@ -44,6 +44,51 @@
 .ps-foot__key b { color: #10233a; }
 .ps-foot > .ps-foot__qr { flex: none; display: block; margin: 0; }
 
+/* Kellékek (src/print/extras.tsx): pages to cut out. Dashed lines are cut lines; the fold is grey and labelled. */
+.px-sheet { gap: 6mm; }
+.px-note { flex: 0 0 48mm; font-size: 10pt; line-height: 1.3; text-align: right; color: #4a5e70; }
+.px-caption { font-size: 9.5pt; font-weight: 700; color: #4a5e70; }
+.px-tip { margin: auto 0 0; padding: 3mm 4mm; border-radius: 3mm; background: #f4f7fa; font-size: 10.5pt; line-height: 1.35; }
+
+.px-tents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12mm; justify-items: center; }
+.px-tent-wrap { display: flex; flex-direction: column; align-items: center; gap: 1.5mm; }
+.px-tent { width: 84mm; height: 186mm; box-sizing: border-box; display: flex; flex-direction: column; border: 0.6mm dashed #10233a; border-radius: 6mm; }
+.px-tent__half { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5mm; }
+.px-tent__half--back { transform: rotate(180deg); }
+.px-tent__half b { font-family: var(--display); font-size: 22pt; font-weight: 800; line-height: 1; }
+.px-tent .px-guide { width: 44mm; height: 68mm; }
+.px-fold { position: relative; height: 0; border-top: 0.5mm dashed #8fa3b8; }
+.px-fold span { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); padding: 0 2.5mm; background: #ffffff; font-size: 9.5pt; font-weight: 700; color: #4a5e70; white-space: nowrap; }
+.px-steps { margin-top: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4mm; }
+.px-step { display: flex; align-items: center; gap: 3mm; padding: 3.5mm 4mm; border-radius: 4mm; background: #f4f7fa; font-size: 11pt; line-height: 1.3; }
+.px-step svg { flex: none; width: 9mm; height: 9mm; color: #10233a; }
+
+.px-group { display: flex; flex-direction: column; gap: 2.5mm; }
+.px-group__head { display: flex; align-items: baseline; justify-content: space-between; gap: 4mm; }
+.px-group__head h3 { margin: 0; font-family: var(--display); font-size: 18pt; font-weight: 800; line-height: 1.1; }
+.px-group__head span { font-size: 10pt; color: #4a5e70; }
+
+.px-badges { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3.5mm; justify-items: center; }
+.px-badge { width: 30mm; height: 30mm; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0.6mm dashed #10233a; border-radius: 50%; }
+.px-badge .px-guide { width: 13mm; height: 20mm; }
+.px-badge b { font-family: var(--display); font-size: 13pt; font-weight: 800; line-height: 1; }
+
+.px-rovers { display: flex; justify-content: space-between; align-items: flex-end; gap: 4mm; }
+.px-rovers__size { display: flex; flex-direction: column; align-items: center; gap: 1.5mm; }
+.px-rovers__pair { display: flex; align-items: flex-end; gap: 2.5mm; }
+.px-rover { box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 0.6mm dashed #10233a; border-radius: 3.5mm; }
+.px-rover svg { width: 88%; height: 88%; }
+.px-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3mm; }
+.px-card { height: 27.5mm; box-sizing: border-box; display: flex; align-items: center; gap: 2.5mm; padding: 0 3.5mm; border: 0.6mm dashed #10233a; border-radius: 4mm; background: #e6f4f3; color: #10233a; }
+/* Turn cards on a lighter yellow, so the two sets stay apart in black and white too. */
+.px-card--turn { background: #fff4d1; }
+.px-card svg { flex: none; width: 14mm; height: 14mm; }
+.px-card b { font-family: var(--display); font-size: 14pt; font-weight: 800; line-height: 1.05; }
+
+/* Kellékek on the Nyomtatás list: the guide stands in for the glyph. */
+.pa-tile svg { width: 34px; height: 48px; }
+.pa-tile .px-tile-rover { width: 40px; height: 40px; }
+
 /* The Megoldások page from a sheet's QR code: a list to read on a phone, not a shrunken A4 page. Fixed like .landing__print: it stands outside the stage, whose clip would hide .pa::before. */
 .ps-answers-page { position: fixed; inset: 0; }
 .ps-answers { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -71,6 +116,7 @@
 
 /* The Nyomtatás page */
 .ps-back { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; padding-left: 0; }
+.ps-inline { padding: 0; font-size: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .ps-game { width: 100%; border: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .ps-game__go { flex: none; color: var(--pa-muted); }
 .ps-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }

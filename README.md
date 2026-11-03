@@ -148,3 +148,11 @@ GitHub Actions, built from the reusable workflows in [tibor-horvath/ci-toolkit](
 | `workflow-lint.yml` | changes under `.github/` | actionlint + shellcheck |
 
 Dependabot (`.github/dependabot.yml`) opens grouped weekly npm and Actions update PRs.
+
+## Contributing
+
+Bug reports, ideas and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+Copyright (C) 2026 Tibor Horváth. Kalandka is free software under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only): anyone may use, change and share it, and anyone who shares a changed version, or runs one for others over a network, must publish its source under the same license.

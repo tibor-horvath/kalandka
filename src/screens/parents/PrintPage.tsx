@@ -1,6 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { Csepi } from '../../components/Csepi';
+import { Csavar, Rover } from '../../components/robot';
 import { MAX_PAGES, PRINT_SHEETS, buildPages, pageRef, saveChoice, savedChoice, sheetFor, tasksPerPage, type PrintChoice } from '../../print/catalog';
+import { EXTRAS, extraFor, type ExtraId } from '../../print/extras';
 import { linkUrl, pageKey } from '../../print/link';
 import { DENSITIES, OtherAnswers, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
 import { useProfiles, type AgeBand } from '../../state/profiles';
@@ -29,6 +32,19 @@ const TILES: Record<PrintId, { glyph: string; tile: string }> = {
   mirror: { glyph: '•|•', tile: 'pa-tile--sky' },
   code: { glyph: '●→?', tile: 'pa-tile--sand' },
   fix: { glyph: '↑✗', tile: 'pa-tile--pink' }
+};
+
+const EXTRA_TILES: Record<ExtraId, { glyph: ReactNode; tile: string }> = {
+  figures: { glyph: <Csepi />, tile: 'pa-tile--blue' },
+  badges: { glyph: <Csavar mood="cheer" />, tile: 'pa-tile--sun' },
+  robot: {
+    glyph: (
+      <svg className="px-tile-rover" viewBox="0 0 100 100">
+        <Rover />
+      </svg>
+    ),
+    tile: 'pa-tile--sky'
+  }
 };
 
 /** "az 5 éves", "a 6 éves", "a 7 éves": the age a visitor picked on the landing page, with its article. */
@@ -125,30 +141,16 @@ function DonePages({ s, choice }: { s: PrintSpec<unknown>; choice: PrintChoice }
   );
 }
 
-/** One game's sheet: level, size and pages, a preview, the answers (on the tablet only) and the print button. */
-function GameSheet({ id, kidId, guestAge, canMark, onBack }: { id: PrintId; kidId: string; guestAge?: AgeBand; canMark?: boolean; onBack: () => void }) {
-  const { progress } = useProgress();
-  const { profiles } = useProfiles();
-  const s = sheetFor(id);
-  const young = (guestAge ?? profiles.kids.find((k) => k.id === kidId)?.age) === '5';
-  const [choice, setChoice] = useState<PrintChoice>(
-    () => savedChoice(kidId, id) ?? { level: s.current(progress), density: young ? 'big' : 'normal', pages: 1, batch: Math.floor(Math.random() * 10_000) }
-  );
-  const [answers, setAnswers] = useState(false);
+/**
+ * While true, the sheets go into a layer of their own beside the app, which print.css shows on paper and hides everything else.
+ * `name` is the document's title meanwhile: also the file name when the sheet is saved as a PDF.
+ */
+function usePrinting(name: string): [boolean, (on: boolean) => void] {
   const [printing, setPrinting] = useState(false);
-
-  const change = (patch: Partial<PrintChoice>) => {
-    const next = { ...choice, ...patch };
-    setChoice(next);
-    saveChoice(kidId, id, next);
-  };
-
-  // The sheets go into a layer of their own beside the app, which print.css shows on paper and hides everything else.
   useEffect(() => {
     if (!printing) return;
     const title = document.title;
-    // Also the file name when the sheet is saved as a PDF.
-    document.title = `Kalandka – ${s.game}`;
+    document.title = `Kalandka – ${name}`;
     const done = () => setPrinting(false);
     window.addEventListener('afterprint', done);
     const frame = requestAnimationFrame(() => window.print());
@@ -157,18 +159,86 @@ function GameSheet({ id, kidId, guestAge, canMark, onBack }: { id: PrintId; kidI
       window.removeEventListener('afterprint', done);
       document.title = title;
     };
-  }, [printing, s.game]);
+  }, [printing, name]);
+  return [printing, setPrinting];
+}
+
+function PrintIcon() {
+  return (
+    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9V3h12v6" />
+      <rect x="3" y="9" width="18" height="8" rx="2" />
+      <path d="M7 14h10v7H7z" />
+    </svg>
+  );
+}
+
+function BackLink({ label, onBack }: { label: string; onBack: () => void }) {
+  return (
+    <button type="button" className="pa-link ps-back" onClick={onBack}>
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M15 5l-7 7 7 7" />
+      </svg>
+      {label}
+    </button>
+  );
+}
+
+/** A Kellékek page: the same for every child, so nothing to choose; a preview and the print button. */
+function ExtraSheet({ id, onBack }: { id: ExtraId; onBack: () => void }) {
+  const e = extraFor(id);
+  const [printing, setPrinting] = usePrinting(e.title);
+  return (
+    <div className="pa-page">
+      <BackLink label="Minden lap" onBack={onBack} />
+      <header className="pa-head">
+        <div>
+          <h1 className="pa-h1">{e.title}</h1>
+          <p className="pa-lead">{e.lead}</p>
+        </div>
+      </header>
+      <div className="ps-layout">
+        <div className="ps-controls">
+          <div className="pa-row">
+            <button type="button" className="pa-btn pa-btn--go" onClick={() => setPrinting(true)}>
+              <PrintIcon />
+              Nyomtatás
+            </button>
+          </div>
+          <p className="pa-muted">Vastagabb papírra nyomtatva tovább bírja. A kivágás a felnőtt dolga, a gyerek a ragasztásban segíthet.</p>
+        </div>
+        <div className="ps-side">
+          <Preview>{[<e.Page key="page" />]}</Preview>
+        </div>
+      </div>
+      {printing && createPortal(<div className="ps-print"><e.Page /></div>, document.body)}
+    </div>
+  );
+}
+
+/** One game's sheet: level, size and pages, a preview, the answers (on the tablet only) and the print button. */
+function GameSheet({ id, kidId, guestAge, canMark, onBack, onExtra }: { id: PrintId; kidId: string; guestAge?: AgeBand; canMark?: boolean; onBack: () => void; onExtra: (id: ExtraId) => void }) {
+  const { progress } = useProgress();
+  const { profiles } = useProfiles();
+  const s = sheetFor(id);
+  const young = (guestAge ?? profiles.kids.find((k) => k.id === kidId)?.age) === '5';
+  const [choice, setChoice] = useState<PrintChoice>(
+    () => savedChoice(kidId, id) ?? { level: s.current(progress), density: young ? 'big' : 'normal', pages: 1, batch: Math.floor(Math.random() * 10_000) }
+  );
+  const [answers, setAnswers] = useState(false);
+  const [printing, setPrinting] = usePrinting(s.game);
+
+  const change = (patch: Partial<PrintChoice>) => {
+    const next = { ...choice, ...patch };
+    setChoice(next);
+    saveChoice(kidId, id, next);
+  };
 
   const perPage = tasksPerPage(s, choice.level, choice.density);
 
   return (
     <div className="pa-page">
-      <button type="button" className="pa-link ps-back" onClick={onBack}>
-        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M15 5l-7 7 7 7" />
-        </svg>
-        Minden játék
-      </button>
+      <BackLink label="Minden lap" onBack={onBack} />
       <header className="pa-head">
         <div>
           <h1 className="pa-h1">{s.game}</h1>
@@ -220,11 +290,7 @@ function GameSheet({ id, kidId, guestAge, canMark, onBack }: { id: PrintId; kidI
 
           <div className="pa-row">
             <button type="button" className="pa-btn pa-btn--go" onClick={() => setPrinting(true)}>
-              <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 9V3h12v6" />
-                <rect x="3" y="9" width="18" height="8" rx="2" />
-                <path d="M7 14h10v7H7z" />
-              </svg>
+              <PrintIcon />
               Nyomtatás
             </button>
             {(s.reshuffles?.(choice.level) ?? true) && (
@@ -236,6 +302,14 @@ function GameSheet({ id, kidId, guestAge, canMark, onBack }: { id: PrintId; kidI
           <p className="pa-muted">
             A megoldások a kinyomtatott lapon nincsenek, csak a képernyőn látszanak: a lap QR-kódját telefonnal beolvasva bármikor megnézhetitek őket.
           </p>
+          {id === 'path' && (
+            <p className="pa-muted">
+              Papíron is léptetnétek a robotot?{' '}
+              <button type="button" className="pa-link ps-inline" onClick={() => onExtra('robot')}>
+                Kis robot és parancskártyák
+              </button>
+            </p>
+          )}
           {canMark && <DonePages s={s} choice={choice} />}
         </div>
 
@@ -266,9 +340,12 @@ export function PrintPage({ kidId, guestAge, canMark }: { kidId: string; guestAg
   const { progress } = useProgress();
   const [open, setOpen] = useState<PrintId | null>(null);
   const [scanning, setScanning] = useState(false);
+  // Opened over a game's sheet, the way back leads to that sheet again.
+  const [extra, setExtra] = useState<ExtraId | null>(null);
 
   if (scanning && canMark) return <ScanSheet kidId={kidId} onBack={() => setScanning(false)} />;
-  if (open) return <GameSheet key={`${kidId}-${open}`} id={open} kidId={kidId} guestAge={guestAge} canMark={canMark} onBack={() => setOpen(null)} />;
+  if (extra) return <ExtraSheet id={extra} onBack={() => setExtra(null)} />;
+  if (open) return <GameSheet key={`${kidId}-${open}`} id={open} kidId={kidId} guestAge={guestAge} canMark={canMark} onBack={() => setOpen(null)} onExtra={setExtra} />;
 
   return (
     <div className="pa-page">
@@ -293,6 +370,9 @@ export function PrintPage({ kidId, guestAge, canMark }: { kidId: string; guestAg
                 <path d="M8 12h8" />
               </svg>
               Lap beolvasása
+            </button>
+            <button type="button" className="pa-btn pa-btn--quiet" onClick={() => setExtra('badges')}>
+              Jelvények a kész lapokra
             </button>
           </div>
         </section>
@@ -323,6 +403,30 @@ export function PrintPage({ kidId, guestAge, canMark }: { kidId: string; guestAg
           </div>
         </WorldGroup>
       ))}
+      <section className="pa-card" aria-labelledby="ps-extras">
+        <h2 className="pa-h2" id="ps-extras">
+          Kellékek
+        </h2>
+        <p className="pa-muted">Kivágós lapok a feladatlapok mellé, minden gyereknek ugyanazok.</p>
+        <div className="pa-levels">
+          {EXTRAS.map((e) => (
+            <button key={e.id} type="button" className="pa-level ps-game" onClick={() => setExtra(e.id)}>
+              <div className={`pa-tile ${EXTRA_TILES[e.id].tile}`} aria-hidden="true">
+                {EXTRA_TILES[e.id].glyph}
+              </div>
+              <div className="pa-level__text">
+                <div className="pa-level__title">
+                  <h3>{e.title}</h3>
+                </div>
+                <span className="pa-level__mode">{e.lead}</span>
+              </div>
+              <svg className="ps-game__go" aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

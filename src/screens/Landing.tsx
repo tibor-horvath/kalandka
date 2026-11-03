@@ -8,7 +8,7 @@ import { KidFields, type KidDraft } from '../components/KidFields';
 import { KalandkaIcon, KalandkaWordmark } from '../components/ui';
 import { promptInstall, useInstallState } from '../lib/install';
 import { AGE_BANDS, AVATAR_IDS, type AgeBand } from '../state/profiles';
-import { LegalPage } from './parents/LegalPage';
+import { LegalPage, SOURCE } from './parents/LegalPage';
 
 const PrintArea = lazy(async () => ({ default: (await import('./PrintArea')).PrintArea }));
 
@@ -762,6 +762,9 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
               <button type="button" className="landing__foot-link" onClick={() => setLegal(true)}>
                 Adatkezelés és impresszum
               </button>
+              <a className="landing__foot-link" href={SOURCE.repo} target="_blank" rel="noreferrer">
+                Forráskód (AGPL-3.0)
+              </a>
             </div>
             {/* The maker's badge, kept in public/badge so it works offline like the rest of the app. */}
             <a className="landing__badge" href="https://tiborhorvath.dev" lang="hu" target="_blank" rel="noopener">

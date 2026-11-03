@@ -17,6 +17,12 @@ const HOST = {
   contact: 'https://azure.microsoft.com/support'
 };
 
+/** AGPL-3.0 §13: whoever runs the app for others over a network offers its source; a changed copy must point at its own. */
+export const SOURCE = {
+  repo: 'https://github.com/tibor-horvath/kalandka',
+  license: 'https://www.gnu.org/licenses/agpl-3.0.html'
+};
+
 const EFFECTIVE = '2026. október 14.';
 
 export function LegalPage() {
@@ -126,6 +132,26 @@ export function LegalPage() {
             </a>
           </dd>
         </dl>
+      </section>
+
+      <section className="pa-card" aria-labelledby="l-source">
+        <h2 id="l-source" className="pa-h2">
+          Licenc és forráskód
+        </h2>
+        <p className="pa-legal">
+          A Kalandka szabad szoftver, a{' '}
+          <a href={SOURCE.license} target="_blank" rel="noreferrer">
+            GNU Affero General Public License 3.0
+          </a>{' '}
+          (AGPL-3.0) feltételei szerint. Bárki használhatja, módosíthatja és továbbadhatja; aki módosított változatot ad tovább vagy tesz elérhetővé
+          az interneten, annak a forráskódját is ugyanígy közzé kell tennie.
+        </p>
+        <p className="pa-legal">
+          Forráskód:{' '}
+          <a href={SOURCE.repo} target="_blank" rel="noreferrer">
+            {SOURCE.repo.replace('https://', '')}
+          </a>
+        </p>
       </section>
     </div>
   );
