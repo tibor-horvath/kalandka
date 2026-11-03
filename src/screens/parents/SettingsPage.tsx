@@ -1,7 +1,8 @@
-import { useState, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { version } from '../../../package.json';
 import { disableBiometric, enrollBiometric, useBiometric } from '../../lib/biometric';
 import { promptInstall, useInstallState } from '../../lib/install';
+import { applyUpdate, checkForUpdate, useUpdateWaiting } from '../../lib/update';
 import { hungarianVoices, onVoicesChanged, speak, type Speaker } from '../../lib/speech';
 import { DEFAULT_PROGRESS, useProgress } from '../../state/progress';
 import { Check } from './controls';
@@ -135,8 +136,32 @@ export function SettingsPage({ onLegal }: { onLegal: () => void }) {
         )}
       </section>
 
-      <p className="pa-muted">Verzió: {version}</p>
+      <VersionLine />
     </div>
+  );
+}
+
+/**
+ * The parents' corner never reloads on its own (a parent may be halfway through a transfer or a form),
+ * so a downloaded update is offered here; leaving the corner applies it too.
+ */
+function VersionLine() {
+  const waiting = useUpdateWaiting();
+  // A parent who opens Settings may be looking for a new version: look now, not at the next timed check.
+  useEffect(checkForUpdate, []);
+  if (!waiting) return <p className="pa-muted">Verzió: {version}</p>;
+  return (
+    <section className="pa-card" aria-labelledby="s-update" role="status">
+      <h2 id="s-update" className="pa-h2">
+        Új verzió érhető el
+      </h2>
+      <p className="pa-muted">Letöltöttük a Kalandka új verzióját. Most ez fut: {version}. A frissítés pár másodperc, a haladás megmarad.</p>
+      <div>
+        <button type="button" className="pa-btn" onClick={applyUpdate}>
+          Frissítés most
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -224,7 +249,7 @@ function UnlockCard() {
         hint="A szülői sarok a készülék ujjlenyomat-olvasójával vagy arcfelismerésével is nyílik. A szorzásos kérdés ugyanúgy megmarad."
       />
       <p className="pa-muted">
-        Az ujjlenyomat a készüléken marad, a Kalandka nem látja. A készülék a PIN-kódját is elfogadhatja helyette, ezért ha a gyerek ismeri a
+        Az ujjlenyomat a készüléken marad, a Kalandka nem látja. A készülék a PIN-kódját is elfogadhatja helyette, ezért ha a gyerkőc ismeri a
         képernyőzár kódját, ne kapcsold be.
       </p>
       {failed && (

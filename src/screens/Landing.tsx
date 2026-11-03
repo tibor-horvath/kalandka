@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../components/art';
 import { Csepi } from '../components/Csepi';
 import { CodeArt, Csavar, FixArt, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../components/robot';
@@ -90,10 +90,36 @@ const ROBOT_GAMES: [string, string, ReactNode][] = [
 
 const HIGHLIGHTS = ['Internet nélkül is működik', 'Nincs szükség fiókra', 'Minden adat a készüléken marad'];
 
+// The page's own sections, for the header's links and the phone menu; each id is a heading or section below.
+const NAV: { id: string; label: string; sub: string; tone: string; icon: ReactNode }[] = [
+  {
+    id: 'l-worlds',
+    label: 'Játékok',
+    sub: 'Két sziget, tizennégy játék',
+    tone: 'drop',
+    icon: (
+      <>
+        <circle cx="8" cy="9" r="4" />
+        <circle cx="16.5" cy="15" r="4" />
+        <path d="M3 20h18" />
+      </>
+    )
+  },
+  { id: 'l-how', label: 'Így működik', sub: 'Kudarc nélkül, a gyerkőc tempójában', tone: 'good', icon: <path d="M4 18h4v-4h4v-4h4V6h4" /> },
+  { id: 'l-parents', label: 'Szülőknek', sub: 'Áttekintés, képernyőidő, szintek', tone: 'oops', icon: <path d="M4 20h16M7 16v-4M12 16V7M17 16v-6" /> },
+  {
+    id: 'l-sheets',
+    label: 'Feladatlapok',
+    sub: 'Nyomtatható A4-es lapok, profil nélkül',
+    tone: 'sun',
+    icon: <path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z" />
+  }
+];
+
 const PRINCIPLES: { title: string; text: string; tone: string; icon: ReactNode }[] = [
   {
     title: 'Nincs kudarc, csak egy „Hoppá”',
-    text: 'Nincs piros x, és nem ketyeg az óra. Egy tévesztésnél a segítő figura együtt számol a gyerekkel, és megmutatja, mire érdemes figyelni.',
+    text: 'Nincs piros x, és nem ketyeg az óra. Egy tévesztésnél a segítő figura együtt számol a gyerkőccel, és megmutatja, mire érdemes figyelni.',
     tone: 'oops',
     icon: (
       <>
@@ -103,7 +129,7 @@ const PRINCIPLES: { title: string; text: string; tone: string; icon: ReactNode }
     )
   },
   {
-    title: 'A szint a gyerekhez igazodik',
+    title: 'A szint a gyerkőchöz igazodik',
     text: 'Néhány önálló, helyes válasz után a játék csendben szintet lép, elakadásnál pedig észrevétlenül könnyít a feladaton. Kezdőszintet a szülő is beállíthat.',
     tone: 'good',
     icon: <path d="M4 18h4v-4h4v-4h4V6h4" />
@@ -116,7 +142,7 @@ const PRINCIPLES: { title: string; text: string; tone: string; icon: ReactNode }
   },
   {
     title: 'Nem baj, ha még nem tud olvasni',
-    text: 'Csepi és Csavar magyarul mondja el a feladatokat. A gyerekek a saját figurájukat keresik a képernyőn, nem a nevüket kell kiolvasniuk.',
+    text: 'Csepi és Csavar magyarul mondja el a feladatokat. A gyerkőcök a saját figurájukat keresik a képernyőn, nem a nevüket kell kiolvasniuk.',
     tone: 'drop',
     icon: <path d="M5 10v4M9 7v10M13 9v6M17 6v12M21 10v4" />
   }
@@ -142,13 +168,13 @@ const PARENTS: { title: string; text: string; tone: string; icon: ReactNode }[] 
   },
   {
     title: 'Szintek testreszabása',
-    text: 'Játékonként megadható kezdőszint, hogy a kihívás mindig a gyerek tempójához igazodjon.',
+    text: 'Játékonként megadható kezdőszint, hogy a kihívás mindig a gyerkőc tempójához igazodjon.',
     tone: 'good',
     icon: <path d="M4 7h10M18 7h2M4 17h4M12 17h8M16 4v6M10 14v6" />
   },
   {
     title: 'Nyomtatható feladatlapok',
-    text: 'Minden játék elérhető A4-es formátumban, a gyerek aktuális szintjére szabva. Fekete-fehér nyomtatón is tökéletesen olvasható.',
+    text: 'Minden játék elérhető A4-es formátumban, a gyerkőc aktuális szintjére szabva. Fekete-fehér nyomtatón is tökéletesen olvasható.',
     tone: 'sun',
     icon: <path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z" />
   }
@@ -197,9 +223,51 @@ const STORY: { title: string; text: string; tone: string; art: ReactNode }[] = [
 /** Staggers the hero's entrance (see .landing__in in landing.css). */
 const delay = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties;
 
+const motion = (): ScrollBehavior => (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
+
+/** The section an id sits in: headings rise in as they scroll into view, so their own box is not where they come to rest. */
+const sectionOf = (id: string) => {
+  const el = document.getElementById(id);
+  return el?.closest('section') ?? el;
+};
+
 function scrollTo(id: string) {
-  const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  document.getElementById(id)?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+  sectionOf(id)?.scrollIntoView({ behavior: motion(), block: 'start' });
+}
+
+function scrollToTop(page: RefObject<HTMLDivElement | null>) {
+  page.current?.scrollTo({ top: 0, behavior: motion() });
+}
+
+/** Which of NAV's sections the page has scrolled to (null above the first). */
+function useCurrentSection(page: RefObject<HTMLDivElement | null>) {
+  const [current, setCurrent] = useState<string | null>(null);
+
+  useEffect(() => {
+    const el = page.current;
+    if (!el) return;
+    let frame = 0;
+    const read = () => {
+      frame = 0;
+      let at: string | null = null;
+      for (const { id } of NAV) {
+        const target = sectionOf(id);
+        if (target && target.getBoundingClientRect().top <= 140) at = id;
+      }
+      setCurrent(at);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(read);
+    };
+    read();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, [page]);
+
+  return current;
 }
 
 function Check({ size = 18 }: { size?: number }) {
@@ -222,6 +290,22 @@ function DownloadIcon() {
   return (
     <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+    </svg>
+  );
+}
+
+function UpIcon() {
+  return (
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 19V5M6 11l6-6 6 6" />
+    </svg>
+  );
+}
+
+function NavIcon({ children, size }: { children: ReactNode; size: number }) {
+  return (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      {children}
     </svg>
   );
 }
@@ -356,11 +440,11 @@ function Sheets({ onOpen }: { onOpen: (age: AgeBand) => void }) {
           </p>
           <h2 id="l-sheets-title">Nyomtatható feladatlapok percek alatt</h2>
           <p className="landing__sheets-lead">
-            Mind a tizennégy játékunk kinyomtatható A4-es feladatlapként – regisztráció és profil nélkül, akár most rögtön. Csak válaszd ki, hány éves a gyerek, és máris a neki megfelelő
+            Mind a tizennégy játékunk kinyomtatható A4-es feladatlapként – regisztráció és profil nélkül, akár most rögtön. Csak válaszd ki, hány éves a gyerkőc, és máris a neki megfelelő
             szintű feladatok nyílnak meg. A lapokat úgy terveztük, hogy fekete-fehér nyomtatón is tökéletesen olvashatók legyenek.
           </p>
           <div className="landing__ages" role="radiogroup" aria-labelledby="l-sheets-age">
-            <span id="l-sheets-age">Hány éves a gyerek?</span>
+            <span id="l-sheets-age">Hány éves a gyerkőc?</span>
             {AGE_BANDS.map((a) => (
               <button key={a} type="button" role="radio" aria-checked={age === a} className={`landing__age${age === a ? ' is-on' : ''}`} onClick={() => setAge(a)}>
                 {a === '7+' ? '7' : a} éves
@@ -583,6 +667,241 @@ function LegalSheet({ onClose }: { onClose: () => void }) {
 }
 
 /**
+ * Stays at the top while the page scrolls: on the sky at first, then a slim white bar that marks the section in view.
+ * Below 980px the section links fold into a menu that opens under the bar.
+ */
+function Header({ page, installed, onStart, back }: { page: RefObject<HTMLDivElement | null>; installed: boolean; onStart: () => void; back?: string }) {
+  const current = useCurrentSection(page);
+  const [open, setOpen] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      toggle.current?.focus();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  const go = (id: string) => {
+    setOpen(false);
+    scrollTo(id);
+  };
+
+  return (
+    <header className={`landing__top${open ? ' is-open' : ''}`}>
+      <div className="landing__wrap landing__bar landing__in landing__in--bar">
+        <button
+          type="button"
+          className="landing__brand"
+          aria-label="Kalandka, az oldal teteje"
+          onClick={() => {
+            setOpen(false);
+            scrollToTop(page);
+          }}
+        >
+          <KalandkaIcon size={44} />
+          <KalandkaWordmark size={30} />
+        </button>
+        <nav className="landing__nav" aria-label="Az oldal részei">
+          <ul>
+            {NAV.map((n) => (
+              <li key={n.id}>
+                <button type="button" className="landing__link" aria-current={current === n.id ? 'location' : undefined} onClick={() => go(n.id)}>
+                  {n.id === 'l-sheets' && <PrinterIcon />}
+                  {n.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className="landing__actions">
+          {!installed && (
+            <button type="button" className="landing__chip" onClick={() => go('l-install')}>
+              <DownloadIcon />
+              Telepítés
+            </button>
+          )}
+          <StartButton onStart={onStart}>
+            <span className="landing__start-long">{back ?? 'Indítás'}</span>
+            <span className="landing__start-short">{back ? 'Játék' : 'Indítás'}</span>
+          </StartButton>
+          <button
+            ref={toggle}
+            type="button"
+            className="landing__menu-btn"
+            aria-expanded={open}
+            aria-controls="l-menu"
+            aria-label={open ? 'Menü bezárása' : 'Menü megnyitása'}
+            onClick={() => setOpen((o) => !o)}
+          >
+            <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
+              <path d={open ? 'M6 6l12 12M18 6L6 18' : 'M4 7h16M4 12h16M4 17h16'} />
+            </svg>
+          </button>
+        </div>
+      </div>
+      {open && (
+        <div id="l-menu" className="landing__menu">
+          <nav className="landing__menu-panel" aria-label="Menü">
+            <ul>
+              {NAV.map((n) => (
+                <li key={n.id}>
+                  <button type="button" className="landing__row" aria-current={current === n.id ? 'location' : undefined} onClick={() => go(n.id)}>
+                    <span className={`landing__icon landing__icon--${n.tone}`}>
+                      <NavIcon size={24}>{n.icon}</NavIcon>
+                    </span>
+                    <span className="landing__row-text">
+                      <b>{n.label}</b>
+                      <span>{n.sub}</span>
+                    </span>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="landing__menu-actions">
+              {!installed && (
+                <button type="button" className="landing__menu-install" onClick={() => go('l-install')}>
+                  <DownloadIcon />
+                  Telepítés a kezdőképernyőre
+                </button>
+              )}
+              <StartButton
+                onStart={() => {
+                  setOpen(false);
+                  onStart();
+                }}
+              >
+                {back}
+              </StartButton>
+            </div>
+            <p className="landing__menu-note">
+              <Check size={16} />
+              Internet és fiók nélkül is működik
+            </p>
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}
+
+/** Below the last call to action: a wave into the dark footer, the page's links again, the legal links and the maker's badge. */
+function Footer({ page, installed, onLegal }: { page: RefObject<HTMLDivElement | null>; installed: boolean; onLegal: () => void }) {
+  const top = () => scrollToTop(page);
+
+  return (
+    <>
+      <svg className="landing__wave" aria-hidden="true" viewBox="0 0 1440 48" preserveAspectRatio="none">
+        <path d="M0 48 C 240 4 480 4 720 26 S 1200 50 1440 10 V48 Z" />
+      </svg>
+      <footer className="landing__foot">
+        <div className="landing__wrap landing__foot-grid">
+          <div className="landing__foot-brand">
+            <div className="landing__foot-mark">
+              <div>
+                <KalandkaWordmark size={34} color="#ffffff" accent="#9fd3ef" />
+                <p>
+                  Gondolkodós játékok 5–7 éveseknek<span className="landing__foot-more">, magyarul, tabletre és telefonra</span>
+                </p>
+              </div>
+              <button type="button" className="landing__top-round" aria-label="Vissza a tetejére" onClick={top}>
+                <UpIcon />
+              </button>
+            </div>
+            <ul className="landing__foot-highlights">
+              {HIGHLIGHTS.map((h) => (
+                <li key={h}>
+                  <Check size={16} />
+                  {h}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <nav className="landing__foot-col" aria-labelledby="l-foot-explore">
+            <h3 id="l-foot-explore">Felfedezés</h3>
+            <ul>
+              <li>
+                <button type="button" className="landing__foot-link" onClick={() => scrollTo('l-worlds')}>
+                  Számkertész
+                </button>
+              </li>
+              <li>
+                <button type="button" className="landing__foot-link" onClick={() => scrollTo('l-worlds')}>
+                  Robotműhely
+                </button>
+              </li>
+              <li>
+                <button type="button" className="landing__foot-link" onClick={() => scrollTo('l-how')}>
+                  Így működik
+                </button>
+              </li>
+            </ul>
+          </nav>
+          <nav className="landing__foot-col" aria-labelledby="l-foot-parents">
+            <h3 id="l-foot-parents">Szülőknek</h3>
+            <ul>
+              <li>
+                <button type="button" className="landing__foot-link" onClick={() => scrollTo('l-parents')}>
+                  Szülői sarok
+                </button>
+              </li>
+              <li>
+                <button type="button" className="landing__foot-link" onClick={() => scrollTo('l-sheets')}>
+                  Feladatlapok
+                </button>
+              </li>
+              {!installed && (
+                <li>
+                  <button type="button" className="landing__foot-link" onClick={() => scrollTo('l-install')}>
+                    Telepítés
+                  </button>
+                </li>
+              )}
+            </ul>
+          </nav>
+          <nav className="landing__foot-col landing__foot-col--info" aria-labelledby="l-foot-info">
+            <h3 id="l-foot-info">Információk</h3>
+            <ul>
+              <li>
+                <button type="button" className="landing__foot-link" onClick={onLegal}>
+                  Adatkezelés és impresszum
+                </button>
+              </li>
+              <li>
+                <a className="landing__foot-link" href={SOURCE.repo} target="_blank" rel="noreferrer">
+                  Forráskód (AGPL-3.0)
+                  <svg role="img" aria-label="új lapon nyílik" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+                  </svg>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <div className="landing__wrap landing__foot-bottom">
+          <p>Nincs fiók, nincs felhő: minden adat ezen a készüléken marad.</p>
+          <button type="button" className="landing__top-pill" onClick={top}>
+            <UpIcon />
+            Vissza a tetejére
+          </button>
+          {/* The maker's badge, kept in public/badge so it works offline like the rest of the app. */}
+          <a className="landing__badge" href="https://tiborhorvath.dev" lang="hu" target="_blank" rel="noopener">
+            <img src="/badge/built-by-hu-dark.svg" alt="Készítette: Horváth Tibor, portfólió megnyitása (új lapon)" width="167" height="50" />
+          </a>
+        </div>
+      </footer>
+    </>
+  );
+}
+
+/**
  * `onResume` is set when a child is already saved on this device (the page was opened at / in a browser or from the
  * parents' corner): the start buttons then go straight back to the game instead of asking for a first child.
  */
@@ -593,32 +912,13 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
   const installed = useInstallState() === 'installed';
   const ask = onResume ?? (() => setAsking(true));
   const back = onResume ? 'Vissza a játékhoz' : undefined;
+  const page = useRef<HTMLDivElement>(null);
 
   return (
     <>
-      <div className="landing">
+      <div className="landing" ref={page}>
         {asking && <FirstKid onCreate={onStart} onCancel={() => setAsking(false)} />}
-        <header className="landing__top">
-          <div className="landing__wrap landing__bar landing__in landing__in--bar">
-            <span className="landing__brand">
-              <KalandkaIcon size={44} />
-              <KalandkaWordmark size={30} />
-            </span>
-            <nav className="landing__nav" aria-label="Gyors elérés">
-              <button type="button" className="landing__chip landing__chip--plain" onClick={() => scrollTo('l-sheets')}>
-                <PrinterIcon />
-                Feladatlapok
-              </button>
-              {!installed && (
-                <button type="button" className="landing__chip" onClick={() => scrollTo('l-install')}>
-                  <DownloadIcon />
-                  Telepítés
-                </button>
-              )}
-              <StartButton onStart={ask}>{back ?? 'Indítás'}</StartButton>
-            </nav>
-          </div>
-        </header>
+        <Header page={page} installed={installed} onStart={ask} back={back} />
 
         <main>
           <section className="landing__hero">
@@ -631,7 +931,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
                   Számolás, logika és programozás – játszva, kudarc nélkül.
                 </h1>
                 <p className="landing__lead landing__in" style={delay(280)}>
-                  Fejlesztő játékok tabletre és telefonra. Csepi, a vízcsepp a Számkertben, Csavar, a robot pedig a Műhelyben várja a gyerekeket. Ők választanak szigetet, a feladatok
+                  Fejlesztő játékok tabletre és telefonra. Csepi, a vízcsepp a Számkertben, Csavar, a robot pedig a Műhelyben várja a gyerkőcöket. Ők választanak szigetet, a feladatok
                   nehézsége pedig észrevétlenül alkalmazkodik hozzájuk.
                 </p>
                 <StartButton onStart={ask} className="landing__in" style={delay(360)}>
@@ -665,7 +965,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
               <h2 id="l-worlds" className="landing__reveal">
                 Két sziget, tizennégy játék
               </h2>
-              <p className="landing__intro landing__reveal">Nincsenek lezárt világok, a gyerekek szabadon evezhetnek bármelyik szigetre. Az app mindig ott nyílik meg, ahol legutóbb jártak.</p>
+              <p className="landing__intro landing__reveal">Nincsenek lezárt világok, a gyerkőcök szabadon evezhetnek bármelyik szigetre. Az app mindig ott nyílik meg, ahol legutóbb jártak.</p>
               <div className="landing__worlds">
                 <article className="landing__world landing__world--garden landing__reveal">
                   <div className="landing__world-head">
@@ -677,7 +977,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
                   </div>
                   <GameList games={GARDEN_GAMES} />
                   <p>
-                    <b>A jutalom:</b> minden jól megoldott feladat egy mag, amit a gyerek a saját Kiskertjébe ültethet, hogy új vendégeket csalogasson oda.
+                    <b>A jutalom:</b> minden jól megoldott feladat egy mag, amit a gyerkőc a saját Kiskertjébe ültethet, hogy új vendégeket csalogasson oda.
                   </p>
                 </article>
                 <article className="landing__world landing__world--robot landing__reveal">
@@ -690,7 +990,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
                   </div>
                   <GameList games={ROBOT_GAMES} />
                   <p>
-                    <b>A jutalom:</b> minden sikeres kör egy csavart ér, amiből a gyerek saját robotot építhet a polcára.
+                    <b>A jutalom:</b> minden sikeres kör egy csavart ér, amiből a gyerkőc saját robotot építhet a polcára.
                   </p>
                 </article>
               </div>
@@ -700,7 +1000,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
           <section className="landing__section landing__section--soft" aria-labelledby="l-how">
             <div className="landing__wrap">
               <h2 id="l-how" className="landing__reveal">
-                Így tanulnak a gyerekek észrevétlenül
+                Így tanulnak a gyerkőcök észrevétlenül
               </h2>
               <div className="landing__principles">
                 {PRINCIPLES.map((p) => (
@@ -723,7 +1023,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
               <div className="landing__parents-text landing__reveal">
                 <h2 id="l-parents">A szülői sarok a tiétek</h2>
                 <p className="landing__intro">
-                  Egy szorzós kapu védi, amit egy 5–7 éves még nem tud kinyitni. Egyetlen készüléken akár hat gyerek is játszhat, mindegyik a saját tempójában és profiljával.
+                  Egy szorzós kapu védi, amit egy 5–7 éves még nem tud kinyitni. Egyetlen készüléken akár hat gyerkőc is játszhat, mindegyik a saját tempójában és profiljával.
                 </p>
               </div>
               <ul className="landing__features">
@@ -754,24 +1054,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
           </section>
         </main>
 
-        <footer className="landing__foot">
-          <div className="landing__wrap">
-            <div className="landing__foot-brand">
-              <KalandkaWordmark size={24} color="#ffffff" accent="#9fd3ef" />
-              <p>Gondolkodós játékok 5–7 éveseknek</p>
-              <button type="button" className="landing__foot-link" onClick={() => setLegal(true)}>
-                Adatkezelés és impresszum
-              </button>
-              <a className="landing__foot-link" href={SOURCE.repo} target="_blank" rel="noreferrer">
-                Forráskód (AGPL-3.0)
-              </a>
-            </div>
-            {/* The maker's badge, kept in public/badge so it works offline like the rest of the app. */}
-            <a className="landing__badge" href="https://tiborhorvath.dev" lang="hu" target="_blank" rel="noopener">
-              <img src="/badge/built-by-hu-dark.svg" alt="Készítette: Horváth Tibor, portfólió megnyitása (új lapon)" width="167" height="50" />
-            </a>
-          </div>
-        </footer>
+        <Footer page={page} installed={installed} onLegal={() => setLegal(true)} />
       </div>
 
       {sheetsFor && (

@@ -175,7 +175,7 @@ const patterns = spec<PatternTask>({
   ask: (level) => (level < SHAPE_ORDER.length ? 'Melyik virág jön ezután? Karikázd be!' : 'Melyik virág hiányzik a sorból? Karikázd be!'),
   tip: (level) =>
     level < SHAPE_ORDER.length
-      ? 'Mondják ki együtt hangosan a sort, virágról virágra, és álljanak meg a végén: a gyerek hallani fogja, mi jön.'
+      ? 'Mondják ki együtt hangosan a sort, virágról virágra, és álljanak meg a végén: a gyerkőc hallani fogja, mi jön.'
       : 'Mondják ki együtt hangosan a sort, virágról virágra: a kérdőjelnél hallani, melyik virág maradt ki.',
   tasks: (req) =>
     Array.from({ length: req.count }, (_, i) => {

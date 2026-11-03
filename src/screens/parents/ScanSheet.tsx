@@ -90,7 +90,7 @@ function ScannedPage({ kidId, opened, onAgain }: { kidId: string; opened: Opened
   const key = pageKey(ref);
   const world = WORLDS.find((w) => w.id === spec.world)!;
   const kid = profiles.kids.find((k) => k.id === kidId);
-  const name = kid ? kidName(kid) : 'a gyerek';
+  const name = kid ? kidName(kid) : 'a gyerkőc';
   const [ticked, setTicked] = useState(() => tasks.map(() => false));
   // Stickers this mark earned, kept to say so after the button turns into "kész".
   const [won, setWon] = useState<Sticker[] | null>(null);

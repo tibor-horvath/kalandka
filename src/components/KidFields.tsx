@@ -43,7 +43,7 @@ export function KidFields({
           onChange={(e) => onChange({ name: e.target.value })}
         />
         <small id="k-name-hint" className={missingName ? 'pa-field__error' : undefined}>
-          {missingName ? 'Írd be a gyerek nevét.' : 'Csepi így szólítja majd. Becenév is jó.'}
+          {missingName ? 'Írd be a gyerkőc nevét.' : 'Csepi így szólítja majd. Becenév is jó.'}
         </small>
       </div>
 

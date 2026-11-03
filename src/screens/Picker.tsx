@@ -111,7 +111,7 @@ export function Picker({ onPick, onAdd, onParents, onPrint }: { onPick: (id: str
             type="button"
             className={`kid-card kid-card--add${picked ? ' is-dimmed' : ''}`}
             style={{ '--i': profiles.kids.length } as CSSProperties}
-            aria-label="Új gyerek hozzáadása (szülőknek)"
+            aria-label="Új gyerkőc hozzáadása (szülőknek)"
             onClick={onAdd}
           >
             <span className="kid-card__plus">
@@ -120,7 +120,7 @@ export function Picker({ onPick, onAdd, onParents, onPrint }: { onPick: (id: str
                 <path d="M5 12h14" />
               </svg>
             </span>
-            <span className="kid-card__name">Új gyerek</span>
+            <span className="kid-card__name">Új gyerkőc</span>
             <span className="kid-card__lock">
               <LockIcon size={16} />
               Szülőknek

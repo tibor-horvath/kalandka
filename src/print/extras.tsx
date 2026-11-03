@@ -221,7 +221,7 @@ function RobotPage() {
 export const EXTRAS: ExtraSpec[] = [
   { id: 'figures', title: 'Csepi és Csavar', lead: 'Kivágható, felállítható figurák: a feladatlap mellett állnak, és „ők mondják” a feladatot.', Page: FiguresPage },
   { id: 'badges', title: 'Jelvények', lead: 'Kész!, Kitartó! és Bátor! jelvények, hogy a kész lapra ragasszátok.', Page: BadgesPage },
-  { id: 'robot', title: 'Kis robot és parancskártyák', lead: 'Kivágható robot és parancskártyák a Robotút lapokhoz: a gyerek kirakja a programot, aztán végiglépteti.', Page: RobotPage }
+  { id: 'robot', title: 'Kis robot és parancskártyák', lead: 'Kivágható robot és parancskártyák a Robotút lapokhoz: a gyerkőc kirakja a programot, aztán végiglépteti.', Page: RobotPage }
 ];
 
 export function extraFor(id: ExtraId): ExtraSpec {
