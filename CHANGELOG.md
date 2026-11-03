@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/tibor-horvath/kalandka/compare/v1.1.0...v1.2.0) (2026-11-03)
+
+
+### Added
+
+* Add contributing guidelines and license information; update pac… ([#12](https://github.com/tibor-horvath/kalandka/issues/12)) ([4d6ef7e](https://github.com/tibor-horvath/kalandka/commit/4d6ef7e81e3f68e01c02191eeca4210e7f1cdc9e))
+* add printable characters and refactoring ([#13](https://github.com/tibor-horvath/kalandka/issues/13)) ([7665af3](https://github.com/tibor-horvath/kalandka/commit/7665af3d23daece6acafb06ee43d6985bf5e8194))
+
+
+### Fixed
+
+* Rename games and update references: ([#10](https://github.com/tibor-horvath/kalandka/issues/10)) ([075e47a](https://github.com/tibor-horvath/kalandka/commit/075e47a160a0cf345e8b2f8008258a0d7261a23b))
+
 ## [1.1.0](https://github.com/tibor-horvath/kalandka/compare/v1.0.0...v1.1.0) (2026-11-02)
 
 
