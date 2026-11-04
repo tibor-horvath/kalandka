@@ -18,10 +18,17 @@ export function useModal<T extends HTMLElement>(onEscape?: () => void) {
     const el = ref.current;
     if (!el) return;
 
+    // Two dialogs can open in one go (a new sticker on the home screen as the rest screen comes up). The one later in
+    // the page sits on top and keeps working; this one must not silence it, or nothing on screen could be tapped.
+    const above = (node: Element) =>
+      [node, ...node.querySelectorAll('[aria-modal="true"]')].some(
+        (d) => d !== el && d.getAttribute('aria-modal') === 'true' && !!(el.compareDocumentPosition(d) & Node.DOCUMENT_POSITION_FOLLOWING)
+      );
+
     const quieted: HTMLElement[] = [];
     for (let node: HTMLElement = el; node.parentElement && node !== document.body; node = node.parentElement) {
       for (const sibling of node.parentElement.children) {
-        if (sibling !== node && sibling instanceof HTMLElement && !sibling.inert) {
+        if (sibling !== node && sibling instanceof HTMLElement && !sibling.inert && !above(sibling)) {
           sibling.inert = true;
           quieted.push(sibling);
         }
