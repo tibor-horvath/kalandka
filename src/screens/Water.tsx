@@ -119,7 +119,6 @@ export function Water({ onBack }: { onBack: () => void }) {
     <GameShell
       game="water"
       className="screen--water"
-      backdrop="lawn"
       meter={meter}
       justSolved={done && !step?.helped}
       levelUp={levelUp}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FitBox } from './FitBox';
 import { useForm, type Form } from './Stage';
-import { LockIcon, PlayIcon } from './ui';
+import { DoneTick, LockIcon, PlayIcon } from './ui';
 
 // A world's home: its island, every game a place along one trail from the boat's dock.
 // The tablet draws the island on the whole stage; phones draw a tall (portrait) or wide (landscape)
@@ -26,6 +26,8 @@ export interface Place {
 
 /** The reward place (Kiskertem, Robotépítő), the last stop on the trail. */
 export interface RewardPlace {
+  /** The screen it opens, so its door can find it. */
+  id?: string;
   label: string;
   name: string;
   art: ReactNode;
@@ -269,6 +271,15 @@ const FIRST_SPOT = 0.35;
 const SPOT_STEP = 0.07;
 /** Leaving for the map (ms): the places go in reverse, the boat sails off, the island sinks away. */
 const LEAVE_MS = 850;
+/** Opening a game (ms): the place hops and its door opens before the game takes over. */
+const ENTER_MS = 450;
+
+/** Back from a game: the island is already in place, only the game's own place lands, with a tick for a task solved there. */
+export interface Return {
+  id: string;
+  solved: boolean;
+  landed: boolean;
+}
 
 const COLORS = {
   garden: { sand: '#F3DFA8', ground: '#A6D676', meadow: '#B4DE88', path: '#EFD9A0', pathDots: '#E0B95E', wave: '#D8F0FB', plank: '#5A3B26', deck: '#C99A6B', hull: '#E8577D', mast: '#5A3B26', sail: '#FFFFFF' },
@@ -341,18 +352,20 @@ function Scene({ world, g }: { world: IslandWorld; g: Geometry }) {
 
 const spotStyle = (at: Pt, i: number) => ({ left: at.x, top: at.y, '--d': `${FIRST_SPOT + i * SPOT_STEP}s` }) as CSSProperties;
 
-function IslandSpot({ place, at, i, phone }: { place: Place; at: Pt; i: number; phone: boolean }) {
+function IslandSpot({ place, at, i, phone, chosen, landed }: { place: Place; at: Pt; i: number; phone: boolean; chosen: boolean; landed: Return | null }) {
   const { locked } = place;
   return (
     <button
       type="button"
-      className={`spot${locked ? ' spot--locked' : ''}${place.start ? ' spot--start' : ''}`}
+      className={`spot${locked ? ' spot--locked' : ''}${place.start ? ' spot--start' : ''}${chosen ? ' is-chosen' : ''}${landed ? ' is-landing' : ''}`}
       style={spotStyle(at, i)}
       onClick={locked ? locked.onTap : place.onOpen}
       aria-label={place.label}
+      data-place={place.id}
     >
       {place.badge && <span className="spot__badge">{place.badge}</span>}
       <span className="spot__disc">
+        {landed?.solved && <DoneTick />}
         {locked && (
           <span className="spot__lock">
             <LockIcon />
@@ -369,9 +382,16 @@ function IslandSpot({ place, at, i, phone }: { place: Place; at: Pt; i: number; 
   );
 }
 
-function RewardSpot({ reward, at, i }: { reward: RewardPlace; at: Pt; i: number }) {
+function RewardSpot({ reward, at, i, chosen, landed }: { reward: RewardPlace; at: Pt; i: number; chosen: boolean; landed: boolean }) {
   return (
-    <button type="button" className="spot spot--reward" style={spotStyle(at, i)} onClick={reward.onClick} aria-label={`${reward.label} · ${reward.count} ${reward.unit}`}>
+    <button
+      type="button"
+      className={`spot spot--reward${chosen ? ' is-chosen' : ''}${landed ? ' is-landing' : ''}`}
+      style={spotStyle(at, i)}
+      onClick={reward.onClick}
+      aria-label={`${reward.label} · ${reward.count} ${reward.unit}`}
+      data-place={reward.id}
+    >
       {reward.badge && <span className="spot__badge">{reward.badge}</span>}
       <span className="spot__disc">
         <span className="spot__art">{reward.art}</span>
@@ -385,21 +405,47 @@ function RewardSpot({ reward, at, i }: { reward: RewardPlace; at: Pt; i: number 
   );
 }
 
-/** The island with its places: the games in trail order, then the reward. `leaving` plays the way out to the map. */
-export function Island({ world, places, reward, leaving }: { world: IslandWorld; places: Place[]; reward: RewardPlace; leaving: boolean }) {
+/**
+ * The island with its places: the games in trail order, then the reward. `leaving` plays the way out to the map,
+ * `opening` names the place whose game is opening, and `back` draws the island as it was when the child comes back from a game.
+ */
+export function Island({
+  world,
+  places,
+  reward,
+  leaving,
+  opening,
+  back
+}: {
+  world: IslandWorld;
+  places: Place[];
+  reward: RewardPlace;
+  leaving: boolean;
+  opening: string | null;
+  back: Return | null;
+}) {
   const form = useForm();
   const g = GEOMETRY[world][form];
   const last = g.spots.length - 1;
   const phone = form !== 'tablet';
+  const board = useRef<HTMLDivElement>(null);
+  const landed = back?.landed ? back : null;
+
+  // The place the child came back to takes the focus once it has landed, so the next tap or Tab starts there.
+  useEffect(() => {
+    if (landed) board.current?.querySelector<HTMLElement>(`[data-place="${landed.id}"]`)?.focus({ preventScroll: true });
+  }, [landed?.id]);
+
+  const state = `${leaving ? ' is-leaving' : ''}${opening ? ' is-opening' : ''}${back ? ' is-back' : ''}`;
   return (
-    <div className={`island island--${world} island--${form}${g.flip ? ' island--flip' : ''}${leaving ? ' is-leaving' : ''}`}>
+    <div className={`island island--${world} island--${form}${g.flip ? ' island--flip' : ''}${state}`}>
       <FitBox width={g.w} height={g.h} className="island__fit">
-        <div className="island__board" style={{ width: g.w, height: g.h }}>
+        <div className="island__board" ref={board} style={{ width: g.w, height: g.h }}>
           <Scene world={world} g={g} />
           {places.slice(0, last).map((p, i) => (
-            <IslandSpot key={p.id} place={p} at={g.spots[i]} i={i} phone={phone} />
+            <IslandSpot key={p.id} place={p} at={g.spots[i]} i={i} phone={phone} chosen={opening === p.id} landed={landed?.id === p.id ? landed : null} />
           ))}
-          <RewardSpot reward={reward} at={g.spots[last]} i={last} />
+          <RewardSpot reward={reward} at={g.spots[last]} i={last} chosen={opening !== null && opening === reward.id} landed={landed !== null && landed.id === reward.id} />
         </div>
       </FitBox>
     </div>
@@ -426,4 +472,29 @@ export function useLeave(onLeave: () => void): [boolean, () => void] {
     timer.current = window.setTimeout(onLeave, LEAVE_MS);
   };
   return [leaving, leave];
+}
+
+/**
+ * The way into a game: the place hops and its door opens, then `open` runs. Further taps wait until the game is open.
+ * With motion turned down the game opens at once.
+ */
+export function useEnter(): [string | null, (id: string, open: () => void) => void] {
+  const [opening, setOpening] = useState<string | null>(null);
+  const timer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (timer.current !== null) window.clearTimeout(timer.current);
+    },
+    []
+  );
+  const enter = (id: string, open: () => void) => {
+    if (opening) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      open();
+      return;
+    }
+    setOpening(id);
+    timer.current = window.setTimeout(open, ENTER_MS);
+  };
+  return [opening, enter];
 }

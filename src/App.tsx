@@ -1,10 +1,12 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { useLandingRoute } from './app/route';
 import { useAudioSettings, useUpdateWhenIdle } from './app/useDevice';
 import { useScreenTime } from './app/useScreenTime';
 import type { KidDraft } from './components/KidFields';
 import { Oops } from './components/Oops';
 import { PageMotion } from './components/PageMotion';
+import type { DoorPlace } from './components/Door';
+import type { PlaceReturn } from './components/WorldHub';
 import { Stage } from './components/Stage';
 import { stopSpeaking } from './lib/speech';
 import { readLink } from './print/link';
@@ -20,7 +22,7 @@ import { Rest, TimeBanner } from './screens/Rest';
 import { WorldMap } from './screens/WorldMap';
 import { RobotHome } from './screens/robot/RobotHome';
 import { Workshop } from './screens/robot/Workshop';
-import { GAMES, isGameId, roundOf, type GameId } from './state/games';
+import { GAMES, isGameId, roundOf, solvedOf, type GameId } from './state/games';
 import { ProfilesProvider, editKid, firstKid, hasSave, progressOf, setActive, useProfiles } from './state/profiles';
 import { useProgress } from './state/progress';
 import { WARN_SECONDS } from './state/screenTime';
@@ -58,6 +60,9 @@ function worldOfScreen(s: Screen, home: WorldId, album: WorldId): WorldId | null
   return s === 'home' ? home : null;
 }
 
+/** Leaving a place (ms): its play sinks away before the island's door closes back into the place. */
+const SETTLE_MS = 200;
+
 /** How deep a screen sits, so moving deeper slides the new page in from the right and going back from the left. */
 function depthOf(s: Screen): number {
   if (s === 'map') return 0;
@@ -84,9 +89,45 @@ function Game() {
   const inParents = parents !== 'closed';
   const world = currentWorld(progress);
 
+  /** The place just opened from the island, and a game's solved count then, so coming back knows if a task was solved. */
+  const [door, setDoor] = useState<{ place: DoorPlace; solved: number } | null>(null);
+  /** Coming back from a place: the island closes its door into it. */
+  const [back, setBack] = useState<PlaceReturn | null>(null);
+  const [settling, setSettling] = useState(false);
+  const settleTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
+    },
+    []
+  );
+
   const go = (s: Screen) => {
     stopSpeaking();
+    if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
+    setSettling(false);
+    setDoor(null);
+    setBack(null);
     setScreen(s);
+  };
+  const openPlace = (place: DoorPlace) => {
+    go(place);
+    setDoor({ place, solved: isGameId(place) ? solvedOf(progress, place) : 0 });
+  };
+  const leavePlace = (place: DoorPlace) => {
+    if (settling) return;
+    const solved = isGameId(place) && door?.place === place && solvedOf(progress, place) > door.solved;
+    const finish = () => {
+      go('home');
+      setBack({ place, solved });
+    };
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      finish();
+      return;
+    }
+    stopSpeaking();
+    setSettling(true);
+    settleTimer.current = window.setTimeout(finish, SETTLE_MS);
   };
 
   useAudioSettings(progress, worldOfScreen(screen, world, albumWorld) === 'robot' ? 'robot' : 'csepi');
@@ -158,24 +199,30 @@ function Game() {
 
   return (
     <Stage>
-      <PageMotion page={screen === 'home' ? (showPicker ? 'picker' : `home-${world}`) : screen} depth={showPicker ? 0 : depthOf(screen)}>
+      <PageMotion
+        page={screen === 'home' ? (showPicker ? 'picker' : `home-${world}`) : screen}
+        depth={showPicker ? 0 : depthOf(screen)}
+        door={door?.place === screen || (screen === 'home' && back !== null)}
+        settling={settling}
+      >
         {screen === 'home' && showPicker && <Picker onPick={pick} onAdd={() => openGate('add')} onParents={() => openGate()} onPrint={openPrint} />}
         {screen === 'home' && !showPicker && (
           <Hub
             key={profiles.activeId}
-            onOpen={go}
-            onReward={() => go(REWARD_SCREEN[world])}
+            onOpen={openPlace}
+            onReward={() => openPlace(REWARD_SCREEN[world])}
             onParents={() => openGate()}
             onPrint={openPrint}
             onSwitch={switchKid}
             onMap={() => go('map')}
+            back={back}
           />
         )}
         {screen === 'map' && !showPicker && <WorldMap onPick={pickWorld} onParents={() => openGate()} />}
-        {screen === 'garden' && <Garden onBack={() => go('home')} onAlbum={() => openAlbum('garden')} />}
-        {screen === 'workshop' && <Workshop onBack={() => go('home')} onAlbum={() => openAlbum('robot')} />}
+        {screen === 'garden' && <Garden onBack={() => leavePlace('garden')} onAlbum={() => openAlbum('garden')} />}
+        {screen === 'workshop' && <Workshop onBack={() => leavePlace('workshop')} onAlbum={() => openAlbum('robot')} />}
         {screen === 'album' && <Album key={albumWorld} world={albumWorld} onBack={() => go(REWARD_SCREEN[albumWorld])} />}
-        {game && GameScreen && <GameScreen key={roundOf(progress, game)} onBack={() => go('home')} />}
+        {game && GameScreen && <GameScreen key={roundOf(progress, game)} onBack={() => leavePlace(game)} />}
       </PageMotion>
       {!resting && !inParents && progress.warnBefore && remaining <= WARN_SECONDS && <TimeBanner remaining={remaining} />}
       {!resting && !inParents && timeUp && !progress.warnBefore && <TimeBanner remaining={0} />}

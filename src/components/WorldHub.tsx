@@ -1,5 +1,7 @@
+import { useState } from 'react';
+import { Door, type DoorPlace } from './Door';
 import { KidChip, MapButton, ParentsButton, PrintButton, VoiceButton } from './hub';
-import { Island, useLeave, type Place, type RewardPlace } from './island';
+import { Island, useEnter, useLeave, type Place, type RewardPlace } from './island';
 import { useForm } from './Stage';
 import { StickerPop } from './StickerPop';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from './ui';
@@ -9,12 +11,19 @@ import { useProgress } from '../state/progress';
 import { markStickerSeen, type Sticker } from '../state/rewards';
 import { WORLDS, type WorldId } from '../state/worlds';
 
-/** The buttons every world's home screen hands back to App. */
+/** The place the child just left (a game, or the reward place), and whether they solved a task there this time. */
+export interface PlaceReturn {
+  place: DoorPlace;
+  solved: boolean;
+}
+
+/** The buttons every world's home screen hands back to App, and the place the child is coming back from. */
 export interface HubActions {
   onParents: () => void;
   onPrint: () => void;
   onSwitch: () => void;
   onMap: () => void;
+  back: PlaceReturn | null;
 }
 
 export interface HubBubble {
@@ -24,9 +33,9 @@ export interface HubBubble {
   tone?: Tone;
 }
 
-const LOOK: Record<WorldId, { className: string; guide: 'csepi' | 'csavar'; accent?: string }> = {
-  garden: { className: 'screen screen--home screen--island', guide: 'csepi' },
-  robot: { className: 'screen screen--home screen--robot-home world--robot screen--island', guide: 'csavar', accent: '#0C6E6A' }
+const LOOK: Record<WorldId, { className: string; guide: 'csepi' | 'csavar'; accent?: string; reward: DoorPlace }> = {
+  garden: { className: 'screen screen--home screen--island', guide: 'csepi', reward: 'garden' },
+  robot: { className: 'screen screen--home screen--robot-home world--robot screen--island', guide: 'csavar', accent: '#0C6E6A', reward: 'workshop' }
 };
 
 /**
@@ -43,7 +52,8 @@ export function WorldHub({
   onParents,
   onPrint,
   onSwitch,
-  onMap
+  onMap,
+  back
 }: HubActions & {
   world: WorldId;
   places: Place[];
@@ -56,45 +66,62 @@ export function WorldHub({
   const { profiles } = useProfiles();
   const phone = useForm() !== 'tablet';
   const [leaving, leaveForMap] = useLeave(onMap);
+  const [opening, enter] = useEnter();
+  // Only the arrival from a game closes the door; a later re-render of the same visit keeps the island as it is.
+  const [returned] = useState(() => (back && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? back : null));
+  const [landed, setLanded] = useState(() => back !== null && returned === null);
   const look = LOOK[world];
+  const doors = places.map((p) => (p.onOpen ? { ...p, onOpen: () => enter(p.id, p.onOpen!) } : p));
+  const rewardDoor = { ...reward, id: look.reward, onClick: () => enter(look.reward, reward.onClick) };
   const info = WORLDS.find((w) => w.id === world)!;
 
   return (
-    <div className={look.className}>
-      <header className="topbar">
-        <div className="brand">
-          <KalandkaIcon size={56} />
-          <div className="brand__text">
-            <KalandkaWordmark size={phone ? 15 : 22} accent={look.accent} />
-            <div className="brand__world">{info.name}</div>
-          </div>
-        </div>
-        <div className="topbar__right">
-          {profiles.kids.length > 1 && <KidChip onSwitch={onSwitch} />}
-          <MapButton onClick={leaveForMap} />
-          <VoiceButton guide={info.guide} />
-          <PrintButton onClick={onPrint} />
-          <ParentsButton onClick={onParents} />
-        </div>
-      </header>
-
-      <div className="home-guide">
-        <GuideBubble guide={look.guide} mood={bubble.mood} tone={bubble.tone} csepiWidth={80}>
-          <div className="bubble__row">
-            <div>
-              <div className="bubble__kicker">{bubble.kicker}</div>
-              <h1 className="bubble__title">{bubble.title}</h1>
+    <>
+      <div className={look.className}>
+        <header className="topbar">
+          <div className="brand">
+            <KalandkaIcon size={56} />
+            <div className="brand__text">
+              <KalandkaWordmark size={phone ? 15 : 22} accent={look.accent} />
+              <div className="brand__world">{info.name}</div>
             </div>
-            <RoundButton label="Meghallgatom újra" tint="blue" onClick={onReplay}>
-              <SpeakerIcon />
-            </RoundButton>
           </div>
-        </GuideBubble>
+          <div className="topbar__right">
+            {profiles.kids.length > 1 && <KidChip onSwitch={onSwitch} />}
+            <MapButton onClick={leaveForMap} />
+            <VoiceButton guide={info.guide} />
+            <PrintButton onClick={onPrint} />
+            <ParentsButton onClick={onParents} />
+          </div>
+        </header>
+
+        <div className="home-guide">
+          <GuideBubble guide={look.guide} mood={bubble.mood} tone={bubble.tone} csepiWidth={80}>
+            <div className="bubble__row">
+              <div>
+                <div className="bubble__kicker">{bubble.kicker}</div>
+                <h1 className="bubble__title">{bubble.title}</h1>
+              </div>
+              <RoundButton label="Meghallgatom újra" tint="blue" onClick={onReplay}>
+                <SpeakerIcon />
+              </RoundButton>
+            </div>
+          </GuideBubble>
+        </div>
+
+        <Island
+          world={world}
+          places={doors}
+          reward={rewardDoor}
+          leaving={leaving}
+          opening={opening}
+          back={back && { id: back.place, solved: back.solved, landed }}
+        />
+
+        {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}
       </div>
-
-      <Island world={world} places={places} reward={reward} leaving={leaving} />
-
-      {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}
-    </div>
+      {opening && <Door place={opening as DoorPlace} way="in" />}
+      {returned && !landed && <Door place={returned.place} way="out" onDone={() => setLanded(true)} />}
+    </>
   );
 }
