@@ -31,7 +31,7 @@ npm run build
 ```
 
 - Keep game rules in the game's `logic.ts` (pure functions with tests) and the drawing in `screens/`.
-- Update the README when a game's behaviour changes.
+- Update the docs when a game's behaviour changes (`docs/garden-games.md`, `docs/robot-games.md`, `docs/levels.md`).
 - PR titles must be Conventional Commits (`feat:`, `fix:`, `docs:` …); they become the commit message.
 - CI runs the tests, the build, a secret scan and Lighthouse; a PR is merged once they pass and it has been reviewed.
 
@@ -67,7 +67,7 @@ Each game is its own rules plus a screen. Everything the games share — the lev
 7. **Stickers** — an album row in `STICKER_GAMES` and the game's stickers in `STICKERS` (`src/state/rewards.ts`).
 8. **Printable sheets** — a `spec({ … })` in `src/print/garden.tsx` or `src/print/robot.tsx`, added to that file's sheet list. Its tasks' fingerprint goes in `src/print/revisions.json` as `"<id>@1"`: the failing test in `src/print/catalog.test.ts` prints the value.
 9. **Opening later** (garden only, optional) — an entry in `UNLOCKS` (`src/state/unlocks.ts`), a flag in `Progress`, and Csepi's lines in `UNLOCK_TEXT` (`Home.tsx`). Remember the rule above: worlds stay open to every child.
-10. **README** — the game's row in the games table and its ladder numbers.
+10. **Docs** — the game's row in `docs/garden-games.md` or `docs/robot-games.md` and its ladder numbers in `docs/levels.md`.
 
 Steps 2–4 and 6's `STEP_WORDS` and `ABOUT` are checked by the type checker; `src/state/gameCoverage.test.ts` checks stickers, sheets, notes and the island's room. The hub tiles are not checked: open both worlds in `npm run dev` before sending the PR.
 

@@ -209,7 +209,7 @@ const STORY: { title: string; text: string; tone: string; art: ReactNode }[] = [
   },
   {
     title: 'Sok kis kalandból lesz a nagy felfedező.',
-    text: 'Minden jó megoldás egy mag vagy egy csavar, és mind megmarad. Holnap jöhet a következő kaland.',
+    text: 'Minden négy jó megoldás egy mag vagy egy csavar, és mind megmarad. Holnap jöhet a következő kaland.',
     tone: 'sun',
     art: (
       <>
@@ -994,7 +994,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
                   </div>
                   <GameList games={ROBOT_GAMES} />
                   <p>
-                    <b>A jutalom:</b> minden sikeres kör egy csavart ér, amiből a gyerkőc saját robotot építhet a polcára.
+                    <b>A jutalom:</b> minden négy sikeres kör egy csavart ér, amiből a gyerkőc saját robotot építhet a polcára.
                   </p>
                 </article>
               </div>

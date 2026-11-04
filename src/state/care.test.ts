@@ -7,28 +7,28 @@ const withSeeds = (seeds: number, extra: Partial<Progress> = {}): Progress => ({
 /** A pear tree in bed 0 that has just grown. */
 const grownTree = () => {
   const p = plant(withSeeds(10), 0, 'tree');
-  return { ...p, seeds: p.seeds + growAfter('tree') };
+  return { ...p, gardenTasks: p.gardenTasks + growAfter('tree') };
 };
-const solve = (p: Progress, n: number): Progress => ({ ...p, seeds: p.seeds + n });
+const solve = (p: Progress, n: number): Progress => ({ ...p, gardenTasks: p.gardenTasks + n });
 
 describe('Kiskert care', () => {
   it('ripens one fruit per solved task on a grown tree, up to its most', () => {
     let p = grownTree();
-    expect(ripeFruit(p.beds[0]!, p.seeds)).toBe(0);
+    expect(ripeFruit(p.beds[0]!, p.gardenTasks)).toBe(0);
     p = solve(p, 2);
-    expect(ripeFruit(p.beds[0]!, p.seeds)).toBe(2);
+    expect(ripeFruit(p.beds[0]!, p.gardenTasks)).toBe(2);
     p = solve(p, 20);
-    expect(ripeFruit(p.beds[0]!, p.seeds)).toBe(FRUIT_MAX.tree);
+    expect(ripeFruit(p.beds[0]!, p.gardenTasks)).toBe(FRUIT_MAX.tree);
   });
 
   it('gets thirsty a few tasks after it grew, never worse, and keeps its fruit', () => {
     let p = solve(grownTree(), THIRSTY_AFTER - 1);
-    expect(isThirsty(p.beds[0]!, p.seeds)).toBe(false);
+    expect(isThirsty(p.beds[0]!, p.gardenTasks)).toBe(false);
     p = solve(p, 1);
     expect(thirstyBeds(p)).toEqual([0]);
     const later = solve(p, 500);
     expect(thirstyBeds(later)).toEqual([0]);
-    expect(ripeFruit(later.beds[0]!, later.seeds)).toBe(FRUIT_MAX.tree);
+    expect(ripeFruit(later.beds[0]!, later.gardenTasks)).toBe(FRUIT_MAX.tree);
   });
 
   it('never makes flowers or seedlings thirsty', () => {
@@ -42,7 +42,7 @@ describe('Kiskert care', () => {
     let p = solve(grownTree(), 3);
     p = pickFruit(p, 0);
     expect(p.pears).toBe(1);
-    expect(ripeFruit(p.beds[0]!, p.seeds)).toBe(2);
+    expect(ripeFruit(p.beds[0]!, p.gardenTasks)).toBe(2);
     p = pickFruit(pickFruit(p, 0), 0);
     expect(p.pears).toBe(3);
     expect(pickFruit(p, 0)).toBe(p);
@@ -54,10 +54,10 @@ describe('Kiskert care', () => {
     p = water(p, 0);
     expect(p.seedsSpent).toBe(spent);
     expect(p.pears).toBe(FRUIT_MAX.tree);
-    expect(isThirsty(p.beds[0]!, p.seeds)).toBe(false);
-    expect(ripeFruit(p.beds[0]!, p.seeds)).toBe(0);
+    expect(isThirsty(p.beds[0]!, p.gardenTasks)).toBe(false);
+    expect(ripeFruit(p.beds[0]!, p.gardenTasks)).toBe(0);
     p = solve(p, 2);
-    expect(ripeFruit(p.beds[0]!, p.seeds)).toBe(2);
+    expect(ripeFruit(p.beds[0]!, p.gardenTasks)).toBe(2);
     expect(water(p, 0)).toBe(p);
   });
 
@@ -79,7 +79,7 @@ describe('Kiskert care', () => {
 });
 
 describe('Robotépítő care', () => {
-  const withBolts = (bolts: number, extra: Partial<Progress> = {}): Progress => ({ ...DEFAULT_PROGRESS, bolts, ...extra });
+  const withBolts = (bolts: number, extra: Partial<Progress> = {}): Progress => ({ ...DEFAULT_PROGRESS, bolts, robotTasks: bolts, ...extra });
 
   it('starts full and uses one bar per solved task, down to empty', () => {
     expect(batteryOf(withBolts(0))).toBe(BATTERY_BARS);
@@ -101,7 +101,7 @@ describe('Robotépítő care', () => {
   it('teaches a trick every few full charges', () => {
     let p = withBolts(0);
     for (let c = 0; c < TRICKS[0].after; c++) {
-      p = { ...p, bolts: p.bolts + BATTERY_BARS };
+      p = { ...p, robotTasks: p.robotTasks + BATTERY_BARS };
       for (let k = 0; k < BATTERY_BARS; k++) p = chargeOne(p);
     }
     expect(tricksOf(p).map((t) => t.id)).toEqual([TRICKS[0].id]);
@@ -111,10 +111,10 @@ describe('Robotépítő care', () => {
     let p = withBolts(SQUEAKY_AFTER - 1);
     expect(isSqueaky(p)).toBe(false);
     expect(oil(p)).toBe(p);
-    p = { ...p, bolts: p.bolts + 1 };
+    p = { ...p, robotTasks: p.robotTasks + 1 };
     expect(isSqueaky(p)).toBe(true);
     p = oil(p);
     expect(isSqueaky(p)).toBe(false);
-    expect(p.bolts).toBe(SQUEAKY_AFTER);
+    expect(p.robotTasks).toBe(SQUEAKY_AFTER);
   });
 });

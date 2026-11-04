@@ -69,7 +69,7 @@ function Charge() {
 /** Robotút: lead the robot to its battery, first one arrow at a time, then with a whole program. */
 export function Path({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
-  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('path');
+  const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('path');
   const puzzle = useMemo(() => buildPuzzle(levelIndex, progress.pathRound), [levelIndex, progress.pathRound]);
   const { level } = puzzle;
   const plan = level.mode === 'plan';
@@ -299,7 +299,6 @@ export function Path({ onBack }: { onBack: () => void }) {
       title="Robotút"
       meter={meter}
       justSolved={solved}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -355,7 +354,7 @@ export function Path({ onBack }: { onBack: () => void }) {
               </FloorRobot>
             </div>
             {solved && (
-              <WinCard title="Feltöltve!" next="Következő pálya" className="" onNext={levelUp.advance} />
+              <WinCard title="Feltöltve!" next="Következő pálya" className="" onNext={goNext} />
             )}
           </div>
         </FitBox>

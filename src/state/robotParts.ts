@@ -1,6 +1,7 @@
 import type { Progress } from './progress';
+import type { ArrivalProgress } from './rewards';
 
-// Robotépítő, Robotműhely's reward: every solved task in the workshop earns a bolt; bolts buy parts
+// Robotépítő, Robotműhely's reward: every four solved tasks in the workshop fill a pod that pays a bolt (see pod.ts); bolts buy parts
 // for the child's own robot; once the first robot has a few new parts a second robot comes to the
 // workbench, which buys parts of its own; more new parts bring robot friends who stay. The robot also
 // asks for care (battery and oil, below). As in the Kiskert, rewards are only ever added: a bought
@@ -210,6 +211,15 @@ export function newFriend(p: Progress): Friend | null {
   return friendsOf(p)[p.robotFriendsSeen] ?? null;
 }
 
+/** The way to the next robot friend still to welcome: parts bought since the friend before it. Null once all have come. */
+export function friendProgress(p: Progress): ArrivalProgress | null {
+  const next = FRIENDS[p.robotFriendsSeen];
+  if (!next) return null;
+  const from = FRIENDS[p.robotFriendsSeen - 1]?.after ?? 0;
+  const need = next.after - from;
+  return { need, done: Math.min(need, Math.max(0, boughtCount(p) - from)), coming: 0 };
+}
+
 // ---------- care: battery, oil and tricks ----------
 // Every solved task in the workshop uses one battery bar: the robot did the work. A flat battery only
 // makes the robot sleepy in the workshop; it never stops a game. The child charges it bar by bar, free,
@@ -237,23 +247,23 @@ export const TRICKS: Trick[] = [
 
 /** 0 … BATTERY_BARS. */
 export function batteryOf(p: Progress): number {
-  return Math.max(0, Math.min(BATTERY_BARS, BATTERY_BARS - (p.bolts - p.robotChargedAt)));
+  return Math.max(0, Math.min(BATTERY_BARS, BATTERY_BARS - (p.robotTasks - p.robotChargedAt)));
 }
 
 /** Charges one bar; filling the last bar counts as a full charge. Unchanged when it is full. */
 export function chargeOne(p: Progress): Progress {
   const now = batteryOf(p);
   if (now >= BATTERY_BARS) return p;
-  const from = Math.max(p.robotChargedAt, p.bolts - BATTERY_BARS);
+  const from = Math.max(p.robotChargedAt, p.robotTasks - BATTERY_BARS);
   return { ...p, robotChargedAt: from + 1, robotCharges: p.robotCharges + (now + 1 === BATTERY_BARS ? 1 : 0) };
 }
 
 export function isSqueaky(p: Progress): boolean {
-  return p.bolts - p.robotOiledAt >= SQUEAKY_AFTER;
+  return p.robotTasks - p.robotOiledAt >= SQUEAKY_AFTER;
 }
 
 export function oil(p: Progress): Progress {
-  return isSqueaky(p) ? { ...p, robotOiledAt: p.bolts } : p;
+  return isSqueaky(p) ? { ...p, robotOiledAt: p.robotTasks } : p;
 }
 
 export function tricksOf(p: Progress): Trick[] {

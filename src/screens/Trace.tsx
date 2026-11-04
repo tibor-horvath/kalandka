@@ -89,7 +89,7 @@ function TrailArrow({ at, angle }: { at: Pt; angle: number }) {
  * On the upper levels the trail is faded (Halvány út) and the see-through bee only comes when asked or after a quiet spell.
  */
 export function Trace({ onBack }: { onBack: () => void }) {
-  const { start, step, win, meter, levelUp } = useLadderRound('trace');
+  const { start, step, win, meter, goNext } = useLadderRound('trace');
   const shape = useMemo(() => buildTraceRound(start.level, start.sinceChange), [start]);
   const drops = useMemo(() => shape.strokes.map(checkpoints), [shape]);
   const multi = shape.strokes.length > 1;
@@ -287,7 +287,6 @@ export function Trace({ onBack }: { onBack: () => void }) {
       title="Mézút"
       meter={meter}
       justSolved={done && !step?.helped}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -405,7 +404,7 @@ export function Trace({ onBack }: { onBack: () => void }) {
               </button>
             )}
             {done && (
-              <button type="button" className="big-btn" onClick={levelUp.advance}>
+              <button type="button" className="big-btn" onClick={goNext}>
                 Következő szám <NextIcon />
               </button>
             )}

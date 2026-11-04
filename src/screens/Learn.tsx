@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Seed } from '../components/art';
 import { FitBox } from '../components/FitBox';
 import { GameShell } from '../components/GameShell';
-import { useLevelUp } from '../components/LevelMeter';
 import { useForm } from '../components/Stage';
 import { DotFace, MiniSprout } from '../components/seeds';
 import { GuideBubble, NextIcon } from '../components/ui';
@@ -10,6 +9,7 @@ import { FIELD_H, FIELD_W, foldSeeds } from '../games/flash/layout';
 import { LEARN_MAX, LEARN_READY, buildLearnRound, learnedFeedback } from '../games/learn/logic';
 import { numberCount } from '../lib/numbers';
 import { speak } from '../lib/speech';
+import { creditSolve } from '../state/games';
 import { evenLevels, levelMeter } from '../state/levelMeter';
 import { useProgress } from '../state/progress';
 
@@ -42,7 +42,7 @@ export function Learn({ onBack }: { onBack: () => void }) {
       speak(learnedFeedback(round.count).speech, { queue: true });
       if (!rewarded.current) {
         rewarded.current = true;
-        update((p) => ({ ...p, seeds: p.seeds + 1, learnSolved: p.learnSolved + 1 }));
+        update((p) => creditSolve(p, 'learn'));
       }
     }
   };
@@ -50,7 +50,6 @@ export function Learn({ onBack }: { onBack: () => void }) {
   // App keys this screen by round, so the next number remounts with fresh state.
   const next = () => update((p) => ({ ...p, learnRound: p.learnRound + 1 }));
   const meter = levelMeter(startRound, evenLevels(LEARN_MAX / LEARN_BLOCK, LEARN_BLOCK), learned);
-  const levelUp = useLevelUp(meter, next);
 
   return (
     <GameShell
@@ -59,7 +58,6 @@ export function Learn({ onBack }: { onBack: () => void }) {
       title="Számoljuk meg együtt!"
       meter={meter}
       justSolved={learned}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -107,7 +105,7 @@ export function Learn({ onBack }: { onBack: () => void }) {
           )}
         </div>
         {learned && (
-          <button type="button" className="big-btn" onClick={levelUp.advance}>
+          <button type="button" className="big-btn" onClick={next}>
             Következő szám <NextIcon />
           </button>
         )}

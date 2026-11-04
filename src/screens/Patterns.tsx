@@ -9,7 +9,7 @@ import { useProgress } from '../state/progress';
 
 export function Patterns({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
-  const { level, step, win, meter, levelUp } = useLadderRound('patterns');
+  const { level, step, win, meter, goNext } = useLadderRound('patterns');
   const [round] = useState(() => buildLevelRound(level, progress.patternRound));
   const [picked, setPicked] = useState<FlowerKind | null>(null);
   const [wrong, setWrong] = useState<FlowerKind | null>(null);
@@ -48,7 +48,6 @@ export function Patterns({ onBack }: { onBack: () => void }) {
       title={screenTitle(round)}
       meter={meter}
       justSolved={solved && !step?.helped}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -88,7 +87,7 @@ export function Patterns({ onBack }: { onBack: () => void }) {
           );
         })}
         {solved && (
-          <button type="button" className="big-btn" onClick={levelUp.advance}>
+          <button type="button" className="big-btn" onClick={goNext}>
             Új virágsor <NextIcon />
           </button>
         )}

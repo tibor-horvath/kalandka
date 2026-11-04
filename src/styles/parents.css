@@ -274,3 +274,45 @@
 .pa-preview { background: #ddf0fa; border-radius: 20px; padding: 22px; display: grid; place-items: center; }
 .pa-preview__card { --ring: var(--leaf); width: 180px; height: 230px; box-sizing: border-box; border: 5px solid var(--ring); box-shadow: 0 7px 0 var(--ring); border-radius: 28px; background: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-family: var(--display); font-size: 30px; font-weight: 800; line-height: 1; }
 .pa-preview__card span { max-width: 100%; padding: 0 10px; box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Lap kész, just marked: the button presses once and its tick draws in; below it the page's tasks drop into the
+   child's reward pod and every full pod sends a seed (bolt) into their total (see PageReceipt.tsx). Played once. */
+.ps-done__btn { animation: ps-press 0.35s ease-out; }
+.ps-done__btn:disabled { opacity: 1; }
+.ps-done__btn svg path { stroke-dasharray: 22; animation: ps-tick 0.35s ease-out 0.1s both; }
+.ps-receipt { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 16px 20px; border-radius: 16px; background: var(--pa-bg); animation: ps-open 0.4s ease-out both; }
+.ps-receipt__part { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ps-receipt__part--center { align-items: center; }
+.ps-receipt__label { font-size: 13px; font-weight: 800; color: var(--pa-muted); }
+.ps-receipt__chips { display: flex; flex-wrap: wrap; gap: 5px; max-width: 360px; }
+.ps-receipt__arrow { color: #9fb3c8; flex: none; }
+.ps-chip { width: 18px; height: 24px; border-radius: 5px; background: var(--pa-card); box-shadow: inset 0 0 0 2px var(--pa-line); transition: opacity 0.25s, transform 0.25s; }
+.ps-chip.is-used { background: var(--pa-good); box-shadow: none; opacity: 0.3; transform: scale(0.85); animation: ps-chip 0.3s ease-out; }
+.ps-pod { position: relative; width: 52px; height: 52px; display: grid; place-items: center; }
+.ps-pod__ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ps-pod__quarter { fill: none; stroke: var(--pa-soft); stroke-width: 6; stroke-linecap: round; transition: stroke 0.2s; }
+.ps-pod__quarter.is-full { stroke: var(--pa-good); }
+.ps-pod.is-gold .ps-pod__quarter { stroke: #ffc93c; }
+.ps-pod__reward { display: grid; opacity: 0.35; filter: grayscale(1); }
+.ps-pod.is-gold .ps-pod__reward { opacity: 1; filter: none; animation: ps-pop 0.35s ease-out; }
+.ps-total-box { position: relative; margin-left: 12px; }
+.ps-total { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 16px 0 10px; border-radius: 22px; background: #e4f4da; color: #1e5520; font: 800 22px/1 var(--display); }
+.ps-total.is-bump { animation: ps-bump 0.4s ease-out; }
+.ps-total__fly { position: absolute; left: -70px; top: 10px; display: grid; opacity: 0; pointer-events: none; animation: ps-fly 0.45s ease-in both; }
+.ps-result { display: flex; align-items: center; gap: 16px 20px; flex-wrap: wrap; animation: ps-open 0.4s ease-out both; }
+.ps-sticker { display: inline-flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 14px; background: #fff6dc; animation: ps-stick 0.5s cubic-bezier(.3, 1.4, .5, 1) both; }
+.ps-sticker > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.ps-sticker__mark { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font: 800 16px/1 var(--display); flex: none; }
+.ps-sticker__where { font-size: 14px; color: var(--pa-muted); }
+@keyframes ps-press { 0% { transform: scale(1); } 40% { transform: scale(0.96); } 100% { transform: none; } }
+@keyframes ps-tick { from { stroke-dashoffset: 22; } to { stroke-dashoffset: 0; } }
+@keyframes ps-open { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@keyframes ps-chip { 0% { opacity: 1; transform: scale(0.7); } 50% { opacity: 1; transform: scale(1.12); } 100% { opacity: 0.3; transform: scale(0.85); } }
+@keyframes ps-pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: none; } }
+@keyframes ps-bump { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: none; } }
+@keyframes ps-fly { 0% { opacity: 1; transform: translate(0, 0) scale(1.1); } 55% { opacity: 1; transform: translate(36px, -20px) scale(1.2); } 100% { opacity: 0; transform: translate(74px, 0) scale(0.8); } }
+@keyframes ps-stick { 0% { opacity: 0; transform: rotate(-8deg) scale(0.6); } 100% { opacity: 1; transform: rotate(-2deg) scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .ps-done__btn, .ps-done__btn svg path, .ps-receipt, .ps-chip.is-used, .ps-pod__reward, .ps-total, .ps-result, .ps-sticker { animation: none !important; }
+  .ps-sticker { transform: rotate(-2deg); }
+}

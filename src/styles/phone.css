@@ -55,29 +55,20 @@
 .is-phone .topbar__title { flex: 1 1 auto; gap: 6px; }
 .stage--landscape .topbar__title { flex-direction: row; justify-content: center; gap: 12px; }
 .stage--landscape .topbar--meter { align-items: center; }
-.is-phone .level-meter { height: 38px; gap: 8px; padding: 0 12px 0 10px; border-radius: 19px; box-shadow: 0 3px 0 var(--grass-deep); }
+.is-phone .level-meter { height: 38px; gap: 8px; padding: 0 8px 0 10px; border-radius: 19px; box-shadow: 0 3px 0 var(--grass-deep); }
 .is-phone .level-meter__stairs { height: 24px; max-width: 56px; gap: 2px; }
 /* Up to ten levels: the steps share a capped width so the meter fits between the buttons. */
 .is-phone .level-meter__step { width: 9px; flex: 0 1 auto; min-width: 3px; border-radius: 3px; }
 .is-phone .level-meter__rule { height: 22px; }
-.is-phone .level-meter__pips { gap: 4px; }
-.is-phone .level-meter__pip { width: 22px; height: 22px; box-shadow: inset 0 0 0 2px var(--grass-deep); }
-.is-phone .level-meter__pip.is-done { box-shadow: none; }
+.is-phone .reward-bank { gap: 5px; }
+.is-phone .reward-pod { width: 32px; height: 32px; }
+.is-phone .reward-pod__reward, .is-phone .reward-total__icon, .is-phone .reward-bank__flyer { width: 16px; height: 16px; }
+.is-phone .reward-bank__flyer { margin: -8px 0 0 -8px; }
+.is-phone .reward-total { height: 28px; padding: 0 9px 0 5px; border-radius: 14px; font-size: 16px; gap: 3px; }
+.is-phone .level-meter__star { width: 10px; height: 10px; margin: -5px 0 0 -5px; }
+.is-phone .level-meter__chip { font-size: 14px; top: calc(100% + 6px); }
 .is-phone .level-meter__stairs.is-ramp { width: 56px; gap: 1px; }
 .is-phone .level-meter__stairs.is-ramp .level-meter__step { flex: 1 1 0; min-width: 0; width: auto; }
-.is-phone .level-up .level-meter__stairs.is-ramp { width: 220px; }
-.is-phone .level-meter--many .level-meter__pips { gap: 3px; }
-.is-phone .level-meter--many .level-meter__pip { width: 17px; height: 17px; }
-.is-phone .level-meter__pip.is-fresh { box-shadow: 0 0 0 4px rgba(255, 201, 60, 0.6); }
-.is-phone.world--robot .level-meter__pip.is-fresh, .is-phone .world--robot .level-meter__pip.is-fresh { box-shadow: 0 0 0 4px rgba(242, 179, 61, 0.55); }
-.is-phone .level-up__card { padding: 28px 20px 30px; gap: 18px; border-radius: 30px; }
-.is-phone .level-up .level-meter__stairs { height: 100px; gap: 10px; }
-.is-phone .level-up .level-meter__step { width: 46px; }
-.is-phone .level-up__title { font-size: 46px; }
-.is-phone .level-up__row { gap: 8px; }
-.is-phone .level-up__row .level-meter__pip { width: 44px; height: 44px; }
-.stage--landscape .level-up__card { flex-direction: row; flex-wrap: wrap; justify-content: center; padding: 20px 24px; gap: 14px 24px; width: 560px; }
-.stage--landscape .level-up .level-meter__stairs { height: 80px; }
 
 /* ---------- home ---------- */
 .is-phone .brand { gap: 10px; }

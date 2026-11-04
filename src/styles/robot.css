@@ -150,7 +150,6 @@
 .path-win__rays { position: absolute; inset: -60px; z-index: -1; border-radius: 50%; background: radial-gradient(circle, #ffe08a 0%, rgba(255, 224, 138, 0) 65%); pointer-events: none; }
 .path-win .big-btn { white-space: nowrap; }
 .path-win__title { font-size: 60px; font-weight: 800; line-height: 1; color: var(--leaf-deep); }
-.path-win__reward { display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 22px; border-radius: 28px; background: #fff4d1; color: #7a5300; font-size: 28px; font-weight: 800; }
 @keyframes win-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 
 .path-energy { display: flex; align-items: center; gap: 12px; margin: 0 14px; padding: 12px 16px; border-radius: 24px; background: var(--paper); box-shadow: 0 5px 0 var(--grass-deep); }
@@ -331,7 +330,6 @@
 .stage--landscape .path-cmd__label { display: none; }
 .is-phone .path-win { min-width: 0; width: max-content; max-width: 92%; padding: 16px 20px 18px; gap: 10px; border-radius: 26px; border-width: 4px; }
 .is-phone .path-win__title { font-size: 40px; }
-.is-phone .path-win__reward { height: 44px; font-size: 22px; }
 /* Landscape phones: the long programs fold into two rows of six so Indulás stays in view. */
 .stage--landscape .path-side { gap: 6px; }
 .stage--landscape .path-side .bubble { font-size: 14px; padding: 6px 10px; }

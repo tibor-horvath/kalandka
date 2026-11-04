@@ -14,7 +14,7 @@ export function Water({ onBack }: { onBack: () => void }) {
   // On phones Csepi talks above the scene instead of inside the panel.
   const phone = useForm() !== 'tablet';
   const round = progress.waterRound;
-  const { level, step, win, meter, levelUp } = useLadderRound('water');
+  const { level, step, win, meter, goNext } = useLadderRound('water');
   // One plant object per round: effects below key on it, so it must not change between renders.
   const plant = useMemo(() => plantForLevel(level, round), [level, round]);
   const [count, setCount] = useState(0);
@@ -119,10 +119,8 @@ export function Water({ onBack }: { onBack: () => void }) {
     <GameShell
       game="water"
       className="screen--water"
-      backdrop="lawn"
       meter={meter}
       justSolved={done && !step?.helped}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(`${introSpeech(plant)} ${fb.speech}`)}
     >
@@ -211,7 +209,7 @@ export function Water({ onBack }: { onBack: () => void }) {
           <div className="panel__foot">
             {!done && <p className="panel__hint">Koppints egy cseppre, és elveszed. Koppints egy üres helyre, és adsz egyet.</p>}
             {done && (
-              <button type="button" className="big-btn" onClick={levelUp.advance}>
+              <button type="button" className="big-btn" onClick={goNext}>
                 Következő virág <NextIcon />
               </button>
             )}

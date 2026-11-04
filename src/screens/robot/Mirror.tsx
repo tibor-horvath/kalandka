@@ -74,7 +74,7 @@ function MissMark() {
 /** Tükörgép: light the reflections, tell a reflection from a copy, or find where the machine went wrong. */
 export function Mirror({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
-  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('mirror');
+  const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('mirror');
   const round = useMemo(() => buildMirrorRound(levelIndex, progress.mirrorRound), [levelIndex, progress.mirrorRound]);
   const first = progress.mirrorSolved === 0;
   const [taskIdx, setTaskIdx] = useState(0);
@@ -126,7 +126,6 @@ export function Mirror({ onBack }: { onBack: () => void }) {
       title={round.level.kind === 'fix' ? 'Hibás tükör' : 'Tükörgép'}
       meter={meter}
       justSolved={solved}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -148,7 +147,7 @@ export function Mirror({ onBack }: { onBack: () => void }) {
       {task.mode === 'fix' && <FixBoard key={taskIdx} task={task} {...props} />}
 
       {solved && (
-        <WinCard onNext={levelUp.advance} />
+        <WinCard onNext={goNext} />
       )}
 
     </GameShell>

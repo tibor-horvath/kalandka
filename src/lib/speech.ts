@@ -108,10 +108,21 @@ function isOnline(as: Speaker): boolean {
   return !v?.localService;
 }
 
+/**
+ * Spellings for words the Hungarian voices get wrong. Only what is said changes; the bubble keeps the real word.
+ * "matrica" comes out as "matrika", while "ts" reads as the c it should be (matricát, matricáim too).
+ */
+const SAY_AS: [RegExp, string][] = [[/(m)atric/gi, '$1atrits']];
+
+export function pronounce(text: string): string {
+  return SAY_AS.reduce((t, [from, to]) => t.replace(from, to), text);
+}
+
 export function speak(text: string, { queue = false, as = speaker, online }: SpeakOptions = {}): void {
   const s = synth();
   if (!s || !enabled || !text) return;
   if (online !== undefined && isOnline(as)) text = online;
+  text = pronounce(text);
   try {
     if (!queue) s.cancel();
     if (as === 'robot') {

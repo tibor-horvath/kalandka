@@ -1,20 +1,23 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { speak } from '../lib/speech';
 import type { LevelMeterState } from '../state/levelMeter';
-import { useModal } from './Modal';
-import { NextIcon } from './ui';
+import { TASKS_PER_REWARD, podFill, tasksIn } from '../state/pod';
+import { useProgress } from '../state/progress';
+import { seedBalance } from '../state/rewards';
+import { boltBalance } from '../state/robotParts';
 
 type World = 'garden' | 'robot';
 
-function MeterFlower() {
+/** How long a level-up plays in the meter; a pod filled by the same win pays after it. */
+export const LEVEL_UP_MS = 3000;
+/** How long a full pod takes to pay: the reward colours in, flies into the total, and the pod empties. */
+const PAY_MS = 2000;
+
+function MeterSeed() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="5.5" r="4.2" fill="#e86a92" />
-      <circle cx="5.8" cy="10" r="4.2" fill="#e86a92" />
-      <circle cx="18.2" cy="10" r="4.2" fill="#e86a92" />
-      <circle cx="8.2" cy="17.2" r="4.2" fill="#e86a92" />
-      <circle cx="15.8" cy="17.2" r="4.2" fill="#e86a92" />
-      <circle cx="12" cy="11.6" r="3.6" fill="#ffc93c" />
+    <svg viewBox="0 0 30 30" aria-hidden="true">
+      <ellipse cx="15" cy="16" rx="9" ry="12" fill="#B77B45" />
+      <path d="M15 6 C12 12 12 20 15 27" stroke="#8A5A2E" strokeWidth="2" fill="none" />
     </svg>
   );
 }
@@ -28,86 +31,188 @@ function MeterBolt() {
   );
 }
 
-function Stairs({ level, levels }: { level: number; levels: number }) {
+function StairsIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M2 13h3V9h3V6h3V3h3" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** Where a step's top middle is inside the staircase, for the star's hop. */
+function topOf(el: HTMLElement | undefined): [number, number] {
+  return el ? [el.offsetLeft + el.offsetWidth / 2, el.offsetTop] : [0, 0];
+}
+
+/**
+ * One step per level: the levels done dark, the current one gold-outlined and filling up with its
+ * solved rounds. On a level-up (`climbing`) the full step locks in dark and a star hops onto the next.
+ */
+function Stairs({ level, levels, fill, fresh, climbing }: { level: number; levels: number; fill: number; fresh: boolean; climbing: boolean }) {
+  const box = useRef<HTMLSpanElement>(null);
+  const [hop, setHop] = useState<CSSProperties>({});
+
+  useLayoutEffect(() => {
+    if (!climbing || !box.current) return;
+    const steps = box.current.children as HTMLCollectionOf<HTMLElement>;
+    const [x0, y0] = topOf(steps[level]);
+    const [x1, y1] = topOf(steps[level + 1]);
+    setHop({ '--x0': `${x0}px`, '--y0': `${y0}px`, '--x1': `${x1}px`, '--y1': `${y1}px`, '--ym': `${Math.min(y0, y1) - 16}px` } as CSSProperties);
+  }, [climbing, level]);
+
   // Long ladders draw as one stepped ramp so they keep the meter's width.
   return (
-    <span className={`level-meter__stairs${levels > 8 ? ' is-ramp' : ''}`} aria-hidden="true">
+    <span ref={box} className={`level-meter__stairs${levels > 8 ? ' is-ramp' : ''}${climbing ? ' is-climbing' : ''}`} style={hop} aria-hidden="true">
       {Array.from({ length: levels }, (_, i) => (
         <span
           key={i}
-          className={`level-meter__step${i < level ? ' is-past' : i === level ? ' is-now' : ''}`}
-          style={{ height: `${35 + (65 * (i + 1)) / levels}%` }}
+          className={`level-meter__step${i < level ? ' is-past' : i === level ? ' is-now' : ''}${i === level + 1 ? ' is-next' : ''}${i === level && fresh ? ' is-fresh' : ''}`}
+          style={{ height: `${35 + (65 * (i + 1)) / levels}%`, ...(i === level ? { '--fill': `${Math.round(fill * 100)}%` } : {}) } as CSSProperties}
         />
       ))}
+      {climbing && (
+        <>
+          <svg className="level-meter__star" viewBox="0 0 24 24">
+            <path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17l-6.1 3.4 1.5-6.8L2.2 9l6.9-.7z" />
+          </svg>
+          <span className="level-meter__rays">
+            {[0, 60, 120, 180, 240, 300].map((r) => (
+              <span key={r} style={{ '--r': `${r}deg` } as CSSProperties} />
+            ))}
+          </span>
+        </>
+      )}
+    </span>
+  );
+}
+
+/** The pod's four quarters as ring arcs around the reward, with a small gap between them; the parents' page receipt draws the same pod. */
+const POD_R = 17;
+const POD_GAP = 14;
+export const POD_QUARTERS = Array.from({ length: TASKS_PER_REWARD }, (_, i) => {
+  const at = (deg: number) => {
+    const a = ((deg - 90) * Math.PI) / 180;
+    return `${(22 + POD_R * Math.cos(a)).toFixed(2)} ${(22 + POD_R * Math.sin(a)).toFixed(2)}`;
+  };
+  const step = 360 / TASKS_PER_REWARD;
+  return `M ${at(i * step + POD_GAP / 2)} A ${POD_R} ${POD_R} 0 0 1 ${at((i + 1) * step - POD_GAP / 2)}`;
+});
+
+/** Where an element's middle is inside the bank, for the reward's flight into the total. */
+function middleOf(el: Element | null, bank: HTMLElement): [number, number] {
+  if (!el) return [0, 0];
+  const r = el.getBoundingClientRect();
+  const b = bank.getBoundingClientRect();
+  // The meter may be scaled (FitBox), so measure in the bank's own pixels.
+  const k = bank.offsetWidth / (b.width || 1);
+  return [(r.left + r.width / 2 - b.left) * k, (r.top + r.height / 2 - b.top) * k];
+}
+
+/**
+ * The reward pod and the total beside it: a quarter fills with every solved task, clockwise from the
+ * top, around the seed (or bolt) it fills up to. The fourth quarter colours the reward in, it hops into
+ * the total, which counts up by one, and the pod empties. A level-up from the same win plays first.
+ */
+function RewardBank({ world, wait }: { world: World; wait: number }) {
+  const { progress } = useProgress();
+  const tasks = tasksIn(progress, world);
+  const balance = world === 'robot' ? boltBalance(progress) : seedBalance(progress);
+  const seen = useRef(tasks);
+  const bank = useRef<HTMLSpanElement>(null);
+  const [fresh, setFresh] = useState<{ quarter: number; paid: boolean } | null>(null);
+  const [flight, setFlight] = useState<CSSProperties>({});
+
+  useEffect(() => {
+    if (tasks <= seen.current) return;
+    seen.current = tasks;
+    const fill = tasks % TASKS_PER_REWARD;
+    if (fill !== 0) {
+      setFresh({ quarter: fill - 1, paid: false });
+      return;
+    }
+    setFresh({ quarter: TASKS_PER_REWARD - 1, paid: true });
+    const empty = window.setTimeout(() => setFresh(null), wait + PAY_MS);
+    return () => window.clearTimeout(empty);
+  }, [tasks, wait]);
+
+  const paid = !!fresh?.paid;
+  useLayoutEffect(() => {
+    if (!paid || !bank.current) return;
+    const [x0, y0] = middleOf(bank.current.querySelector('.reward-pod__reward'), bank.current);
+    const [x1, y1] = middleOf(bank.current.querySelector('.reward-total__icon'), bank.current);
+    setFlight({ '--fx0': `${x0}px`, '--fy0': `${y0}px`, '--fx1': `${x1}px`, '--fy1': `${y1}px`, '--fxm': `${(x0 + x1) / 2}px` } as CSSProperties);
+  }, [paid]);
+
+  const filled = paid ? TASKS_PER_REWARD : tasks % TASKS_PER_REWARD;
+  const Icon = world === 'robot' ? MeterBolt : MeterSeed;
+  return (
+    <span ref={bank} className={`reward-bank${paid ? ' is-paid' : ''}`} style={{ '--pay-wait': `${wait}ms`, ...flight } as CSSProperties} aria-hidden="true">
+      <span className="reward-pod">
+        <svg className="reward-pod__ring" viewBox="0 0 44 44">
+          {POD_QUARTERS.map((d, i) => (
+            <path key={i} d={d} className={`reward-pod__quarter${i < filled ? ' is-full' : ''}${fresh?.quarter === i ? ' is-fresh' : ''}`} />
+          ))}
+        </svg>
+        <span className="reward-pod__reward">
+          <Icon />
+        </span>
+      </span>
+      <span className="reward-total">
+        <span className="reward-total__icon">
+          <Icon />
+        </span>
+        <span className="reward-total__roll">
+          {/* While paying, the number rolls up from the total before this reward. */}
+          <span className="reward-total__col">
+            {paid && <span>{balance - 1}</span>}
+            <span>{balance}</span>
+          </span>
+        </span>
+      </span>
+      {paid && (
+        <span className="reward-bank__flyer">
+          <Icon />
+        </span>
+      )}
     </span>
   );
 }
 
 /**
- * The level meter under a game's title: a staircase with one step per level (the current one gold)
- * and a slot per round of this level. A solved round plants a flower, or a bolt in the workshop.
+ * The level meter under a game's title: a staircase with one step per level (the current one gold,
+ * filling up with this level's solved rounds), and the reward pod with the seeds (or bolts) to spend
+ * beside it; four solved tasks fill the pod and pay one. A win that fills a level's row plays the
+ * level-up here, with Csepi saying so, instead of a card between rounds.
  */
 export function LevelMeter({ meter, world, justSolved = false }: { meter: LevelMeterState; world: World; justSolved?: boolean }) {
-  const { level, levels, done, rounds } = meter;
-  const Icon = world === 'robot' ? MeterBolt : MeterFlower;
-  return (
-    <div className={`level-meter${rounds > 6 ? ' level-meter--many' : ''}`} role="img" aria-label={`${level + 1}. szint, ${rounds} körből ${done} kész`}>
-      <Stairs level={level} levels={levels} />
-      <span className="level-meter__rule" aria-hidden="true" />
-      <span className="level-meter__pips" aria-hidden="true">
-        {Array.from({ length: rounds }, (_, i) => (
-          <span key={i} className={`level-meter__pip${i < done ? ' is-done' : ''}${justSolved && i === done - 1 ? ' is-fresh' : ''}`}>
-            {i < done && <Icon />}
-          </span>
-        ))}
-      </span>
-    </div>
-  );
-}
-
-/** "Következő" opens the level-up card first when this win filled the row; "Tovább" there (`finish`) moves on. */
-export function useLevelUp(meter: LevelMeterState, next: () => void) {
-  const [open, setOpen] = useState(false);
-  return {
-    open,
-    advance: () => (meter.levelUp ? setOpen(true) : next()),
-    // Some screens stay mounted between rounds, so the card closes itself.
-    finish: () => {
-      setOpen(false);
-      next();
-    }
-  };
-}
-
-/** Shown once between rounds when a level's row is full: the staircase climbs a step. */
-export function LevelUpCard({ meter, world, onNext }: { meter: LevelMeterState; world: World; onNext: () => void }) {
-  const button = useRef<HTMLButtonElement>(null);
-  const Icon = world === 'robot' ? MeterBolt : MeterFlower;
-  const modal = useModal<HTMLDivElement>();
+  const { level, levels, done, rounds, levelUp } = meter;
+  const { progress } = useProgress();
+  const left = TASKS_PER_REWARD - podFill(progress, world);
+  const balance = world === 'robot' ? `${boltBalance(progress)} csavarod` : `${seedBalance(progress)} magod`;
+  const reward = world === 'robot' ? 'csavarig' : 'magig';
 
   useEffect(() => {
-    speak('Új szint! Ügyes vagy!');
-    button.current?.focus();
-  }, []);
+    if (!levelUp) return;
+    // Said as the chip comes up, after the round's own praise.
+    const say = window.setTimeout(() => speak('Új szint! Ügyes vagy!', { queue: true }), 1200);
+    return () => window.clearTimeout(say);
+  }, [levelUp]);
 
   return (
-    <div ref={modal} className="level-up" role="dialog" aria-modal="true" aria-labelledby="level-up-title">
-      <div className="level-up__card">
-        <Stairs level={meter.level + 1} levels={meter.levels} />
-        <h2 id="level-up-title" className="level-up__title">
+    <div
+      className={`level-meter${levelUp ? ' is-climbing' : ''}`}
+      role="img"
+      aria-label={`${levelUp ? `Új szint: ${level + 2}. szint` : `${level + 1}. szint, ${rounds} körből ${done} kész`}. ${balance} van, még ${left} feladat a következő ${reward}.`}
+    >
+      <Stairs level={level} levels={levels} fill={done / rounds} fresh={justSolved && !levelUp} climbing={levelUp} />
+      <span className="level-meter__rule" aria-hidden="true" />
+      <RewardBank world={world} wait={levelUp ? LEVEL_UP_MS : 0} />
+      {levelUp && (
+        <span className="level-meter__chip" aria-hidden="true">
+          <StairsIcon />
           Új szint!
-        </h2>
-        <span className="level-up__row" aria-hidden="true">
-          {Array.from({ length: meter.rounds }, (_, i) => (
-            <span key={i} className="level-meter__pip is-done">
-              <Icon />
-            </span>
-          ))}
         </span>
-        <button ref={button} type="button" className={`big-btn${world === 'robot' ? ' big-btn--robot' : ''}`} onClick={onNext}>
-          Tovább <NextIcon />
-        </button>
-      </div>
+      )}
     </div>
   );
 }

@@ -15,7 +15,7 @@ type Phase = 'ready' | 'flash' | 'ask' | 'reveal' | 'solved';
 /** Villámszem: ready → seeds shown → covered → child answers (peek again any time). */
 export function Flash({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
-  const { level, win, meter, levelUp } = useLadderRound('flash');
+  const { level, win, meter, goNext } = useLadderRound('flash');
   const [round] = useState(() => buildFlashRound(progress.flashRound, level));
   // Portrait phones: the two groups stand one above the other, so the seeds can be bigger.
   const folded = useForm() === 'portrait' ? foldSeeds(round.seeds) : null;
@@ -69,7 +69,6 @@ export function Flash({ onBack }: { onBack: () => void }) {
       title="Hány magot láttál?"
       meter={meter}
       justSolved={phase === 'solved'}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -123,7 +122,7 @@ export function Flash({ onBack }: { onBack: () => void }) {
           );
         })}
         {phase === 'solved' && (
-          <button type="button" className="big-btn" onClick={levelUp.advance}>
+          <button type="button" className="big-btn" onClick={goNext}>
             Újra! <NextIcon />
           </button>
         )}

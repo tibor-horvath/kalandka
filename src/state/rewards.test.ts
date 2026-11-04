@@ -23,9 +23,11 @@ import {
   grownCount,
   markEarnedSeen,
   markPageDone,
+  pageReward,
   markStickerSeen,
   newStickers,
   newVisitor,
+  visitorProgress,
   pagesDoneIn,
   plant,
   seedBalance
@@ -38,7 +40,7 @@ describe('Kiskert', () => {
     const p = plant(withSeeds(7), 0, 'flower');
     expect(p.seeds).toBe(7);
     expect(seedBalance(p)).toBe(4);
-    expect(p.beds[0]).toEqual({ kind: 'flower', at: 7 });
+    expect(p.beds[0]).toEqual({ kind: 'flower', at: 0 });
     expect(p.beds).toHaveLength(BEDS);
   });
 
@@ -54,17 +56,17 @@ describe('Kiskert', () => {
   it('grows a planting after a few more solved tasks', () => {
     const p = plant(withSeeds(3), 2, 'flower');
     expect(grownCount(p)).toBe(0);
-    expect(grownCount({ ...p, seeds: p.seeds + growAfter('flower') - 1 })).toBe(0);
-    expect(grownCount({ ...p, seeds: p.seeds + growAfter('flower') })).toBe(1);
+    expect(grownCount({ ...p, gardenTasks: p.gardenTasks + growAfter('flower') - 1 })).toBe(0);
+    expect(grownCount({ ...p, gardenTasks: p.gardenTasks + growAfter('flower') })).toBe(1);
   });
 
   it('grows bigger plants more slowly: flower, then bush, then tree', () => {
     expect(growAfter('flower')).toBeLessThan(growAfter('bush'));
     expect(growAfter('bush')).toBeLessThan(growAfter('tree'));
     let p = plant(plant(withSeeds(13), 0, 'flower'), 1, 'tree');
-    p = { ...p, seeds: p.seeds + growAfter('flower') };
+    p = { ...p, gardenTasks: p.gardenTasks + growAfter('flower') };
     expect(grownCount(p)).toBe(1);
-    p = { ...p, seeds: p.seeds + growAfter('tree') - growAfter('flower') };
+    p = { ...p, gardenTasks: p.gardenTasks + growAfter('tree') - growAfter('flower') };
     expect(grownCount(p)).toBe(2);
   });
 
@@ -72,10 +74,23 @@ describe('Kiskert', () => {
     let p = withSeeds(100);
     for (let i = 0; i < VISITORS[0].after; i++) p = plant(p, i, 'flower');
     expect(newVisitor(p)).toBeNull();
-    p = { ...p, seeds: p.seeds + growAfter('flower') };
+    p = { ...p, gardenTasks: p.gardenTasks + growAfter('flower') };
     expect(newVisitor(p)?.id).toBe('hedgehog');
     p = { ...p, visitorsSeen: 1 };
     expect(newVisitor(p)).toBeNull();
+  });
+
+  it('shows the way to the next visitor: grown plants since the one before, and the ones still growing', () => {
+    let p = withSeeds(100);
+    expect(visitorProgress(p)).toEqual({ need: VISITORS[0].after, done: 0, coming: 0 });
+    p = plant(plant(p, 0, 'flower'), 1, 'flower');
+    expect(visitorProgress(p)).toEqual({ need: 3, done: 0, coming: 2 });
+    p = plant({ ...p, gardenTasks: p.gardenTasks + growAfter('flower') }, 2, 'flower');
+    expect(visitorProgress(p)).toEqual({ need: 3, done: 2, coming: 1 });
+    // Süni came at 3 and was welcomed: the way to Katica (5) starts again from there.
+    p = { ...plant({ ...p, gardenTasks: p.gardenTasks + growAfter('flower') }, 3, 'flower'), visitorsSeen: 1 };
+    expect(visitorProgress(p)).toEqual({ need: VISITORS[1].after - VISITORS[0].after, done: 0, coming: 1 });
+    expect(visitorProgress({ ...p, visitorsSeen: VISITORS.length })).toBeNull();
   });
 
   it('can reach every visitor within the beds', () => {
@@ -283,12 +298,21 @@ describe('stickers', () => {
     expect(newStickers(mark(pages('code', 1)), 'garden')).toEqual([]);
   });
 
-  it('counts a marked page once, and pays only a seed or bolt per task of its world', () => {
-    const once = markPageDone(DEFAULT_PROGRESS, 'learn.1.0.n.7.0', 8);
-    expect(markPageDone(once, 'learn.1.0.n.7.0', 8)).toBe(once);
+  it('counts a marked page once, and fills only its own world’s reward pod with its tasks', () => {
+    const once = markPageDone(DEFAULT_PROGRESS, 'learn.1.0.n.7.0', 9);
+    expect(markPageDone(once, 'learn.1.0.n.7.0', 9)).toBe(once);
     expect(pagesDoneIn(once, 'garden')).toBe(1);
-    expect(once).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['learn.1.0.n.7.0'], seeds: 8 });
-    expect(markPageDone(DEFAULT_PROGRESS, 'code.1.0.b.3.1', 4)).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['code.1.0.b.3.1'], bolts: 4 });
+    expect(once).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['learn.1.0.n.7.0'], gardenTasks: 9, seeds: 2 });
+    expect(markPageDone(DEFAULT_PROGRESS, 'code.1.0.b.3.1', 4)).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['code.1.0.b.3.1'], robotTasks: 4, bolts: 1 });
+    // A part-filled pod: three tasks already in it, so a two-task page pays one.
+    const filled = { ...DEFAULT_PROGRESS, gardenTasks: 3 };
+    expect(pageReward(filled, 'water.1.0.n.7.0', 2)).toEqual({ seeds: 1, bolts: 0 });
+    expect(markPageDone(filled, 'water.1.0.n.7.0', 2)).toMatchObject({ gardenTasks: 5, seeds: 1 });
+  });
+
+  it('starts the task clocks of older saves from the seeds and bolts they earned one per task', () => {
+    expect(readProgress({ seeds: 30, bolts: 12, stickersSeen: [] })).toMatchObject({ seeds: 30, gardenTasks: 30, bolts: 12, robotTasks: 12 });
+    expect(readProgress({ seeds: 30, gardenTasks: 41, stickersSeen: [] }).gardenTasks).toBe(41);
   });
 
   it('starts older saves with no pages done', () => {

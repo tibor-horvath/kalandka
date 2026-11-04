@@ -149,44 +149,96 @@ h1, h2, p { margin: 0; }
 .meadow { position: absolute; left: -1000px; right: -1000px; bottom: -1000px; height: 1330px; background: var(--grass); }
 .screen-title { font-size: 40px; font-weight: 800; line-height: 1; }
 
-/* ---------- level meter: a game's title with its level staircase and round slots under it ---------- */
+/* ---------- level meter: a game's title with its level staircase and the reward pod under it ---------- */
 .topbar--meter { align-items: flex-start; }
 .topbar__title { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
-.level-meter { display: inline-flex; align-items: center; gap: 14px; height: 52px; padding: 0 18px 0 16px; border-radius: 26px; background: var(--paper); box-shadow: 0 4px 0 var(--grass-deep); flex: none; }
+.level-meter { display: inline-flex; align-items: center; gap: 14px; height: 52px; padding: 0 12px 0 16px; border-radius: 26px; background: var(--paper); box-shadow: 0 4px 0 var(--grass-deep); flex: none; }
 .level-meter__stairs { display: flex; align-items: flex-end; gap: 4px; height: 34px; }
 .level-meter__step { width: 12px; border-radius: 4px; background: var(--good-tint); box-shadow: inset 0 0 0 3px var(--grass-deep); }
 .level-meter__step.is-past { background: var(--leaf-deep); box-shadow: none; }
-.level-meter__step.is-now { background: var(--sun); box-shadow: inset 0 0 0 3px var(--leaf-deep); }
-.world--robot .level-meter__step.is-now { background: var(--bolt); }
+/* The current step fills from the bottom with this level's solved rounds (--fill), and is full on a level-up. */
+@property --fill { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+.level-meter__step.is-now { --tone: var(--sun); background: linear-gradient(to top, var(--tone) var(--fill), var(--good-tint) var(--fill)); box-shadow: inset 0 0 0 3px var(--leaf-deep); transition: --fill 0.5s ease-out; }
+.world--robot .level-meter__step.is-now { --tone: var(--bolt); }
+.level-meter__step.is-now.is-fresh { animation: answer-pop 0.6s cubic-bezier(.3, 1.4, .5, 1); }
 .level-meter__stairs.is-ramp { gap: 1px; width: 110px; }
 .level-meter__stairs.is-ramp .level-meter__step { flex: 1 1 0; width: auto; border-radius: 1px; }
 .level-meter__stairs.is-ramp .level-meter__step:first-child { border-radius: 4px 1px 1px 4px; }
 .level-meter__stairs.is-ramp .level-meter__step:last-child { border-radius: 1px 4px 4px 1px; }
 .level-meter__rule { width: 3px; height: 30px; border-radius: 2px; background: var(--good-tint); }
-.level-meter__pips { display: flex; align-items: center; gap: 7px; }
-.level-meter__pip { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--good-tint); box-shadow: inset 0 0 0 3px var(--grass-deep); }
-.level-meter--many .level-meter__pips { gap: 5px; }
-.level-meter--many .level-meter__pip { width: 26px; height: 26px; }
-.level-meter__pip svg { width: 82%; height: 82%; }
-.level-meter__pip.is-done { background: var(--paper); box-shadow: none; }
-/* The round just won: its slot pops once and keeps a soft halo until the next round. */
-.level-meter__pip.is-fresh { box-shadow: 0 0 0 5px rgba(255, 201, 60, 0.6); animation: answer-pop 0.6s cubic-bezier(.3, 1.4, .5, 1); }
-.world--robot .level-meter__pip.is-fresh { box-shadow: 0 0 0 5px rgba(242, 179, 61, 0.55); }
 
-/* minmax(0, 1fr): the column is the screen's width, so the card's max-width shrinks it on phones. */
-.level-up { position: absolute; inset: 0; z-index: 20; display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; background: rgba(16, 35, 58, 0.42); animation: settle-fade 0.25s ease-out; }
-.level-up__card { width: 600px; max-width: calc(100% - 32px); padding: 40px 44px 44px; border-radius: 40px; background: var(--paper); box-shadow: 0 10px 0 var(--grass-deep); display: flex; flex-direction: column; align-items: center; gap: 26px; animation: pop 0.35s cubic-bezier(.3, 1.4, .5, 1); }
-.level-up .level-meter__stairs { height: 150px; gap: 14px; }
-.level-up .level-meter__step { width: 64px; border-radius: 12px; box-shadow: inset 0 0 0 5px var(--grass-deep); }
-.level-up .level-meter__step.is-past { box-shadow: none; }
-.level-up .level-meter__step.is-now { box-shadow: inset 0 0 0 6px var(--leaf-deep); }
-.level-up .level-meter__stairs.is-ramp { width: 300px; gap: 2px; }
-.level-up .level-meter__stairs.is-ramp .level-meter__step { width: auto; border-radius: 4px; box-shadow: none; }
-.level-up .level-meter__stairs.is-ramp .level-meter__step:not(.is-past):not(.is-now) { box-shadow: inset 0 0 0 3px var(--grass-deep); }
-.level-up__title { font-size: 64px; font-weight: 800; line-height: 1; color: var(--leaf-deep); }
-.level-up__row { display: flex; gap: 12px; }
-.level-up__row .level-meter__pip { width: 60px; height: 60px; background: var(--good-tint); }
-@keyframes settle-fade { from { opacity: 0; } to { opacity: 1; } }
+/* Level-up, played once in the meter (3 s, see LEVEL_UP_MS): the full step locks in dark, a star hops onto
+   the next step, which lifts and takes the "current" outline, one sparkle, and an "Új szint!" chip below. */
+.level-meter { position: relative; }
+.level-meter__stairs { position: relative; }
+.level-meter__step { position: relative; }
+.level-meter__step::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--leaf-deep); opacity: 0; }
+.level-meter__stairs.is-climbing .level-meter__step.is-now { animation: lu-lock 3s ease-out both; }
+.level-meter__stairs.is-climbing .level-meter__step.is-now::after { animation: lu-darken 3s ease-out both; }
+.level-meter__stairs.is-climbing .level-meter__step.is-next { animation: lu-next 3s ease-out both; }
+.level-meter__star { position: absolute; left: 0; top: 0; width: 12px; height: 12px; margin: -6px 0 0 -6px; overflow: visible; fill: var(--sun); stroke: var(--leaf-deep); stroke-width: 1.6; stroke-linejoin: round; pointer-events: none; animation: lu-hop 3s linear both; }
+.world--robot .level-meter__star { fill: var(--bolt); }
+.level-meter__rays { position: absolute; left: var(--x1); top: calc(var(--y1) - 6px); width: 0; height: 0; pointer-events: none; }
+.level-meter__rays span { position: absolute; left: -1.5px; top: -3.5px; width: 3px; height: 7px; border-radius: 2px; background: var(--sun); opacity: 0; animation: lu-rays 3s ease-out both; }
+.world--robot .level-meter__rays span { background: var(--bolt); }
+.level-meter__chip { position: absolute; left: 6px; top: calc(100% + 10px); z-index: 5; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 8px; border-radius: 16px; background: var(--leaf-deep); color: var(--paper); font: 800 16px/1 var(--display); white-space: nowrap; box-shadow: 0 3px 0 rgba(16, 35, 58, 0.25); pointer-events: none; animation: lu-chip 3s ease-out both; }
+.level-meter__chip svg { width: 16px; height: 16px; }
+@keyframes lu-lock { 0%, 20% { transform: none; } 25% { transform: scaleY(0.88); } 31% { transform: scaleY(1.05); } 36%, 100% { transform: none; } }
+@keyframes lu-darken { 0%, 18% { opacity: 0; } 30%, 100% { opacity: 1; } }
+@keyframes lu-next { 0%, 48% { box-shadow: inset 0 0 0 3px var(--grass-deep); transform: none; } 52% { box-shadow: inset 0 0 0 3px var(--leaf-deep); transform: translateY(0); } 57% { transform: translateY(-5px); } 63% { transform: translateY(1px); } 68%, 100% { box-shadow: inset 0 0 0 3px var(--leaf-deep); transform: none; } }
+@keyframes lu-hop {
+  0%, 28% { opacity: 0; translate: var(--x0) calc(var(--y0) - 6px); scale: 0.3; }
+  33% { opacity: 1; translate: var(--x0) calc(var(--y0) - 6px); scale: 1.1; }
+  42% { translate: calc((var(--x0) + var(--x1)) / 2) var(--ym); scale: 1; }
+  52% { translate: var(--x1) calc(var(--y1) - 6px); scale: 1; }
+  56% { scale: 1.25; }
+  62%, 78% { opacity: 1; translate: var(--x1) calc(var(--y1) - 6px); scale: 1; }
+  90%, 100% { opacity: 0; translate: var(--x1) calc(var(--y1) + 4px); scale: 0.4; }
+}
+@keyframes lu-rays { 0%, 52% { opacity: 0; transform: rotate(var(--r)) translateY(-7px) scaleY(0.4); } 57% { opacity: 1; transform: rotate(var(--r)) translateY(-11px) scaleY(1); } 72%, 100% { opacity: 0; transform: rotate(var(--r)) translateY(-17px) scaleY(0.5); } }
+@keyframes lu-chip { 0%, 40% { opacity: 0; transform: translateY(-10px) scale(0.6); } 47% { opacity: 1; transform: translateY(0) scale(1.08); } 52% { opacity: 1; transform: none; } 82% { opacity: 1; transform: none; } 96%, 100% { opacity: 0; transform: translateY(4px); } }
+
+/* Reward pod: four quarters around the seed (bolt) they fill up to, faded until it is earned; the total
+   to spend stands beside it. */
+.reward-bank { position: relative; display: flex; align-items: center; gap: 8px; }
+.reward-pod { position: relative; width: 44px; height: 44px; flex: none; display: grid; place-items: center; }
+.reward-pod__ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.reward-pod__quarter { fill: none; stroke: var(--good-tint); stroke-width: 6; stroke-linecap: round; }
+.reward-pod__quarter.is-full { stroke: var(--leaf); }
+/* The quarter just filled draws itself in along the ring, once. */
+.reward-pod__quarter.is-fresh { stroke-dasharray: 30; animation: pod-draw 0.45s ease-out both; }
+.reward-pod__reward { width: 22px; height: 22px; display: grid; place-items: center; opacity: 0.35; filter: grayscale(1); }
+.reward-pod__reward svg, .reward-total__icon svg, .reward-bank__flyer svg { width: 100%; height: 100%; display: block; }
+.reward-total { display: inline-flex; align-items: center; gap: 4px; height: 36px; padding: 0 12px 0 7px; border-radius: 18px; background: var(--good-tint); color: var(--leaf-deep); font: 800 20px/1 var(--display); }
+.reward-total__icon { width: 22px; height: 22px; flex: none; }
+.reward-total__roll { display: block; height: 22px; overflow: hidden; min-width: 12px; }
+.reward-total__col { display: block; }
+.reward-total__col span { display: block; height: 22px; line-height: 22px; }
+.reward-bank__flyer { position: absolute; left: 0; top: 0; width: 22px; height: 22px; margin: -11px 0 0 -11px; opacity: 0; pointer-events: none; }
+/* A full pod pays (2 s, after a level-up from the same win): the ring turns gold and the reward colours in
+   and pops, hops into the total, the total bumps and counts up, and the ring empties. All once. */
+.reward-bank.is-paid .reward-pod__quarter { animation: pod-ring 2s ease-out both; }
+.reward-bank.is-paid .reward-pod__quarter.is-fresh { stroke-dasharray: 30; animation: pod-last 2s ease-out both; }
+.reward-bank.is-paid .reward-pod__reward { animation: pod-center 2s ease-out both; }
+.reward-bank.is-paid .reward-bank__flyer { animation: pod-fly 2s linear both; }
+.reward-bank.is-paid .reward-total { animation: pod-bump 2s ease-out both; }
+.reward-bank.is-paid .reward-total__col { animation: pod-roll 2s ease-out both; }
+.reward-bank.is-paid .reward-pod__quarter, .reward-bank.is-paid .reward-pod__reward, .reward-bank.is-paid .reward-bank__flyer, .reward-bank.is-paid .reward-total, .reward-bank.is-paid .reward-total__col { animation-delay: var(--pay-wait, 0ms); }
+@keyframes pod-draw { from { stroke-dashoffset: 30; } to { stroke-dashoffset: 0; } }
+@keyframes pod-ring { 0%, 15% { stroke: var(--leaf); } 20%, 72% { stroke: var(--sun); } 88%, 100% { stroke: var(--good-tint); } }
+@keyframes pod-last { 0% { stroke: var(--leaf); stroke-dashoffset: 30; } 15% { stroke: var(--leaf); stroke-dashoffset: 0; } 20%, 72% { stroke: var(--sun); stroke-dashoffset: 0; } 88%, 100% { stroke: var(--good-tint); stroke-dashoffset: 0; } }
+@keyframes pod-center { 0%, 15% { opacity: 0.35; filter: grayscale(1); transform: none; } 22% { opacity: 1; filter: none; transform: scale(1.5); } 28%, 31% { opacity: 1; filter: none; transform: none; } 40%, 100% { opacity: 0.35; filter: grayscale(1); transform: none; } }
+@keyframes pod-fly {
+  0%, 29% { opacity: 0; translate: var(--fx0) var(--fy0); scale: 1; }
+  30% { opacity: 1; translate: var(--fx0) var(--fy0); }
+  40% { translate: calc((var(--fx0) * 3 + var(--fx1)) / 4) calc(var(--fy0) - 36px); scale: 1.35; }
+  50% { translate: calc((var(--fx0) + var(--fx1) * 3) / 4) calc(var(--fy0) - 28px); scale: 1.2; }
+  60% { opacity: 1; translate: var(--fx1) var(--fy1); scale: 1; }
+  62%, 100% { opacity: 0; translate: var(--fx1) var(--fy1); scale: 0.8; }
+}
+@keyframes pod-bump { 0%, 59% { transform: none; box-shadow: 0 0 0 0 rgba(255, 201, 60, 0); } 64% { transform: scale(1.18); box-shadow: 0 0 0 5px rgba(255, 201, 60, 0.55); } 72% { transform: scale(0.97); } 78%, 100% { transform: none; box-shadow: 0 0 0 0 rgba(255, 201, 60, 0); } }
+@keyframes pod-roll { 0%, 60% { transform: none; } 70%, 100% { transform: translateY(-22px); } }
+
 
 .bed { position: relative; margin: 40px 56px 0; }
 .bed__row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; padding: 0 20px; align-items: end; }

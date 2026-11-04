@@ -14,6 +14,7 @@ import {
   buy,
   canBuyAnything,
   cheapestLeft,
+  friendProgress,
   friendsOf,
   lookOf,
   newFriend,
@@ -123,6 +124,16 @@ describe('robot friends', () => {
     expect(newFriend(p)?.id).toBe('dog');
     p = { ...p, robotFriendsSeen: 1 };
     expect(newFriend(p)).toBeNull();
+  });
+
+  it('shows the way to the next friend: parts bought since the one before', () => {
+    let p = withBolts(1000);
+    expect(friendProgress(p)).toEqual({ need: FRIENDS[0].after, done: 0, coming: 0 });
+    p = buy(p, 'antenna-spring');
+    expect(friendProgress(p)).toEqual({ need: 2, done: 1, coming: 0 });
+    p = { ...buy(buy(p, 'paint-orange'), 'paint-purple'), robotFriendsSeen: 1 };
+    expect(friendProgress(p)).toEqual({ need: FRIENDS[1].after - FRIENDS[0].after, done: 1, coming: 0 });
+    expect(friendProgress({ ...p, robotFriendsSeen: FRIENDS.length })).toBeNull();
   });
 
   it('can all be reached with the parts there are for both robots', () => {

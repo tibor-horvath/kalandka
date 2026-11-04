@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { GAME_IDS, GAMES, LADDER_GAMES, creditSolve, gamesIn, isGameId, nextRound, roundOf, solvedOf, withRound } from './games';
-import { DEFAULT_PROGRESS } from './progress';
+import { GAME_IDS, GAMES, LADDER_GAMES, creditSolve, gamesIn, isGameId, nextRound, roundOf, solvedOf, withRound, type GameId } from './games';
+import { TASKS_PER_REWARD } from './pod';
+import { DEFAULT_PROGRESS, type Progress } from './progress';
 
 describe('game list', () => {
   it('lists every game once, under its own id', () => {
@@ -34,16 +35,16 @@ describe('game counters', () => {
     expect(roundOf(p, 'sort')).toBe(0);
   });
 
-  it('pays a seed in the garden and a bolt in the workshop', () => {
-    const garden = creditSolve(DEFAULT_PROGRESS, 'flash');
-    expect(garden).toMatchObject({ seeds: 1, bolts: 0, flashSolved: 1 });
-    const robot = creditSolve(DEFAULT_PROGRESS, 'code');
-    expect(robot).toMatchObject({ seeds: 0, bolts: 1, codeSolved: 1 });
+  it('fills its world’s reward pod: a seed in the garden and a bolt in the workshop for every four tasks', () => {
+    const solveN = (id: GameId, n: number) => Array.from({ length: n }).reduce<Progress>((p) => creditSolve(p, id), DEFAULT_PROGRESS);
+    expect(solveN('flash', 1)).toMatchObject({ gardenTasks: 1, seeds: 0, robotTasks: 0, bolts: 0, flashSolved: 1 });
+    expect(solveN('flash', TASKS_PER_REWARD)).toMatchObject({ gardenTasks: TASKS_PER_REWARD, seeds: 1, bolts: 0 });
+    expect(solveN('code', TASKS_PER_REWARD * 2 + 1)).toMatchObject({ robotTasks: TASKS_PER_REWARD * 2 + 1, bolts: 2, seeds: 0, codeSolved: 9 });
   });
 
   it('counts Locsolás by its plants', () => {
     const p = creditSolve({ ...DEFAULT_PROGRESS, garden: ['tulipan', 'napraforgo'] }, 'water');
-    expect(p.seeds).toBe(1);
+    expect(p.gardenTasks).toBe(1);
     expect(solvedOf(p, 'water')).toBe(2);
   });
 });

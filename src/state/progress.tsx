@@ -7,8 +7,10 @@ import type { TaskLog } from './taskLog';
 import type { WorldId } from './worlds';
 
 export interface Progress {
-  /** Every seed ever earned (one per solved task); the balance to plant is seeds − seedsSpent. */
+  /** Every seed ever earned (one per full reward pod, see pod.ts); the balance to plant is seeds − seedsSpent. */
   seeds: number;
+  /** Every task solved in the garden world: the clock the Kiskert's plants grow, ripen and get thirsty on. */
+  gardenTasks: number;
   /** Seeds planted in the Kiskert. */
   seedsSpent: number;
   /** The Kiskert's beds (see BEDS in rewards.ts); null is an empty bed. */
@@ -93,8 +95,10 @@ export interface Progress {
   world: WorldId | null;
   /** Csavar has introduced himself. */
   robotWelcomed: boolean;
-  /** Robotműhely's reward: one bolt per solved task, like the garden's seeds. */
+  /** Robotműhely's reward: one bolt per full reward pod, like the garden's seeds. */
   bolts: number;
+  /** Every task solved in the workshop: the clock the robot's battery and oil run on. */
+  robotTasks: number;
   /** Robotút course: which one comes next, and how many were done (five per level). */
   pathRound: number;
   pathSolved: number;
@@ -131,9 +135,9 @@ export interface Progress {
   robot2Announced: boolean;
   /** Robot friends welcomed so far. */
   robotFriendsSeen: number;
-  /** Bolt count the robot's battery is measured from (see the care section in robotParts.ts). */
+  /** Workshop task count the robot's battery is measured from (see the care section in robotParts.ts). */
   robotChargedAt: number;
-  /** Bolt count when the robot was last oiled. */
+  /** Workshop task count when the robot was last oiled. */
   robotOiledAt: number;
   /** Full charges so far; they teach the robot its tricks. */
   robotCharges: number;
@@ -145,6 +149,7 @@ export interface Progress {
 
 export const DEFAULT_PROGRESS: Progress = {
   seeds: 0,
+  gardenTasks: 0,
   seedsSpent: 0,
   beds: [],
   pears: 0,
@@ -199,6 +204,7 @@ export const DEFAULT_PROGRESS: Progress = {
   world: null,
   robotWelcomed: false,
   bolts: 0,
+  robotTasks: 0,
   pathRound: 0,
   pathSolved: 0,
   sortRound: 0,
@@ -241,6 +247,8 @@ export function readProgress(saved: unknown): Progress {
   let p = migrate({ ...DEFAULT_PROGRESS, addLevelsVersion: 1, ...raw });
   // Saves from before the 15-minute default: switch "no limit" to it once; parents can turn it off again.
   if (!raw.limitDefaulted) p = { ...p, screenLimitMin: p.screenLimitMin || DEFAULT_PROGRESS.screenLimitMin, limitDefaulted: true };
+  // Saves from before the reward pod paid one seed or bolt per task, which was the clock then: the clock starts there.
+  if (raw.gardenTasks === undefined) p = { ...p, gardenTasks: p.seeds, robotTasks: p.bolts };
   // Saves from before the stickers: what was already earned goes into the album without a celebration each.
   return raw.stickersSeen ? p : markEarnedSeen(p);
 }

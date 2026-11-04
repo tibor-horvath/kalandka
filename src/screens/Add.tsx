@@ -132,7 +132,7 @@ export function Add({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const [wrong, setWrong] = useState<number | null>(null);
   // The row is the first-try streak; a wrong pick empties it at once, and a full row steps up.
-  const { level, step, win, meter, levelUp } = useLadderRound('add', { missed: wrong !== null });
+  const { level, step, win, meter, goNext } = useLadderRound('add', { missed: wrong !== null });
   const [round] = useState(() => buildAddRound(progress.addRound, level));
   const form = useForm();
   const countingOn = round.level.strategy === 'on';
@@ -356,7 +356,6 @@ export function Add({ onBack }: { onBack: () => void }) {
       }
       meter={meter}
       justSolved={phase === 'solved' && !step?.helped}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -475,7 +474,7 @@ export function Add({ onBack }: { onBack: () => void }) {
           );
         })}
         {phase === 'solved' && (
-          <button type="button" className="big-btn" onClick={levelUp.advance}>
+          <button type="button" className="big-btn" onClick={goNext}>
             Következő <NextIcon />
           </button>
         )}

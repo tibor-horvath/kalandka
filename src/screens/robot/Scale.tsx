@@ -466,7 +466,7 @@ export function Scale({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const [solved, setSolved] = useState(false);
   // The meter fills when the round's last line is over and the win card shows.
-  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('scale', { showStep: solved });
+  const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('scale', { showStep: solved });
   const round = useMemo(() => buildScaleRound(levelIndex, progress.scaleRound), [levelIndex, progress.scaleRound]);
   const { level, tasks } = round;
   const [at, setAt] = useState(0);
@@ -524,7 +524,6 @@ export function Scale({ onBack }: { onBack: () => void }) {
       title="Mérleg"
       meter={meter}
       justSolved={solved}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -549,7 +548,7 @@ export function Scale({ onBack }: { onBack: () => void }) {
       </div>
 
       {solved && (
-        <WinCard onNext={levelUp.advance} />
+        <WinCard onNext={goNext} />
       )}
 
     </GameShell>

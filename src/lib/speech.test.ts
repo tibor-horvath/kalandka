@@ -44,3 +44,11 @@ describe('speak with an online fallback', () => {
     expect(spoken).toEqual(['Melyik játékot választod?']);
   });
 });
+
+describe('pronounce', () => {
+  it('respells matrica so the voice says c, not k, in every form', async () => {
+    const { speech, spoken } = await load(true);
+    speech.speak('Matricáim: egy új matricát kaptál!');
+    expect(spoken).toEqual(['Matritsáim: egy új matritsát kaptál!']);
+  });
+});

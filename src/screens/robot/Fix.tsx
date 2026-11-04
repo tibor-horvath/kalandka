@@ -42,7 +42,7 @@ const cardName = (c: Card) => `${CMD_LABELS[c.cmd]}${c.times > 1 ? `, ${c.times}
 /** Hibavadász: run the broken program, find the card that is to blame, put it right. */
 export function Fix({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
-  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('fix');
+  const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('fix');
   const round = useMemo(() => buildFixRound(levelIndex, progress.fixRound), [levelIndex, progress.fixRound]);
   const [taskIdx, setTaskIdx] = useState(0);
   const [fb, setFb] = useState<FixFeedback>(() => startFeedback(round.level));
@@ -98,7 +98,6 @@ export function Fix({ onBack }: { onBack: () => void }) {
       title="Hibavadász"
       meter={meter}
       justSolved={solved}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -115,7 +114,7 @@ export function Fix({ onBack }: { onBack: () => void }) {
       </Task>
 
       {solved && (
-        <WinCard onNext={levelUp.advance} />
+        <WinCard onNext={goNext} />
       )}
 
     </GameShell>

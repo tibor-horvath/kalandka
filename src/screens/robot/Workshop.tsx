@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ArrivalRing } from '../../components/ArrivalRing';
 import { Modal } from '../../components/Modal';
 import { Bolt } from '../../components/robot';
 import { FriendArt, RobotFigure, SlotIcon, type PartMotion } from '../../components/robotParts';
@@ -10,7 +11,6 @@ import type { Mood, Tone } from '../../lib/types';
 import { useProgress } from '../../state/progress';
 import {
   BATTERY_BARS,
-  FRIENDS,
   PART_SLOTS,
   SECOND_ROBOT_AFTER,
   TRICKS,
@@ -39,7 +39,8 @@ import {
   type Part,
   type PartSlot,
   type RobotIdx,
-  type TrickId
+  type TrickId,
+  friendProgress
 } from '../../state/robotParts';
 
 const ROBOT_NAMES: Record<RobotIdx, string> = { 0: 'Első robot', 1: 'Második robot' };
@@ -73,7 +74,7 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
   const friend = newFriend(progress);
   const robotArrived = !friend && secondRobotNew(progress);
   const welcomed = friendsOf(progress).slice(0, progress.robotFriendsSeen);
-  const nextFriend = FRIENDS[welcomed.length];
+  const toFriend = friendProgress(progress);
   const tricks = tricksOf(progress);
   /** The trick playing now; the count restarts it on every tap. */
   const [trick, setTrick] = useState<{ id: TrickId; n: number } | null>(null);
@@ -360,14 +361,7 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
                 </span>
               </button>
             ))}
-            {nextFriend && (
-              <div className="visitors__next" aria-label={`${nextFriend.after} új alkatrésznél valaki beköltözik`}>
-                <span className="visitors__q" aria-hidden="true">
-                  ?
-                </span>
-                <span className="visitors__when">{nextFriend.after} alkatrésznél</span>
-              </div>
-            )}
+            {toFriend && <ArrivalRing progress={toFriend} unit="part" />}
           </div>
         </div>
 
@@ -435,7 +429,7 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
             })}
           </div>
           <p className="kiskert__note">
-            Minden megoldott feladat a műhelyben egy csavar. Amit megvettél, az a tiéd marad: bármikor visszacserélheted. {boughtCount(progress)} új
+            Minden négy megoldott feladat a műhelyben egy csavar. Amit megvettél, az a tiéd marad: bármikor visszacserélheted. {boughtCount(progress)} új
             alkatrészed van.{robots.length === 1 ? ` ${SECOND_ROBOT_AFTER} új alkatrésznél jön egy második robot.` : ' Minden robotnak saját alkatrészei vannak.'}
           </p>
         </aside>
