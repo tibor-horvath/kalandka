@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/tibor-horvath/kalandka/compare/v1.4.0...v1.4.1) (2026-11-04)
+
+
+### Fixed
+
+* Enhance game transition effects and reward system ([#20](https://github.com/tibor-horvath/kalandka/issues/20)) ([11e93cf](https://github.com/tibor-horvath/kalandka/commit/11e93cf1c5a5c4e8911a415ca27745601724afe9))
+
 ## [1.4.0](https://github.com/tibor-horvath/kalandka/compare/v1.3.0...v1.4.0) (2026-11-03)
 
 
