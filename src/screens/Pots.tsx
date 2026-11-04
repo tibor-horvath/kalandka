@@ -19,7 +19,7 @@ const REVEAL_STEP_S = 0.55;
 /** Cserépbarátok: some pots flower; how many more fill the box? Tapping an empty pot counts it. */
 export function Pots({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
-  const { level, win, meter, levelUp } = useLadderRound('pots');
+  const { level, win, meter, goNext } = useLadderRound('pots');
   const [round] = useState(() => buildPotsRound(progress.potsRound, level));
   const box = boxSize(round.total);
   const cells = potCells(round.total);
@@ -76,7 +76,6 @@ export function Pots({ onBack }: { onBack: () => void }) {
       title="Hány virág kell még?"
       meter={meter}
       justSolved={phase === 'solved'}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -141,7 +140,7 @@ export function Pots({ onBack }: { onBack: () => void }) {
           );
         })}
         {phase === 'solved' && (
-          <button type="button" className="big-btn" onClick={levelUp.advance}>
+          <button type="button" className="big-btn" onClick={goNext}>
             Következő <NextIcon />
           </button>
         )}

@@ -39,7 +39,23 @@
 .visitors__one { transform-origin: 50% 100%; }
 .visitors__next { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-left: auto; }
 .visitors__q { width: 54px; height: 54px; border-radius: 50%; border: 3px dashed #4a5e70; background: rgba(255, 255, 255, 0.7); display: grid; place-items: center; font-size: 28px; font-weight: 800; color: #4a5e70; }
-.visitors__when { font-family: var(--body); font-size: 15px; font-weight: 700; color: #26402c; }
+.visitors__when { display: inline-flex; align-items: center; gap: 4px; font-family: var(--body); font-size: 15px; font-weight: 800; color: #26402c; }
+.visitors__when svg { width: 18px; height: 18px; }
+/* Who comes next: a segment per grown plant (bought part) the arrival needs around the "?"; dotted ones are on
+   the way. The newest fills once; a full ring flashes gold once as the arrival comes. */
+.visitors__badge { position: relative; display: grid; place-items: center; padding: 8px; }
+.visitors__ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.visitors__seg { fill: none; stroke: rgba(255, 255, 255, 0.75); stroke-width: 6; stroke-linecap: round; }
+.visitors__seg.is-done { stroke: var(--leaf-deep); }
+.visitors__seg.is-coming { stroke: var(--leaf-deep); stroke-opacity: 0.35; stroke-dasharray: 2 5; }
+.visitors__seg.is-fresh { stroke-dasharray: 60; animation: arrive-draw 0.5s ease-out both; }
+.visitors__next.is-full .visitors__seg { stroke: var(--sun); stroke-opacity: 1; stroke-dasharray: none; animation: none; }
+.visitors__next.is-full .visitors__q { border-style: solid; border-color: var(--sun); background: #fff4d1; animation: arrive-pop 0.5s cubic-bezier(.3, 1.4, .5, 1); }
+.world--robot .visitors__seg { stroke: #dbe3eb; }
+.world--robot .visitors__seg.is-done { stroke: #138a86; }
+.world--robot .visitors__next.is-full .visitors__seg { stroke: var(--bolt); }
+@keyframes arrive-draw { from { stroke-dashoffset: 60; } to { stroke-dashoffset: 0; } }
+@keyframes arrive-pop { 0% { transform: scale(1); } 45% { transform: scale(1.18); } 100% { transform: none; } }
 
 .kiskert__panel { width: 330px; flex: none; background: var(--paper); border-radius: 32px; box-shadow: 0 6px 0 var(--grass-deep); padding: 20px; display: flex; flex-direction: column; gap: 14px; }
 .kiskert__say { display: flex; align-items: center; gap: 10px; }
@@ -120,7 +136,7 @@
 /* ---------- a new sticker ---------- */
 .sticker-pop { position: absolute; z-index: 7; inset: -1000px; padding: 1000px; background: #fff8e6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; overflow: hidden; }
 .sticker-pop__title { font-size: 64px; font-weight: 800; line-height: 1; color: var(--oops-ink); animation: title-pop 0.5s cubic-bezier(.3, 1.6, .5, 1) 0.55s both; }
-.sticker-pop__stage { position: relative; width: 240px; height: 260px; display: grid; place-items: center; }
+.sticker-pop__stage { position: relative; z-index: 1; width: 240px; height: 260px; display: grid; place-items: center; }
 .sticker-pop__flyer { position: relative; width: 220px; height: 220px; border-radius: 50%; overflow: hidden; opacity: 0; }
 .sticker-pop__flyer .sticker { width: 220px; height: 220px; border-width: 10px; box-shadow: none; }
 .sticker-pop__flyer .sticker__mark { font-size: 66px; }
@@ -186,6 +202,7 @@
 .stage--portrait .visitors { height: 80px; margin-top: 12px; }
 .stage--portrait .visitors .visitor-art { width: 84px; height: 70px; }
 .stage--portrait .visitors__q { width: 40px; height: 40px; font-size: 20px; }
+.stage--portrait .visitors__badge { padding: 6px; }
 .stage--portrait .kiskert__panel { width: auto; padding: 14px; gap: 10px; border-radius: 24px; }
 .stage--portrait .plant-options { flex-direction: row; gap: 8px; }
 .stage--portrait .plant-option { flex: 1; min-width: 0; }
@@ -208,6 +225,9 @@
 .stage--landscape .visitors .visitor-art { width: 52px; height: 43px; }
 .stage--landscape .visitors__q { width: 34px; height: 34px; font-size: 18px; }
 .stage--landscape .visitors__when { font-size: 12px; }
+.stage--landscape .visitors__when svg { width: 13px; height: 13px; }
+.stage--landscape .visitors__badge { padding: 5px; }
+.stage--landscape .visitors__seg { stroke-width: 7; }
 .stage--landscape .kiskert__panel { width: 250px; padding: 10px; gap: 6px; border-radius: 20px; }
 .stage--landscape .kiskert__say .guide__csepi { display: none; }
 .stage--landscape .kiskert__say .bubble { font-size: 16px; padding: 8px 12px; }

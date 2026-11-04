@@ -72,7 +72,7 @@ function MissMark() {
 /** Mintagép: carry on the pattern on the belt, or find the part that does not fit. */
 export function Seq({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
-  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('seq');
+  const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('seq');
   const round = useMemo(() => buildSeqRound(levelIndex, progress.seqRound), [levelIndex, progress.seqRound]);
   const first = progress.seqSolved === 0;
   const [taskIdx, setTaskIdx] = useState(0);
@@ -124,7 +124,6 @@ export function Seq({ onBack }: { onBack: () => void }) {
       title={round.level.kind === 'fix' ? 'Hibavadász' : 'Mintagép'}
       meter={meter}
       justSolved={solved}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -144,7 +143,7 @@ export function Seq({ onBack }: { onBack: () => void }) {
       <Task key={taskIdx} level={round.level} task={round.tasks[taskIdx]} n={taskIdx} solved={solved} say={say} onDone={done} later={later} />
 
       {solved && (
-        <WinCard onNext={levelUp.advance} />
+        <WinCard onNext={goNext} />
       )}
 
     </GameShell>

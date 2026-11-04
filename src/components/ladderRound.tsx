@@ -4,8 +4,6 @@ import { creditSolve, nextRound, type LadderGame } from '../state/games';
 import { EASIER_SPEECH, LADDER_RULES, afterSolve, ladderMeter, ladderOf, withLadder, type LadderStep } from '../state/ladder';
 import { useProgress, type Progress } from '../state/progress';
 import { logTask } from '../state/taskLog';
-import { useLevelUp } from './LevelMeter';
-import { Bolt } from './robot';
 import { NextIcon } from './ui';
 
 interface RoundOptions {
@@ -25,7 +23,7 @@ interface WinOptions {
 /**
  * One task of a levelled game. The task keeps the level its ladder had when it started, even after its
  * win steps up or down; the win is counted once (a seed or a bolt, the task log and the new ladder),
- * and "Következő" moves on, through the level-up card when the row is full. App keys the screen by round.
+ * and "Következő" moves on; a full row plays its level-up in the meter. App keys the screen by round.
  */
 export function useLadderRound(game: LadderGame, { showStep = true, missed = false }: RoundOptions = {}) {
   const { progress, update } = useProgress();
@@ -45,22 +43,19 @@ export function useLadderRound(game: LadderGame, { showStep = true, missed = fal
     return s;
   };
 
-  const next = () => update((p) => nextRound(p, game));
+  /** "Következő": the next round (a level-up already played in the meter when the win came). */
+  const goNext = () => update((p) => nextRound(p, game));
   const meter = ladderMeter(missed && !step ? { ...start, streak: 0 } : start, rule, showStep ? step : null);
-  const levelUp = useLevelUp(meter, next);
 
-  return { level: start.level, start, step, win, meter, levelUp };
+  return { level: start.level, start, step, win, meter, goNext };
 }
 
-/** The workshop's win card over the machine: the bolt it paid, and the way on to the next round. */
+/** The workshop's win card over the machine and the way on to the next round; the bolt it earned shows in the meter's reward pod. */
 export function WinCard({ title = 'Kész!', next = 'Következő kör', className = 'sort-win', onNext }: { title?: string; next?: string; className?: string; onNext: () => void }) {
   return (
     <div className={`path-win ${className}`.trim()} role="status">
       <span className="path-win__rays" aria-hidden="true" />
       <span className="path-win__title">{title}</span>
-      <span className="path-win__reward">
-        +1 <Bolt size={34} /> csavar
-      </span>
       <button type="button" className="big-btn big-btn--robot" onClick={onNext}>
         {next} <NextIcon />
       </button>

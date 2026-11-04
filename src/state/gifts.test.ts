@@ -20,7 +20,7 @@ import {
 /** A garden where every visitor has been welcomed, with these treats on the shelf. */
 const shelf = (pantry: Progress['pantry'], extra: Partial<Progress> = {}): Progress => {
   const beds = Array.from({ length: 20 }, () => ({ kind: 'flower' as const, at: 0 }));
-  return { ...DEFAULT_PROGRESS, seeds: 100, beds, visitorsSeen: VISITORS.length, pantry, ...extra };
+  return { ...DEFAULT_PROGRESS, seeds: 100, gardenTasks: 100, beds, visitorsSeen: VISITORS.length, pantry, ...extra };
 };
 
 describe('visitor gifts', () => {

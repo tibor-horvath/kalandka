@@ -14,8 +14,9 @@ import { GAMES, type GameId } from './games';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';
 import { ladderOf } from './ladder';
+import { creditTasks, rewardFor } from './pod';
 
-// The reward loop: every solved task earns a seed; seeds are planted in the child's own garden
+// The reward loop: every four solved tasks fill a pod that pays a seed (see pod.ts); seeds are planted in the child's own garden
 // (Kiskert); plants grow as the child keeps playing; a grown garden brings visitors; picked fruit
 // (and, once the garden is full, spare seeds) is made into treats for the pantry shelf; and each new
 // skill earns a sticker for the album. Grown bushes and trees also ask for care (see below), but
@@ -28,7 +29,7 @@ export interface PlantOption {
   id: PlantKind;
   name: string;
   cost: number;
-  /** Solved tasks (seeds earned) after planting until it is grown: the bigger the plant, the longer it takes. */
+  /** Solved tasks after planting until it is grown: the bigger the plant, the longer it takes. */
   grows: number;
 }
 
@@ -47,9 +48,9 @@ export const BEDS = PLOT_BEDS * PLOTS;
 
 export interface Bed {
   kind: PlantKind;
-  /** Seeds earned in total when it was planted; growth counts the seeds earned since. */
+  /** Garden tasks solved in total when it was planted; growth counts the tasks solved since. */
   at: number;
-  /** Seeds earned in total when it was last watered; none yet: care counts from when it grew. */
+  /** Garden tasks solved in total when it was last watered; none yet: care counts from when it grew. */
   watered?: number;
   /** Fruit picked since it was last watered (or grew). */
   picked?: number;
@@ -69,17 +70,17 @@ export function growAfter(kind: PlantKind): number {
   return PLANT_OPTIONS.find((o) => o.id === kind)!.grows;
 }
 
-/** 0 … growAfter(kind): how far a planting has grown. */
-export function growthOf(bed: Bed, seeds: number): number {
-  return Math.min(growAfter(bed.kind), Math.max(0, seeds - bed.at));
+/** 0 … growAfter(kind): how far a planting has grown, `tasks` being the garden's task clock. */
+export function growthOf(bed: Bed, tasks: number): number {
+  return Math.min(growAfter(bed.kind), Math.max(0, tasks - bed.at));
 }
 
-export function isGrown(bed: Bed, seeds: number): boolean {
-  return growthOf(bed, seeds) >= growAfter(bed.kind);
+export function isGrown(bed: Bed, tasks: number): boolean {
+  return growthOf(bed, tasks) >= growAfter(bed.kind);
 }
 
 export function grownCount(p: Progress): number {
-  return p.beds.filter((b): b is Bed => !!b && isGrown(b, p.seeds)).length;
+  return p.beds.filter((b): b is Bed => !!b && isGrown(b, p.gardenTasks)).length;
 }
 
 /** Beds the child can plant in: the first plot, and the second too once the first is planted full. */
@@ -108,7 +109,7 @@ export function plant(p: Progress, i: number, kind: PlantKind): Progress {
   if (!canPlant(p, i, kind)) return p;
   const cost = PLANT_OPTIONS.find((o) => o.id === kind)!.cost;
   const beds = Array.from({ length: BEDS }, (_, k) => bedAt(p, k));
-  beds[i] = { kind, at: p.seeds };
+  beds[i] = { kind, at: p.gardenTasks };
   return { ...p, beds, seedsSpent: p.seedsSpent + cost };
 }
 
@@ -136,19 +137,19 @@ export function fruitName(kind: PlantKind): string {
   return kind === 'tree' ? 'körte' : 'áfonya';
 }
 
-/** The seed count care is measured from: the last watering, or when it grew. */
+/** The task count care is measured from: the last watering, or when it grew. */
 function caredAt(bed: Bed): number {
   return bed.watered ?? bed.at + growAfter(bed.kind);
 }
 
-export function isThirsty(bed: Bed, seeds: number): boolean {
-  return FRUIT_MAX[bed.kind] > 0 && isGrown(bed, seeds) && seeds - caredAt(bed) >= THIRSTY_AFTER;
+export function isThirsty(bed: Bed, tasks: number): boolean {
+  return FRUIT_MAX[bed.kind] > 0 && isGrown(bed, tasks) && tasks - caredAt(bed) >= THIRSTY_AFTER;
 }
 
 /** Fruit hanging on the plant, ready to pick. */
-export function ripeFruit(bed: Bed, seeds: number): number {
-  if (!isGrown(bed, seeds)) return 0;
-  const ripened = Math.min(FRUIT_MAX[bed.kind], THIRSTY_AFTER, Math.max(0, seeds - caredAt(bed)));
+export function ripeFruit(bed: Bed, tasks: number): number {
+  if (!isGrown(bed, tasks)) return 0;
+  const ripened = Math.min(FRUIT_MAX[bed.kind], THIRSTY_AFTER, Math.max(0, tasks - caredAt(bed)));
   return Math.max(0, ripened - pickedFruit(bed));
 }
 
@@ -158,11 +159,11 @@ export function pickedFruit(bed: Bed): number {
 }
 
 export function thirstyBeds(p: Progress): number[] {
-  return p.beds.flatMap((b, i) => (b && isThirsty(b, p.seeds) ? [i] : []));
+  return p.beds.flatMap((b, i) => (b && isThirsty(b, p.gardenTasks) ? [i] : []));
 }
 
 export function ripeTotal(p: Progress): number {
-  return p.beds.reduce((n, b) => n + (b ? ripeFruit(b, p.seeds) : 0), 0);
+  return p.beds.reduce((n, b) => n + (b ? ripeFruit(b, p.gardenTasks) : 0), 0);
 }
 
 function withBed(p: Progress, i: number, bed: Bed): (Bed | null)[] {
@@ -178,16 +179,16 @@ function addFruit(p: Progress, kind: PlantKind, n: number): Progress {
 /** Picks one ripe fruit into the basket; unchanged when there is none. */
 export function pickFruit(p: Progress, i: number): Progress {
   const bed = bedAt(p, i);
-  if (!bed || ripeFruit(bed, p.seeds) === 0) return p;
+  if (!bed || ripeFruit(bed, p.gardenTasks) === 0) return p;
   return addFruit({ ...p, beds: withBed(p, i, { ...bed, picked: pickedFruit(bed) + 1 }) }, bed.kind, 1);
 }
 
 /** Waters a thirsty plant; fruit still on it goes into the basket. Unchanged when it is not thirsty. */
 export function water(p: Progress, i: number): Progress {
   const bed = bedAt(p, i);
-  if (!bed || !isThirsty(bed, p.seeds)) return p;
-  const left = ripeFruit(bed, p.seeds);
-  return addFruit({ ...p, beds: withBed(p, i, { ...bed, watered: p.seeds, picked: 0 }) }, bed.kind, left);
+  if (!bed || !isThirsty(bed, p.gardenTasks)) return p;
+  const left = ripeFruit(bed, p.gardenTasks);
+  return addFruit({ ...p, beds: withBed(p, i, { ...bed, watered: p.gardenTasks, picked: 0 }) }, bed.kind, left);
 }
 
 /** Waters every thirsty plant at once (the watering can). */
@@ -296,6 +297,27 @@ export function visitorsOf(p: Progress): Visitor[] {
 /** The next visitor that arrived but has not been welcomed yet. */
 export function newVisitor(p: Progress): Visitor | null {
   return visitorsOf(p)[p.visitorsSeen] ?? null;
+}
+
+/** How far along the way to a visitor is: `done` of `need` since the one before, and `coming` on the way. */
+export interface ArrivalProgress {
+  need: number;
+  done: number;
+  coming: number;
+}
+
+/**
+ * The way to the next visitor still to welcome: grown plants since the visitor before it, and plants planted but
+ * still growing, which count once they grow. Null once every visitor has come.
+ */
+export function visitorProgress(p: Progress): ArrivalProgress | null {
+  const next = VISITORS[p.visitorsSeen];
+  if (!next) return null;
+  const from = VISITORS[p.visitorsSeen - 1]?.after ?? 0;
+  const need = next.after - from;
+  const done = Math.min(need, Math.max(0, grownCount(p) - from));
+  const growing = p.beds.filter((b) => !!b && !isGrown(b, p.gardenTasks)).length;
+  return { need, done, coming: Math.min(growing, need - done) };
 }
 
 /** Visitors already welcomed, in order of arrival. */
@@ -516,20 +538,26 @@ export function pagesDoneIn(p: Progress, world: WorldId): number {
   return p.pagesDone.filter((key) => STICKER_GAMES.find((g) => g.id === key.split('.')[0])?.world === world).length;
 }
 
-/** What a finished page of `tasks` tasks pays: a seed or a bolt for each, like a solved task in its world's games. */
-export function pageReward(key: string, tasks: number): { seeds: number; bolts: number } {
-  const world = STICKER_GAMES.find((g) => g.id === key.split('.')[0])?.world;
-  return { seeds: world === 'garden' ? tasks : 0, bolts: world === 'robot' ? tasks : 0 };
+function pageWorld(key: string): WorldId | undefined {
+  return STICKER_GAMES.find((g) => g.id === key.split('.')[0])?.world;
+}
+
+/** What a finished page of `tasks` tasks pays now: its tasks fill the reward pod like solved tasks in its world's games. */
+export function pageReward(p: Progress, key: string, tasks: number): { seeds: number; bolts: number } {
+  const world = pageWorld(key);
+  const pay = world ? rewardFor(p, world, tasks) : 0;
+  return { seeds: world === 'garden' ? pay : 0, bolts: world === 'robot' ? pay : 0 };
 }
 
 /**
  * A grown-up saw the page finished. It counts once, for finishing, never for how many answers were right,
- * and it changes no level. It pays `pageReward` for its `tasks`. There is no taking it back: a sticker that has been stuck in stays.
+ * and it changes no level. Its `tasks` fill the reward pod (see `pageReward`). There is no taking it back: a sticker that has been stuck in stays.
  */
 export function markPageDone(p: Progress, key: string, tasks: number): Progress {
   if (p.pagesDone.includes(key)) return p;
-  const pay = pageReward(key, tasks);
-  return { ...p, pagesDone: [...p.pagesDone, key], seeds: p.seeds + pay.seeds, bolts: p.bolts + pay.bolts };
+  const world = pageWorld(key);
+  const done = { ...p, pagesDone: [...p.pagesDone, key] };
+  return world ? creditTasks(done, world, tasks) : done;
 }
 
 /** Feladatlapok stickers: pages done in a world. */

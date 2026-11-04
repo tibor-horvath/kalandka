@@ -1,3 +1,4 @@
+import { creditTasks } from './pod';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';
 
@@ -77,9 +78,9 @@ export function nextRound(p: Progress, id: GameId): Progress {
   return withRound(p, id, roundOf(p, id) + 1);
 }
 
-/** A solved task: the game's count, and its world's reward (a seed in the garden, a bolt in the workshop). */
+/** A solved task: the game's count, and a quarter of its world's reward pod (see pod.ts). */
 export function creditSolve(p: Progress, id: GameId): Progress {
   const { world, solvedKey } = GAMES[id];
-  const paid = world === 'robot' ? { ...p, bolts: p.bolts + 1 } : { ...p, seeds: p.seeds + 1 };
+  const paid = creditTasks(p, world);
   return solvedKey ? { ...paid, [solvedKey]: paid[solvedKey] + 1 } : paid;
 }

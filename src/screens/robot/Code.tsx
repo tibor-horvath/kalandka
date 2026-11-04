@@ -77,7 +77,7 @@ function KeyArrow() {
 /** Kódzár: read the code on the lock, press the keypad, and the crate opens. */
 export function Code({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
-  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('code');
+  const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('code');
   const round = useMemo(() => buildCodeRound(levelIndex, progress.codeRound), [levelIndex, progress.codeRound]);
   const first = progress.codeSolved === 0;
   const [taskIdx, setTaskIdx] = useState(0);
@@ -132,7 +132,6 @@ export function Code({ onBack }: { onBack: () => void }) {
       title="Kódzár"
       meter={meter}
       justSolved={solved}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -152,7 +151,7 @@ export function Code({ onBack }: { onBack: () => void }) {
       <Task key={taskIdx} level={round.level} task={round.tasks[taskIdx]} n={taskIdx} solved={solved} say={say} noteHelp={noteHelp} onDone={done} later={later} />
 
       {solved && (
-        <WinCard onNext={levelUp.advance} />
+        <WinCard onNext={goNext} />
       )}
 
     </GameShell>

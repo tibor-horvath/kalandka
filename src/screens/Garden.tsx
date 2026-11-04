@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { ArrivalRing } from '../components/ArrivalRing';
 import { Seed } from '../components/art';
 import { BerryIcon, CanIcon, DecorArt, DropIcon, GardenPlant, PearIcon, PlantIcon, TreatArt, VisitorArt } from '../components/garden';
 import { Modal, useModal } from '../components/Modal';
@@ -54,7 +55,8 @@ import {
   type PlantKind,
   type Recipe,
   type TreatId,
-  type VisitorId
+  type VisitorId,
+  visitorProgress
 } from '../state/rewards';
 
 interface Say {
@@ -96,7 +98,7 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
   const [freshDecor, setFreshDecor] = useState<DecorId | null>(null);
   const givenDecor = useRef<DecorId | null>(null);
   const [done, setDone] = useState(false);
-  const nextVisitor = VISITORS[welcomed.length];
+  const toVisitor = visitorProgress(progress);
 
   function opening(): Say {
     if (thirsty.length > 0) {
@@ -171,10 +173,10 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
       else tell(opening());
       return;
     }
-    const left = growAfter(bed.kind) - growthOf(bed, progress.seeds);
+    const left = growAfter(bed.kind) - growthOf(bed, progress.gardenTasks);
     const name = PLANT_OPTIONS.find((o) => o.id === bed.kind)!.name.toLowerCase();
     // Ripe fruit first, one per tap, counted aloud; then a thirsty plant gets its water.
-    const ripe = ripeFruit(bed, progress.seeds);
+    const ripe = ripeFruit(bed, progress.gardenTasks);
     if (ripe > 0) {
       const count = pickedFruit(bed) + 1;
       const word = capitalize(numberCount(count));
@@ -184,12 +186,12 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
         tell({ text: `${word}!`, speech: `${word}!`, mood: 'cheer', tone: 'plain' });
       } else {
         const all = `${word}! ${capitalize(numberAttr(count))} ${fruitName(bed.kind)} a kosárban.`;
-        const thirst = isThirsty(bed, progress.seeds) ? ' Most locsold meg, és újra terem!' : '';
+        const thirst = isThirsty(bed, progress.gardenTasks) ? ' Most locsold meg, és újra terem!' : '';
         tell({ text: all + thirst, speech: all + thirst, mood: 'cheer', tone: 'good' });
       }
       return;
     }
-    if (isThirsty(bed, progress.seeds)) {
+    if (isThirsty(bed, progress.gardenTasks)) {
       chime();
       update((p) => water(p, i));
       tell({ text: 'Köszöni! Megint teremni fog.', speech: `Megöntözted! A ${name} köszöni. Ha tovább játszol, megint terem.`, mood: 'cheer', tone: 'good' });
@@ -326,11 +328,11 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
             {Array.from({ length: PLOT_BEDS }, (_, k) => {
               const i = plot * PLOT_BEDS + k;
               const bed = bedAt(progress, i);
-              const growth = bed ? growthOf(bed, progress.seeds) : 0;
+              const growth = bed ? growthOf(bed, progress.gardenTasks) : 0;
               const needs = bed ? growAfter(bed.kind) : 0;
               const grown = !!bed && growth >= needs;
-              const dry = !!bed && isThirsty(bed, progress.seeds);
-              const ripe = bed ? ripeFruit(bed, progress.seeds) : 0;
+              const dry = !!bed && isThirsty(bed, progress.gardenTasks);
+              const ripe = bed ? ripeFruit(bed, progress.gardenTasks) : 0;
               const name = bed ? PLANT_OPTIONS.find((o) => o.id === bed.kind)!.name : '';
               const care = `${ripe > 0 ? `, ${ripe} érett ${fruitName(bed!.kind)}` : ''}${dry ? ', szomjas' : ''}`;
               const label = !bed
@@ -416,14 +418,7 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
                 </span>
               </button>
             ))}
-            {nextVisitor && (
-              <div className="visitors__next" aria-label={`${nextVisitor.after} kinőtt növénynél valaki beköltözik`}>
-                <span className="visitors__q" aria-hidden="true">
-                  ?
-                </span>
-                <span className="visitors__when">{nextVisitor.after} növénynél</span>
-              </div>
-            )}
+            {toVisitor && <ArrivalRing progress={toVisitor} unit="plant" />}
           </div>
         </div>
 

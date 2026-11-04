@@ -44,7 +44,7 @@ function PartPic({ part, size }: { part: Part; size: number }) {
 /** Válogatógép: sort the parts coming down the belt into the right boxes, or find the odd one out. */
 export function Sort({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
-  const { level: levelIndex, win: solve, meter, levelUp } = useLadderRound('sort');
+  const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('sort');
   const round = useMemo(() => buildRound(levelIndex, progress.sortRound), [levelIndex, progress.sortRound]);
   const [fb, setFb] = useState<SortFeedback>(() => startFeedback(round));
   const [solved, setSolved] = useState(false);
@@ -79,7 +79,6 @@ export function Sort({ onBack }: { onBack: () => void }) {
       title={isOdd(round) ? 'Kakukktojás' : 'Válogatógép'}
       meter={meter}
       justSolved={solved}
-      levelUp={levelUp}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -96,7 +95,7 @@ export function Sort({ onBack }: { onBack: () => void }) {
         <Belt round={round} solved={solved} say={say} onWin={win} />
       )}
 
-      {solved && <WinCard onNext={levelUp.advance} />}
+      {solved && <WinCard onNext={goNext} />}
 
     </GameShell>
   );
