@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/tibor-horvath/kalandka/compare/v1.4.1...v1.4.2) (2026-11-04)
+
+
+### Fixed
+
+* prevent interaction with underlying elements ([#23](https://github.com/tibor-horvath/kalandka/issues/23)) ([d7f28d9](https://github.com/tibor-horvath/kalandka/commit/d7f28d9de4253cbde4c4864a9529530c7175a04d))
+
 ## [1.4.1](https://github.com/tibor-horvath/kalandka/compare/v1.4.0...v1.4.1) (2026-11-04)
 
 
