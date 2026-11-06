@@ -29,7 +29,8 @@ export default defineConfig(({ mode }) => {
           // The installed app opens on the game; / is the landing page (src/App.tsx). The id stays '/', so existing installs keep their identity.
           start_url: '/jatek',
           display: 'fullscreen',
-          orientation: 'landscape',
+          // Phones and tablets work either way up (an upright tablet gets the portrait layout, see components/Stage.tsx).
+          orientation: 'any',
           background_color: '#DDF0FA',
           theme_color: '#FFC93C',
           categories: ['education', 'games', 'kids']

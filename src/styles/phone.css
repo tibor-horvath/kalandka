@@ -2,7 +2,8 @@
  * Phone layouts. The Stage switches to a 390 px-wide portrait or 390 px-tall landscape stage on phones
  * (.stage--portrait / .stage--landscape, both .is-phone): every screen, the games, the parents'
  * gate and area and the rest screen. Fixed-size drawings (seed beds, flower beds, the honey trail)
- * scale into the room left for them through FitBox.
+ * scale into the room left for them through FitBox. An upright tablet gets the portrait layout too,
+ * on a wider stage (see the end of this file).
  * Touch targets stay at least 44 px; the game's main choices stay large.
  */
 
@@ -583,3 +584,24 @@
 /* The right-answer tick badge, sized for small phone tiles (the choice art rules above would stretch its svg). */
 .is-phone .choice .done-tick { width: 32px; height: 32px; top: -10px; right: -10px; box-shadow: 0 2px 0 var(--leaf-deep); }
 .is-phone .choice .done-tick svg { width: 20px !important; height: 20px !important; max-width: none !important; }
+
+/*
+ * Upright tablet: the portrait layout on a wider stage (.stage--tall-tablet, about 560–720 px wide,
+ * drawn 1.4× larger). Most screens stretch to the width on their own; these use the extra room.
+ */
+.stage--tall-tablet .kids { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stage--tall-tablet .kbeds { grid-template-rows: repeat(2, minmax(0, 190px)); gap: 14px 8px; }
+.stage--tall-tablet .cloud-btn > svg { width: 220px; }
+.stage--tall-tablet .screen--water:has(.ten-frame--double) .sky-tools .cloud-btn > svg { width: 170px; }
+.stage--tall-tablet .can-btn__can svg { width: 100px; }
+.stage--tall-tablet .plant svg { max-height: 300px; }
+.stage--tall-tablet .planter > svg { width: 150px; }
+.stage--tall-tablet .bed__row { gap: 8px; padding: 0 12px; }
+.stage--tall-tablet .bed__slot { height: 140px; }
+.stage--tall-tablet .bed__slot svg { max-width: 84px; }
+.stage--tall-tablet .bed__question { max-width: 80px; height: 110px; border-radius: 20px; font-size: 60px; }
+.stage--tall-tablet .bed__soil { height: 32px; border-radius: 16px; margin-top: -8px; }
+.stage--tall-tablet .screen--patterns .choice { height: 170px; font-size: 20px; }
+.stage--tall-tablet .screen--patterns .choice svg { width: 80px; }
+.stage--tall-tablet .pa-games__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stage--tall-tablet .pa-avatars { grid-template-columns: repeat(6, minmax(0, 1fr)); }
