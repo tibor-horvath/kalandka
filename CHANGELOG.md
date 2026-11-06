@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.4](https://github.com/tibor-horvath/kalandka/compare/v1.4.3...v1.4.4) (2026-11-06)
+
+
+### Fixed
+
+* enhance print page layout and functionality with new shelf selec… ([#28](https://github.com/tibor-horvath/kalandka/issues/28)) ([2decaad](https://github.com/tibor-horvath/kalandka/commit/2decaad3a1c336579e02e9b0d0511e6a3534dde0))
+* update printout logic to allow new tasks after marking pages done ([#27](https://github.com/tibor-horvath/kalandka/issues/27)) ([4d5e15d](https://github.com/tibor-horvath/kalandka/commit/4d5e15d965f86809066d8a34b9abe4104d0c0d9f))
+
 ## [1.4.3](https://github.com/tibor-horvath/kalandka/compare/v1.4.2...v1.4.3) (2026-11-06)
 
 
