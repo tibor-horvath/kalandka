@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.3](https://github.com/tibor-horvath/kalandka/compare/v1.4.2...v1.4.3) (2026-11-06)
+
+
+### Fixed
+
+* improve portrait layout for tablets and adjust PWA orientation ([#25](https://github.com/tibor-horvath/kalandka/issues/25)) ([83dd0a0](https://github.com/tibor-horvath/kalandka/commit/83dd0a08c04b22260ebb7e3a03b591c6e8083a03))
+
 ## [1.4.2](https://github.com/tibor-horvath/kalandka/compare/v1.4.1...v1.4.2) (2026-11-04)
 
 
