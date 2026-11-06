@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0](https://github.com/tibor-horvath/kalandka/compare/v1.4.5...v1.5.0) (2026-11-06)
+
+
+### Added
+
+* enhance ParentArea with update notifications and improved layout ([#34](https://github.com/tibor-horvath/kalandka/issues/34)) ([3b2de14](https://github.com/tibor-horvath/kalandka/commit/3b2de14e30411e67b588963f8bf9114ae85c4c9b))
+* implement sticker album feature and enhance UI elements across … ([#32](https://github.com/tibor-horvath/kalandka/issues/32)) ([8c0f487](https://github.com/tibor-horvath/kalandka/commit/8c0f48704709dc370b53ecce677e87d73502f5ac))
+
 ## [1.4.5](https://github.com/tibor-horvath/kalandka/compare/v1.4.4...v1.4.5) (2026-11-06)
 
 
