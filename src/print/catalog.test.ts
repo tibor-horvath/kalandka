@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { GAME_IDS } from '../state/games';
 import { DEFAULT_PROGRESS } from '../state/progress';
 import { markPageDone, pagesDoneIn } from '../state/rewards';
-import { PRINT_SHEETS, buildPages, openLink, pageRef, sheetFor, tasksPerPage } from './catalog';
+import { PRINT_SHEETS, buildPages, nextPrintout, openLink, pageRef, sheetFor, tasksPerPage, type PrintChoice } from './catalog';
 import { linkHash, pageKey, readLink, readScanned } from './link';
 import REVISIONS from './revisions.json';
 import { DENSITIES, MAX_PAGES } from './sheet';
@@ -53,6 +53,20 @@ describe('printable sheets', () => {
         expect(() => buildPages(s, { level, density: 'many', pages: 5, batch: 9_999 }), `${s.id} ${level}`).not.toThrow();
       }
     }
+  });
+
+  it('moves on to new tasks once every page of the printout is marked done, so the next one counts again', () => {
+    const s = sheetFor('water');
+    const choice: PrintChoice = { level: 0, density: 'normal', pages: 2, batch: 7 };
+    const key = (c: PrintChoice, page: number) => pageKey(pageRef(s, c, page));
+    expect(nextPrintout(s, choice, [])).toBe(choice);
+    // A page still to do keeps the printout, so its answers stay at hand.
+    expect(nextPrintout(s, choice, [key(choice, 0)])).toBe(choice);
+    const next = nextPrintout(s, choice, [key(choice, 0), key(choice, 1)]);
+    expect(next).toEqual({ ...choice, batch: 8 });
+    expect(buildPages(s, next)).not.toEqual(buildPages(s, choice));
+    const progress = [0, 1].reduce((p, page) => markPageDone(p, key(choice, page), 1), DEFAULT_PROGRESS);
+    expect(markPageDone(progress, key(next, 0), 1)).not.toBe(progress);
   });
 
   it('starts a new child on the first level', () => {
