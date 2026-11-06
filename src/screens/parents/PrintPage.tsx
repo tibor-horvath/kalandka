@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { createPortal } from 'react-dom';
 import { Csepi } from '../../components/Csepi';
 import { Csavar, Rover } from '../../components/robot';
-import { MAX_PAGES, PRINT_SHEETS, buildPages, pageRef, saveChoice, savedChoice, sheetFor, tasksPerPage, type PrintChoice } from '../../print/catalog';
+import { MAX_PAGES, PRINT_SHEETS, buildPages, nextPrintout, pageRef, saveChoice, savedChoice, sheetFor, tasksPerPage, type PrintChoice } from '../../print/catalog';
 import { EXTRAS, extraFor, type ExtraId } from '../../print/extras';
 import { linkUrl, pageKey } from '../../print/link';
 import { DENSITIES, OtherAnswers, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
@@ -222,9 +222,14 @@ function GameSheet({ id, kidId, guestAge, canMark, onBack, onExtra }: { id: Prin
   const { profiles } = useProfiles();
   const s = sheetFor(id);
   const young = (guestAge ?? profiles.kids.find((k) => k.id === kidId)?.age) === '5';
-  const [choice, setChoice] = useState<PrintChoice>(
-    () => savedChoice(kidId, id) ?? { level: s.current(progress), density: young ? 'big' : 'normal', pages: 1, batch: Math.floor(Math.random() * 10_000) }
-  );
+  const [choice, setChoice] = useState<PrintChoice>(() => {
+    const saved = savedChoice(kidId, id);
+    if (!saved) return { level: s.current(progress), density: young ? 'big' : 'normal', pages: 1, batch: Math.floor(Math.random() * 10_000) };
+    // A printout marked done gives way to new tasks, kept so the answers match the sheet printed next.
+    const next = nextPrintout(s, saved, progress.pagesDone);
+    if (next !== saved) saveChoice(kidId, id, next);
+    return next;
+  });
   const [answers, setAnswers] = useState(false);
   const [printing, setPrinting] = usePrinting(s.game);
 

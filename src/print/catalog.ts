@@ -1,5 +1,5 @@
 import { GARDEN_SHEETS } from './garden';
-import type { PageRef, ReadLink } from './link';
+import { pageKey, type PageRef, type ReadLink } from './link';
 import { readJson, removeKeys, writeKey } from '../lib/storage';
 import { ROBOT_SHEETS } from './robot';
 import { MAX_PAGES, type Density, type Grid, type PrintId, type PrintSpec } from './sheet';
@@ -35,6 +35,17 @@ export function buildPages(s: PrintSpec<unknown>, c: PrintChoice): { grid: Grid;
 /** The link printed on page `page` (from 0) of a printout. */
 export function pageRef(s: PrintSpec<unknown>, c: PrintChoice, page: number): PageRef {
   return { id: s.id, rev: s.rev, level: c.level, density: c.density, batch: c.batch, page };
+}
+
+/**
+ * The printout to show when a sheet opens: once every page of `c` is marked done, the next batch,
+ * so the child gets new tasks without "Új feladatok" and the new pages count again. `done` is `Progress.pagesDone`.
+ */
+export function nextPrintout(s: PrintSpec<unknown>, c: PrintChoice, done: string[]): PrintChoice {
+  const finished = (x: PrintChoice) => Array.from({ length: x.pages }, (_, i) => pageKey(pageRef(s, x, i))).every((k) => done.includes(k));
+  let next = c;
+  while (finished(next)) next = { ...next, batch: next.batch + 1 };
+  return next;
 }
 
 export type OpenedLink = { kind: 'page'; spec: PrintSpec<unknown>; ref: PageRef; tasks: unknown[] } | { kind: 'older' } | { kind: 'newer' } | { kind: 'bad' };
