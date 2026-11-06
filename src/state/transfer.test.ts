@@ -7,7 +7,7 @@ import { PIECE_BYTES, collect, isComplete, merge, pack, toPieces, unpack, type C
 
 const family = () => {
   let s = addKid(fromProgress(DEFAULT_PROGRESS, 'a'), { name: 'Lili', avatar: 'ladybug', age: '5' }, 'b');
-  s = applyUpdate(s, 'a', (p) => ({ ...p, seeds: 42, addLevel: 7, garden: ['tulipan', 'pipacs'], stickersSeen: ['water-1'], robotOwned: ['hat'], voice: false }));
+  s = applyUpdate(s, 'a', (p) => ({ ...p, seeds: 42, addLevel: 7, garden: ['tulipan', 'pipacs'], stickersSeen: ['water-level-1'], robotOwned: ['hat'], voice: false }));
   return applyUpdate(s, 'b', (p) => ({ ...p, bolts: 12, seqSolved: 9 }));
 };
 

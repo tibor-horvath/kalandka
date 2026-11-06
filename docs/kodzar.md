@@ -53,7 +53,7 @@ Nothing fails and nothing is red. The rules are the same as the other machines:
 ## Rewards
 
 - One bolt per finished round.
-- Stickers: **Első zár** (first round), **Kódtábla** (level 3), **Pöttykód** (level 5), then **Üzenetküldő** (level 6) and **Kódfejtő** (level 7).
+- Stickers: one per level, from **Első zár** (level 1) to **Kódfejtő** (level 7).
 - On RobotHome, Kódzár replaces its entry in `COMING` and gets a "Új gép!" tile with a crate-and-lock picture. Hibavadász, the last machine in `COMING`, came after it (see [hibakereso.md](hibakereso.md)).
 
 ## Printable sheet
