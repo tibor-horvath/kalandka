@@ -55,6 +55,8 @@
 .map-spot__face { width: 66px; height: 66px; border-radius: 33px; background: var(--face); display: flex; align-items: center; justify-content: center; overflow: hidden; flex: none; }
 .map-spot__name { font-size: 36px; font-weight: 800; line-height: 1.05; }
 .map-spot__count { display: flex; align-items: center; gap: 6px; height: 52px; padding: 0 16px 0 10px; border-radius: 26px; background: var(--edge); color: var(--paper); font-size: 28px; font-weight: 800; }
+/* Today's play time, standing on top of each world island; taps go through to the island. */
+.map-timer { position: absolute; translate: -50% -100%; pointer-events: none; }
 
 /*
  * Map motion, all one-off: as the map opens the islands rise, the signs pop in, the boat glides into its dock
@@ -78,6 +80,7 @@
 .map.is-sailing .map-route--boat { opacity: 0; }
 .map-spot__sign { animation: map-sign-in 0.42s cubic-bezier(.34, 1.56, .64, 1) 0.42s backwards; }
 .map-spot--robot .map-spot__sign { animation-delay: 0.52s; }
+.map-timer .play-timer__sign { transform-origin: 50% 100%; animation: map-sign-in 0.42s cubic-bezier(.34, 1.56, .64, 1) 0.6s backwards; }
 .map-spot.is-picked .map-spot__sign { animation: map-press 0.2s ease-out; }
 .map-hop { transform-box: fill-box; transform-origin: 50% 100%; animation: map-hop 0.44s ease-out 0.76s; }
 .map-isle + .map-isle .map-hop { animation-delay: 0.86s; }
@@ -124,7 +127,7 @@
 @media (prefers-reduced-motion: reduce) {
   .map-isle, .map-fog, .map-mist, .map-boat__arrive, .map-route--boat, .map-spot__sign, .map-hop,
   .map-waves path, .map-boat__bob, .map-fog__high, .map-fog__low, .map-mist__veil,
-  .map-mist__float { animation: none !important; }
+  .map-mist__float, .map-timer .play-timer__sign { animation: none !important; }
 }
 
 /* ---------- Robotút ---------- */

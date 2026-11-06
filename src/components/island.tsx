@@ -84,6 +84,8 @@ interface Geometry {
   spots: Pt[];
   /** Where the sticker album's picture is centred, on the grass beside the trail. */
   book: Pt;
+  /** Where the bottom of the play-time sign sits, and how big the sign is drawn there. */
+  timer: Pt & { scale: number };
 }
 
 const SHORE_TABLET =
@@ -138,7 +140,8 @@ const GARDEN_TABLET: Geometry = {
     { x: 590, y: 540 },
     { x: 432, y: 696 }
   ],
-  book: { x: 745, y: 700 }
+  book: { x: 745, y: 700 },
+  timer: { x: 1050, y: 366, scale: 1 }
 };
 
 /** The workshop on the tablet: the shore turned around, its wide machines placed on their own. */
@@ -178,7 +181,8 @@ const ROBOT_TABLET: Geometry = {
     { x: 600, y: 540 },
     { x: 770, y: 670 }
   ],
-  book: { x: 250, y: 660 }
+  book: { x: 250, y: 660 },
+  timer: { x: 1000, y: 386, scale: 1 }
 };
 
 /** Portrait phones: a tall island, the trail winding up from the dock in four rows of two. */
@@ -224,7 +228,8 @@ const GARDEN_PORTRAIT: Geometry = {
     { x: 285, y: 65 },
     { x: 105, y: 65 }
   ],
-  book: { x: 195, y: 465 }
+  book: { x: 195, y: 465 },
+  timer: { x: 195, y: 664, scale: 0.55 }
 };
 
 /** Landscape phones: a wide island beside Csepi, the trail out along the bottom row and back along the top. */
@@ -269,11 +274,12 @@ const GARDEN_LANDSCAPE: Geometry = {
     { x: 216, y: 104 },
     { x: 76, y: 104 }
   ],
-  book: { x: 576, y: 326 }
+  book: { x: 576, y: 326 },
+  timer: { x: 286, y: 216, scale: 0.55 }
 };
 
 /** The workshop's phone islands: the garden's turned around, so its dock and trail start on the other side. */
-const mirrored = (g: Geometry): Geometry => ({ ...g, flip: true, meadows: [], spots: g.spots.map((p) => ({ x: g.w - p.x, y: p.y })), book: { x: g.w - g.book.x, y: g.book.y } });
+const mirrored = (g: Geometry): Geometry => ({ ...g, flip: true, meadows: [], spots: g.spots.map((p) => ({ x: g.w - p.x, y: p.y })), book: { x: g.w - g.book.x, y: g.book.y }, timer: { ...g.timer, x: g.w - g.timer.x } });
 
 const GEOMETRY: Record<IslandWorld, Record<Form, Geometry>> = {
   garden: { tablet: GARDEN_TABLET, portrait: GARDEN_PORTRAIT, landscape: GARDEN_LANDSCAPE },
@@ -446,7 +452,8 @@ export function Island({
   book,
   leaving,
   opening,
-  back
+  back,
+  timer
 }: {
   world: IslandWorld;
   places: Place[];
@@ -455,6 +462,8 @@ export function Island({
   leaving: boolean;
   opening: string | null;
   back: Return | null;
+  /** Today's play-time sign, planted where the island keeps room for it. */
+  timer?: ReactNode;
 }) {
   const form = useForm();
   const g = GEOMETRY[world][form];
@@ -479,6 +488,11 @@ export function Island({
           ))}
           <RewardSpot reward={reward} at={g.spots[last]} i={last} chosen={opening !== null && opening === reward.id} landed={landed !== null && landed.id === reward.id} />
           <BookSpot book={book} at={g.book} i={last} />
+          {timer && (
+            <div className="island__timer" style={{ left: g.timer.x, top: g.timer.y, '--s': g.timer.scale, '--d': `${FIRST_SPOT + (last + 1) * SPOT_STEP}s` } as CSSProperties}>
+              {timer}
+            </div>
+          )}
         </div>
       </FitBox>
     </div>

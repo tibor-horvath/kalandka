@@ -19,13 +19,15 @@ interface Where {
   away: boolean;
   /** The parents' corner or the printable sheets: the clock waits and nobody is sent home. */
   paused: boolean;
+  /** A game or a reward place (Kiskertem, Robotépítő) is open: only there does the clock tick. */
+  playing: boolean;
 }
 
 /**
  * The parents' daily limit and evening rest: the play clock, the spoken warning, and the end of play.
  * When time is up in a task, the child may finish it (if parents allow) and is then sent home by `sendHome`.
  */
-export function useScreenTime({ screen, round, atHome, atHub, away, paused }: Where, activeKid: string, sendHome: () => void) {
+export function useScreenTime({ screen, round, atHome, atHub, away, paused, playing }: Where, activeKid: string, sendHome: () => void) {
   const { progress, update } = useProgress();
   // Re-check the evening rest every minute even when nothing else changes.
   const [clock, setClock] = useState(() => Date.now());
@@ -43,14 +45,15 @@ export function useScreenTime({ screen, round, atHome, atHub, away, paused }: Wh
     return () => window.clearInterval(id);
   }, []);
 
-  // Play clock: only while the app is on screen, a child is playing, the parents' area is closed and the child is not resting.
+  // Play clock: only while the app is on screen, a game or reward place is open and the parents' area is closed.
+  // Choosing where to go (home, map, album) does not count as play.
   useEffect(() => {
-    if (away || paused || resting) return;
+    if (!playing || away || paused) return;
     const id = window.setInterval(() => {
       if (document.visibilityState === 'visible') update((p) => addPlay(p, TICK_SECONDS, today()));
     }, TICK_SECONDS * 1000);
     return () => window.clearInterval(id);
-  }, [away, paused, resting, update]);
+  }, [playing, away, paused, update]);
 
   // A gentle spoken warning once per day and child, two minutes before the end (parents can switch it off).
   useEffect(() => {

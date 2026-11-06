@@ -4,6 +4,7 @@ import { Csepi } from '../components/Csepi';
 import { FitBox } from '../components/FitBox';
 import { ParentsButton } from '../components/hub';
 import { Bolt, Csavar } from '../components/robot';
+import { PlayTimer, pausedLabel, useTimeLeft } from '../components/PlayTimer';
 import { useForm } from '../components/Stage';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from '../components/ui';
 import { speak, stopSpeaking } from '../lib/speech';
@@ -433,6 +434,8 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
     garden: { icon: <Seed size={28} />, n: seedBalance(progress) },
     robot: { icon: <Bolt size={28} />, n: boltBalance(progress) }
   };
+  // With a daily limit, each island shows the time left in its own gauge; the clock stands on the map, so it is paused here.
+  const time = useTimeLeft();
   const faces: Record<WorldId, ReactNode> = {
     garden: <Csepi mood="cheer" width={40} />,
     robot: <Csavar mood="cheer" width={40} />
@@ -544,6 +547,17 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
                 </button>
               );
             })}
+
+            {/* Planted on top of each island; only the first is read out, the second says the same. */}
+            {time &&
+              WORLDS.map((w, i) => {
+                const at = w.id === 'garden' ? map.garden : map.robot;
+                return (
+                  <div key={w.id} className="map-timer" style={{ left: at.x, top: at.y - 150 }}>
+                    <PlayTimer world={w.id} remaining={time.remaining} total={time.allowance} paused label={i === 0 ? pausedLabel(time.remaining) : undefined} />
+                  </div>
+                );
+              })}
           </div>
           <div className={`map__wash map__wash--${picked ?? last}`} aria-hidden="true" />
         </nav>

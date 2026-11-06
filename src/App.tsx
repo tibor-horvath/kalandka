@@ -139,7 +139,8 @@ function Game() {
       atHome: screen === 'home',
       atHub: isHub(screen),
       away: route.landing || showPicker,
-      paused: inParents
+      paused: inParents,
+      playing: isGameId(screen) || screen === 'garden' || screen === 'workshop'
     },
     profiles.activeId,
     () => go('home')

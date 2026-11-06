@@ -59,12 +59,17 @@ export function playedToday(p: Progress, day: string): number {
   return p.playDate === day ? p.playSeconds : 0;
 }
 
+/** Today's whole play time in seconds, the limit plus any bonus; Infinity when there is no limit. */
+export function allowanceSeconds(p: Progress, day: string): number {
+  if (!p.screenLimitMin) return Infinity;
+  const bonus = p.playDate === day ? p.bonusSeconds : 0;
+  return p.screenLimitMin * 60 + bonus;
+}
+
 /** Seconds of play left today; Infinity when there is no limit. "Pihenő most" makes it 0. */
 export function remainingSeconds(p: Progress, day: string): number {
   if (p.restDay === day) return 0;
-  if (!p.screenLimitMin) return Infinity;
-  const bonus = p.playDate === day ? p.bonusSeconds : 0;
-  return Math.max(0, p.screenLimitMin * 60 + bonus - playedToday(p, day));
+  return Math.max(0, allowanceSeconds(p, day) - playedToday(p, day));
 }
 
 /** Evening rest: from the chosen hour until 7 in the morning. */
