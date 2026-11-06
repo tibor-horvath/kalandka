@@ -28,7 +28,7 @@ const CHECK = (
 /**
  * Lap beolvasása: the grown-up holds a finished sheet's QR code to the tablet's camera. The page's own tasks come back
  * from its seed, to tick off one by one against the paper, and "Lap kész" marks it done for the child shown:
- * its tasks fill the child's reward pod as in the app (played back below the button), and the Feladatlapok stickers the child then gets at home. Behind the parents' gate only.
+ * its tasks fill the child's reward pod as in the app (played back below the button), and the stickers the child then gets at home: Feladatlapok, and the game's own for the page's level. Behind the parents' gate only.
  */
 export function ScanSheet({ kidId, onBack }: { kidId: string; onBack: () => void }) {
   const [opened, setOpened] = useState<Opened | null>(null);

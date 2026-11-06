@@ -19,7 +19,7 @@ const DROP_MS = 750;
  */
 export function StickerPop({ sticker, seen, onDone }: { sticker: Sticker; seen: string[]; onDone: () => void }) {
   const game = gameOf(sticker);
-  const row = STICKERS.filter((s) => s.game === sticker.game && (s.set ?? 0) === (sticker.set ?? 0));
+  const row = STICKERS.filter((s) => s.game === sticker.game);
   const [run, setRun] = useState(0);
   const [phase, setPhase] = useState<Phase>('measure');
   const [flight, setFlight] = useState<CSSProperties>({});
@@ -98,7 +98,7 @@ export function StickerPop({ sticker, seen, onDone }: { sticker: Sticker; seen: 
 
       <section className="sticker-pop__card" aria-label={game.name}>
         <h3 className="sticker-pop__game">{game.name}</h3>
-        <div className="sticker-pop__row">
+        <div className={`sticker-pop__row${row.length > 4 ? ' sticker-pop__row--long' : ''}`}>
           {row.map((s, i) => {
             const isNew = s.id === sticker.id;
             const tilt = [5, -6, 4][i % 3];
@@ -129,7 +129,7 @@ export function StickerPop({ sticker, seen, onDone }: { sticker: Sticker; seen: 
 
       <div className="sticker-pop__foot">
         <div className="sticker-pop__say">
-          <GuideBubble mood="cheer" tone="good" csepiWidth={56}>
+          <GuideBubble guide={game.world === 'robot' ? 'csavar' : 'csepi'} mood="cheer" tone="good" csepiWidth={56}>
             {sticker.praise}
           </GuideBubble>
         </div>

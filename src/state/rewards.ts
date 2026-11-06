@@ -1,19 +1,9 @@
-import { ADD_LEVELS } from '../games/add/logic';
-import { LEVELS as FLASH_LEVELS } from '../games/flash/logic';
 import { LEARN_MAX } from '../games/learn/logic';
-import { POTS_LEVELS } from '../games/pots/logic';
-import { TRACE_ORDER } from '../games/trace/logic';
-import { PATH_LEVELS } from '../games/robot/path';
-import { SCALE_LEVELS } from '../games/robot/scale';
-import { CODE_LEVELS } from '../games/robot/code';
-import { FIX_LEVELS } from '../games/robot/fix';
-import { MIRROR_LEVELS } from '../games/robot/mirror';
-import { SEQ_LEVELS } from '../games/robot/seq';
-import { SORT_LEVELS } from '../games/robot/sort';
 import { GAMES, type GameId } from './games';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';
-import { ladderOf } from './ladder';
+import { ladderOf, type LadderGame } from './ladder';
+import { FRIENDS, boughtCount, friendsOf, secondRobotOpen } from './robotParts';
 import { creditTasks, rewardFor } from './pod';
 
 // The reward loop: every four solved tasks fill a pod that pays a seed (see pod.ts); seeds are planted in the child's own garden
@@ -482,8 +472,8 @@ export function gardenDone(p: Progress): boolean {
 
 // ---------- stickers ----------
 
-/** The Kiskert's own album row and each world's row for finished paper sheets, next to the games. */
-export type StickerGameId = GameId | 'kiskert' | 'paper-garden' | 'paper-robot';
+/** Each world's reward place (Kiskert, Robotépítő) and finished paper sheets have album rows of their own, next to the games. */
+export type StickerGameId = GameId | 'kiskert' | 'robotepito' | 'paper-garden' | 'paper-robot';
 
 export interface Sticker {
   id: string;
@@ -494,8 +484,6 @@ export interface Sticker {
   /** Csepi's line when it is collected. */
   praise: string;
   earned: (p: Progress) => boolean;
-  /** A later skill step of the game (Mézút's faded trail), shown as its own row when it pops. */
-  set?: number;
 }
 
 export interface StickerGame {
@@ -524,12 +512,13 @@ export const STICKER_GAMES: StickerGame[] = [
   { id: 'kiskert', name: 'Kiskert', color: '#7A4FB5', ink: '#FFFFFF', world: 'garden' },
   { id: 'paper-garden', name: 'Feladat­lapok', color: '#F3E3B3', ink: '#10233A', world: 'garden' },
   gameRow('path', '#138A86', '#FFFFFF'),
-  gameRow('sort', '#5E7184', '#FFFFFF'),
+  gameRow('sort', '#5E7184', '#FFFFFF', 'Válogató­gép'),
   gameRow('scale', '#F2B33D', '#10233A'),
   gameRow('seq', '#2E5FA8', '#FFFFFF'),
   gameRow('mirror', '#7FE9F0', '#10233A'),
   gameRow('code', '#C98F4E', '#10233A'),
-  gameRow('fix', '#D9741A', '#FFFFFF'),
+  gameRow('fix', '#D9741A', '#FFFFFF', 'Hiba­vadász'),
+  { id: 'robotepito', name: 'Robot­építő', color: '#7A4FB5', ink: '#FFFFFF', world: 'robot' },
   { id: 'paper-robot', name: 'Feladat­lapok', color: '#D5DEE6', ink: '#10233A', world: 'robot' }
 ];
 
@@ -563,100 +552,182 @@ export function markPageDone(p: Progress, key: string, tasks: number): Progress 
 /** Feladatlapok stickers: pages done in a world. */
 const pagesIn = (world: WorldId, count: number) => (p: Progress) => pagesDoneIn(p, world) >= count;
 
-/** Robotút stickers: a course solved on a level (the first solved course of that level and on). */
-const pathLevel = (name: string) => PATH_LEVELS.findIndex((l) => l.name === name);
-const pathPassed = (name: string) => (p: Progress) => ladderOf(p, 'path').solvedTop >= pathLevel(name);
-/** Válogatógép stickers: a round solved on a level. */
-const sortLevel = (name: string) => SORT_LEVELS.findIndex((l) => l.name === name);
-const sortPassed = (name: string) => (p: Progress) => ladderOf(p, 'sort').solvedTop >= sortLevel(name);
-/** Mérleg stickers: a round solved on a level. */
-const scaleLevel = (name: string) => SCALE_LEVELS.findIndex((l) => l.name === name);
-const scalePassed = (name: string) => (p: Progress) => ladderOf(p, 'scale').solvedTop >= scaleLevel(name);
+/** The highest level of this game's printed sheet (0-based, as in the page key) with a page marked done; -1 for none. */
+export function sheetTop(p: Progress, game: GameId): number {
+  return p.pagesDone.reduce((top, key) => {
+    const [id, , level] = key.split('.');
+    return id === game ? Math.max(top, Number(level)) : top;
+  }, -1);
+}
 
-/** Mintagép stickers: a round solved on a level. */
-const seqLevel = (name: string) => SEQ_LEVELS.findIndex((l) => l.name === name);
-const seqPassed = (name: string) => (p: Progress) => ladderOf(p, 'seq').solvedTop >= seqLevel(name);
+/**
+ * The ladder level each printed sheet level stands for, where the sheet's levels are not the game's own: the
+ * sheet joins or splits some levels (Csepp-kert's first sheet is both small-drop levels, Virágsor prints AAB and ABB apart).
+ */
+const SHEET_LADDER: Partial<Record<LadderGame, number[]>> = {
+  water: [1, 2],
+  patterns: [0, 1, 2, 2, 3],
+  trace: [0, 1, 3]
+};
 
-/** Tükörgép stickers: a round solved on a level. */
-const mirrorLevel = (name: string) => MIRROR_LEVELS.findIndex((l) => l.name === name);
-const mirrorPassed = (name: string) => (p: Progress) => ladderOf(p, 'mirror').solvedTop >= mirrorLevel(name);
+/** The highest ladder level a finished sheet of this game stands for; -1 for none. */
+function sheetLadderTop(p: Progress, game: LadderGame): number {
+  const top = sheetTop(p, game);
+  return top < 0 ? -1 : (SHEET_LADDER[game]?.[top] ?? top);
+}
 
-/** Kódzár stickers: a round solved on a level. */
-const codeLevel = (name: string) => CODE_LEVELS.findIndex((l) => l.name === name);
-const codePassed = (name: string) => (p: Progress) => ladderOf(p, 'code').solvedTop >= codeLevel(name);
+/**
+ * A game's level stickers, easiest first: one per level, or one per few neighbouring levels in the games with
+ * long ladders (Méhkas, Robotút), so no game has more than seven. `from` is the first level (0-based) the
+ * sticker stands for: it is earned with the first task solved there, so a child who keeps needing help on a
+ * level still has its sticker. `legacy` names the stickers of the old hand-picked list it replaces.
+ */
+interface LevelSticker {
+  from: number;
+  mark: string;
+  label: string;
+  praise: string;
+  legacy?: string[];
+}
 
-/** Hibavadász stickers: a round solved on a level. */
-const fixLevel = (name: string) => FIX_LEVELS.findIndex((l) => l.name === name);
-const fixPassed = (name: string) => (p: Progress) => ladderOf(p, 'fix').solvedTop >= fixLevel(name);
+export const MAX_LEVEL_STICKERS = 7;
 
-/** Méhkas levels that close a number range: the last level up to 5, up to 10, and round tens. */
-const ADD_PAST_5 = ADD_LEVELS.findIndex((l) => l.name === '10-ig, gyűjtéssel');
-const ADD_PAST_10 = ADD_LEVELS.findIndex((l) => l.name === '20-ig');
-const ADD_HUNDRED = ADD_LEVELS.findIndex((l) => l.name === 'Kerek tízesek 100-ig');
-const addReached = (level: number) => (p: Progress) => ladderOf(p, 'add').solvedTop >= level;
+export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
+  water: [
+    { from: 0, mark: '1', label: 'Első virág', praise: 'Kinőtt az első virágod!', legacy: ['water-1'] },
+    { from: 1, mark: '10', label: 'Tízes keret', praise: 'Már tíz cseppig locsolsz!', legacy: ['water-10'] },
+    { from: 2, mark: '20', label: 'Két keret', praise: 'Már húsz cseppig locsolsz!', legacy: ['water-20'] }
+  ],
+  patterns: [
+    { from: 0, mark: 'AB', label: 'Kettes sor', praise: 'Folytattad az első virágsort!', legacy: ['patterns-ab'] },
+    { from: 1, mark: 'ABC', label: 'Hármas sor', praise: 'Már a hármas sort is folytatod!', legacy: ['patterns-abc'] },
+    { from: 2, mark: 'AAB', label: 'Kettő-egy', praise: 'Már a kettő-egy sort is kitalálod!' },
+    { from: 3, mark: '?', label: 'Hiányzó virág', praise: 'Megtalálod a hiányzó virágot is!', legacy: ['patterns-all'] }
+  ],
+  flash: [
+    { from: 0, mark: '3', label: 'Egy pillantás', praise: 'Egy pillantásra látod, hány mag van!', legacy: ['flash-3'] },
+    { from: 1, mark: '5', label: 'Öt mag', praise: 'Már öt magot is egy pillantásra látsz!' },
+    { from: 2, mark: '•5', label: 'Szórt magok', praise: 'A szórt magokat is egy pillantásra látod!', legacy: ['flash-5'] },
+    { from: 3, mark: '10', label: 'Tíz mag', praise: 'Már tíz magot is egy pillantásra látsz!', legacy: ['flash-10'] }
+  ],
+  add: [
+    { from: 0, mark: '5', label: 'Ötig', praise: 'Már ötig adsz össze és veszel el!' },
+    { from: 3, mark: '+10', label: 'Tízig', praise: 'Már tízig adsz össze és veszel el!', legacy: ['add-5'] },
+    { from: 6, mark: '20', label: 'Húszig', praise: 'Már húszig adsz össze és veszel el!', legacy: ['add-10'] },
+    { from: 8, mark: '10+', label: 'Tízes átlépés', praise: 'Már a tízesen is átlépsz!' },
+    { from: 10, mark: '40', label: 'Kerek tízesek', praise: 'Már a kerek tízesekkel is számolsz!', legacy: ['add-100'] },
+    { from: 12, mark: '100', label: 'Százig', praise: 'Már százig adsz össze és veszel el!' },
+    { from: 14, mark: '100+', label: 'Nagy átlépés', praise: 'Százig is átlépsz a tízesen!' }
+  ],
+  trace: [
+    { from: 0, mark: '1–5', label: 'Írom 5-ig', praise: 'Már ötig írod a számokat!', legacy: ['trace-5'] },
+    { from: 1, mark: '0–9', label: 'Minden szám', praise: 'Minden számot meg tudsz írni!', legacy: ['trace-9', 'trace-0'] },
+    { from: 2, mark: '5', label: 'Halvány út', praise: 'Már halvány úton is írod a számokat!', legacy: ['trace-fade'] },
+    { from: 3, mark: '10', label: 'Fejből írom', praise: 'Minden számot emlékezetből írsz!', legacy: ['trace-memory'] }
+  ],
+  pots: [
+    { from: 0, mark: '5', label: 'Öt barátai', praise: 'Ismered az öt barátait!', legacy: ['pots-5'] },
+    { from: 1, mark: '10', label: 'Tíz barátai', praise: 'Ismered a tíz barátait!', legacy: ['pots-10'] },
+    { from: 2, mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', legacy: ['pots-mix'] }
+  ],
+  path: [
+    { from: 0, mark: '1', label: 'Első út', praise: 'Elvezetted a robotot az elemhez!', legacy: ['path-first'] },
+    { from: 2, mark: '▶', label: 'Tervező', praise: 'Előre megtervezted a robot útját!', legacy: ['path-plan'] },
+    { from: 4, mark: '→→', label: 'Hosszú út', praise: 'A hosszú úton is elvezetted a robotot!' },
+    { from: 5, mark: '×3', label: 'Ismétlő', praise: 'Az ismétléssel rövid lett a programod!' },
+    { from: 6, mark: '↻', label: 'Fordulós', praise: 'A robot arra megy, amerre néz, és te tudod, merre fordítsd!', legacy: ['path-turn'] },
+    { from: 8, mark: '×↻', label: 'Ismételd és fordulj', praise: 'Egy programban ismételsz és fordulsz is!', legacy: ['path-repeat'] },
+    { from: 9, mark: '2', label: 'Két elem', praise: 'Egy programmal két elemet is összegyűjtöttél!', legacy: ['path-two'] }
+  ],
+  sort: [
+    { from: 0, mark: '2', label: 'Első válogatás', praise: 'Minden darabot a helyére tettél!', legacy: ['sort-first'] },
+    { from: 1, mark: '3', label: 'Három szín', praise: 'Már három színt is szétválogatsz!' },
+    { from: 2, mark: '▲', label: 'Formák', praise: 'Már formák szerint is válogatsz!', legacy: ['sort-shape'] },
+    { from: 3, mark: '●•', label: 'Nagy és kicsi', praise: 'Már nagyság szerint is válogatsz!' },
+    { from: 4, mark: '?', label: 'Kakukktojás', praise: 'Megtalálod, melyik nem illik a többihez!', legacy: ['sort-odd'] },
+    { from: 5, mark: '2+', label: 'Két szabály', praise: 'Egyszerre két dologra is figyelsz!', legacy: ['sort-two'] },
+    { from: 6, mark: '!', label: 'Szabálykereső', praise: 'Kitaláltad a gép titkos szabályát!', legacy: ['sort-rule'] }
+  ],
+  scale: [
+    { from: 0, mark: '↓', label: 'Első mérés', praise: 'Megmondtad, melyik oldal a nehezebb!', legacy: ['scale-first'] },
+    { from: 1, mark: '≈', label: 'Egyforma', praise: 'Észreveszed, ha a két oldal egyforma nehéz!' },
+    { from: 2, mark: '=', label: 'Egyensúly', praise: 'Egyensúlyba hoztad a mérleget!', legacy: ['scale-even'] },
+    { from: 3, mark: '10', label: 'Egyensúly tízig', praise: 'Már tízig is egyensúlyba hozod a mérleget!' },
+    { from: 4, mark: '2', label: 'Kettes súly', praise: 'Már a kettes súlyokkal is kiméred!', legacy: ['scale-two'] },
+    { from: 5, mark: '?', label: 'Hiányzó súly', praise: 'Kitaláltad, melyik súly hiányzik!', legacy: ['scale-missing'] },
+    { from: 6, mark: 'x', label: 'Titkos doboz', praise: 'Kitaláltad, mennyit nyom a titkos doboz!', legacy: ['scale-secret'] }
+  ],
+  seq: [
+    { from: 0, mark: 'AB', label: 'Első minta', praise: 'Folytattad a gép első mintáját!', legacy: ['seq-first'] },
+    { from: 1, mark: 'ABB', label: 'Hosszú minta', praise: 'A hosszabb mintát is folytatod!' },
+    { from: 2, mark: '●■', label: 'Szín és forma', praise: 'Egyszerre figyeled a színt és a formát!', legacy: ['seq-both'] },
+    { from: 3, mark: '123', label: 'Növekvő sor', praise: 'Tudod, hogyan nő tovább a sor!' },
+    { from: 4, mark: '↻', label: 'Forgató', praise: 'Tudod, merre fordul a nyíl!', legacy: ['seq-turn'] },
+    { from: 5, mark: '!', label: 'Hibavadász', praise: 'Megtalálod, hol csúszott el a gép!', legacy: ['seq-fix'] },
+    { from: 6, mark: '⇄', label: 'Mintafordító', praise: 'Ugyanazt a mintát nyilakkal is felismered!', legacy: ['seq-translate'] }
+  ],
+  mirror: [
+    { from: 0, mark: '•|•', label: 'Első tükör', praise: 'Megtaláltad az első tükörképet!', legacy: ['mirror-first'] },
+    { from: 1, mark: '••|', label: 'Több lámpa', praise: 'Több lámpát is jól tükrözöl!' },
+    { from: 2, mark: '♥', label: 'Fél kép', praise: 'A tükörrel egész képet rajzolsz!', legacy: ['mirror-picture'] },
+    { from: 3, mark: '◐', label: 'Színes kép', praise: 'A színes képet is pontosan tükrözöd!' },
+    { from: 4, mark: '⇅', label: 'Fel-le tükör', praise: 'A fekvő tükörrel is boldogulsz!', legacy: ['mirror-flat'] },
+    { from: 5, mark: 'b|d', label: 'Tükörkép', praise: 'Már nem téveszted össze a tükörképet a másolattal!', legacy: ['mirror-pick'] },
+    { from: 6, mark: '!', label: 'Tükörjavító', praise: 'Megtalálod, hol tévedett a tükörgép!', legacy: ['mirror-fix'] }
+  ],
+  code: [
+    { from: 0, mark: '●●', label: 'Első zár', praise: 'Kinyitottad az első kódzárat!', legacy: ['code-first'] },
+    { from: 1, mark: '●●●', label: 'Hosszú zár', praise: 'A hosszabb zárat is kinyitod!' },
+    { from: 2, mark: '●→', label: 'Kódtábla', praise: 'Már a kódtáblát is el tudod olvasni!', legacy: ['code-key'] },
+    { from: 3, mark: '■→', label: 'Új kódtábla', praise: 'Az új kódtáblát is el tudod olvasni!' },
+    { from: 4, mark: '•3', label: 'Pöttykód', praise: 'A pöttyökből számot csinálsz!', legacy: ['code-dots'] },
+    { from: 5, mark: '→●', label: 'Üzenetküldő', praise: 'Titkos üzenetet küldtél Kutyabotnak!', legacy: ['code-send'] },
+    { from: 6, mark: '?', label: 'Kódfejtő', praise: 'Kitaláltad a letakart jelet!', legacy: ['code-crack'] }
+  ],
+  fix: [
+    { from: 0, mark: '↑✓', label: 'Első javítás', praise: 'Megjavítottad az első programot!', legacy: ['fix-first'] },
+    { from: 1, mark: '↑↑', label: 'Hosszú program', praise: 'A hosszabb programban is megtalálod a hibát!' },
+    { from: 2, mark: '▣', label: 'Dobozkerülő', praise: 'A dobozok között is megtalálod a hibát!', legacy: ['fix-crates'] },
+    { from: 3, mark: '✕', label: 'Kártyaszedő', praise: 'Megtalálod a felesleges kártyát!' },
+    { from: 4, mark: '×3', label: 'Számjavító', praise: 'Már a rossz számot is kijavítod!', legacy: ['fix-times'] },
+    { from: 5, mark: '↰', label: 'Fordulójavító', praise: 'A fordulós programban is megtalálod a hibát!', legacy: ['fix-turn'] },
+    { from: 6, mark: '!!', label: 'Dupla javítás', praise: 'Két hibát is megtaláltál egy programban!', legacy: ['fix-two'] }
+  ]
+};
 
-export const STICKERS: Sticker[] = [
-  { id: 'learn-5', game: 'learn', mark: '1–5', label: 'Ismerem 5-ig', praise: 'Már ötig ismered a számokat!', earned: (p) => p.learnSolved >= 5 },
-  { id: 'learn-10', game: 'learn', mark: '1–10', label: 'Ismerem 10-ig', praise: 'Már tízig ismered a számokat!', earned: (p) => p.learnSolved >= 10 },
-  { id: 'learn-20', game: 'learn', mark: '1–20', label: 'Ismerem 20-ig', praise: 'Már húszig ismered a számokat!', earned: (p) => p.learnSolved >= LEARN_MAX },
-  { id: 'water-1', game: 'water', mark: '1', label: 'Első virág', praise: 'Kinőtt az első virágod!', earned: (p) => p.garden.length >= 1 },
-  { id: 'water-10', game: 'water', mark: '10', label: 'Tízes keret', praise: 'Minden virágot meglocsoltál tízig!', earned: (p) => ladderOf(p, 'water').reached >= 2 },
-  { id: 'water-20', game: 'water', mark: '20', label: 'Két keret', praise: 'Már húsz cseppig locsolsz!', earned: (p) => ladderOf(p, 'water').solvedTop >= 2 },
-  { id: 'patterns-ab', game: 'patterns', mark: 'AB', label: 'Kettes sor', praise: 'Folytattad az első virágsort!', earned: (p) => p.patternsSolved >= 1 },
-  { id: 'patterns-abc', game: 'patterns', mark: 'ABC', label: 'Hármas sor', praise: 'Már a hármas sort is folytatod!', earned: (p) => ladderOf(p, 'patterns').solvedTop >= 1 },
-  { id: 'patterns-all', game: 'patterns', mark: 'AAB', label: 'Minden minta', praise: 'Mind a négy virágmintát kitaláltad!', earned: (p) => ladderOf(p, 'patterns').reached >= 3 },
-  { id: 'flash-3', game: 'flash', mark: '3', label: 'Egy pillantás', praise: 'Egy pillantásra látod, hány mag van!', earned: (p) => ladderOf(p, 'flash').reached >= 1 },
-  { id: 'flash-5', game: 'flash', mark: '5', label: 'Öt mag', praise: 'Már öt magot is egy pillantásra látsz!', earned: (p) => ladderOf(p, 'flash').reached >= FLASH_LEVELS.length - 1 },
-  { id: 'flash-10', game: 'flash', mark: '10', label: 'Tíz mag', praise: 'Már tíz magot is egy pillantásra látsz!', earned: (p) => ladderOf(p, 'flash').reached >= FLASH_LEVELS.length },
-  { id: 'add-5', game: 'add', mark: '+5', label: 'Adok 5-ig', praise: 'Már ötig adsz össze és veszel el!', earned: addReached(ADD_PAST_5) },
-  { id: 'add-10', game: 'add', mark: '+10', label: 'Adok 10-ig', praise: 'Már tízig adsz össze és veszel el!', earned: addReached(ADD_PAST_10) },
-  { id: 'add-100', game: 'add', mark: '100', label: 'Százig', praise: 'Már a százas számokkal is számolsz!', earned: addReached(ADD_HUNDRED) },
-  { id: 'trace-5', game: 'trace', mark: '1–5', label: 'Írom 5-ig', praise: 'Már ötig írod a számokat!', earned: (p) => p.traceSolved >= 5 },
-  { id: 'trace-9', game: 'trace', mark: '6–9', label: 'Írom 9-ig', praise: 'Már kilencig írod a számokat!', earned: (p) => p.traceSolved >= 9 && ladderOf(p, 'trace').solvedTop >= 1 },
-  { id: 'trace-0', game: 'trace', mark: '0', label: 'Minden szám', praise: 'Minden számot meg tudsz írni!', earned: (p) => ladderOf(p, 'trace').reached >= 2 },
-  { id: 'trace-fade', game: 'trace', mark: '5', label: 'Halvány út', praise: 'Már halvány úton is írod a számokat!', earned: (p) => p.traceFadedSolved >= 5, set: 1 },
-  { id: 'trace-memory', game: 'trace', mark: '0–9', label: 'Fejből írom', praise: 'Minden számot emlékezetből írsz!', earned: (p) => p.traceFadedSolved >= TRACE_ORDER.length && ladderOf(p, 'trace').solvedTop >= 3, set: 1 },
-  { id: 'pots-5', game: 'pots', mark: '5', label: 'Öt barátai', praise: 'Ismered az öt barátait!', earned: (p) => ladderOf(p, 'pots').reached >= 1 },
-  { id: 'pots-10', game: 'pots', mark: '10', label: 'Tíz barátai', praise: 'Ismered a tíz barátait!', earned: (p) => ladderOf(p, 'pots').reached >= 2 },
-  { id: 'path-first', game: 'path', mark: '1', label: 'Első út', praise: 'Elvezetted a robotot az elemhez!', earned: (p) => p.pathSolved >= 1 },
-  { id: 'path-plan', game: 'path', mark: '▶', label: 'Tervező', praise: 'Előre megtervezted a robot útját!', earned: pathPassed('Tervezz előre') },
-  { id: 'path-turn', game: 'path', mark: '↻', label: 'Fordulós', praise: 'A robot arra megy, amerre néz, és te tudod, merre fordítsd!', earned: pathPassed('Fordulj!') },
-  { id: 'path-repeat', game: 'path', mark: '×3', label: 'Ismétlő', praise: 'Az ismétléssel rövid lett a programod!', earned: pathPassed('Ismételd és fordulj'), set: 1 },
-  { id: 'path-two', game: 'path', mark: '2', label: 'Két elem', praise: 'Egy programmal két elemet is összegyűjtöttél!', earned: pathPassed('Két elem'), set: 1 },
-  { id: 'sort-first', game: 'sort', mark: '2', label: 'Első válogatás', praise: 'Minden darabot a helyére tettél!', earned: (p) => p.sortSolved >= 1 },
-  { id: 'sort-shape', game: 'sort', mark: '▲', label: 'Formák', praise: 'Már formák szerint is válogatsz!', earned: sortPassed('Formák') },
-  { id: 'sort-odd', game: 'sort', mark: '?', label: 'Kakukktojás', praise: 'Megtalálod, melyik nem illik a többihez!', earned: sortPassed('Kakukktojás') },
-  { id: 'sort-two', game: 'sort', mark: '2+', label: 'Két szabály', praise: 'Egyszerre két dologra is figyelsz!', earned: sortPassed('Két szabály'), set: 1 },
-  { id: 'sort-rule', game: 'sort', mark: '!', label: 'Szabálykereső', praise: 'Kitaláltad a gép titkos szabályát!', earned: sortPassed('Mi a szabály?'), set: 1 },
-  { id: 'scale-first', game: 'scale', mark: '↓', label: 'Első mérés', praise: 'Megmondtad, melyik oldal a nehezebb!', earned: (p) => p.scaleSolved >= 1 },
-  { id: 'scale-even', game: 'scale', mark: '=', label: 'Egyensúly', praise: 'Egyensúlyba hoztad a mérleget!', earned: scalePassed('Tedd egyensúlyba!') },
-  { id: 'scale-two', game: 'scale', mark: '2', label: 'Kettes súly', praise: 'Már a kettes súlyokkal is kiméred!', earned: scalePassed('Kettes súlyok') },
-  { id: 'scale-missing', game: 'scale', mark: '?', label: 'Hiányzó súly', praise: 'Kitaláltad, melyik súly hiányzik!', earned: scalePassed('Hiányzó súly'), set: 1 },
-  { id: 'scale-secret', game: 'scale', mark: 'x', label: 'Titkos doboz', praise: 'Kitaláltad, mennyit nyom a titkos doboz!', earned: scalePassed('Titkos doboz'), set: 1 },
-  { id: 'seq-first', game: 'seq', mark: 'AB', label: 'Első minta', praise: 'Folytattad a gép első mintáját!', earned: (p) => p.seqSolved >= 1 },
-  { id: 'seq-both', game: 'seq', mark: '●■', label: 'Szín és forma', praise: 'Egyszerre figyeled a színt és a formát!', earned: seqPassed('Szín és forma') },
-  { id: 'seq-turn', game: 'seq', mark: '↻', label: 'Forgató', praise: 'Tudod, merre fordul a nyíl!', earned: seqPassed('Forgó sor') },
-  { id: 'seq-fix', game: 'seq', mark: '!', label: 'Hibavadász', praise: 'Megtalálod, hol csúszott el a gép!', earned: seqPassed('Hibavadász'), set: 1 },
-  { id: 'seq-translate', game: 'seq', mark: '⇄', label: 'Mintafordító', praise: 'Ugyanazt a mintát nyilakkal is felismered!', earned: seqPassed('Mintafordító'), set: 1 },
-  { id: 'mirror-first', game: 'mirror', mark: '•|•', label: 'Első tükör', praise: 'Megtaláltad az első tükörképet!', earned: (p) => p.mirrorSolved >= 1 },
-  { id: 'mirror-picture', game: 'mirror', mark: '♥', label: 'Fél kép', praise: 'A tükörrel egész képet rajzolsz!', earned: mirrorPassed('Fél kép') },
-  { id: 'mirror-flat', game: 'mirror', mark: '⇅', label: 'Fel-le tükör', praise: 'A fekvő tükörrel is boldogulsz!', earned: mirrorPassed('Fel-le tükör') },
-  { id: 'mirror-pick', game: 'mirror', mark: 'b|d', label: 'Tükörkép', praise: 'Már nem téveszted össze a tükörképet a másolattal!', earned: mirrorPassed('Tükör vagy másolat?'), set: 1 },
-  { id: 'mirror-fix', game: 'mirror', mark: '!', label: 'Tükörjavító', praise: 'Megtalálod, hol tévedett a tükörgép!', earned: mirrorPassed('Hibás tükör'), set: 1 },
-  { id: 'code-first', game: 'code', mark: '●●', label: 'Első zár', praise: 'Kinyitottad az első kódzárat!', earned: (p) => p.codeSolved >= 1 },
-  { id: 'code-key', game: 'code', mark: '●→', label: 'Kódtábla', praise: 'Már a kódtáblát is el tudod olvasni!', earned: codePassed('Kódtábla') },
-  { id: 'code-dots', game: 'code', mark: '•3', label: 'Pöttykód', praise: 'A pöttyökből számot csinálsz!', earned: codePassed('Pöttykód') },
-  { id: 'code-send', game: 'code', mark: '→●', label: 'Üzenetküldő', praise: 'Titkos üzenetet küldtél Kutyabotnak!', earned: codePassed('Üzenet'), set: 1 },
-  { id: 'code-crack', game: 'code', mark: '?', label: 'Kódfejtő', praise: 'Kitaláltad a letakart jelet!', earned: codePassed('Hiányzó jel'), set: 1 },
-  { id: 'fix-first', game: 'fix', mark: '↑✓', label: 'Első javítás', praise: 'Megjavítottad az első programot!', earned: (p) => p.fixSolved >= 1 },
-  { id: 'fix-crates', game: 'fix', mark: '▣', label: 'Dobozkerülő', praise: 'A dobozok között is megtalálod a hibát!', earned: fixPassed('Dobozok között') },
-  { id: 'fix-times', game: 'fix', mark: '×3', label: 'Számjavító', praise: 'Már a rossz számot is kijavítod!', earned: fixPassed('Rossz szám') },
-  { id: 'fix-turn', game: 'fix', mark: '↰', label: 'Fordulójavító', praise: 'A fordulós programban is megtalálod a hibát!', earned: fixPassed('Fordulós hiba'), set: 1 },
-  { id: 'fix-two', game: 'fix', mark: '!!', label: 'Dupla javítás', praise: 'Két hibát is megtaláltál egy programban!', earned: fixPassed('Két hiba'), set: 1 },
+const LADDER_GAMES = Object.keys(LEVEL_STICKERS) as LadderGame[];
+
+const isLadderGame = (id: StickerGameId): id is LadderGame => (LADDER_GAMES as string[]).includes(id);
+
+/** A game's level stickers: number n (from 1) stands for its level(s) on the ladder, solved in the game or on a finished sheet. */
+function levelStickers(game: LadderGame): Sticker[] {
+  return LEVEL_STICKERS[game].map((s, i) => ({
+    id: `${game}-level-${i + 1}`,
+    game,
+    mark: s.mark,
+    label: s.label,
+    praise: s.praise,
+    earned: (p: Progress) => ladderOf(p, game).solvedTop >= s.from || sheetLadderTop(p, game) >= s.from
+  }));
+}
+
+/** Számmagok's sheet levels start at 1, 6, 11 and 16: a finished page of `level` knows the numbers up to its sticker's. */
+const learnSheet = (level: number) => (p: Progress) => sheetTop(p, 'learn') >= level;
+
+/**
+ * Számmagok has no ladder: its stickers count the numbers the child knows, in the game or on a finished sheet.
+ * The reward places and the worksheets count what was done.
+ */
+const OTHER_STICKERS: Sticker[] = [
+  { id: 'learn-5', game: 'learn', mark: '1–5', label: 'Ismerem 5-ig', praise: 'Már ötig ismered a számokat!', earned: (p) => p.learnSolved >= 5 || learnSheet(0)(p) },
+  { id: 'learn-10', game: 'learn', mark: '1–10', label: 'Ismerem 10-ig', praise: 'Már tízig ismered a számokat!', earned: (p) => p.learnSolved >= 10 || learnSheet(1)(p) },
+  { id: 'learn-20', game: 'learn', mark: '1–20', label: 'Ismerem 20-ig', praise: 'Már húszig ismered a számokat!', earned: (p) => p.learnSolved >= LEARN_MAX || learnSheet(3)(p) },
   { id: 'kiskert-gift', game: 'kiskert', mark: '1', label: 'Első ajándék', praise: 'Megajándékoztad az első lakót a kertedben!', earned: (p) => decorCount(p) >= 1 },
   { id: 'kiskert-all', game: 'kiskert', mark: '6', label: 'Minden lakónak', praise: 'Mind a hat lakó kapott tőled ajándékot!', earned: (p) => VISITORS.every((v) => giftsOf(p, v.id) >= 1) },
   { id: 'kiskert-done', game: 'kiskert', mark: '18', label: 'Kész a kert', praise: 'Kész a kert! Minden lakó megkapta az ajándékát.', earned: gardenDone },
-  { id: 'pots-mix', game: 'pots', mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', earned: (p) => ladderOf(p, 'pots').reached >= POTS_LEVELS.length },
+  { id: 'robotepito-part', game: 'robotepito', mark: '1', label: 'Első alkatrész', praise: 'Felszerelted az első új alkatrészt a robotodra!', earned: (p) => boughtCount(p) >= 1 },
+  { id: 'robotepito-second', game: 'robotepito', mark: '2', label: 'Második robot', praise: 'Megérkezett a második robotod a munkapadra!', earned: secondRobotOpen },
+  { id: 'robotepito-friends', game: 'robotepito', mark: '6', label: 'Minden barát', praise: 'Mind a hat robotbarát beköltözött a műhelybe!', earned: (p) => friendsOf(p).length === FRIENDS.length },
   { id: 'paper-garden-1', game: 'paper-garden', mark: '1', label: 'Első lap', praise: 'Kész az első feladatlapod!', earned: pagesIn('garden', 1) },
   { id: 'paper-garden-5', game: 'paper-garden', mark: '5', label: 'Öt lap', praise: 'Már öt feladatlapot befejeztél!', earned: pagesIn('garden', 5) },
   { id: 'paper-garden-15', game: 'paper-garden', mark: '15', label: 'Tizenöt lap', praise: 'Már tizenöt feladatlapot befejeztél!', earned: pagesIn('garden', 15) },
@@ -665,12 +736,30 @@ export const STICKERS: Sticker[] = [
   { id: 'paper-robot-15', game: 'paper-robot', mark: '15', label: 'Tizenöt lap', praise: 'Már tizenöt feladatlapot befejeztél!', earned: pagesIn('robot', 15) }
 ];
 
+/** Every sticker, in album order. */
+export const STICKERS: Sticker[] = STICKER_GAMES.flatMap(({ id }) => (isLadderGame(id) ? levelStickers(id) : OTHER_STICKERS.filter((s) => s.game === id)));
+
+/** The level sticker that took the place of each sticker of the old hand-picked list. */
+const LEGACY_STICKERS: Record<string, string> = Object.fromEntries(
+  LADDER_GAMES.flatMap((game) => LEVEL_STICKERS[game].flatMap((s, i) => (s.legacy ?? []).map((old) => [old, `${game}-level-${i + 1}`])))
+);
+
+/**
+ * Saves from before the level stickers: a sticker the child had stuck in stays, as the level sticker that took
+ * its place, even where that level has no solved task yet (the old list gave some for stepping onto a level).
+ */
+export function carryOverStickers(p: Progress): Progress {
+  const carried = [...new Set(p.stickersSeen.map((id) => LEGACY_STICKERS[id]).filter((id) => id && !p.stickersSeen.includes(id)))];
+  return carried.length === 0 ? p : { ...p, stickersSeen: [...p.stickersSeen, ...carried] };
+}
+
 export function gameOf(s: Sticker): StickerGame {
   return STICKER_GAMES.find((g) => g.id === s.game)!;
 }
 
+/** A sticker once stuck in stays, whatever happens to the level or the rule it came from. */
 export function earnedStickers(p: Progress): Sticker[] {
-  return STICKERS.filter((s) => s.earned(p));
+  return STICKERS.filter((s) => s.earned(p) || p.stickersSeen.includes(s.id));
 }
 
 /** Stickers earned but not celebrated yet, in album order; with a world, only that world's (each pops on its own home screen). */

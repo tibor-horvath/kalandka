@@ -45,7 +45,7 @@ Generator rules (`src/games/robot/fix.ts`):
 ## Rewards
 
 - One bolt per finished round.
-- Stickers: **Első javítás** (first round), **Dobozkerülő** (level 3), **Számjavító** (level 5), then **Fordulójavító** (level 6) and **Dupla javítás** (level 7).
+- Stickers: one per level, from **Első javítás** (level 1) to **Dupla javítás** (level 7).
 
 ## Printable sheet
 

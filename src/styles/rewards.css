@@ -130,6 +130,12 @@
 .album__game--more .sticker__mark { font-size: 20px; }
 .album__game--more .album__label { font-size: 13px; }
 .album__game--more .album__sticker { gap: 2px; padding: 1px; }
+/* Seven level stickers: smaller and without captions; the guide reads each one on tap. Level 1 sits at the bottom, like the meter's staircase. */
+.album__game--ladder .album__stickers { flex-direction: column-reverse; padding: 10px 4px; }
+.album__game--ladder .sticker, .album__game--ladder .sticker-slot { width: 52px; height: 52px; border-width: 3px; }
+.album__game--ladder .sticker__mark { font-size: 18px; }
+.album__game--ladder .album__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.album__game--ladder .album__sticker { padding: 1px; }
 .album__guide { display: flex; align-items: center; gap: 12px; padding: 0 32px 24px; }
 .album__guide .bubble { font-size: 22px; padding: 12px 20px; box-shadow: 0 4px 0 #ead9a8; }
 
@@ -155,6 +161,11 @@
 .sticker-pop__place { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 130px; }
 .sticker-pop__place .sticker, .sticker-pop__place .sticker-slot { width: 120px; height: 120px; }
 .sticker-pop__place .sticker__mark { font-size: 36px; }
+.sticker-pop__row--long { gap: 12px; }
+.sticker-pop__row--long .sticker-pop__place { width: 92px; }
+.sticker-pop__row--long .sticker-pop__place .sticker, .sticker-pop__row--long .sticker-pop__place .sticker-slot { width: 80px; height: 80px; }
+.sticker-pop__row--long .sticker-pop__place .sticker__mark { font-size: 26px; }
+.sticker-pop__row--long .sticker-pop__label { font-size: 14px; }
 .sticker-pop__label { font-family: var(--body); font-size: 16px; font-weight: 700; text-align: center; }
 .sticker-pop__label.is-open { color: #6b5520; }
 .sticker-pop__stuck { position: relative; padding: 0; border: none; background: none; border-radius: 50%; cursor: pointer; }
@@ -255,6 +266,8 @@
 .stage--portrait .album__game { min-height: 0; container: album-game / size; }
 .stage--portrait .album__game--more { grid-column: 1 / -1; }
 .stage--portrait .album__game--more .album__stickers { flex-wrap: nowrap; }
+.stage--portrait .album__game--ladder { grid-column: 1 / -1; }
+.stage--portrait .album__game--ladder .album__stickers { flex-direction: row; flex-wrap: nowrap; }
 @container album-game (max-height: 130px) { .album__label { display: none; } .album__stickers { align-items: center; } }
 @container album-game (max-height: 96px) { .stage--portrait .album .sticker, .stage--portrait .album .sticker-slot { width: 44px; height: 44px; } }
 .stage--landscape .album { grid-template-columns: repeat(var(--cols, 7), minmax(0, 1fr)); gap: 6px; padding: 8px 0; }
@@ -292,6 +305,11 @@
 .is-phone .sticker-pop__place { width: 96px; }
 .is-phone .sticker-pop__place .sticker, .is-phone .sticker-pop__place .sticker-slot { width: 76px; height: 76px; }
 .is-phone .sticker-pop__place .sticker__mark { font-size: 24px; }
+.is-phone .sticker-pop__row--long { gap: 4px; }
+.is-phone .sticker-pop__row--long .sticker-pop__place { width: 52px; }
+.is-phone .sticker-pop__row--long .sticker-pop__place .sticker, .is-phone .sticker-pop__row--long .sticker-pop__place .sticker-slot { width: 48px; height: 48px; border-width: 3px; }
+.is-phone .sticker-pop__row--long .sticker-pop__place .sticker__mark { font-size: 16px; }
+.is-phone .sticker-pop__row--long .sticker-pop__label { display: none; }
 .is-phone .sticker-pop__label { font-size: 13px; }
 .stage--portrait .sticker-pop__foot { flex-direction: column; gap: 12px; padding: 0 16px; }
 .is-phone .sticker-pop__say .bubble { font-size: 17px; }
