@@ -117,8 +117,45 @@
 /* The Nyomtatás page */
 .ps-back { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; padding-left: 0; }
 .ps-inline { padding: 0; font-size: inherit; text-decoration: underline; text-underline-offset: 3px; }
-.ps-game { width: 100%; border: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.ps-game__go { flex: none; color: var(--pa-muted); }
+/* The print area stands outside the scaled stage, at the window's own size. */
+.pa-layer { position: fixed; inset: 0; z-index: 20; }
+/* The list: a world first (step 1), then only its games (step 2), across the whole width. */
+.ps-top { flex-wrap: wrap; gap: 16px 24px; }
+.ps-top > div { flex: 1 1 auto; min-width: 0; }
+.ps-scan { display: flex; align-items: center; gap: 16px; padding: 12px 14px 12px 18px; border-radius: 18px; background: var(--pa-card); }
+.ps-scan .ps-inline { align-self: flex-start; margin-top: 2px; font-size: 14px; }
+.ps-step { display: flex; flex-direction: column; gap: 14px; }
+.ps-step__title { margin: 0; display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 22px; font-weight: 800; line-height: 1.1; }
+.ps-step__num { width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--pa-ink); color: #ffffff; font-size: 16px; }
+.ps-shelves { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.ps-shelf { --shelf-bg: #e4f4da; --shelf-ink: #1e5520; --shelf-sub: #3e5a47; --shelf-fill: var(--pa-good); min-height: 112px; padding: 16px 18px; border: 3px solid transparent; border-radius: 22px; background: var(--shelf-bg); color: var(--shelf-ink); display: flex; align-items: center; gap: 16px; text-align: left; cursor: pointer; box-shadow: 0 1px 2px rgba(16, 35, 58, 0.08); }
+.ps-shelf--robot { --shelf-bg: #ddf3f1; --shelf-ink: #0c5f5c; --shelf-sub: #2f5654; --shelf-fill: #138a86; }
+.ps-shelf--extras { --shelf-bg: #f6eedf; --shelf-ink: #6b4317; --shelf-sub: #6e5a44; --shelf-fill: #a8641f; }
+.ps-shelf.is-on { border-color: var(--shelf-fill); box-shadow: 0 4px 0 var(--shelf-fill); }
+.ps-shelf__badge { width: 64px; height: 64px; flex: none; border-radius: 18px; display: grid; place-items: center; background: #ffffff; color: var(--shelf-fill); }
+.ps-shelf__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ps-shelf__name { font-family: var(--display); font-size: 26px; font-weight: 800; line-height: 1.05; }
+.ps-shelf__about { font-size: 15px; font-weight: 700; color: var(--shelf-sub); }
+.ps-shelf__count { margin-top: 4px; font-size: 14px; font-weight: 800; }
+.ps-shelf__check { width: 32px; height: 32px; flex: none; align-self: flex-start; box-sizing: border-box; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--shelf-sub); color: transparent; opacity: 0.45; }
+.ps-shelf.is-on .ps-shelf__check { border-color: var(--shelf-fill); background: var(--shelf-fill); color: #ffffff; opacity: 1; }
+.ps-games { --shelf-bg: #e4f4da; --shelf-ink: #1e5520; --shelf-sub: #3e5a47; --shelf-fill: var(--pa-good); padding: 20px 24px 24px; border-radius: 26px; background: var(--shelf-bg); }
+.ps-games--robot { --shelf-bg: #ddf3f1; --shelf-ink: #0c5f5c; --shelf-sub: #2f5654; --shelf-fill: #138a86; }
+.ps-games--extras { --shelf-bg: #f6eedf; --shelf-ink: #6b4317; --shelf-sub: #6e5a44; --shelf-fill: #a8641f; }
+.ps-games__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; }
+.ps-games .ps-step__title { color: var(--shelf-ink); }
+.ps-games .ps-step__num { background: var(--shelf-fill); }
+.ps-games__hint { font-size: 15px; font-weight: 700; color: var(--shelf-sub); }
+.ps-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.ps-card { min-height: 168px; padding: 18px; border: 2px solid transparent; border-radius: 20px; background: var(--pa-card); color: var(--pa-ink); display: flex; flex-direction: column; align-items: stretch; gap: 14px; font: inherit; text-align: left; cursor: pointer; box-shadow: 0 1px 2px rgba(16, 35, 58, 0.08); }
+.ps-card:hover { border-color: var(--shelf-fill); }
+.ps-card__top { display: flex; align-items: center; gap: 14px; }
+.ps-card .pa-tile { width: 60px; height: 60px; }
+.ps-card__title { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.ps-card__title h3 { margin: 0; font-family: var(--display); font-size: 24px; font-weight: 800; line-height: 1.05; }
+.ps-card__level { padding: 3px 10px; border-radius: 999px; background: var(--pa-soft); color: #33485c; font-size: 13px; font-weight: 800; line-height: 1.3; }
+.ps-card__ask { flex: 1; font-size: 15px; font-weight: 700; line-height: 1.35; color: #33485c; }
+.ps-card__go { display: flex; align-items: center; justify-content: flex-end; gap: 4px; padding-top: 12px; border-top: 1px solid var(--pa-soft); color: var(--pa-accent); font-size: 15px; font-weight: 800; }
 .ps-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
 .ps-controls { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .ps-controls .pa-stepper__value { width: auto; flex: 1; }
@@ -150,14 +187,22 @@
   .pa--print .pa-card { padding: 16px; border-radius: 18px; }
   .pa--print .pa-world { padding: 12px; border-radius: 18px; gap: 10px; }
 
-  /* The list: tile | name, level and task | arrow. */
-  .pa--print .pa-level.ps-game { display: grid; grid-template-columns: 48px minmax(0, 1fr) 22px; align-items: center; gap: 12px; padding: 12px 10px 12px 12px; border-radius: 16px; }
-  .pa--print .ps-game .pa-tile { width: 48px; height: 48px; border-radius: 14px; font-size: 19px; align-self: start; }
-  .pa--print .ps-game .pa-level__text { gap: 4px; }
-  .pa--print .ps-game .pa-level__title { flex-direction: column; align-items: flex-start; gap: 4px; }
-  .pa--print .ps-game .pa-level__title h3 { font-size: 19px; }
-  .pa--print .ps-game .pa-level__title span { padding: 2px 8px; border-radius: 8px; background: #e3f1fc; color: #1f5c9e; font-size: 12px; font-weight: 800; line-height: 1.4; }
-  .pa--print .ps-game .pa-level__mode { line-height: 1.35; }
+  /* The list: the worlds as compact rows, the games one under another. */
+  .pa--print .ps-scan { flex-wrap: wrap; width: 100%; box-sizing: border-box; }
+  .pa--print .ps-step__title { font-size: 19px; }
+  .pa--print .ps-shelves { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .pa--print .ps-shelf { min-height: 0; padding: 12px 14px; border-radius: 18px; gap: 12px; }
+  .pa--print .ps-shelf__badge { width: 48px; height: 48px; border-radius: 14px; }
+  .pa--print .ps-shelf__name { font-size: 21px; }
+  .pa--print .ps-shelf__about { font-size: 14px; }
+  .pa--print .ps-shelf__count { display: none; }
+  .pa--print .ps-games { padding: 14px 12px 12px; border-radius: 20px; }
+  .pa--print .ps-cards { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .pa--print .ps-card { min-height: 0; padding: 14px; gap: 10px; border-radius: 16px; }
+  .pa--print .ps-card .pa-tile { width: 48px; height: 48px; border-radius: 14px; font-size: 19px; }
+  .pa--print .ps-card__title h3 { font-size: 20px; }
+  .pa--print .ps-card__ask { font-size: 14px; }
+  .pa--print .ps-card__go { padding-top: 8px; }
 
   /* One game: the settings, then the preview, with the print buttons held at the bottom of the screen. */
   .pa--print .ps-layout { display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
