@@ -51,6 +51,7 @@ export function RobotHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
   };
   const open = (game: GameId) => {
     welcomeOnce();
+    if (!progress.robotOpened.includes(game)) update((p) => ({ ...p, robotOpened: [...p.robotOpened, game] }));
     onOpen(game);
   };
   const openWorkshop = () => {
@@ -58,11 +59,12 @@ export function RobotHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
     onReward();
   };
 
-  // The first machine is where a new child starts; every machine is new until first solved, then shows its level.
+  // The first machine is where a new child starts, until first solved; the others are new until first opened, then show their level.
   const places: Place[] = gamesIn('robot').map(({ id, name }, i) => {
     const fresh = solvedOf(progress, id) === 0;
+    const unopened = fresh && !progress.robotOpened.includes(id);
     const level = isLadderGame(id) ? ladderOf(progress, id).level : 0;
-    const badge = fresh ? (i === 0 ? 'Kezdd itt!' : 'Új gép!') : `${level + 1}. szint`;
+    const badge = i === 0 && fresh ? 'Kezdd itt!' : unopened ? 'Új gép!' : `${level + 1}. szint`;
     return { id, name, label: TILES[id]!.label, badge, start: i === 0 && fresh, art: TILES[id]!.art, onOpen: () => open(id) };
   });
   const reward: RewardPlace = {

@@ -38,6 +38,8 @@
 .spot--reward { --disc-w: 150px; --disc-h: 150px; }
 .spot--reward .spot__disc { background: #fff4d1; }
 .spot--reward .spot__art { zoom: 1; }
+/* Off the trail, the reward place is round on both islands, like the sticker album beside it. */
+.island .spot.spot--reward .spot__disc { border-radius: 50%; }
 .spot__count { position: absolute; right: -26px; bottom: -10px; height: 42px; padding: 0 12px 0 6px; border-radius: 21px; background: var(--paper); display: flex; align-items: center; gap: 4px; font-size: 26px; font-weight: 800; line-height: 1; box-shadow: 0 3px 0 rgba(16, 35, 58, 0.12); }
 
 /* The workshop's machines are wide: rounded panels instead of round windows. */
@@ -45,8 +47,8 @@
 .island--robot .spot__disc { border-radius: 30px; }
 .island--robot .spot__art { zoom: 0.7; }
 .island--robot .spot--locked .spot__art { zoom: 1; }
-.island--robot .spot--reward { --disc-w: 170px; --disc-h: 136px; }
-.island--robot .spot--reward .spot__art { zoom: 0.9; }
+.island--robot .spot--reward { --disc-w: 150px; --disc-h: 150px; }
+.island--robot .spot--reward .spot__art { zoom: 0.8; }
 .world--robot .spot--locked .spot__disc { background: #cfdbe8; border-color: #edf2f8; }
 .world--robot .spot--locked .spot__name { background: #edf2f8; }
 .world--robot .spot__lock { color: #3e5872; }
@@ -75,9 +77,8 @@
 .island--portrait.island--robot .spot__disc { border-radius: 20px; }
 .island--portrait.island--robot .spot__art { zoom: 0.45; }
 .island--portrait.island--robot .spot--locked .spot__art { zoom: 0.7; }
-.island--portrait.island--robot .spot--reward { --disc-w: 120px; --disc-h: 96px; }
-.island--portrait.island--robot .spot--reward .spot__disc { border-radius: 26px; }
-.island--portrait.island--robot .spot--reward .spot__art { zoom: 0.6; }
+.island--portrait.island--robot .spot--reward { --disc-w: 100px; --disc-h: 100px; }
+.island--portrait.island--robot .spot--reward .spot__art { zoom: 0.52; }
 
 .island--landscape .spot { --disc-w: 72px; --disc-h: 72px; gap: 4px; }
 .island--landscape .spot__art { zoom: 0.46; }
@@ -94,9 +95,20 @@
 .island--landscape.island--robot .spot__disc { border-radius: 18px; }
 .island--landscape.island--robot .spot__art { zoom: 0.4; }
 .island--landscape.island--robot .spot--locked .spot__art { zoom: 0.6; }
-.island--landscape.island--robot .spot--reward { --disc-w: 104px; --disc-h: 80px; }
-.island--landscape.island--robot .spot--reward .spot__disc { border-radius: 22px; }
-.island--landscape.island--robot .spot--reward .spot__art { zoom: 0.5; }
+.island--landscape.island--robot .spot--reward { --disc-w: 84px; --disc-h: 84px; }
+.island--landscape.island--robot .spot--reward .spot__art { zoom: 0.44; }
+
+/* The sticker album beside the trail: a smaller place, the same on both islands. On phones only its book shows (its name is in the label). */
+.spot.spot--book { --disc-w: 104px; --disc-h: 104px; }
+.island .spot--book .spot__disc { border-radius: 50%; border-color: #7a4fb5; background: #f1eafa; box-shadow: 0 7px 0 #563682; }
+.spot--book:active .spot__disc { box-shadow: 0 2px 0 #563682; }
+.spot--book .spot__art { zoom: 0.62; }
+.spot--book .spot__count { right: -20px; color: #563682; }
+.island--portrait .spot.spot--book, .island--landscape .spot.spot--book { --disc-w: 60px; --disc-h: 60px; }
+.island--portrait .spot--book .spot__disc, .island--landscape .spot--book .spot__disc { box-shadow: 0 4px 0 #563682; }
+.island--portrait .spot--book .spot__art, .island--landscape .spot--book .spot__art { zoom: 0.38; }
+.island--portrait .spot--book .spot__count, .island--landscape .spot--book .spot__count { right: -16px; bottom: -8px; height: 26px; font-size: 16px; padding: 0 8px; }
+.island--portrait .spot--book .spot__name, .island--landscape .spot--book .spot__name { display: none; }
 
 /* ---------- arrival ---------- */
 .island__scene { animation: island-rise 0.5s cubic-bezier(.2, .8, .2, 1) backwards; }
@@ -126,7 +138,7 @@
 .island__waves path:nth-child(5) { animation-delay: -4.2s; }
 .island__bob { --tilt: -2deg; transform-box: fill-box; transform-origin: 50% 100%; animation: island-bob 3.6s ease-in-out 1s infinite; }
 .island--tablet.island--robot .island__bob { --tilt: 2deg; }
-.screen--home .spot:not(.spot--reward) .spot__art > svg { transform-origin: 50% 100%; animation: plant-sway 4.5s ease-in-out infinite; animation-delay: calc(var(--d, 0s) * -3); }
+.screen--home .spot:not(.spot--reward, .spot--book) .spot__art > svg { transform-origin: 50% 100%; animation: plant-sway 4.5s ease-in-out infinite; animation-delay: calc(var(--d, 0s) * -3); }
 
 @keyframes island-drift { from { transform: translateX(-10px); opacity: 0.55; } to { transform: translateX(10px); opacity: 1; } }
 @keyframes island-bob { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-3px) rotate(var(--tilt)); } 70% { transform: translateY(2px) rotate(calc(var(--tilt) * -0.75)); } }

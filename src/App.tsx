@@ -68,7 +68,6 @@ const SETTLE_MS = 200;
 function depthOf(s: Screen): number {
   if (s === 'map') return 0;
   if (s === 'home') return 1;
-  if (s === 'album') return 3;
   return 2;
 }
 
@@ -83,7 +82,7 @@ function Game() {
   // Without the picker, a child who has never chosen a world starts on the map, like after picking.
   const [screen, setScreen] = useState<Screen>(() => (picking || progress.world ? 'home' : 'map'));
   const [parents, setParents] = useState<Parents>('closed');
-  /** The world whose reward place opened the sticker album, and so which page it opens on. */
+  /** The world whose island opened the sticker album, and so which page it opens on. */
   const [albumWorld, setAlbumWorld] = useState<WorldId>('garden');
   const [parentStart, setParentStart] = useState<ParentStart>('overview');
   const showPicker = picking && profiles.kids.length > 1;
@@ -216,13 +215,14 @@ function Game() {
             onPrint={openPrint}
             onSwitch={switchKid}
             onMap={() => go('map')}
+            onAlbum={() => openAlbum(world)}
             back={back}
           />
         )}
         {screen === 'map' && !showPicker && <WorldMap onPick={pickWorld} onParents={() => openGate()} />}
-        {screen === 'garden' && <Garden onBack={() => leavePlace('garden')} onAlbum={() => openAlbum('garden')} />}
-        {screen === 'workshop' && <Workshop onBack={() => leavePlace('workshop')} onAlbum={() => openAlbum('robot')} />}
-        {screen === 'album' && <Album key={albumWorld} world={albumWorld} onBack={() => go(REWARD_SCREEN[albumWorld])} />}
+        {screen === 'garden' && <Garden onBack={() => leavePlace('garden')} />}
+        {screen === 'workshop' && <Workshop onBack={() => leavePlace('workshop')} />}
+        {screen === 'album' && <Album key={albumWorld} world={albumWorld} onBack={() => go('home')} />}
         {game && GameScreen && <GameScreen key={roundOf(progress, game)} onBack={() => leavePlace(game)} />}
       </PageMotion>
       {!resting && !inParents && progress.warnBefore && remaining <= WARN_SECONDS && <TimeBanner remaining={remaining} />}

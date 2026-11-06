@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../games/add/logic';
+import type { GameId } from './games';
 import { carryOverStickers, markEarnedSeen, type Bed, type TreatId, type VisitorId } from './rewards';
 import type { PartSlot } from './robotParts';
 import type { Ladder, LadderGame } from './ladder';
@@ -95,6 +96,8 @@ export interface Progress {
   world: WorldId | null;
   /** Csavar has introduced himself. */
   robotWelcomed: boolean;
+  /** Workshop machines opened at least once; the rest wear the "Új gép!" badge. */
+  robotOpened: GameId[];
   /** Robotműhely's reward: one bolt per full reward pod, like the garden's seeds. */
   bolts: number;
   /** Every task solved in the workshop: the clock the robot's battery and oil run on. */
@@ -203,6 +206,7 @@ export const DEFAULT_PROGRESS: Progress = {
   welcomed: false,
   world: null,
   robotWelcomed: false,
+  robotOpened: [],
   bolts: 0,
   robotTasks: 0,
   pathRound: 0,

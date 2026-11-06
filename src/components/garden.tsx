@@ -575,3 +575,18 @@ export function StickerSlot({ sticker, className = '' }: { sticker: Sticker; cla
     </span>
   );
 }
+
+/** The sticker album on the island: a purple book open on a page of stickers, one place still empty. */
+export function StickerBookArt({ size = 100 }: { size?: number }) {
+  return (
+    <svg aria-hidden="true" width={size} height={size * 1.1} viewBox="0 0 100 110">
+      <rect x="8" y="4" width="84" height="102" rx="10" fill="#7A4FB5" />
+      <rect x="8" y="4" width="12" height="102" rx="6" fill="#563682" />
+      <rect x="24" y="12" width="60" height="86" rx="6" fill="#FFFFFF" />
+      <circle cx="40" cy="36" r="11" fill="#2E86DE" stroke="#FFFFFF" strokeWidth="3" />
+      <circle cx="68" cy="36" r="11" fill="#FFC93C" stroke="#FFFFFF" strokeWidth="3" />
+      <circle cx="40" cy="72" r="11" fill="#F4A3C4" stroke="#FFFFFF" strokeWidth="3" />
+      <circle cx="68" cy="72" r="10" fill="none" stroke="#B9A3D6" strokeWidth="3" strokeDasharray="5 4" />
+    </svg>
+  );
+}

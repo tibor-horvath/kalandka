@@ -8,7 +8,7 @@ import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon }
 import type { Mood, Tone } from '../lib/types';
 import { useProfiles } from '../state/profiles';
 import { useProgress } from '../state/progress';
-import { markStickerSeen, type Sticker } from '../state/rewards';
+import { earnedStickers, gameOf, markStickerSeen, type Sticker } from '../state/rewards';
 import { WORLDS, type WorldId } from '../state/worlds';
 
 /** The place the child just left (a game, or the reward place), and whether they solved a task there this time. */
@@ -23,6 +23,7 @@ export interface HubActions {
   onPrint: () => void;
   onSwitch: () => void;
   onMap: () => void;
+  onAlbum: () => void;
   back: PlaceReturn | null;
 }
 
@@ -40,7 +41,7 @@ const LOOK: Record<WorldId, { className: string; guide: 'csepi' | 'csavar'; acce
 
 /**
  * A world's home screen: the top bar, the guide's bubble with its replay button, the island of games
- * with the reward place last, and the celebration of a sticker earned since the last visit.
+ * with the reward place last, the sticker album beside them, and the celebration of a sticker earned since the last visit.
  */
 export function WorldHub({
   world,
@@ -53,6 +54,7 @@ export function WorldHub({
   onPrint,
   onSwitch,
   onMap,
+  onAlbum,
   back
 }: HubActions & {
   world: WorldId;
@@ -74,6 +76,7 @@ export function WorldHub({
   const doors = places.map((p) => (p.onOpen ? { ...p, onOpen: () => enter(p.id, p.onOpen!) } : p));
   const rewardDoor = { ...reward, id: look.reward, onClick: () => enter(look.reward, reward.onClick) };
   const info = WORLDS.find((w) => w.id === world)!;
+  const book = { count: earnedStickers(progress).filter((s) => gameOf(s).world === world).length, onOpen: onAlbum };
 
   return (
     <>
@@ -113,6 +116,7 @@ export function WorldHub({
           world={world}
           places={doors}
           reward={rewardDoor}
+          book={book}
           leaving={leaving}
           opening={opening}
           back={back && { id: back.place, solved: back.solved, landed }}
