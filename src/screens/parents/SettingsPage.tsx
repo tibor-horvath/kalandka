@@ -2,7 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { version } from '../../../package.json';
 import { disableBiometric, enrollBiometric, useBiometric } from '../../lib/biometric';
 import { promptInstall, useInstallState } from '../../lib/install';
-import { applyUpdate, checkForUpdate, useUpdateWaiting } from '../../lib/update';
+import { checkForUpdate, useUpdateWaiting } from '../../lib/update';
 import { hungarianVoices, onVoicesChanged, speak, type Speaker } from '../../lib/speech';
 import { DEFAULT_PROGRESS, useProgress } from '../../state/progress';
 import { Check } from './controls';
@@ -141,28 +141,12 @@ export function SettingsPage({ onLegal }: { onLegal: () => void }) {
   );
 }
 
-/**
- * The parents' corner never reloads on its own (a parent may be halfway through a transfer or a form),
- * so a downloaded update is offered here; leaving the corner applies it too.
- */
+/** The version running; a waiting update is offered in the menu (see ParentArea). */
 function VersionLine() {
   const waiting = useUpdateWaiting();
   // A parent who opens Settings may be looking for a new version: look now, not at the next timed check.
   useEffect(checkForUpdate, []);
-  if (!waiting) return <p className="pa-muted">Verzió: {version}</p>;
-  return (
-    <section className="pa-card" aria-labelledby="s-update" role="status">
-      <h2 id="s-update" className="pa-h2">
-        Új verzió érhető el
-      </h2>
-      <p className="pa-muted">Letöltöttük a Kalandka új verzióját. Most ez fut: {version}. A frissítés pár másodperc, a haladás megmarad.</p>
-      <div>
-        <button type="button" className="pa-btn" onClick={applyUpdate}>
-          Frissítés most
-        </button>
-      </div>
-    </section>
-  );
+  return <p className="pa-muted">Verzió: {version}{waiting && ' · új verzió vár a menüben'}</p>;
 }
 
 const VOICE_ROWS: { who: Speaker; key: 'csepiVoice' | 'robotVoice'; label: string; sample: string }[] = [

@@ -502,84 +502,88 @@
 .stage--landscape .gate__key { height: 52px; }
 
 /* ---------- parents' area ---------- */
-.is-phone .pa-nav { position: static; }
-.is-phone .pa-nav::before { display: none; }
-.is-phone .pa-nav__brand,
-.is-phone .pa-nav__note { display: none; }
-.is-phone .pa-nav__item { flex-direction: column; justify-content: center; gap: 2px; padding: 0 2px; font-size: 12px; text-align: center; border-radius: 14px; }
-.is-phone .pa-page { padding: 18px 16px 24px; gap: 14px; }
-.is-phone .pa-head { flex-direction: column; align-items: flex-start; gap: 4px; }
-.is-phone .pa-h1 { font-size: 30px; }
-.is-phone .pa-card { padding: 16px 18px; border-radius: 18px; }
-.is-phone .pa-facts { grid-template-columns: 1fr; gap: 2px; }
-.is-phone .pa-facts dd + dt { margin-top: 8px; }
-.is-phone .pa-today { gap: 16px; }
-.is-phone .pa-today svg { flex: none; width: 104px; height: 104px; }
-.is-phone .pa-bars { height: 100px; gap: 8px; }
-.is-phone .pa-games__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.is-phone .pa-world { padding: 12px; border-radius: 18px; }
-.is-phone .pa-level { flex-wrap: wrap; gap: 12px; padding: 14px 16px; }
-.is-phone .pa-stepper { flex-basis: 100%; justify-content: space-between; }
-.is-phone .pa-stepper__value { width: auto; flex: 1; }
-.is-phone .pa-seg--pill .pa-seg__btn { min-width: 0; flex: 1; }
-.is-phone .pa-seg--8 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.is-phone .pa-inline-field { padding-left: 0; flex-wrap: wrap; }
-.is-phone .pa-confirm span { min-width: 0; }
+/* It stands outside the scaled stage, at the window's own size, so it follows the window, not .is-phone. */
 
-/* Portrait: the menu becomes a tab bar along the bottom; "back to the game" sits top right. */
-.stage--portrait .pa { flex-direction: column; }
-.stage--portrait .pa-main { flex: 1; padding-top: var(--safe-t); }
-.stage--portrait .pa-nav { order: 2; flex: none; width: auto; flex-direction: row; gap: 4px; padding: 8px 8px calc(8px + var(--safe-b)); }
-.stage--portrait .pa-nav__item { flex: 1 1 0; min-width: 0; height: 60px; }
-.stage--portrait .pa-nav__spacer { display: none; }
-.stage--portrait .pa-nav__back { position: absolute; z-index: 1; top: calc(var(--safe-t) + 14px); right: 16px; height: 44px; padding: 0 14px; gap: 6px; border-radius: 14px; font-size: 17px; }
-.stage--portrait .pa-nav__back svg { width: 18px; height: 18px; }
-.stage--portrait .pa-page { padding-top: 72px; }
-.stage--portrait .pa-grid2 { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+/* Medium windows (upright tablets, small laptops): the menu becomes a rail of icons over their names. */
+@media (max-width: 1099px) {
+  .pa-top__date { display: none; }
+}
+@media (max-width: 1023px) {
+  .pa-nav { width: calc(96px + env(safe-area-inset-left, 0px)); padding-inline: 8px; }
+  .pa-nav__item { flex-direction: column; justify-content: center; gap: 4px; height: 64px; padding: 0 2px; font-size: 12px; text-align: center; }
+  .pa-nav__item.is-active { box-shadow: inset 0 -3px 0 var(--pa-accent), 0 1px 3px rgba(16, 35, 58, 0.14); }
+  /* The rail has room for the button alone; its label says what it does. */
+  .pa-nav__update { padding: 6px; gap: 0; }
+  .pa-nav__update-text { display: none; }
+  .pa-nav__update .pa-btn { flex-direction: column; gap: 2px; height: auto; min-height: 56px; padding: 6px 2px; font-size: 12px; }
+}
 
-/* Landscape: a slim rail on the left, "back to the game" at its foot. */
-.stage--landscape .pa-nav { width: calc(92px + max(8px, var(--safe-l))); padding: 10px 8px max(10px, var(--safe-b)) max(8px, var(--safe-l)); gap: 4px; }
-.stage--landscape .pa-nav__item { height: 60px; font-size: 11px; }
-.stage--landscape .pa-nav__back { flex-direction: column; height: auto; min-height: 56px; padding: 6px 4px; gap: 2px; border-radius: 14px; font-size: 13px !important; line-height: 1.1; text-align: center; }
-.stage--landscape .pa-nav__back svg { width: 18px; height: 18px; }
-.stage--landscape .pa-main { padding-right: var(--safe-r); }
-.stage--landscape .pa-page { padding: 14px 18px 24px; }
-.stage--landscape .pa-h1 { font-size: 28px; }
-.stage--landscape .pa-games__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* Phones upright: a compact top bar with the children on their own row, the menu as tabs along the bottom. */
+@media (max-width: 599px) {
+  .pa-top { flex-wrap: wrap; gap: 10px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; }
+  .pa-top__brand svg { width: 34px; height: 34px; }
+  .pa-top__title { font-size: 20px; }
+  .pa-top__sub { display: none; }
+  .pa-top__kids { order: 3; flex: 1 1 100%; margin: 0; }
+  .pa-top__kid { flex: 1 0 auto; justify-content: center; }
+  .pa-top__end { margin-left: auto; }
+  .pa-top__back { height: 44px; padding: 0 14px 0 10px; gap: 4px; font-size: 16px; }
+  .pa-body { flex-direction: column; }
+  .pa-nav { order: 2; width: auto; flex-direction: row; gap: 2px; padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); overflow: visible; border-right: none; border-top: 1px solid var(--pa-line); background: var(--pa-card); }
+  .pa-nav__item { flex: 1 1 0; min-width: 0; height: 58px; font-size: 11px; }
+  .pa-nav__item.is-active { background: #e3f1fc; box-shadow: inset 0 -3px 0 var(--pa-accent); }
+  /* Above the tabs, as one slim row across the width. */
+  .pa-nav { flex-wrap: wrap; }
+  .pa-nav__update { order: -1; flex: 1 1 100%; flex-direction: row; align-items: center; margin: 0 0 6px; padding: 8px 8px 8px 14px; gap: 12px; }
+  .pa-nav__update-text { flex: 1; min-width: 0; display: flex; }
+  .pa-nav__update-text span { display: none; }
+  .pa-nav__update .pa-btn { flex-direction: row; min-height: 0; height: 44px; padding: 0 14px; font-size: 15px; }
+  .pa-foot { padding-bottom: 20px; }
+}
 
-/* Feladatlapok (print pages without the gate): the back button sits in the top bar, so nothing has to clear it. */
-.stage--portrait .pa--print .pa-nav__back { position: static; }
-.stage--portrait .pa--print .pa-main { padding-top: 0; }
-.stage--portrait .pa--print .pa-page { padding-top: 18px; }
-.stage--portrait .pa--print .pa-kidbar { top: 0; padding-top: 14px; }
-.stage--portrait .pa--print .pa-kidbar.is-stuck { padding-top: 7px; }
-.stage--portrait .pa--print .pa-kidbar.is-stuck .pa-kidbar__kids { max-width: none; }
-.stage--portrait .pa--print .pa-kidbar + .pa-page { padding-top: 6px; }
+/* Phones on their side: little height, so a slimmer top bar and rail. */
+@media (max-height: 500px) and (min-width: 600px) {
+  .pa-top { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: 6px; }
+  .pa-top__brand svg { width: 34px; height: 34px; }
+  .pa-top__sub { display: none; }
+  .pa-top__kid { height: 40px; }
+  .pa-top__back { height: 44px; font-size: 16px; }
+  .pa-nav { padding-top: 8px; }
+  .pa-nav__item { height: 54px; }
+  .pa--area .pa-page { padding-top: 14px; }
+  .pa--area .pa-h1 { font-size: 28px; }
+}
 
-/* Parents' children page and the child switch on a phone. */
-.is-phone .pa-kidbar { padding: 14px 16px 0; }
-.stage--portrait .pa-kidbar { padding-top: 72px; }
-.stage--landscape .pa-kidbar { padding: 14px 18px 0; }
-.is-phone .pa-kidbar + .pa-page { padding-top: 14px; }
-.is-phone .pa-kidbar.is-stuck { padding-top: 7px; padding-bottom: 7px; }
-.stage--landscape .pa-kidbar.is-stuck { padding-top: 7px; padding-bottom: 7px; }
-/* Portrait: the top padding clears the back button; stuck, that padding slides out of view and the
-   children sit left of the back button (which stays above the bar). No room for the title here. */
-.stage--portrait .pa-kidbar { top: -62px; padding-bottom: 8px; justify-content: flex-start; }
-.stage--portrait .pa-kidbar.is-stuck { padding-top: 72px; padding-bottom: 8px; padding-right: 16px; }
-.stage--portrait .pa-kidbar.is-stuck .pa-kidbar__title { display: none; }
-.stage--portrait .pa-kidbar.is-stuck .pa-kidbar__kids { max-width: calc(100% - 190px); overflow-x: auto; }
-.stage--portrait .pa-kidbar + .pa-page { padding-top: 6px; }
-.stage--portrait .pa-nav__back { z-index: 2; }
-.stage--portrait .pa-nav__item { font-size: 11px; }
-.is-phone .pa-kid { flex-wrap: wrap; gap: 10px 14px; padding: 14px 16px; }
-.is-phone .pa-kid > svg { width: 48px; height: 48px; }
-.is-phone .pa-kid__time { width: auto; flex-basis: 100%; }
-.is-phone .pa-kid__actions { flex-basis: 100%; justify-content: flex-end; }
-.is-phone .pa-kidform { flex-direction: column; align-items: stretch; }
-.is-phone .pa-kidform__preview { display: none; }
-.is-phone .pa-avatars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.stage--landscape .pa-avatars { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+/* Narrow pages: whatever the window, by the width the page itself has. */
+@container pa-main (max-width: 600px) {
+  .pa-page { padding-top: 18px; padding-bottom: 24px; gap: 14px; }
+  .pa-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .pa-h1 { font-size: 30px; }
+  .pa-card { padding: 16px 18px; border-radius: 18px; }
+  .pa-facts { grid-template-columns: 1fr; gap: 2px; }
+  .pa-facts dd + dt { margin-top: 8px; }
+  .pa-today { gap: 16px; }
+  .pa-today svg { flex: none; width: 104px; height: 104px; }
+  .pa-bars { height: 100px; gap: 8px; }
+  .pa-games__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .pa-world { padding: 12px; border-radius: 18px; }
+  .pa-worlds > .pa-world { flex-basis: 100%; }
+  .pa-level { flex-wrap: wrap; gap: 12px; padding: 14px 16px; }
+  .pa-stepper { flex-basis: 100%; justify-content: space-between; }
+  .pa-stepper__value { width: auto; flex: 1; }
+  .pa-seg--pill .pa-seg__btn { min-width: 0; flex: 1; }
+  .pa-seg--8 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .pa-inline-field { padding-left: 0; flex-wrap: wrap; }
+  .pa-confirm span { min-width: 0; }
+  .pa-kid { flex-wrap: wrap; gap: 10px 14px; padding: 14px 16px; }
+  .pa-kid > svg { width: 48px; height: 48px; }
+  .pa-kid__time { width: auto; flex-basis: 100%; }
+  .pa-kid__actions { flex-basis: 100%; justify-content: flex-end; }
+  .pa-kidform { flex-direction: column; align-items: stretch; }
+  .pa-kidform__preview { display: none; }
+  .pa-avatars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ps-layout { grid-template-columns: minmax(0, 1fr); }
+}
 
 /* The right-answer tick badge, sized for small phone tiles (the choice art rules above would stretch its svg). */
 .is-phone .choice .done-tick { width: 32px; height: 32px; top: -10px; right: -10px; box-shadow: 0 2px 0 var(--leaf-deep); }
@@ -603,5 +607,3 @@
 .stage--tall-tablet .bed__soil { height: 32px; border-radius: 16px; margin-top: -8px; }
 .stage--tall-tablet .screen--patterns .choice { height: 170px; font-size: 20px; }
 .stage--tall-tablet .screen--patterns .choice svg { width: 80px; }
-.stage--tall-tablet .pa-games__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.stage--tall-tablet .pa-avatars { grid-template-columns: repeat(6, minmax(0, 1fr)); }

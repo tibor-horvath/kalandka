@@ -3,7 +3,7 @@ import { GAME_IDS, GAMES, solvedOf, type GameId } from '../../state/games';
 import { LADDER_LEVELS, LADDER_RULES, ladderOf, upNeed, type LadderGame } from '../../state/ladder';
 import { LEVEL_SETTINGS } from '../../state/levels';
 import { useProgress } from '../../state/progress';
-import { BONUS_OPTIONS, addBonus, lastSevenDays, playedToday, remainingSeconds, today } from '../../state/screenTime';
+import { BONUS_OPTIONS, addBonus, lastSevenDays, playedToday, remainingSeconds, restNow, today } from '../../state/screenTime';
 import { LEARN_MAX } from '../../games/learn/logic';
 import { WORLDS, type WorldId } from '../../state/worlds';
 import type { ParentPage } from './ParentArea';
@@ -22,8 +22,6 @@ const COUNTED: Partial<Record<GameId, string>> = {
   code: 'kör',
   fix: 'kör'
 };
-
-const DATE_FMT = new Intl.DateTimeFormat('hu-HU', { month: 'long', day: 'numeric', weekday: 'long' });
 
 /** Minutes ring for today. With no limit it shows the minutes alone. */
 function TodayRing({ played, limit }: { played: number; limit: number }) {
@@ -63,6 +61,7 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
   const day = today(now);
   const played = Math.floor(playedToday(progress, day) / 60);
   const limit = progress.screenLimitMin;
+  const resting = progress.restDay === day;
   const left = remainingSeconds(progress, day);
   const week = lastSevenDays(progress, now);
   const avg = Math.round(week.reduce((s, d) => s + d.minutes, 0) / 7);
@@ -101,13 +100,10 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
   return (
     <div className="pa-page">
       <header className="pa-head">
-        <div>
-          <div className="pa-head__date">Ma · {DATE_FMT.format(now)}</div>
-          <h1 className="pa-h1">Áttekintés</h1>
-        </div>
+        <h1 className="pa-h1">Áttekintés</h1>
       </header>
 
-      <div className="pa-grid2">
+      <div className="pa-sum">
         <section className="pa-card pa-today" aria-labelledby="ov-today">
           <TodayRing played={played} limit={limit} />
           <div className="pa-today__text">
@@ -116,17 +112,6 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
             </h2>
             <div className="pa-big">{!limit ? 'Nincs napi korlát' : left > 0 ? `Még ${Math.max(1, Math.ceil(left / 60))} perc` : 'Lejárt'}</div>
             <div className="pa-muted">{limit ? 'A pihenő előtt Csepi szól.' : 'Napi keretet a Képernyőidő oldalon adhatsz meg.'}</div>
-            <div className="pa-row">
-              {limit > 0 &&
-                BONUS_OPTIONS.map((m) => (
-                  <button key={m} type="button" className="pa-btn" onClick={() => update((p) => addBonus(p, today(), m * 60))}>
-                    +{m} perc ma
-                  </button>
-                ))}
-              <button type="button" className="pa-link" onClick={() => onGo('time')}>
-                Beállítás
-              </button>
-            </div>
           </div>
         </section>
 
@@ -160,6 +145,27 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
               <span className="pa-legend__dash" /> napi keret: {limit} perc
             </div>
           )}
+        </section>
+
+        <section className="pa-card pa-quick" aria-labelledby="ov-quick">
+          <h2 id="ov-quick" className="pa-eyebrow">
+            Gyorsan
+          </h2>
+          {limit > 0 &&
+            BONUS_OPTIONS.map((m) => (
+              <button key={m} type="button" className="pa-btn" onClick={() => update((p) => addBonus(p, today(), m * 60))}>
+                +{m} perc ma
+              </button>
+            ))}
+          <button type="button" className="pa-btn pa-btn--quiet" disabled={resting} onClick={() => update((p) => restNow(p, today()))}>
+            {resting ? 'Ma már pihenő van' : 'Pihenő most'}
+          </button>
+          <button type="button" className="pa-btn pa-btn--quiet" onClick={() => onGo('print')}>
+            Feladatlap nyomtatása
+          </button>
+          <button type="button" className="pa-link pa-quick__more" onClick={() => onGo('time')}>
+            Képernyőidő beállítása
+          </button>
         </section>
       </div>
 
@@ -205,25 +211,27 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
             Szintek módosítása
           </button>
         </div>
-        {WORLDS.map((w) => {
-          const own = games.filter((g) => g.world === w.id);
-          return (
-            <WorldGroup key={w.id} world={w} heading="h3" aside={`${own.length} játék`}>
-              <div className="pa-games__grid">
-                {own.map((g) => (
-                  <div key={g.name} className="pa-game">
-                    <div className="pa-game__name">{g.name}</div>
-                    <div className="pa-game__detail">{g.detail}</div>
-                    {noteFor.get(g.name) && <GameStatus note={noteFor.get(g.name)!} />}
-                    <div className="pa-meter" aria-hidden="true">
-                      <div style={{ width: `${Math.round(g.share * 100)}%` }} />
+        <div className="pa-worlds">
+          {WORLDS.map((w) => {
+            const own = games.filter((g) => g.world === w.id);
+            return (
+              <WorldGroup key={w.id} world={w} heading="h3" aside={`${own.length} játék`}>
+                <div className="pa-games__grid">
+                  {own.map((g) => (
+                    <div key={g.name} className="pa-game">
+                      <div className="pa-game__name">{g.name}</div>
+                      <div className="pa-game__detail">{g.detail}</div>
+                      {noteFor.get(g.name) && <GameStatus note={noteFor.get(g.name)!} />}
+                      <div className="pa-meter" aria-hidden="true">
+                        <div style={{ width: `${Math.round(g.share * 100)}%` }} />
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </WorldGroup>
-          );
-        })}
+                  ))}
+                </div>
+              </WorldGroup>
+            );
+          })}
+        </div>
       </section>
     </div>
   );

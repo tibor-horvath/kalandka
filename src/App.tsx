@@ -231,12 +231,16 @@ function Game() {
         <Rest evening={evening && remaining > 0} onParents={() => openGate()} onSwitch={profiles.kids.length > 1 && !evening ? switchKid : undefined} />
       )}
       {parents === 'gate' && <Gate onPass={() => setParents('open')} onCancel={closeParents} />}
-      {parents === 'open' && (
-        <Suspense fallback={null}>
-          <ParentArea start={parentStart} onClose={closeParents} onAbout={openLanding} />
-        </Suspense>
-      )}
-      {/* An adult page, at the window's own size: outside the scaled stage, like the landing page's sheets. */}
+      {/* Adult pages, at the window's own size: outside the scaled stage, like the landing page's sheets. */}
+      {parents === 'open' &&
+        createPortal(
+          <div className="pa-layer">
+            <Suspense fallback={null}>
+              <ParentArea start={parentStart} onClose={closeParents} onAbout={openLanding} />
+            </Suspense>
+          </div>,
+          document.body
+        )}
       {parents === 'print' &&
         createPortal(
           <div className="pa-layer">
