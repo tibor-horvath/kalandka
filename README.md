@@ -78,7 +78,7 @@ src/
 - Bubble text shows digits; speech uses number words with correct Hungarian forms.
 - Pattern flowers differ in shape and lightness as well as colour (colour-blind friendly).
 - Touch targets are at least 64 px; the layout is a fixed 1180×820 stage scaled to the screen.
-- Phones get a 390 px phone stage instead, portrait or landscape (`components/Stage.tsx`, `styles/phone.css`), for every screen. Fixed-size drawings (seed beds, flower beds, the honey trail) scale into the room left for them (`components/FitBox.tsx`); in portrait the seed beds and Méhkas's flower beds fold, the second group under the first, so they can be drawn bigger. Turning the phone re-lays the screen out with a short tilt-and-settle (skipped with reduced motion). On phones, targets are at least 44 px and the game's choices stay large.
+- Phones get a 390 px phone stage instead, portrait or landscape (`components/Stage.tsx`, `styles/phone.css`), for every screen. A tablet held upright gets the portrait layout too, on a wider stage drawn about 1.4× larger (`.stage--tall-tablet`). Fixed-size drawings (seed beds, flower beds, the honey trail) scale into the room left for them (`components/FitBox.tsx`); in portrait the seed beds and Méhkas's flower beds fold, the second group under the first, so they can be drawn bigger. Turning the device re-lays the screen out with a short tilt-and-settle (skipped with reduced motion). On phones, targets are at least 44 px and the game's choices stay large.
 
 ## Not done yet
 

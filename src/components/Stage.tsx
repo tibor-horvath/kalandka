@@ -9,11 +9,22 @@ export const PHONE_SHORT = 390;
 const PHONE_MAX = 600;
 /** The phone stage's long side never shrinks below this; shorter windows letterbox instead. */
 const PHONE_MIN_LONG = 640;
+/**
+ * A tablet held upright gets the portrait layout on a wider stage, drawn this much larger than
+ * on a phone so the buttons stay big for a child's finger at arm's length.
+ */
+const TALL_TABLET_SCALE = 1.4;
+/** The upright tablet stage's width stays within these, so the portrait layout neither stretches nor crowds. */
+const TALL_TABLET_MIN_W = 540;
+const TALL_TABLET_MAX_W = 720;
 /** The settle after the phone is turned: a small tilt that springs upright. */
 const TURN_MS = 560;
 const TURN_TILT = 10;
 
-/** tablet: the fixed 1180×820 stage; portrait / landscape: a 390 px-wide or -tall phone stage. */
+/**
+ * tablet: the fixed 1180×820 stage; portrait / landscape: a 390 px-wide or -tall phone stage.
+ * An upright tablet is 'portrait' too, on a wider stage (marked .stage--tall-tablet).
+ */
 export type Form = 'tablet' | 'portrait' | 'landscape';
 
 const FormContext = createContext<Form>('tablet');
@@ -25,12 +36,19 @@ export function useForm(): Form {
 
 interface Fit {
   form: Form;
+  /** An upright tablet: the portrait layout with room to spare. */
+  tallTablet?: boolean;
   width: number;
   height: number;
   scale: number;
 }
 
 function fit(w: number, h: number): Fit {
+  if (Math.min(w, h) >= PHONE_MAX && h > w) {
+    const width = Math.min(TALL_TABLET_MAX_W, Math.max(TALL_TABLET_MIN_W, w / TALL_TABLET_SCALE));
+    const scale = w / width;
+    return { form: 'portrait', tallTablet: true, width, height: h / scale, scale };
+  }
   if (Math.min(w, h) >= PHONE_MAX) {
     return { form: 'tablet', width: STAGE_W, height: STAGE_H, scale: Math.min(w / STAGE_W, h / STAGE_H) };
   }
@@ -52,8 +70,9 @@ function turnDirection(before: number | null, after: number | null): number {
 
 /**
  * Lays the game out on a fixed stage and scales it to fit any screen: the 1180×820 tablet stage,
- * or on phones a portrait or landscape phone stage. Turning a phone re-lays the screen out and
- * the new layout tilts in and springs upright, leaning the way the phone turned.
+ * on phones a portrait or landscape phone stage, and on an upright tablet a wider portrait stage.
+ * Turning the device re-lays the screen out and the new layout tilts in and springs upright,
+ * leaning the way the device turned.
  */
 export function Stage({ children }: { children: ReactNode }) {
   const [view, setView] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }));
@@ -69,7 +88,7 @@ export function Stage({ children }: { children: ReactNode }) {
   }, []);
 
   // Worked out while rendering, so a screen never paints a frame in the other layout.
-  const { form, width, height, scale } = fit(view.w, view.h);
+  const { form, tallTablet, width, height, scale } = fit(view.w, view.h);
 
   // Before paint, so the first frame of the new layout is already the start of the motion.
   useLayoutEffect(() => {
@@ -78,7 +97,8 @@ export function Stage({ children }: { children: ReactNode }) {
     const angle = screen.orientation?.angle ?? null;
     const dir = turnDirection(lastAngle.current, angle);
     lastAngle.current = angle;
-    const turned = (before === 'portrait' && form === 'landscape') || (before === 'landscape' && form === 'portrait');
+    // Every turn of a device goes to or from portrait (a tablet turned upright is portrait too).
+    const turned = before !== null && before !== form && (before === 'portrait' || form === 'portrait');
     if (!turned || !stage.current?.animate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     // `rotate` and `scale` compose with the stage's own centring transform instead of replacing it.
     stage.current.animate(
@@ -95,7 +115,7 @@ export function Stage({ children }: { children: ReactNode }) {
     <div className="stage-outer">
       <div
         ref={stage}
-        className={`stage stage--${form}${form === 'tablet' ? '' : ' is-phone'}`}
+        className={`stage stage--${form}${form === 'tablet' ? '' : ' is-phone'}${tallTablet ? ' stage--tall-tablet' : ''}`}
         style={{ width, height, transform: `translate(-50%, -50%) scale(${scale})` }}
       >
         <FormContext.Provider value={form}>{children}</FormContext.Provider>
