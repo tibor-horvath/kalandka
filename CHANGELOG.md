@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/tibor-horvath/kalandka/compare/v1.5.0...v1.6.0) (2026-11-06)
+
+
+### Added
+
+* implement play timer functionality and integrate into game logic ([#35](https://github.com/tibor-horvath/kalandka/issues/35)) ([522b8b6](https://github.com/tibor-horvath/kalandka/commit/522b8b6f60f6c3f8101df437a32fb49fde341799))
+
 ## [1.5.0](https://github.com/tibor-horvath/kalandka/compare/v1.4.5...v1.5.0) (2026-11-06)
 
 
