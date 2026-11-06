@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FitBox } from './FitBox';
 import { useForm, type Form } from './Stage';
+import { StickerBookArt } from './garden';
 import { DoneTick, LockIcon, PlayIcon } from './ui';
 
 // A world's home: its island, every game a place along one trail from the boat's dock.
@@ -24,7 +25,7 @@ export interface Place {
   onOpen?: () => void;
 }
 
-/** The reward place (Kiskertem, Robotépítő), the last stop on the trail. */
+/** The reward place (Kiskertem, Robotépítő), off the trail's end like the sticker album. */
 export interface RewardPlace {
   /** The screen it opens, so its door can find it. */
   id?: string;
@@ -36,6 +37,13 @@ export interface RewardPlace {
   unit: string;
   badge: string | null;
   onClick: () => void;
+}
+
+/** The sticker album (Matricáim), off the trail beside it: the world's stickers are earned in its games. */
+export interface BookPlace {
+  /** Stickers earned in this world. */
+  count: number;
+  onOpen: () => void;
 }
 
 interface Pt {
@@ -62,7 +70,7 @@ interface Geometry {
   dots: Pt[];
   dotR: number;
   pier: { planks: string[]; deck: string; plankW: number; deckW: number };
-  /** The short walk from the pier to the first place, and the trail through all of them. */
+  /** The short walk from the pier to the first place, and the trail through the games (the reward and the album stand beside it). */
   walk: string;
   trail: string;
   trailW: number;
@@ -74,6 +82,8 @@ interface Geometry {
   tile: number;
   /** Where each place's picture is centred, in trail order: the seven games, then the reward. */
   spots: Pt[];
+  /** Where the sticker album's picture is centred, on the grass beside the trail. */
+  book: Pt;
 }
 
 const SHORE_TABLET =
@@ -92,7 +102,7 @@ const GARDEN_TABLET: Geometry = {
     { x: 1023, y: 578, r: 28 },
     { x: 221, y: 378, r: 30 },
     { x: 1014, y: 325, r: 24 },
-    { x: 694, y: 680, r: 26 }
+    { x: 585, y: 728, r: 22 }
   ],
   dots: [
     { x: 520, y: 430 },
@@ -104,7 +114,7 @@ const GARDEN_TABLET: Geometry = {
   dotR: 7,
   pier: { planks: ['M150 735 L230 690', 'M160 752 L240 707'], deck: 'M195 712 L265 672', plankW: 10, deckW: 30 },
   walk: 'M265 672 C260 640 265 600 280 560',
-  trail: 'M280 540 C330 450 360 380 430 360 S560 280 630 295 S780 280 840 300 S970 390 990 480 S880 560 800 540 S680 540 590 540 S470 660 420 655',
+  trail: 'M280 540 C330 450 360 380 430 360 S560 280 630 295 S780 280 840 300 S970 390 990 480 S880 560 800 540 S680 540 590 540',
   trailW: 26,
   dotW: 5,
   dotGap: 16,
@@ -126,8 +136,9 @@ const GARDEN_TABLET: Geometry = {
     { x: 990, y: 480 },
     { x: 800, y: 540 },
     { x: 590, y: 540 },
-    { x: 420, y: 655 }
-  ]
+    { x: 432, y: 696 }
+  ],
+  book: { x: 745, y: 700 }
 };
 
 /** The workshop on the tablet: the shore turned around, its wide machines placed on their own. */
@@ -148,7 +159,7 @@ const ROBOT_TABLET: Geometry = {
   dotR: 6,
   pier: { planks: ['M1030 735 L950 690', 'M1020 752 L940 707'], deck: 'M985 712 L915 672', plankW: 10, deckW: 30 },
   walk: 'M915 672 C915 630 920 590 930 560',
-  trail: 'M930 540 S800 430 760 380 S640 290 560 300 S420 300 350 320 S230 400 230 480 S330 570 400 560 S520 540 600 540 S720 670 770 670',
+  trail: 'M930 540 S800 430 760 380 S640 290 560 300 S420 300 350 320 S230 400 230 480 S330 570 400 560 S520 540 600 540',
   boat: 'translate(1088 748) rotate(28) scale(-1 1)',
   waves: [
     { x: 1040, y: 300 },
@@ -166,7 +177,8 @@ const ROBOT_TABLET: Geometry = {
     { x: 400, y: 560 },
     { x: 600, y: 540 },
     { x: 770, y: 670 }
-  ]
+  ],
+  book: { x: 250, y: 660 }
 };
 
 /** Portrait phones: a tall island, the trail winding up from the dock in four rows of two. */
@@ -182,15 +194,15 @@ const GARDEN_PORTRAIT: Geometry = {
   ],
   props: [{ x: 200, y: 600, r: 16 }],
   dots: [
-    { x: 190, y: 440 },
-    { x: 198, y: 434 },
-    { x: 206, y: 448 },
+    { x: 188, y: 305 },
+    { x: 196, y: 299 },
+    { x: 204, y: 313 },
     { x: 330, y: 290 }
   ],
   dotR: 5,
   pier: { planks: ['M70 636 L96 600', 'M84 644 L108 606'], deck: 'M78 630 L104 592', plankW: 7, deckW: 20 },
   walk: 'M104 592 C105 580 105 572 105 566',
-  trail: 'M105 545 L285 545 C342 545 342 385 285 385 L105 385 C48 385 48 225 105 225 L285 225 C342 225 342 65 285 65 L105 65',
+  trail: 'M105 545 L285 545 C342 545 342 385 285 385 L105 385 C48 385 48 225 105 225 L285 225 C342 225 342 65 285 65',
   trailW: 18,
   dotW: 4,
   dotGap: 12,
@@ -211,7 +223,8 @@ const GARDEN_PORTRAIT: Geometry = {
     { x: 285, y: 225 },
     { x: 285, y: 65 },
     { x: 105, y: 65 }
-  ]
+  ],
+  book: { x: 195, y: 465 }
 };
 
 /** Landscape phones: a wide island beside Csepi, the trail out along the bottom row and back along the top. */
@@ -229,12 +242,12 @@ const GARDEN_LANDSCAPE: Geometry = {
     { x: 148, y: 182 },
     { x: 158, y: 188 },
     { x: 428, y: 190 },
-    { x: 566, y: 300 }
+    { x: 560, y: 196 }
   ],
   dotR: 4,
   pier: { planks: ['M32 372 L50 340', 'M44 378 L62 346'], deck: 'M40 366 L60 334', plankW: 6, deckW: 16 },
   walk: 'M60 334 C66 322 70 314 76 304',
-  trail: 'M76 268 L496 268 C568 268 568 104 496 104 L76 104',
+  trail: 'M76 268 L496 268 C568 268 568 104 496 104 L216 104',
   trailW: 15,
   dotW: 3.5,
   dotGap: 11,
@@ -255,11 +268,12 @@ const GARDEN_LANDSCAPE: Geometry = {
     { x: 356, y: 104 },
     { x: 216, y: 104 },
     { x: 76, y: 104 }
-  ]
+  ],
+  book: { x: 576, y: 326 }
 };
 
 /** The workshop's phone islands: the garden's turned around, so its dock and trail start on the other side. */
-const mirrored = (g: Geometry): Geometry => ({ ...g, flip: true, meadows: [], spots: g.spots.map((p) => ({ x: g.w - p.x, y: p.y })) });
+const mirrored = (g: Geometry): Geometry => ({ ...g, flip: true, meadows: [], spots: g.spots.map((p) => ({ x: g.w - p.x, y: p.y })), book: { x: g.w - g.book.x, y: g.book.y } });
 
 const GEOMETRY: Record<IslandWorld, Record<Form, Geometry>> = {
   garden: { tablet: GARDEN_TABLET, portrait: GARDEN_PORTRAIT, landscape: GARDEN_LANDSCAPE },
@@ -405,14 +419,31 @@ function RewardSpot({ reward, at, i, chosen, landed }: { reward: RewardPlace; at
   );
 }
 
+function BookSpot({ book, at, i }: { book: BookPlace; at: Pt; i: number }) {
+  return (
+    <button type="button" className="spot spot--book" style={spotStyle(at, i)} onClick={book.onOpen} aria-label={`Matricáim · ${book.count} matrica`} data-place="album">
+      <span className="spot__disc">
+        <span className="spot__art">
+          <StickerBookArt />
+        </span>
+        <span className="spot__count" aria-hidden="true">
+          {book.count}
+        </span>
+      </span>
+      <span className="spot__name">Matricáim</span>
+    </button>
+  );
+}
+
 /**
- * The island with its places: the games in trail order, then the reward. `leaving` plays the way out to the map,
+ * The island with its places: the games in trail order, then the reward, and the sticker album beside the trail. `leaving` plays the way out to the map,
  * `opening` names the place whose game is opening, and `back` draws the island as it was when the child comes back from a game.
  */
 export function Island({
   world,
   places,
   reward,
+  book,
   leaving,
   opening,
   back
@@ -420,6 +451,7 @@ export function Island({
   world: IslandWorld;
   places: Place[];
   reward: RewardPlace;
+  book: BookPlace;
   leaving: boolean;
   opening: string | null;
   back: Return | null;
@@ -446,6 +478,7 @@ export function Island({
             <IslandSpot key={p.id} place={p} at={g.spots[i]} i={i} phone={phone} chosen={opening === p.id} landed={landed?.id === p.id ? landed : null} />
           ))}
           <RewardSpot reward={reward} at={g.spots[last]} i={last} chosen={opening !== null && opening === reward.id} landed={landed !== null && landed.id === reward.id} />
+          <BookSpot book={book} at={g.book} i={last} />
         </div>
       </FitBox>
     </div>

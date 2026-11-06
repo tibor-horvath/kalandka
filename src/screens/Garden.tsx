@@ -73,7 +73,7 @@ function tasksLeft(n: number): string {
 }
 
 /** Kiskert: the child plants the seeds earned in the games; plantings grow as they keep playing. */
-export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () => void }) {
+export function Garden({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
   const balance = seedBalance(progress);
   const empty = emptyBeds(progress);
@@ -281,10 +281,6 @@ export function Garden({ onBack, onAlbum }: { onBack: () => void; onAlbum: () =>
         </RoundButton>
         <h1 className="screen-title">Kiskertem</h1>
         <div className="topbar__right">
-          <button type="button" className="album-btn" onClick={onAlbum}>
-            <span className="album-btn__icon" aria-hidden="true" />
-            <span className="album-btn__label">Matricáim</span>
-          </button>
           {pears + berries > 0 && (
             <div className="pill pill--basket" aria-label={`A kosárban ${pears} körte és ${berries} áfonya`}>
               <PearIcon size={26} />

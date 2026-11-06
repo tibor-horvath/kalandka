@@ -58,7 +58,7 @@ function boltsWord(n: number): string {
 }
 
 /** Robotépítő: the child spends the bolts earned on Robotút on parts for their own robot. */
-export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () => void }) {
+export function Workshop({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
   const balance = boltBalance(progress);
   const robot = activeRobot(progress);
@@ -276,10 +276,6 @@ export function Workshop({ onBack, onAlbum }: { onBack: () => void; onAlbum: () 
         </RoundButton>
         <h1 className="screen-title">Robotépítő</h1>
         <div className="topbar__right">
-          <button type="button" className="album-btn" onClick={onAlbum}>
-            <span className="album-btn__icon" aria-hidden="true" />
-            <span className="album-btn__label">Matricáim</span>
-          </button>
           <div className={`pill workshop__bolts${answer?.kind === 'nope' ? ` is-short-${answer.n % 2 ? 'a' : 'b'}` : ''}`} aria-label={`${balance} csavar`}>
             <Bolt />
             <span>
