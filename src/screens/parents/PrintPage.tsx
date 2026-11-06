@@ -109,7 +109,7 @@ function Stepper({ label, value, dots, onStep, atMin, atMax }: { label: string; 
   );
 }
 
-/** The grown-up marks the pages the child finished: the pages of the printout chosen here. Each counts once, towards the Feladatlapok stickers. */
+/** The grown-up marks the pages the child finished: the pages of the printout chosen here. Each counts once, towards the Feladatlapok stickers and the game's own sticker for its level. */
 function DonePages({ s, choice }: { s: PrintSpec<unknown>; choice: PrintChoice }) {
   const { progress, update } = useProgress();
   return (

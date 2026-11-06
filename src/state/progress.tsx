@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../games/add/logic';
 import type { GameId } from './games';
-import { markEarnedSeen, type Bed, type TreatId, type VisitorId } from './rewards';
+import { carryOverStickers, markEarnedSeen, type Bed, type TreatId, type VisitorId } from './rewards';
 import type { PartSlot } from './robotParts';
 import type { Ladder, LadderGame } from './ladder';
 import type { TaskLog } from './taskLog';
@@ -30,7 +30,7 @@ export interface Progress {
   gifts: Partial<Record<VisitorId, number>>;
   /** Stickers already celebrated; the rest of the earned ones get the sticker animation. */
   stickersSeen: string[];
-  /** Printed pages a grown-up marked done, each once (see pageKey in print/link.ts); they earn the Feladatlapok stickers. */
+  /** Printed pages a grown-up marked done, each once (see pageKey in print/link.ts); they earn the Feladatlapok stickers and each game's level stickers (see sheetTop in rewards.ts). */
   pagesDone: string[];
   /** Plant ids grown in the watering game, oldest first. */
   garden: string[];
@@ -254,7 +254,8 @@ export function readProgress(saved: unknown): Progress {
   // Saves from before the reward pod paid one seed or bolt per task, which was the clock then: the clock starts there.
   if (raw.gardenTasks === undefined) p = { ...p, gardenTasks: p.seeds, robotTasks: p.bolts };
   // Saves from before the stickers: what was already earned goes into the album without a celebration each.
-  return raw.stickersSeen ? p : markEarnedSeen(p);
+  // Saves from before the level stickers: the stickers of the old list carry over to the level stickers.
+  return raw.stickersSeen ? carryOverStickers(p) : markEarnedSeen(p);
 }
 
 export type Update = (fn: (p: Progress) => Progress) => void;

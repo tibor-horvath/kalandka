@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.5](https://github.com/tibor-horvath/kalandka/compare/v1.4.4...v1.4.5) (2026-11-06)
+
+
+### Fixed
+
+* update sticker identifiers and enhance styling for ladder and lo… ([#30](https://github.com/tibor-horvath/kalandka/issues/30)) ([9a715e6](https://github.com/tibor-horvath/kalandka/commit/9a715e693db2deba40ba25ced2fac2b85846e92e))
+
 ## [1.4.4](https://github.com/tibor-horvath/kalandka/compare/v1.4.3...v1.4.4) (2026-11-06)
 
 
