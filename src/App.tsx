@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLandingRoute } from './app/route';
 import { useAudioSettings, useUpdateWhenIdle } from './app/useDevice';
 import { useScreenTime } from './app/useScreenTime';
@@ -235,11 +236,16 @@ function Game() {
           <ParentArea start={parentStart} onClose={closeParents} onAbout={openLanding} />
         </Suspense>
       )}
-      {parents === 'print' && (
-        <Suspense fallback={null}>
-          <PrintArea onClose={closeParents} />
-        </Suspense>
-      )}
+      {/* An adult page, at the window's own size: outside the scaled stage, like the landing page's sheets. */}
+      {parents === 'print' &&
+        createPortal(
+          <div className="pa-layer">
+            <Suspense fallback={null}>
+              <PrintArea onClose={closeParents} />
+            </Suspense>
+          </div>,
+          document.body
+        )}
     </Stage>
   );
 }
