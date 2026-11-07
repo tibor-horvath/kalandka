@@ -30,7 +30,7 @@ Seven levels, five rounds each (`CODE_ROUNDS_PER_LEVEL = 5`), on the shared ladd
 | 6 | Üzenet | 6–7 | Encoding: Csavar wants to send Kutyabot a message. The message is 2–3 pictures and the keypad shows colour lamps, so the child reads the key backwards (picture → sign). The lamps travel along a wire to Kutyabot, who fetches the thing shown by the first picture. | 3 colours | 3 |
 | 7 | Hiányzó jel | 7 | One key row is covered (?). A note stuck on the crate shows an opened code with its answer, and the child picks the hidden meaning from 3 cards (first step, like Hibavadász). The row then uncovers and the child opens the lock (second step). | 3 pictures | 2 |
 
-Generator rules (`src/games/robot/code.ts`):
+Generator rules (`src/worlds/robot/games/code.ts`):
 - A code never repeats the previous task's code within a round.
 - Level 1: two different colours. Level 2: at least two different colours.
 - Levels 3, 4, 6 and 7: the key maps the three lamps to three of the four pictures, one-to-one. On level 4 the mapping changes every task. On level 7 the note shows two different lamps, the covered one among them, and the cards are its meaning, another row's meaning and the picture no lamp means.
@@ -62,9 +62,9 @@ Each task becomes a crate with empty boxes under the code and the key beside it.
 
 ## Files
 
-- `src/games/robot/code.ts`: levels, task generator, key, Csavar's lines. Plus `code.test.ts`.
-- `src/screens/robot/Code.tsx`: the screen.
-- `src/styles/robot.css`: `.code-*` styles, phone layout (the key folds above the crate in portrait).
+- `src/worlds/robot/games/code.ts`: levels, task generator, key, Csavar's lines. Plus `code.test.ts`.
+- `src/worlds/robot/screens/Code.tsx`: the screen.
+- `src/worlds/robot/robot.css`: `.code-*` styles, phone layout (the key folds above the crate in portrait).
 - `src/state/ladder.ts`: `code` entry. Also update `levels.ts`, `rewards.ts` (stickers) and `insights.ts` (parents' note).
-- `src/print/`: the sheet.
+- `src/worlds/robot/print.tsx`: the sheet.
 - README: a Robotműhely table row, the stickers and the Structure line.

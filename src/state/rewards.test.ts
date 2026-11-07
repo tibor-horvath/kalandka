@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ADD_LEVELS } from '../games/add/logic';
-import { SORT_LEVELS } from '../games/robot/sort';
+import { ADD_LEVELS } from '../worlds/garden/games/add/logic';
+import { SORT_LEVELS } from '../worlds/robot/games/sort';
 import { LADDER_LEVELS, ladderOf, withLadder, type LadderGame } from './ladder';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
 import { PARTS } from './robotParts';

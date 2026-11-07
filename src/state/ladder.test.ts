@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTraceRound } from '../games/trace/logic';
+import { buildTraceRound } from '../worlds/garden/games/trace/logic';
 import { LADDER_RULES, afterSolve, ladderMeter, ladderOf, placeAt, startAt, type Ladder, type LadderRule } from './ladder';
 import { DEFAULT_PROGRESS } from './progress';
 

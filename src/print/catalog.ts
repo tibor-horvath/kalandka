@@ -1,7 +1,7 @@
-import { GARDEN_SHEETS } from './garden';
+import { GARDEN_SHEETS } from '../worlds/garden/print';
 import { pageKey, type PageRef, type ReadLink } from './link';
 import { readJson, removeKeys, writeKey } from '../lib/storage';
-import { ROBOT_SHEETS } from './robot';
+import { ROBOT_SHEETS } from '../worlds/robot/print';
 import { MAX_PAGES, type Density, type Grid, type PrintId, type PrintSpec } from './sheet';
 
 /** Every game's sheet, in the order the games stand in the parents' corner. */

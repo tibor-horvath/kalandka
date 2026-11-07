@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { Csepi } from '../components/Csepi';
-import { CmdIcon, Csavar, Rover } from '../components/robot';
+import { CmdIcon, Csavar, Rover } from '../worlds/robot/art';
 import { KalandkaIcon, KalandkaWordmark } from '../components/ui';
-import type { Cmd } from '../games/robot/path';
+import type { Cmd } from '../worlds/robot/games/path';
 import type { Mood } from '../lib/types';
 import { DENSITIES, siteAddress } from './sheet';
 

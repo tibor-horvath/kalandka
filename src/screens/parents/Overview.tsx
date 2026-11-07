@@ -4,7 +4,7 @@ import { LADDER_LEVELS, LADDER_RULES, ladderOf, upNeed, type LadderGame } from '
 import { LEVEL_SETTINGS } from '../../state/levels';
 import { useProgress } from '../../state/progress';
 import { BONUS_OPTIONS, addBonus, lastSevenDays, playedToday, remainingSeconds, restNow, today } from '../../state/screenTime';
-import { LEARN_MAX } from '../../games/learn/logic';
+import { LEARN_MAX } from '../../worlds/garden/games/learn/logic';
 import { WORLDS, type WorldId } from '../../state/worlds';
 import type { ParentPage } from './ParentArea';
 import { WorldGroup } from './controls';

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState, type CSSProperties } from 'react';
-import { StickerDisc, StickerSlot } from '../components/garden';
+import { StickerDisc, StickerSlot } from '../components/stickers';
 import { GuideSay } from '../components/GuideSay';
 import { PlaceShell } from '../components/PlaceShell';
 import { popBubble } from '../lib/sound';

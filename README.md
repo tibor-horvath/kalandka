@@ -33,22 +33,35 @@ npm run build    # type-check + production build with service worker, then the o
 
 ```
 src/
-  games/water/logic.ts      pure watering rules: status, feedback text and speech, ten-frame slots
-  games/patterns/logic.ts   pure pattern rounds and hints
-  games/learn/logic.ts      Számmagok rounds, number naming, Villámszem unlock rule
-  games/flash/logic.ts      Villámszem levels and answers
-  games/flash/layout.ts     seed layouts shared by both seed games
-  games/add/logic.ts        Méhkas levels, sums, bouquets
-  games/trace/logic.ts      Mézút digit trails, forgiving finger following, honey-drop checkpoints
-  games/pots/logic.ts       Cserépbarátok levels, rounds, pot layout and Csepi's lines
-  games/robot/path.ts       Robotút levels, course generator (shortest-way search), running a program, energy, Csavar's lines
-  games/robot/seq.ts        Mintagép levels, pattern rows and choices, reading the row aloud, Csavar's lines
-  games/robot/mirror.ts     Tükörgép levels, reflecting across the mirror, pictures, reflection-or-copy shapes, the board with one fault, Csavar's lines
-  games/robot/sort.ts       Válogatógép levels, parts and boxes, odd-one-out rows, hidden-rule examples, Csavar's lines
-  games/robot/scale.ts      Mérleg levels and tasks, tilt, weights on a pan, Csavar's lines
-  games/robot/code.ts       Kódzár levels, codes and code keys, the covered row and its note, Csavar's lines
-  games/robot/fix.ts        Hibavadász levels, programs with a mistake put in, the check that only one change fixes them, Csavar's lines
+  worlds/                   one folder per world: its games, screens, art, printable sheets and styles.
+                            A world imports only shared code (everything outside worlds/), never another world.
+  worlds/garden/            Számkertész, Csepi's world
+    games/water/logic.ts      pure watering rules: status, feedback text and speech, ten-frame slots
+    games/patterns/logic.ts   pure pattern rounds and hints
+    games/learn/logic.ts      Számmagok rounds, number naming, Villámszem unlock rule
+    games/flash/logic.ts      Villámszem levels and answers
+    games/flash/layout.ts     seed layouts shared by both seed games
+    games/add/logic.ts        Méhkas levels, sums, bouquets
+    games/trace/logic.ts      Mézút digit trails, forgiving finger following, honey-drop checkpoints
+    games/pots/logic.ts       Cserépbarátok levels, rounds, pot layout and Csepi's lines
+    screens/                  Home, Garden (Kiskert), Learn, Water, Patterns, Flash, Add, Trace, Pots
+    art.tsx, seeds.tsx        drops, flowers, pots, bees and the seed fields
+    kiskert.tsx               the Kiskert's plants, fruit, visitors, treats and decorations
+    print.tsx                 the garden's printable sheets
+  worlds/robot/             Robotműhely, Csavar's world
+    games/path.ts             Robotút levels, course generator (shortest-way search), running a program, energy, Csavar's lines
+    games/seq.ts              Mintagép levels, pattern rows and choices, reading the row aloud, Csavar's lines
+    games/mirror.ts           Tükörgép levels, reflecting across the mirror, pictures, reflection-or-copy shapes, the board with one fault, Csavar's lines
+    games/sort.ts             Válogatógép levels, parts and boxes, odd-one-out rows, hidden-rule examples, Csavar's lines
+    games/scale.ts            Mérleg levels and tasks, tilt, weights on a pan, Csavar's lines
+    games/code.ts             Kódzár levels, codes and code keys, the covered row and its note, Csavar's lines
+    games/fix.ts              Hibavadász levels, programs with a mistake put in, the check that only one change fixes them, Csavar's lines
+    screens/                  RobotHome, Workshop (Robotépítő), Path, Sort, Scale, Seq, Mirror, Code, Fix; a chunk of their own (lazy.ts)
+    art.tsx, parts.tsx        Csavar, the robot parts and the workshop art
+    floor.tsx                 the workshop floor (Robotút, Hibavadász)
+    print.tsx, robot.css      the workshop's printable sheets and styles
   lib/numbers.ts            Hungarian number words 1–100 ("két csepp" vs. counting "kettő", articles)
+  lib/rng.ts                the seeded random every game draws its rounds from
   lib/speech.ts             Csepi's voice via browser hu-HU text-to-speech (placeholder for recorded audio)
   lib/sound.ts              synthesised pops and chimes (Web Audio) and light vibration
   app/                      routing, device (tablet or phone) and the screen-time hook
@@ -67,9 +80,9 @@ src/
   state/taskLog.ts          the last few solved tasks per game, for the parents' notes
   state/insights.ts         plain-language notes for parents; the multiplication gate
   state/levels.ts           per-game level settings for the parents' corner (read current, apply new start)
-  print/                    printable worksheets per game (garden.tsx, robot.tsx), the cut-out pages (extras.tsx), QR links
-  components/               Csepi, Csavar and the robot art, the workshop floor (Robotút, Hibavadász), artwork, buttons, speech bubble, game frame and level meter, home-screen top-bar controls (hub), scaling stage (1180×820 tablet, 390 px phone)
-  screens/                  WorldMap, Picker (Ki játszik?), Home, Garden (Kiskert), Album (Matricáim), Learn, Water, Patterns, Flash, Add, Trace, Pots, PrintArea, Rest; robot/ (RobotHome, Path, Sort, Scale, Seq, Mirror, Code, Fix, Workshop); parents/ (Gate, ParentArea and its pages)
+  print/                    the worksheet frame and the catalog of every world's sheets, the cut-out pages (extras.tsx), QR links
+  components/               Csepi, the islands, sticker art, buttons, speech bubble, game frame and level meter, home-screen top-bar controls (hub), scaling stage (1180×820 tablet, 390 px phone)
+  screens/                  screens of no one world: Landing, WorldMap, Picker (Ki játszik?), Album (Matricáim), PrintArea, Rest, the list of game screens (gameScreens.ts); parents/ (Gate, ParentArea and its pages)
 ```
 ## Design rules carried into code
 

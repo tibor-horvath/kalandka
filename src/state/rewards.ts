@@ -1,4 +1,4 @@
-import { LEARN_MAX } from '../games/learn/logic';
+import { LEARN_MAX } from '../worlds/garden/games/learn/logic';
 import { GAMES, type GameId } from './games';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';

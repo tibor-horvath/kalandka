@@ -1,8 +1,8 @@
 import { useId, type ReactNode } from 'react';
 import { QrCode } from '../components/QrCode';
-import { Lamp, TextureContext } from '../components/robot';
+import { Lamp, TextureContext } from '../worlds/robot/art';
 import { KalandkaIcon, KalandkaWordmark } from '../components/ui';
-import type { Color } from '../games/robot/sort';
+import type { Color } from '../worlds/robot/games/sort';
 import { GAMES, type GameId } from '../state/games';
 import type { Progress } from '../state/progress';
 import { WORLDS, type WorldId } from '../state/worlds';
@@ -171,7 +171,7 @@ export function WriteBox({ x, y, size = 90, answer, answers }: { x: number; y: n
 }
 
 /**
- * The textures that keep colours apart in black and white (TextureContext in components/robot.tsx):
+ * The textures that keep colours apart in black and white (TextureContext in worlds/robot/art.tsx):
  * red striped, blue dotted, yellow plain. Hidden but not display:none, so the patterns still paint.
  */
 function Textures({ red, blue }: { red: string; blue: string }) {
