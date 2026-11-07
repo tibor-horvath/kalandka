@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.7.0](https://github.com/tibor-horvath/kalandka/compare/v1.6.0...v1.7.0) (2026-11-07)
+
+
+### Added
+
+* add ESLint configuration and integrate linting into package.json ([#40](https://github.com/tibor-horvath/kalandka/issues/40)) ([e2e4358](https://github.com/tibor-horvath/kalandka/commit/e2e4358ea2e4149837c9654b7b49142526f6ffd6))
+* Add flower components and update watering game logic ([#44](https://github.com/tibor-horvath/kalandka/issues/44)) ([f9101f8](https://github.com/tibor-horvath/kalandka/commit/f9101f8547d60c0e8e85aa3704bed02cc4947e5f))
+* add new sticker mechanics and enhance album display for Feladat… ([#39](https://github.com/tibor-horvath/kalandka/issues/39)) ([cf01fd0](https://github.com/tibor-horvath/kalandka/commit/cf01fd04ec465a2873ab8a91026761a961622fe0))
+* implement practice mechanics and enhance level meter functionality ([#43](https://github.com/tibor-horvath/kalandka/issues/43)) ([4fa127a](https://github.com/tibor-horvath/kalandka/commit/4fa127a40da45b19067cfb6db84c4917cb4b6037))
+* redesing rest screen ([#42](https://github.com/tibor-horvath/kalandka/issues/42)) ([8920133](https://github.com/tibor-horvath/kalandka/commit/8920133fb892d5801ff2c523445dbf1a643e566b))
+
+
+### Changed
+
+* refactor reward page components and introduce PlaceShell fo… ([#37](https://github.com/tibor-horvath/kalandka/issues/37)) ([de5ddf4](https://github.com/tibor-horvath/kalandka/commit/de5ddf4e73cc3cfc7c36ac5b2ae78ec4325a6cf8))
+* split worlds intto separate folders ([#41](https://github.com/tibor-horvath/kalandka/issues/41)) ([b54badf](https://github.com/tibor-horvath/kalandka/commit/b54badf6a37debb7da144f6aebeb6fac9e4eeca6))
+
 ## [1.6.0](https://github.com/tibor-horvath/kalandka/compare/v1.5.0...v1.6.0) (2026-11-06)
 
 
