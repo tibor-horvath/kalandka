@@ -1,7 +1,9 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 export const STAGE_W = 1180;
 export const STAGE_H = 820;
+/** On a screen wider than the tablet stage, the map screens may grow it sideways up to this. */
+const WIDE_MAX_W = 1720;
 
 /** The phone stage's short side, in CSS px (the phone designs are drawn at 390 × 844). */
 export const PHONE_SHORT = 390;
@@ -22,16 +24,33 @@ const TURN_MS = 560;
 const TURN_TILT = 10;
 
 /**
- * tablet: the fixed 1180×820 stage; portrait / landscape: a 390 px-wide or -tall phone stage.
+ * tablet: the 1180×820 stage (on a wide screen the map screens draw it wider); portrait / landscape: a 390 px-wide or -tall phone stage.
  * An upright tablet is 'portrait' too, on a wider stage (marked .stage--tall-tablet).
  */
 export type Form = 'tablet' | 'portrait' | 'landscape';
 
 const FormContext = createContext<Form>('tablet');
 
+/** How much wider than STAGE_W the tablet stage is drawn, and the way a screen asks for (+1) or gives up (−1) the wide stage. */
+const WideContext = createContext<{ extra: number; ask: (n: number) => void }>({ extra: 0, ask: () => {} });
+
 /** Which layout the current screen is drawn in. */
 export function useForm(): Form {
   return useContext(FormContext);
+}
+
+/**
+ * Lets the tablet stage grow sideways to fill a wide screen while this screen is shown (the map screens use it;
+ * the games keep the 1180 stage). Returns how many px wider than STAGE_W the stage is: 0 on phones and 4:3 screens.
+ */
+export function useWideStage(): number {
+  const { extra, ask } = useContext(WideContext);
+  // Before paint, so the first frame is already drawn at the wide width.
+  useLayoutEffect(() => {
+    ask(1);
+    return () => ask(-1);
+  }, [ask]);
+  return extra;
 }
 
 interface Fit {
@@ -43,14 +62,16 @@ interface Fit {
   scale: number;
 }
 
-function fit(w: number, h: number): Fit {
+function fit(w: number, h: number, wide: boolean): Fit {
   if (Math.min(w, h) >= PHONE_MAX && h > w) {
     const width = Math.min(TALL_TABLET_MAX_W, Math.max(TALL_TABLET_MIN_W, w / TALL_TABLET_SCALE));
     const scale = w / width;
     return { form: 'portrait', tallTablet: true, width, height: h / scale, scale };
   }
   if (Math.min(w, h) >= PHONE_MAX) {
-    return { form: 'tablet', width: STAGE_W, height: STAGE_H, scale: Math.min(w / STAGE_W, h / STAGE_H) };
+    const scale = Math.min(w / STAGE_W, h / STAGE_H);
+    const width = wide ? Math.round(Math.min(WIDE_MAX_W, Math.max(STAGE_W, w / scale))) : STAGE_W;
+    return { form: 'tablet', width, height: STAGE_H, scale };
   }
   // The short side is always 390 px; the long side follows the screen's shape.
   if (h >= w) {
@@ -79,6 +100,8 @@ export function Stage({ children }: { children: ReactNode }) {
   const stage = useRef<HTMLDivElement>(null);
   const lastForm = useRef<Form | null>(null);
   const lastAngle = useRef<number | null>(screen.orientation?.angle ?? null);
+  const [wideAsks, setWideAsks] = useState(0);
+  const ask = useCallback((n: number) => setWideAsks((a) => a + n), []);
 
   useEffect(() => {
     const measure = () => setView({ w: window.innerWidth, h: window.innerHeight });
@@ -88,7 +111,8 @@ export function Stage({ children }: { children: ReactNode }) {
   }, []);
 
   // Worked out while rendering, so a screen never paints a frame in the other layout.
-  const { form, tallTablet, width, height, scale } = fit(view.w, view.h);
+  const { form, tallTablet, width, height, scale } = fit(view.w, view.h, wideAsks > 0);
+  const wide = useMemo(() => ({ extra: form === 'tablet' ? width - STAGE_W : 0, ask }), [form, width, ask]);
 
   // Before paint, so the first frame of the new layout is already the start of the motion.
   useLayoutEffect(() => {
@@ -118,7 +142,9 @@ export function Stage({ children }: { children: ReactNode }) {
         className={`stage stage--${form}${form === 'tablet' ? '' : ' is-phone'}${tallTablet ? ' stage--tall-tablet' : ''}`}
         style={{ width, height, transform: `translate(-50%, -50%) scale(${scale})` }}
       >
-        <FormContext.Provider value={form}>{children}</FormContext.Provider>
+        <FormContext.Provider value={form}>
+          <WideContext.Provider value={wide}>{children}</WideContext.Provider>
+        </FormContext.Provider>
       </div>
     </div>
   );

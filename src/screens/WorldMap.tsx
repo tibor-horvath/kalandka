@@ -5,7 +5,7 @@ import { FitBox } from '../components/FitBox';
 import { ParentsButton } from '../components/hub';
 import { Bolt, Csavar } from '../worlds/robot/art';
 import { PlayTimer, pausedLabel, useTimeLeft } from '../components/PlayTimer';
-import { useForm } from '../components/Stage';
+import { useForm, useWideStage } from '../components/Stage';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from '../components/ui';
 import { speak, stopSpeaking } from '../lib/speech';
 import { useProgress } from '../state/progress';
@@ -117,6 +117,52 @@ const WIDE: MapLayout = {
     { kind: 'tower', x: 995, y: 81, w: 186 }
   ]
 };
+
+/** How far each island may move out on a wide stage. */
+const WIDE_SPREAD = 260;
+
+/**
+ * Moves each pair of an absolute path's numbers by `dx`, the first pair by `from` and the last by `to`, those
+ * between by a share of both: a route from one island to the other keeps both its ends at their places.
+ */
+const slidePath = (d: string, from: number, to: number) => {
+  const pairs = (d.match(/-?\d+(\.\d+)?/g) ?? []).length / 2;
+  let i = 0;
+  return d.replace(/-?\d+(\.\d+)?/g, (n) => {
+    const at = Math.floor(i / 2);
+    const x = i++ % 2 === 0;
+    return x ? String(Math.round(Number(n) + from + ((to - from) * at) / Math.max(1, pairs - 1))) : n;
+  });
+};
+
+/** The wide map on a stage `extra` px wider: the islands, their boats and the far fog islands move apart. */
+function spread(map: MapLayout, extra: number): MapLayout {
+  const d = Math.min(WIDE_SPREAD, Math.round(extra / 2));
+  if (d <= 0) return map;
+  const w = map.w + 2 * d;
+  const side: Record<WorldId, number> = { garden: -d, robot: d };
+  const other: Record<WorldId, WorldId> = { garden: 'robot', robot: 'garden' };
+  const move = <T extends Pt>(p: T, dx: number): T => ({ ...p, x: p.x + d + dx });
+  return {
+    ...map,
+    w,
+    garden: move(map.garden, -d),
+    robot: move(map.robot, d),
+    boat: { garden: move(map.boat.garden, -d), robot: move(map.boat.robot, d) },
+    route: {
+      garden: slidePath(map.route.garden, d + side.garden, d + side[other.garden]),
+      robot: slidePath(map.route.robot, d + side.robot, d + side[other.robot])
+    },
+    sail: {
+      'garden-robot': slidePath(map.sail['garden-robot'], 0, 2 * d),
+      'garden-garden': slidePath(map.sail['garden-garden'], 0, 0),
+      'robot-garden': slidePath(map.sail['robot-garden'], 2 * d, 0),
+      'robot-robot': slidePath(map.sail['robot-robot'], 2 * d, 2 * d)
+    },
+    banks: [[bank(w, map.h, 86, [38, 26, 44, 30]), bank(w, map.h, 34, [30, 22, 34])]],
+    mist: map.mist.map((m) => move(m, m.x < map.w / 3 ? -d : m.x > (map.w * 2) / 3 ? d : 0))
+  };
+}
 
 const TALL: MapLayout = {
   w: 600,
@@ -390,7 +436,8 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
   const { progress } = useProgress();
   const form = useForm();
   const phone = form !== 'tablet';
-  const map = form === 'portrait' ? TALL : WIDE;
+  const extra = useWideStage();
+  const map = form === 'portrait' ? TALL : form === 'tablet' ? spread(WIDE, extra) : WIDE;
   const last = currentWorld(progress);
   const [picked, setPicked] = useState<WorldId | null>(null);
   const [diving, setDiving] = useState(false);
