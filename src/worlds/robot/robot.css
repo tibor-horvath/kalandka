@@ -983,7 +983,7 @@ button.workshop__robot { border: none; background: none; padding: 0; font: inher
 /* The longest title on Robotút's half-width landscape header: both give a little so they fit side by side. */
 .stage--landscape .screen--fix .screen-title { flex: none; font-size: 19px; }
 .stage--landscape .screen--fix .topbar__title { gap: 6px; }
-.stage--landscape .screen--fix .topbar__title > :last-child { flex: none; transform: scale(0.8); margin: 0 -19px; }
+.stage--landscape .screen--fix .topbar__title > .level-meter { flex: none; transform: scale(0.8); margin: 0 -19px; }
 
 @media (prefers-reduced-motion: reduce) {
   .path-card.is-glow, .path-cmd.is-glow { animation: none; }

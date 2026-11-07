@@ -151,23 +151,21 @@ h1, h2, p { margin: 0; }
 .meadow { position: absolute; left: -1000px; right: -1000px; bottom: -1000px; height: 1330px; background: var(--grass); }
 .screen-title { font-size: 40px; font-weight: 800; line-height: 1; }
 
-/* ---------- level meter: a game's title with its level staircase and the reward pod under it ---------- */
+/* ---------- level meter: always on top of a game's title (or Méhkas's sum), its level staircase and the reward pod ---------- */
 .topbar--meter { align-items: flex-start; }
-.topbar__title { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
-.level-meter { display: inline-flex; align-items: center; gap: 14px; height: 52px; padding: 0 12px 0 16px; border-radius: 26px; background: var(--paper); box-shadow: 0 4px 0 var(--grass-deep); flex: none; }
-.level-meter__stairs { display: flex; align-items: flex-end; gap: 4px; height: 34px; }
-.level-meter__step { width: 12px; border-radius: 4px; background: var(--good-tint); box-shadow: inset 0 0 0 3px var(--grass-deep); }
+.topbar__title { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; }
+.level-meter { display: inline-flex; align-items: center; gap: 16px; height: 60px; padding: 0 14px 0 20px; border-radius: 30px; background: var(--paper); box-shadow: 0 4px 0 var(--grass-deep); flex: none; }
+/* One track for every game: each step takes (track − gaps) ÷ levels, kept between --step-min and --step-max,
+   so a short ladder stays compact and a long one (Méhkas's 16) still shows every step. */
+.level-meter__stairs { --track: 200px; --gap: 3px; --step-min: 8px; --step-max: 18px; display: flex; align-items: flex-end; gap: var(--gap); height: 40px; }
+.level-meter__step { width: clamp(var(--step-min), (var(--track) - (var(--levels, 5) - 1) * var(--gap)) / var(--levels, 5), var(--step-max)); border-radius: 4px; background: var(--good-tint); box-shadow: inset 0 0 0 3px var(--grass-deep); }
 .level-meter__step.is-past { background: var(--leaf-deep); box-shadow: none; }
 /* The current step fills from the bottom with this level's solved rounds (--fill), and is full on a level-up. */
 @property --fill { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
 .level-meter__step.is-now { --tone: var(--sun); background: linear-gradient(to top, var(--tone) var(--fill), var(--good-tint) var(--fill)); box-shadow: inset 0 0 0 3px var(--leaf-deep); transition: --fill 0.5s ease-out; }
 .world--robot .level-meter__step.is-now { --tone: var(--bolt); }
 .level-meter__step.is-now.is-fresh { animation: answer-pop 0.6s cubic-bezier(.3, 1.4, .5, 1); }
-.level-meter__stairs.is-ramp { gap: 1px; width: 110px; }
-.level-meter__stairs.is-ramp .level-meter__step { flex: 1 1 0; width: auto; border-radius: 1px; }
-.level-meter__stairs.is-ramp .level-meter__step:first-child { border-radius: 4px 1px 1px 4px; }
-.level-meter__stairs.is-ramp .level-meter__step:last-child { border-radius: 1px 4px 4px 1px; }
-.level-meter__rule { width: 3px; height: 30px; border-radius: 2px; background: var(--good-tint); }
+.level-meter__rule { width: 3px; height: 36px; border-radius: 2px; background: var(--good-tint); }
 /* A round's tasks (the workshop): one pip each, the current one ringed, the solved ones filled. */
 .level-meter__tasks { display: flex; align-items: center; gap: 6px; }
 .level-meter__task { width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; border: 3px solid #9fb3c8; background: var(--paper); }

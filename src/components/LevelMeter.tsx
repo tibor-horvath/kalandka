@@ -78,9 +78,9 @@ function Stairs({ level, levels, fill, fresh, climbing, mastering, finished }: {
   }, [starred, climbing, level]);
 
   const moving = climbing || mastering;
-  // Long ladders draw as one stepped ramp so they keep the meter's width.
+  // The staircase keeps one track width; each step takes its share of it by the level count (see the CSS).
   return (
-    <span ref={box} className={`level-meter__stairs${levels > 8 ? ' is-ramp' : ''}${moving ? ' is-climbing' : ''}`} style={hop} aria-hidden="true">
+    <span ref={box} className={`level-meter__stairs${moving ? ' is-climbing' : ''}`} style={{ ...hop, '--levels': levels } as CSSProperties} aria-hidden="true">
       {Array.from({ length: levels }, (_, i) => (
         <span
           key={i}

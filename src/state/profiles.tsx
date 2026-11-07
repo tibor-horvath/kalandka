@@ -9,8 +9,13 @@ import { readKey, removeKeys, writeKey } from '../lib/storage';
 // progress: garden, seeds, levels and screen time. Csepi's voice, the sounds and the evening rest
 // belong to the device and are shared by everyone.
 
-export type AvatarId = 'frog' | 'ladybug' | 'bee' | 'snail' | 'flower' | 'fish';
-export const AVATAR_IDS: AvatarId[] = ['frog', 'ladybug', 'bee', 'snail', 'flower', 'fish'];
+const FIGURES = [
+  'frog', 'ladybug', 'bee', 'snail', 'flower', 'fish',
+  'bunny', 'panda', 'fox', 'hedgehog', 'owl', 'penguin',
+  'turtle', 'butterfly', 'puppy', 'mouse', 'dino', 'piglet'
+] as const;
+export type AvatarId = (typeof FIGURES)[number];
+export const AVATAR_IDS: AvatarId[] = [...FIGURES];
 
 /** Sets the starting levels of a new profile; parents can change them later on the levels page. */
 export type AgeBand = '5' | '6' | '7+';
@@ -45,8 +50,11 @@ export interface Profiles {
   progress: Record<string, KidProgress>;
 }
 
-/** Every child has a figure of their own, so they find themselves without reading. */
-export const MAX_KIDS = AVATAR_IDS.length;
+/**
+ * Every child has a figure of their own, so they find themselves without reading. There are more figures
+ * than places, so each child still has a real choice; the picker and kid cards are laid out for six.
+ */
+export const MAX_KIDS = 6;
 export const NAME_MAX = 16;
 
 const KEY = 'kalandka.profiles.v1';

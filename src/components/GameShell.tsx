@@ -19,10 +19,10 @@ export function GameBackdrop({ game }: { game: GameId }) {
 }
 
 /**
- * Every game's frame: the backdrop and the top bar (back, the title with the level meter, replay); a
+ * Every game's frame: the backdrop and the top bar (back, the level meter on top of the title, replay); a
  * level-up plays in the meter itself. The game's world sets the look; the screen brings only its play.
- * Without a title the meter sits alone between the buttons; `aside` takes the title's place (Méhkas's
- * sum) and moves the meter beside the replay button.
+ * Without a title the meter sits alone between the buttons; `aside` takes the title's place under the
+ * meter (Méhkas's sum).
  */
 export function GameShell({
   game,
@@ -63,25 +63,18 @@ export function GameShell({
     <div className={`screen ${className}${look.className}`}>
       <div className={OWN_BACKDROP[game] ?? look.gameGround} aria-hidden="true" />
 
-      <header className={title !== undefined ? 'topbar topbar--meter' : 'topbar'}>
+      <header className={title !== undefined || aside !== undefined ? 'topbar topbar--meter' : 'topbar'}>
         <RoundButton label={look.back} onClick={onBack}>
           <BackIcon />
         </RoundButton>
-        {title !== undefined ? (
+        {title !== undefined || aside !== undefined ? (
           <>
+            {/* The meter always comes first, on top of the title (or the aside). */}
             <div className="topbar__title">
-              <h1 className="screen-title">{title}</h1>
               {levelMeter}
+              {title !== undefined ? <h1 className="screen-title">{title}</h1> : aside}
             </div>
             {replay}
-          </>
-        ) : aside !== undefined ? (
-          <>
-            {aside}
-            <div className="topbar__right">
-              {levelMeter}
-              {replay}
-            </div>
           </>
         ) : (
           <>

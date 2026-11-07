@@ -52,15 +52,15 @@
 .is-phone .screen-title { font-size: 22px; line-height: 1.05; text-align: center; min-width: 0; }
 .stage--landscape .screen-title { font-size: 26px; }
 
-/* Level meter: a smaller meter under the title; in landscape it sits beside the title to save height. */
+/* Level meter: a smaller meter on top of the title; in landscape it sits first, beside the title, to save height. */
 .is-phone .topbar__title { flex: 1 1 auto; gap: 6px; }
 .stage--landscape .topbar__title { flex-direction: row; justify-content: center; gap: 12px; }
 .stage--landscape .topbar--meter { align-items: center; }
-.is-phone .level-meter { height: 38px; gap: 8px; padding: 0 8px 0 10px; border-radius: 19px; box-shadow: 0 3px 0 var(--grass-deep); }
-.is-phone .level-meter__stairs { height: 24px; max-width: 56px; gap: 2px; }
-/* Up to ten levels: the steps share a capped width so the meter fits between the buttons. */
-.is-phone .level-meter__step { width: 9px; flex: 0 1 auto; min-width: 3px; border-radius: 3px; }
-.is-phone .level-meter__rule { height: 22px; }
+/* A phone meter may shrink to fit between the buttons: the steps give way down to 3 px before anything overflows. */
+.is-phone .level-meter { height: 42px; gap: 10px; padding: 0 10px 0 12px; border-radius: 21px; box-shadow: 0 3px 0 var(--grass-deep); flex: 0 1 auto; min-width: 0; max-width: 100%; }
+.is-phone .level-meter__stairs { --track: 112px; --gap: 2px; --step-min: 5px; --step-max: 11px; height: 28px; flex: 0 1 auto; min-width: 0; }
+.is-phone .level-meter__step { flex: 0 1 auto; min-width: 3px; border-radius: 3px; }
+.is-phone .level-meter__rule { height: 24px; flex: none; }
 .is-phone .level-meter__tasks { gap: 4px; }
 .is-phone .level-meter__task { width: 11px; height: 11px; border-width: 2px; }
 .is-phone .reward-bank { gap: 5px; }
@@ -70,8 +70,6 @@
 .is-phone .reward-total { height: 28px; padding: 0 9px 0 5px; border-radius: 14px; font-size: 16px; gap: 3px; }
 .is-phone .level-meter__star { width: 10px; height: 10px; margin: -5px 0 0 -5px; }
 .is-phone .level-meter__chip { font-size: 14px; top: calc(100% + 6px); }
-.is-phone .level-meter__stairs.is-ramp { width: 56px; gap: 1px; }
-.is-phone .level-meter__stairs.is-ramp .level-meter__step { flex: 1 1 0; min-width: 0; width: auto; }
 
 /* ---------- home ---------- */
 .is-phone .brand { gap: 10px; }
@@ -260,8 +258,7 @@
 .is-phone .choices--add .big-btn { flex-basis: 100%; }
 .is-phone .add-wait { height: 84px; }
 
-.stage--portrait .screen--add .topbar { flex-wrap: wrap; row-gap: 10px; }
-.stage--portrait .screen--add .equation { order: 3; flex-basis: 100%; }
+.stage--portrait .screen--add .equation { align-self: stretch; }
 /* A margin, not padding: FitBox fits the drawing to the box's clientWidth, which counts padding. */
 .stage--portrait .screen--add .add-scene-box { margin: 0 16px; }
 
@@ -650,7 +647,7 @@
   .pa-kid__actions { flex-basis: 100%; justify-content: flex-end; }
   .pa-kidform { flex-direction: column; align-items: stretch; }
   .pa-kidform__preview { display: none; }
-  .pa-avatars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .pa-avatars { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .ps-layout { grid-template-columns: minmax(0, 1fr); }
 }
 
