@@ -215,7 +215,7 @@ function GardenIsland({ at }: { at: Pt }) {
         <RoundFlower petal="#FFC93C" width={48} />
       </g>
       <g transform="translate(-56 -16)">
-        <RoundFlower petal="#8E6BD6" width={52} />
+        <RoundFlower petal="#B83D8F" width={52} />
       </g>
       <ellipse cx="58" cy="44" rx="30" ry="7" fill="#8CC45E" />
       <g transform="translate(20 -76)">

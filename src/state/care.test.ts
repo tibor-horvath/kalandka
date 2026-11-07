@@ -48,17 +48,19 @@ describe('Kiskert care', () => {
     expect(pickFruit(p, 0)).toBe(p);
   });
 
-  it('waters a thirsty plant for free, puts its fruit in the basket and starts it ripening again', () => {
-    let p = solve(grownTree(), THIRSTY_AFTER);
+  it('waters a thirsty plant for free, leaves its fruit on to pick and starts it ripening again', () => {
+    let p = pickFruit(pickFruit(solve(grownTree(), THIRSTY_AFTER), 0), 0);
     const spent = p.seedsSpent;
     p = water(p, 0);
     expect(p.seedsSpent).toBe(spent);
-    expect(p.pears).toBe(FRUIT_MAX.tree);
+    expect(p.pears).toBe(2);
     expect(isThirsty(p.beds[0]!, p.gardenTasks)).toBe(false);
-    expect(ripeFruit(p.beds[0]!, p.gardenTasks)).toBe(0);
-    p = solve(p, 2);
-    expect(ripeFruit(p.beds[0]!, p.gardenTasks)).toBe(2);
-    expect(water(p, 0)).toBe(p);
+    expect(ripeFruit(p.beds[0]!, p.gardenTasks)).toBe(FRUIT_MAX.tree - 2);
+    p = solve(p, 1);
+    expect(ripeFruit(p.beds[0]!, p.gardenTasks)).toBe(FRUIT_MAX.tree - 1);
+    p = solve(p, 5);
+    expect(ripeFruit(p.beds[0]!, p.gardenTasks)).toBe(FRUIT_MAX.tree);
+    expect(water(solve(grownTree(), 2), 0)).toEqual(solve(grownTree(), 2));
   });
 
   it('waters every thirsty plant with the can', () => {
@@ -67,8 +69,8 @@ describe('Kiskert care', () => {
     expect(thirstyBeds(p)).toEqual([0, 1]);
     p = waterAll(p);
     expect(thirstyBeds(p)).toEqual([]);
-    expect(p.pears).toBe(FRUIT_MAX.tree);
-    expect(p.berries).toBe(FRUIT_MAX.bush);
+    expect(p.pears).toBe(0);
+    expect(ripeTotal(p)).toBe(FRUIT_MAX.tree + FRUIT_MAX.bush);
   });
 
   it('reads older saves without the basket', () => {

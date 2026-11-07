@@ -1,4 +1,4 @@
-import { Basket, Bouquet, DROP_PATH, Hive, PatternFlower, RoundFlower, Seed, SmallPot } from './art';
+import { Basket, Bouquet, DROP_PATH, GrowingPlant, Hive, PatternFlower, RoundFlower, Seed, SmallPot } from './art';
 import { ADD_LEVELS, BOX_W, RIGHT_X, SCENE_H, bedWidth, buildAddRound, hiveX, type AddItem, type AddRound } from './games/add/logic';
 import { FIELD_H, FIELD_W, LEVELS as FLASH_LEVELS, buildFlashRound, type FlashRound } from './games/flash/logic';
 import { diceFace } from './games/flash/layout';
@@ -142,7 +142,7 @@ const water = spec<Plant>({
     return (
       <Pic w={570} h={h}>
         <At x={10} y={h / 2 - 150}>
-          <RoundFlower petal={paper(plant.petal)} width={120} />
+          <GrowingPlant species={plant.id} petal={paper(plant.petal)} bloom width={104} />
         </At>
         <Num x={70} y={h / 2 + 30} n={t} size={70} />
         <Dots n={t} x={0} y={h / 2 + 80} w={140} h={60} />

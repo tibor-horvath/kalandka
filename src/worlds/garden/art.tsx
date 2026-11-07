@@ -1,4 +1,6 @@
 import type { FlowerKind } from './games/patterns/logic';
+import type { SpeciesId } from './games/water/logic';
+import { Bloom, turns } from './blooms';
 import { Csepi } from '../../components/Csepi';
 
 /** Csepi asleep on a big leaf, tucked in under a smaller one: the rest screen after the garden. Laid out by .rest-scene. */
@@ -54,29 +56,17 @@ export function Pot() {
   );
 }
 
-const PETALS_BIG: [number, number][] = [
-  [154, 80], [144, 104], [120, 114], [96, 104], [86, 80], [96, 56], [120, 46], [144, 56]
-];
-
-/** The watered plant: stem, leaves, and either a bud or a smiling bloom. */
-export function GrowingPlant({ petal, bloom }: { petal: string; bloom: boolean }) {
+/** The watered plant: a bud on a stem until it has its drops, then the real species in bloom. */
+export function GrowingPlant({ species, petal, bloom, width = 240 }: { species: SpeciesId; petal: string; bloom: boolean; width?: number }) {
   return (
-    <svg aria-hidden="true" width="240" height="300" viewBox="0 0 240 300">
-      <path d="M120 300 C114 240 126 170 120 96" stroke="#3F8F3A" strokeWidth="11" fill="none" strokeLinecap="round" />
-      <path d="M118 236 C96 214 66 214 48 226 C66 248 98 250 118 236 Z" fill="#5BAA4A" />
-      <path d="M122 186 C144 162 176 160 194 172 C176 196 144 200 122 186 Z" fill="#7CC35C" />
+    <svg aria-hidden="true" width={width} height={Math.round(width * 1.25)} viewBox="0 0 240 300">
       {bloom ? (
-        <g>
-          {PETALS_BIG.map(([x, y]) => (
-            <circle key={`${x}-${y}`} cx={x} cy={y} r="22" fill={petal} stroke="#00000014" strokeWidth="1" />
-          ))}
-          <circle cx="120" cy="80" r="24" fill="#7A4B26" />
-          <circle cx="111" cy="76" r="3.5" fill="#1F1208" />
-          <circle cx="129" cy="76" r="3.5" fill="#1F1208" />
-          <path d="M112 86 Q120 93 128 86" stroke="#1F1208" strokeWidth="3" fill="none" strokeLinecap="round" />
-        </g>
+        <Bloom species={species} />
       ) : (
         <g>
+          <path d="M120 300 C114 240 126 170 120 96" stroke="#3F8F3A" strokeWidth="11" fill="none" strokeLinecap="round" />
+          <path d="M118 236 C96 214 66 214 48 226 C66 248 98 250 118 236 Z" fill="#5BAA4A" />
+          <path d="M122 186 C144 162 176 160 194 172 C176 196 144 200 122 186 Z" fill="#7CC35C" />
           <ellipse cx="120" cy="84" rx="20" ry="30" fill="#5BAA4A" />
           <path d="M106 66 Q120 40 134 66 Z" fill={petal} />
         </g>
@@ -85,48 +75,81 @@ export function GrowingPlant({ petal, bloom }: { petal: string; bloom: boolean }
   );
 }
 
-const PETALS_SMALL: [number, number][] = [
-  [82, 46], [75.6, 61.6], [60, 68], [44.4, 61.6], [38, 46], [44.4, 30.4], [60, 24], [75.6, 30.4]
-];
+const COSMOS_PETAL = 'M0 -6 C-9 -10 -14 -24 -12 -32 L-8 -30 L-4 -34 L0 -31 L4 -34 L8 -30 L12 -32 C14 -24 9 -10 0 -6 Z';
 
-/** A grown flower for the garden strip and plot cards. */
+/** A cosmos head (radius 34 at scale 1): eight toothed petals round a yellow middle. Cosmos grows in many colours, so it suits the counters. */
+function CosmosHead({ x, y, scale, petal }: { x: number; y: number; scale: number; petal: string }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      {turns(8).map((a) => (
+        <path key={a} d={COSMOS_PETAL} fill={petal} stroke="#00000018" strokeWidth="1" transform={`rotate(${a})`} />
+      ))}
+      <circle r="9" fill="#F2B01E" />
+      <circle r="5" fill="#FFD54A" />
+    </g>
+  );
+}
+
+/** A grown flower (cosmos) for counting, the garden strip and plot cards. */
 export function RoundFlower({ petal, width = 120 }: { petal: string; width?: number }) {
   return (
     <svg aria-hidden="true" width={width} height={Math.round(width * 1.08)} viewBox="0 0 120 130">
-      <path d="M60 130 V60" stroke="#3F8F3A" strokeWidth="8" strokeLinecap="round" />
-      <ellipse cx="44" cy="102" rx="17" ry="8" transform="rotate(-30 44 102)" fill="#5BAA4A" />
-      <ellipse cx="76" cy="90" rx="17" ry="8" transform="rotate(30 76 90)" fill="#5BAA4A" />
-      {PETALS_SMALL.map(([x, y]) => (
-        <circle key={`${x}-${y}`} cx={x} cy={y} r="14" fill={petal} stroke="#00000014" strokeWidth="1" />
-      ))}
-      <circle cx="60" cy="46" r="14" fill="#7A4B26" />
+      <path d="M60 130 V64" stroke="#3F8F3A" strokeWidth="7" strokeLinecap="round" />
+      <path
+        d="M60 110 L40 96 M48 102 L42 108 M50 103 L46 90 M60 94 L80 80 M72 86 L78 92 M70 87 L74 74"
+        stroke="#5BAA4A"
+        strokeWidth="4"
+        fill="none"
+        strokeLinecap="round"
+      />
+      <CosmosHead x={60} y={44} scale={1.1} petal={petal} />
     </svg>
   );
 }
 
-const SUN_PETALS: [number, number][] = [
-  [54, 36], [49.9, 45.9], [40, 50], [30.1, 45.9], [26, 36], [30.1, 26.1], [40, 22], [49.9, 26.1]
+const SUN_RAY = 'M0 -11 C4.5 -15 4.5 -23 0 -28 C-4.5 -23 -4.5 -15 0 -11 Z';
+const FORGET_ME_NOT: [number, number][] = [
+  [40, 24], [49.5, 30.9], [45.9, 42.1], [34.1, 42.1], [30.5, 30.9]
 ];
 
 /** Pattern-game flowers: each kind differs in colour, lightness AND shape, so colour-blind children can play. */
 export function PatternFlower({ kind, width = 110 }: { kind: FlowerKind; width?: number }) {
   return (
     <svg aria-hidden="true" width={width} height={Math.round(width * 1.375)} viewBox="0 0 80 110">
-      <path d="M40 110 V48" stroke="#3F8F3A" strokeWidth="6" strokeLinecap="round" />
-      <ellipse cx="30" cy="84" rx="12" ry="5" transform="rotate(-30 30 84)" fill="#5BAA4A" />
-      {kind === 'tulip' && <path d="M22 26 L27 50 H53 L58 26 L49 36 L40 22 L31 36 Z" fill="#D63B3B" />}
+      {kind === 'tulip' && (
+        <>
+          <path d="M40 110 V50" stroke="#3F8F3A" strokeWidth="6" strokeLinecap="round" />
+          <path d="M38 108 C26 92 22 76 26 60 C32 76 38 90 44 108 Z" fill="#6FA35E" />
+          <path d="M28 34 C30 22 36 16 40 14 C44 16 50 22 52 34 Z" fill="#A82424" />
+          <path d="M38 54 C25 53 21 38 23 17 C31 23 37 30 41 41 Z" fill="#B82E2E" />
+          <path d="M42 54 C55 53 59 38 57 17 C49 23 43 30 39 41 Z" fill="#B82E2E" />
+          <path d="M40 16 C48 20 51 36 49 47 C46 54 34 54 31 47 C29 36 32 20 40 16 Z" fill="#D63B3B" />
+        </>
+      )}
       {kind === 'sun' && (
         <>
-          {SUN_PETALS.map(([x, y]) => (
-            <circle key={`${x}-${y}`} cx={x} cy={y} r="9" fill="#FFC93C" />
-          ))}
-          <circle cx="40" cy="36" r="9" fill="#7A4B26" />
+          <path d="M40 110 V60" stroke="#3F8F3A" strokeWidth="7" strokeLinecap="round" />
+          <path d="M39 92 C30 80 16 80 10 90 C18 100 32 100 39 92 Z" fill="#5BAA4A" />
+          <g transform="translate(40 36)">
+            {turns(16).map((a) => (
+              <path key={a} d={SUN_RAY} fill="#FFC93C" transform={`rotate(${a})`} />
+            ))}
+            <circle r="12" fill="#5A3418" />
+            <circle r="7" fill="#6E4322" />
+          </g>
         </>
       )}
       {kind === 'star' && (
         <>
-          <polygon points="40,14 45.9,27.9 60.9,29.2 49.5,38.8 52.9,53.8 40,46 27.1,53.8 30.5,38.8 19.1,29.2 34.1,27.9" fill="#3B6FD6" />
-          <circle cx="40" cy="35" r="5" fill="#FFE08A" />
+          <path d="M40 110 V46 M40 70 Q50 56 56 34" stroke="#3F8F3A" strokeWidth="5" fill="none" strokeLinecap="round" />
+          <path d="M39 96 C30 92 22 84 20 76 C28 76 36 84 39 96 Z" fill="#5BAA4A" />
+          <circle cx="58" cy="26" r="3.6" fill="#F2A7C3" />
+          <circle cx="63" cy="33" r="3.2" fill="#F2A7C3" />
+          {FORGET_ME_NOT.map(([x, y]) => (
+            <circle key={`${x}-${y}`} cx={x} cy={y} r="9.5" fill="#6FA8F0" />
+          ))}
+          <circle cx="40" cy="34" r="6" fill="#FFFFFF" />
+          <circle cx="40" cy="34" r="3.4" fill="#FFC93C" />
         </>
       )}
     </svg>
@@ -203,10 +226,7 @@ export function Bouquet({ petal, width = 62 }: { petal: string; width?: number }
     <svg aria-hidden="true" width={width} height={Math.round(width * 1.45)} viewBox="0 0 62 90">
       <path d="M31 88 L22 50 M31 88 L31 46 M31 88 L40 50 M31 88 L14 44 M31 88 L48 44" stroke="#3F8F3A" strokeWidth="3" strokeLinecap="round" />
       {BOUQUET_HEADS.map(([x, y]) => (
-        <circle key={`${x}-${y}`} cx={x} cy={y} r="7.5" fill={petal} stroke="#00000022" strokeWidth="1" />
-      ))}
-      {BOUQUET_HEADS.map(([x, y]) => (
-        <circle key={`c${x}-${y}`} cx={x} cy={y} r="2.6" fill="#7A4B26" />
+        <CosmosHead key={`${x}-${y}`} x={x} y={y} scale={0.24} petal={petal} />
       ))}
       <rect x="18" y="62" width="26" height="18" rx="5" fill="#FFFFFF" stroke="#C2185B" strokeWidth="2.5" />
       <text x="31" y="76" textAnchor="middle" fontSize="14" fontWeight="800" fill="#10233A" fontFamily="'Baloo 2', sans-serif">10</text>
@@ -230,8 +250,7 @@ export function Basket({ petal, count }: { petal: string; count: number }) {
       {basketHeads(count).map(([x, y]) => (
         <g key={`${x}-${y}`}>
           <path d={`M${x} 70 V${y + 8}`} stroke="#3F8F3A" strokeWidth="4" strokeLinecap="round" />
-          <circle cx={x} cy={y} r="12" fill={petal} stroke="#00000022" />
-          <circle cx={x} cy={y} r="5" fill="#7A4B26" />
+          <CosmosHead x={x} y={y} scale={0.38} petal={petal} />
         </g>
       ))}
       <path d="M10 62 H180 L162 146 H28 Z" fill="#C98A4B" />

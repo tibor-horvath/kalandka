@@ -166,7 +166,7 @@ export function Water({ onBack }: { onBack: () => void }) {
             ))}
             {fb.status === 'over' && <span className="puddle" aria-hidden="true" />}
             <div className="plant" style={{ transform: `rotate(${fb.status === 'over' ? 12 : 0}deg) scale(${scale})` }}>
-              <GrowingPlant petal={plant.petal} bloom={done} />
+              <GrowingPlant species={plant.id} petal={plant.petal} bloom={done} />
             </div>
             <Pot />
           </div>

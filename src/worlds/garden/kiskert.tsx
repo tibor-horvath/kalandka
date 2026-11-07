@@ -8,21 +8,19 @@ const LEAF = '#3F8F3A';
 const LEAF_LIGHT = '#5BAA4A';
 /** A thirsty plant's leaves: paler and duller, never brown or dead. */
 const DRY = '#8FA857';
-const DRY_LIGHT = '#AFC273';
 
+/** Where the blueberry clusters hang, in ripening order. */
 const BERRIES = [
-  [58, 50],
-  [96, 40],
-  [112, 78],
-  [72, 88],
-  [40, 86]
+  [48, 140],
+  [108, 124],
+  [86, 158]
 ];
 const PEARS = [
-  [58, 60],
-  [108, 50],
-  [120, 100],
-  [80, 96],
-  [44, 108]
+  [58, 62],
+  [110, 54],
+  [124, 112],
+  [82, 108],
+  [44, 124]
 ];
 
 function Flower() {
@@ -43,39 +41,93 @@ function Flower() {
   );
 }
 
-/** A thirsty bush sags a little lower and paler; its berries stay on. */
-function Bush({ fruit = 5, dry = false }: { fruit?: number; dry?: boolean }) {
+/** [x, y, radius] circles for the leaf masses. */
+const BUSH_LEAVES = [[40, 146, 22], [58, 122, 24], [82, 110, 26], [106, 120, 24], [124, 144, 22], [52, 166, 20], [112, 166, 20], [82, 146, 32]];
+const CROWN_LEAVES = [[85, 40, 32], [60, 70, 32], [110, 70, 32], [48, 106, 30], [122, 106, 30], [85, 96, 42], [64, 134, 24], [106, 134, 24]];
+
+function Leafage({ fill, blobs }: { fill: string; blobs: number[][] }) {
   return (
-    <g transform={dry ? 'translate(0 98) scale(1 0.92)' : 'translate(0 90)'}>
-      <circle cx="50" cy="80" r="42" fill={dry ? DRY : LEAF} />
-      <circle cx="110" cy="80" r="42" fill={dry ? DRY : LEAF} />
-      <circle cx="80" cy="52" r="46" fill={dry ? DRY_LIGHT : LEAF_LIGHT} />
-      <g fill="#2E86DE">
-        {BERRIES.slice(0, fruit).map(([x, y]) => (
-          <circle key={`${x},${y}`} cx={x} cy={y} r="8" />
-        ))}
+    <g fill={fill}>
+      {blobs.map(([x, y, r]) => (
+        <circle key={`${x},${y}`} cx={x} cy={y} r={r} />
+      ))}
+    </g>
+  );
+}
+
+/** A hanging cluster of dusty-blue blueberries, each with its little dark crown. One cluster is one pick. */
+function BerryCluster({ x, y }: { x: number; y: number }) {
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <path d="M0 -14 Q1 -6 0 0 M0 -10 Q8 -6 9 4 M0 -10 Q-6 -4 -7 6" stroke="#7A4A2E" strokeWidth="1.6" fill="none" />
+      {[[0, 2], [9, 8], [-7, 9], [2, 14]].map(([bx, by]) => (
+        <g key={`${bx},${by}`} transform={`translate(${bx} ${by})`}>
+          <circle r="7" fill="#4E6DB4" />
+          <ellipse cx="-2.6" cy="-2.6" rx="2.6" ry="1.7" fill="#A9BCE3" />
+          <circle cx="1.4" cy="2.2" r="2.2" fill="#26315F" />
+        </g>
+      ))}
+    </g>
+  );
+}
+
+/** A ripe pear hanging on its stalk: yellow with a red blush. */
+function HangingPear({ x, y }: { x: number; y: number }) {
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <path d="M0 -12 C1 -18 3 -22 6 -25" stroke="#6B4A2E" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+      <path
+        d="M0 -12 C-5 -12 -6 -6 -6 -2 C-11 2 -14 8 -14 14 A14 13 0 0 0 14 14 C14 8 11 2 6 -2 C6 -6 5 -12 0 -12 Z"
+        fill="#F0D75A"
+        stroke="#A08A1E"
+        strokeWidth="1.6"
+      />
+      <ellipse cx="6" cy="13" rx="6" ry="7" fill="#E9925A" fillOpacity="0.55" />
+      <ellipse cx="-6" cy="8" rx="2.4" ry="5" fill="#FFFFFF" fillOpacity="0.4" />
+      <g fill="#A08A1E">
+        <circle cx="-2" cy="18" r="0.9" />
+        <circle cx="3" cy="4" r="0.9" />
+        <circle cx="-7" cy="20" r="0.9" />
       </g>
     </g>
   );
 }
 
-/** A thirsty tree's crown droops a little and pales; its pears stay on. */
+/** A blueberry bush: thin reddish canes from the ground under a leafy mass. A thirsty one sags a little lower and paler; its berries stay on. */
+function Bush({ fruit = 3, dry = false }: { fruit?: number; dry?: boolean }) {
+  return (
+    <>
+      <path
+        d="M80 218 C74 196 52 170 36 146 M80 218 C78 184 66 150 60 120 M80 218 C82 184 96 150 102 116 M80 218 C86 196 110 170 126 144 M80 218 C80 194 80 160 82 128"
+        stroke="#8A4B3A"
+        strokeWidth="4"
+        fill="none"
+        strokeLinecap="round"
+      />
+      <g transform={dry ? 'translate(0 13) scale(1 0.94)' : undefined}>
+        <Leafage fill={dry ? DRY : LEAF} blobs={BUSH_LEAVES} />
+        {BERRIES.slice(0, fruit).map(([x, y]) => (
+          <BerryCluster key={`${x},${y}`} x={x} y={y} />
+        ))}
+      </g>
+    </>
+  );
+}
+
+/** A pear tree: tapering trunk, upright egg-shaped crown, hanging pears. A thirsty one's crown droops a little and pales; its pears stay on. */
 function PearTree({ fruit = 5, dry = false }: { fruit?: number; dry?: boolean }) {
   return (
-    <g transform="translate(0 4) scale(0.94)">
-      <path d="M74 228V130h22v98z" fill="#8A5A3B" />
-      <path d="M85 150l-26-26M85 140l24-22" stroke="#8A5A3B" strokeWidth="9" strokeLinecap="round" />
-      <g transform={dry ? 'translate(0 10)' : undefined}>
-        <circle cx="85" cy="78" r="70" fill={dry ? DRY_LIGHT : LEAF_LIGHT} />
-        <circle cx="50" cy="110" r="36" fill={dry ? DRY : LEAF} />
-        <circle cx="122" cy="106" r="36" fill={dry ? DRY : LEAF} />
-        <g fill="#FFC93C" stroke="#B07A10" strokeWidth="2">
-          {PEARS.slice(0, fruit).map(([x, y]) => (
-            <circle key={`${x},${y}`} cx={x} cy={y} r="11" />
-          ))}
-        </g>
+    <>
+      <path d="M72 220 C74 196 76 172 77 150 L93 150 C94 172 96 196 98 220 Z" fill="#7A5236" />
+      <path d="M80 212 C80 196 82 182 81 166 M89 206 C89 192 88 178 89 164" stroke="#5E3E28" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path d="M85 168 C72 152 58 140 48 122 M86 160 C100 142 112 130 120 112 M85 156 V100" stroke="#7A5236" strokeWidth="7" fill="none" strokeLinecap="round" />
+      <g transform={dry ? 'translate(0 8)' : undefined}>
+        <Leafage fill={dry ? DRY : LEAF} blobs={CROWN_LEAVES} />
+        {PEARS.slice(0, fruit).map(([x, y]) => (
+          <HangingPear key={`${x},${y}`} x={x} y={y} />
+        ))}
       </g>
-    </g>
+    </>
   );
 }
 
@@ -110,8 +162,11 @@ export function GardenPlant({ kind, grown, fruit = 0, thirsty = false }: { kind:
 export function PearIcon({ size = 28 }: { size?: number }) {
   return (
     <svg aria-hidden="true" width={size} height={Math.round(size * 1.15)} viewBox="0 0 36 42">
-      <path d="M18 2v6" stroke="#8A5A3B" strokeWidth="3" strokeLinecap="round" />
-      <path d="M18 8c-5 0-6 6-6 9-4 3-7 8-7 13a13 12 0 0 0 26 0c0-5-3-10-7-13 0-3-1-9-6-9z" fill="#FFC93C" stroke="#B07A10" strokeWidth="2" />
+      <path d="M18 9 C18 6 19 3 21 1" stroke="#6B4A2E" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+      <path d="M20 4 C24 0 30 0 32 3 C28 6 23 6 20 4 Z" fill={LEAF_LIGHT} />
+      <path d="M18 9 C13 9 12 15 12 18 C8 21 5 26 5 31 A13 10.5 0 0 0 31 31 C31 26 28 21 24 18 C24 15 23 9 18 9 Z" fill="#F0D75A" stroke="#A08A1E" strokeWidth="1.8" />
+      <ellipse cx="24" cy="31" rx="5.5" ry="6" fill="#E9925A" fillOpacity="0.55" />
+      <ellipse cx="11" cy="26" rx="2" ry="4.5" fill="#FFFFFF" fillOpacity="0.4" />
     </svg>
   );
 }
@@ -120,11 +175,22 @@ export function PearIcon({ size = 28 }: { size?: number }) {
 export function BerryIcon({ size = 28 }: { size?: number }) {
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 36 36">
-      <path d="M18 4c2 4 6 5 10 4" stroke="#3F8F3A" strokeWidth="3" fill="none" strokeLinecap="round" />
-      <g fill="#2E86DE" stroke="#1F5C9E" strokeWidth="2">
+      <path d="M18 4 C19 9 22 11 28 10" stroke={LEAF} strokeWidth="3" fill="none" strokeLinecap="round" />
+      <path d="M28 10 C30 5 34 4 35 6 C33 9 31 10 28 10 Z" fill={LEAF_LIGHT} />
+      <g fill="#4E6DB4" stroke="#2F4A8A" strokeWidth="1.6">
         <circle cx="12" cy="16" r="7" />
         <circle cx="24" cy="16" r="7" />
         <circle cx="18" cy="27" r="7" />
+      </g>
+      <g fill="#A9BCE3">
+        <ellipse cx="9.5" cy="13.5" rx="2.2" ry="1.4" />
+        <ellipse cx="21.5" cy="13.5" rx="2.2" ry="1.4" />
+        <ellipse cx="15.5" cy="24.5" rx="2.2" ry="1.4" />
+      </g>
+      <g fill="#26315F">
+        <circle cx="13.5" cy="18" r="1.8" />
+        <circle cx="25.5" cy="18" r="1.8" />
+        <circle cx="19.5" cy="29" r="1.8" />
       </g>
     </svg>
   );

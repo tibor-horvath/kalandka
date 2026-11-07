@@ -265,10 +265,10 @@ export interface AddRound {
 }
 
 const PETAL_PAIRS: [string, string][] = [
-  ['#F2709C', '#7DA7F5'],
-  ['#FFC93C', '#B07CE8'],
+  ['#F2709C', '#FFC93C'],
+  ['#FFC93C', '#B83D8F'],
   ['#F2603A', '#FFFFFF'],
-  ['#FFB347', '#7DA7F5']
+  ['#FFB347', '#9E2A4A']
 ];
 
 export interface Slot {

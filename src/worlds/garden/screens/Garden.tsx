@@ -227,15 +227,11 @@ export function Garden({ onBack }: { onBack: () => void }) {
 
   const waterThirsty = () => {
     if (thirsty.length === 0) return;
-    const before = basketPears(progress) + basketBerries(progress);
-    const after = waterAll(progress);
-    const moved = basketPears(after) + basketBerries(after) - before;
     chime();
     update(waterAll);
-    const fruit = moved > 0 ? ` A termést a kosárba tettük: ${numberAttr(moved)} darab.` : '';
     tell({
       text: 'Megöntöztük! Köszönik.',
-      speech: `Megöntöztük őket! Köszönik.${fruit} Ha tovább játszol, megint teremnek.`,
+      speech: 'Megöntöztük őket! Köszönik. Ha tovább játszol, megint teremnek.',
       mood: 'cheer',
       tone: 'good'
     });
