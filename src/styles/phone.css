@@ -296,7 +296,7 @@
 .is-phone .meadow { left: -100px; right: -100px; height: calc(1000px + 70%); }
 .stage--landscape .meadow { height: calc(1000px + 80%); }
 .is-phone .seedbed { margin: 0; }
-.is-phone .potbox { margin: 0; }
+.is-phone .potbox, .is-phone .potbox-scaled { margin: 0; }
 .stage--portrait .seedbed-box { margin: 0 16px; }
 /* Buttons drawn on the bed keep their real size however small the bed is drawn. */
 .is-phone .seedbed__cover > button { transform: scale(calc(1 / var(--fit-k, 1))); }

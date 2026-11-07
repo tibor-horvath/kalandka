@@ -638,7 +638,10 @@ export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
   pots: [
     { from: 0, mark: '5', label: 'Öt barátai', praise: 'Ismered az öt barátait!', legacy: ['pots-5'] },
     { from: 1, mark: '10', label: 'Tíz barátai', praise: 'Ismered a tíz barátait!', legacy: ['pots-10'] },
-    { from: 2, mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', legacy: ['pots-mix'] }
+    { from: 2, mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', legacy: ['pots-mix'] },
+    { from: 3, mark: '6–9', label: 'Új barátok', praise: 'Már a hat, hét, nyolc és kilenc barátait is ismered!' },
+    { from: 4, mark: '20', label: 'Húsz barátai', praise: 'Ismered a húsz barátait!' },
+    { from: 5, mark: '?', label: 'Fejből', praise: 'Fejből tudod a tíz barátait!' }
   ],
   path: [
     { from: 0, mark: '1', label: 'Első út', praise: 'Elvezetted a robotot az elemhez!', legacy: ['path-first'] },

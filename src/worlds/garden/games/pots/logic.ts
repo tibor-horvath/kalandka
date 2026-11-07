@@ -3,7 +3,8 @@ import type { Mood, Tone } from '../../../../lib/types';
 import { rng } from '../../../../lib/rng';
 
 // Cserépbarátok: a window box of five or ten pots, some already in bloom. How many more fill the box?
-// The child finds the number friends of five and ten ("3 and 7 make 10"); tapping the empty pots counts them.
+// The child finds the number friends of five, ten, six to nine and twenty ("3 and 7 make 10"); tapping the empty
+// pots counts them. On the last level a cover hides the box, so the friends of ten come from memory.
 
 /** Cserépbarátok opens once the child has met all ten numbers in Számmagok (or a parent opens everything). */
 export const UNLOCK_POTS_AFTER = 10;
@@ -13,18 +14,30 @@ export interface PotsLevel {
   /** Shown to parents. */
   name: string;
   /** Pots in the box: the number both groups make together. */
-  total: 5 | 10;
+  total: number;
+  /** Boxes of several sizes, one after the other round by round (in place of `total`). */
+  totals?: number[];
+  /** Fewest pots already in bloom: on the twenty level the first ten are always full. */
+  minHave?: number;
   /** Flowering pots fill the box in reading order, or stand anywhere. */
   scattered: boolean;
   /** Dot pictures under the numerals on the answer buttons. */
   dotChoices: boolean;
+  /** A cover hides the box until a wrong pick or the right one: the friends come from memory, not counting. */
+  hidden?: boolean;
 }
 
 export const POTS_LEVELS: PotsLevel[] = [
   { name: 'Ötös barátok', total: 5, scattered: false, dotChoices: true },
   { name: 'Tízes barátok, sorban', total: 10, scattered: false, dotChoices: true },
-  { name: 'Tízes barátok, szórva', total: 10, scattered: true, dotChoices: false }
+  { name: 'Tízes barátok, szórva', total: 10, scattered: true, dotChoices: false },
+  { name: 'Hatos–kilences barátok', total: 9, totals: [6, 7, 8, 9], scattered: false, dotChoices: false },
+  { name: 'Húszas barátok', total: 20, minHave: 11, scattered: false, dotChoices: false },
+  { name: 'Tízes barátok, letakarva', total: 10, scattered: false, dotChoices: false, hidden: true }
 ];
+
+/** The printed sheets keep the first three levels: twenty pots do not fit a page, and paper cannot hide a box. */
+export const POTS_PRINT_LEVELS = 3;
 
 /** Five solved rounds per level, then the next level. */
 export function potsLevelFor(solved: number): PotsLevel {
@@ -36,22 +49,34 @@ export const POT_STEP = 128;
 export const POT_ROW_H = 150;
 const PAD_X = 24;
 const PAD_Y = 14;
+/** Space between the two ten-frames of the twenty box. */
+const FRAME_GAP = 64;
+const FRAME_W = 5 * POT_STEP + FRAME_GAP;
 
 export interface PotCell {
   x: number;
   y: number;
 }
 
-export function boxSize(total: number): { width: number; height: number } {
-  return { width: PAD_X * 2 + 5 * POT_STEP, height: PAD_Y * 2 + Math.ceil(total / 5) * POT_ROW_H };
+/** Twenty pots stand as two ten-frames side by side, so the box stays two rows high and the tens show apart. */
+function frames(total: number): number {
+  return Math.ceil(total / 10);
 }
 
-/** Centre of each pot, row by row. */
+export function boxSize(total: number): { width: number; height: number } {
+  const rows = total > 10 ? 2 : Math.ceil(total / 5);
+  return { width: PAD_X * 2 + frames(total) * FRAME_W - FRAME_GAP, height: PAD_Y * 2 + rows * POT_ROW_H };
+}
+
+/** Centre of each pot, row by row, one ten-frame after the other. */
 export function potCells(total: number): PotCell[] {
-  return Array.from({ length: total }, (_, i) => ({
-    x: PAD_X + (i % 5) * POT_STEP + POT_STEP / 2,
-    y: PAD_Y + Math.floor(i / 5) * POT_ROW_H + POT_ROW_H / 2
-  }));
+  return Array.from({ length: total }, (_, i) => {
+    const j = i % 10;
+    return {
+      x: PAD_X + Math.floor(i / 10) * FRAME_W + (j % 5) * POT_STEP + POT_STEP / 2,
+      y: PAD_Y + Math.floor(j / 5) * POT_ROW_H + POT_ROW_H / 2
+    };
+  });
 }
 
 /** Petal colours for the flowers already there; the new friends bloom in the paired colour. */
@@ -80,9 +105,10 @@ export interface PotsRound {
 /** A round on this level (0-based; the level comes from the game's ladder, see state/ladder.ts). */
 export function buildPotsRound(round: number, levelIndex: number): PotsRound {
   const level = POTS_LEVELS[Math.max(0, Math.min(POTS_LEVELS.length - 1, levelIndex))];
-  const total = level.total;
+  const total = level.totals ? level.totals[Math.max(0, Math.floor(round)) % level.totals.length] : level.total;
   const rand = rng(round + 101);
-  const have = 1 + Math.floor(rand() * (total - 1));
+  const least = level.minHave ?? 1;
+  const have = least + Math.floor(rand() * (total - least));
   const need = total - have;
 
   let filled = Array.from({ length: total }, (_, i) => i < have);
@@ -114,9 +140,11 @@ export interface PotsFeedback {
   tone: Tone;
 }
 
-/** "ötös barátok" / "tízes barátok" */
+const FRIENDS: Record<number, string> = { 5: 'ötös', 6: 'hatos', 7: 'hetes', 8: 'nyolcas', 9: 'kilences', 10: 'tízes', 20: 'húszas' };
+
+/** "ötös barátok" / "tízes barátok" / "húszas barátok" */
 function friends(total: number): string {
-  return total === 5 ? 'ötös barátok' : 'tízes barátok';
+  return `${FRIENDS[total]} barátok`;
 }
 
 /** "mind az öt cserép" spoken, "mind az 5 cserép" written: the article follows the spoken word. */
@@ -126,6 +154,14 @@ function allPots(total: number, written: boolean): string {
 }
 
 export function askFeedback(r: PotsRound): PotsFeedback {
+  if (r.level.hidden) {
+    return {
+      text: `A takaró alatt ${r.have} virág nyílik. Hány kell még, hogy ${allPots(r.total, true)} virágos legyen?`,
+      speech: `A takaró alatt ${numberAttr(r.have)} virág nyílik. Hány virág kell még, hogy ${allPots(r.total, false)} virágos legyen?`,
+      mood: 'smile',
+      tone: 'plain'
+    };
+  }
   return {
     text: `${r.have} virág már nyílik. Hány kell még, hogy ${allPots(r.total, true)} virágos legyen?`,
     speech: `${capitalize(numberAttr(r.have))} virág már nyílik. Hány virág kell még, hogy ${allPots(r.total, false)} virágos legyen? Ha kell, koppints az üres cserepekre, és megszámoljuk!`,
@@ -156,9 +192,10 @@ export function rightFeedback(r: PotsRound): PotsFeedback {
 /** A wrong pick: Csepi counts the empty pots with the child; no "wrong" word. */
 export function revealFeedback(r: PotsRound): PotsFeedback {
   const counting = Array.from({ length: r.need }, (_, i) => numberCount(i + 1)).join(', ');
+  const lead = r.level.hidden ? 'Hoppá! Vegyük le a takarót, és számoljuk meg együtt az üres cserepeket!' : 'Hoppá! Számoljuk meg együtt az üres cserepeket!';
   return {
-    text: 'Hoppá! Számoljuk meg együtt az üres cserepeket!',
-    speech: `Hoppá! Számoljuk meg együtt az üres cserepeket! ${capitalize(counting)}.`,
+    text: lead,
+    speech: `${lead} ${capitalize(counting)}.`,
     mood: 'oops',
     tone: 'oops'
   };

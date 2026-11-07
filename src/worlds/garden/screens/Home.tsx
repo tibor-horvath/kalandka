@@ -114,7 +114,7 @@ const TILES: Partial<Record<GameId, Tile>> = {
   flash: { label: 'Villámszem – hány darab játék', art: <SeedTrio />, badge: isNew('flash') },
   add: { label: 'Méhkas – összeadós játék', art: <BeeArt />, badge: (p) => (solvedOf(p, 'add') === 0 ? 'Új!' : `${ladderOf(p, 'add').level + 1}. szint`) },
   trace: { label: 'Mézút – számírás a méhecskével', art: <TrailArt />, badge: isNew('trace') },
-  pots: { label: 'Cserépbarátok – tízes barátok játék', art: <PotsArt />, badge: isNew('pots') }
+  pots: { label: 'Cserépbarátok – számbarátok játék', art: <PotsArt />, badge: isNew('pots') }
 };
 
 /** What Csepi says about a game that opens later: once it opened, and when it is tapped while still asleep. */

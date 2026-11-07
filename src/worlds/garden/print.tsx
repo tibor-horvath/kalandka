@@ -4,7 +4,7 @@ import { FIELD_H, FIELD_W, LEVELS as FLASH_LEVELS, buildFlashRound, type FlashRo
 import { diceFace } from './games/flash/layout';
 import { rng } from '../../lib/rng';
 import { CHOICES, FLOWER_LABELS, SHAPES, SHAPE_ORDER, buildRound as buildPatternRound, type FlowerKind } from './games/patterns/logic';
-import { POTS_LEVELS, boxSize, buildPotsRound, potCells, type PotsRound } from './games/pots/logic';
+import { POTS_LEVELS, POTS_PRINT_LEVELS, boxSize, buildPotsRound, potCells, type PotsRound } from './games/pots/logic';
 import { TRACE_ORDER, arrowPoints, digitShape, heading, lapOrder, pathData, type DigitShape } from './games/trace/logic';
 import { PLANTS, plantForRound, type Plant } from './games/water/logic';
 import { ladderOf } from '../../state/ladder';
@@ -461,8 +461,8 @@ const trace = spec<TraceTask>({
 const pots = spec<PotsRound>({
   id: 'pots',
   rev: 2,
-  levels: POTS_LEVELS.map((l) => l.name),
-  current: (p) => ladderOf(p, 'pots').level,
+  levels: POTS_LEVELS.slice(0, POTS_PRINT_LEVELS).map((l) => l.name),
+  current: (p) => Math.min(POTS_PRINT_LEVELS - 1, ladderOf(p, 'pots').level),
   grid: (level, d) => (POTS_LEVELS[level].total === 5 ? pickGrid(d, [2, 4], [2, 5], [3, 7]) : pickGrid(d, [2, 3], [2, 4], [3, 5])),
   ask: () => 'Rajzolj virágot minden üres cserépbe! Hány virág kellett? Karikázd be!',
   tip: (level) =>
