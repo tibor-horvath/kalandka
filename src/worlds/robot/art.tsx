@@ -95,6 +95,32 @@ export function Csavar({ mood = 'smile', width = 84, className }: { mood?: Mood;
 }
 
 /** The little robot seen from above, in a 100 × 100 box, its headlight facing up (rotate it to turn). */
+/** Csavar asleep on his charging dock, the battery half full: the rest screen after the workshop. Laid out by .rest-scene. */
+export function CsavarCharging({ night = false }: { night?: boolean }) {
+  const ink = night ? '#FFFFFF' : INK;
+  const empty = night ? 'rgba(219, 231, 243, 0.22)' : 'rgba(16, 35, 58, 0.12)';
+  return (
+    <div className="rest-scene rest-scene--robot">
+      <Csavar mood="sleep" width={190} className="rest-scene__guide" />
+      <svg className="rest-scene__dock" aria-hidden="true" viewBox="0 0 420 130">
+        <rect x="20" y="20" width="380" height="96" rx="24" fill="#5E7287" />
+        <rect x="0" y="0" width="420" height="32" rx="16" fill={STEEL} />
+        <circle cx="60" cy="70" r="7" fill={SCREEN} />
+        <circle cx="360" cy="70" r="7" fill={SCREEN} />
+        <path d="M214 48 L196 74 H212 L206 96 L226 66 H210 Z" fill="#FFC93C" />
+      </svg>
+      <svg className="rest-scene__battery" aria-hidden="true" viewBox="0 0 60 104">
+        <rect x="20" y="2" width="20" height="10" rx="3" fill={ink} />
+        <rect x="4" y="10" width="52" height="90" rx="12" fill="none" stroke={ink} strokeWidth="5" />
+        <rect x="13" y="78" width="34" height="14" rx="4" fill={ROBOT_TEAL} />
+        <rect x="13" y="60" width="34" height="14" rx="4" fill={ROBOT_TEAL} />
+        <rect x="13" y="42" width="34" height="14" rx="4" fill={empty} />
+        <rect x="13" y="24" width="34" height="14" rx="4" fill={empty} />
+      </svg>
+    </div>
+  );
+}
+
 export function Rover() {
   return (
     <g>

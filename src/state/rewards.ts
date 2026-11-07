@@ -5,6 +5,7 @@ import type { WorldId } from './worlds';
 import { ladderOf, type LadderGame } from './ladder';
 import { FRIENDS, boughtCount, friendsOf, secondRobotOpen } from './robotParts';
 import { creditTasks, rewardFor } from './pod';
+import { today } from './screenTime';
 
 // The reward loop: every four solved tasks fill a pod that pays a seed (see pod.ts); seeds are planted in the child's own garden
 // (Kiskert); plants grow as the child keeps playing; a grown garden brings visitors; picked fruit
@@ -815,8 +816,17 @@ export function newStickers(p: Progress, world?: WorldId): Sticker[] {
   return earnedStickers(p).filter((s) => !p.stickersSeen.includes(s.id) && (!world || gameOf(s).world === world));
 }
 
-export function markStickerSeen(p: Progress, id: string): Progress {
-  return p.stickersSeen.includes(id) ? p : { ...p, stickersSeen: [...p.stickersSeen, id] };
+export function markStickerSeen(p: Progress, id: string, day = today()): Progress {
+  if (p.stickersSeen.includes(id)) return p;
+  const before = p.stickersDay === day ? p.stickersToday : [];
+  return { ...p, stickersSeen: [...p.stickersSeen, id], stickersDay: day, stickersToday: [...before, id] };
+}
+
+/** The day's stickers, newest first: those still waiting for their celebration, then the ones celebrated that day. */
+export function todaysStickers(p: Progress, day = today()): Sticker[] {
+  const celebrated = p.stickersDay === day ? [...p.stickersToday].reverse() : [];
+  const ids = [...new Set([...newStickers(p).map((s) => s.id), ...celebrated])];
+  return ids.map((id) => STICKERS.find((s) => s.id === id)).filter((s): s is Sticker => s !== undefined);
 }
 
 /**

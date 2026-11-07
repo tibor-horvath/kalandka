@@ -1,4 +1,25 @@
 import type { FlowerKind } from './games/patterns/logic';
+import { Csepi } from '../../components/Csepi';
+
+/** Csepi asleep on a big leaf, tucked in under a smaller one: the rest screen after the garden. Laid out by .rest-scene. */
+export function CsepiResting({ night = false }: { night?: boolean }) {
+  const leaf = night ? '#3B7A44' : '#5BAA4A';
+  const cover = night ? '#4C8F52' : '#7CC46A';
+  const vein = night ? '#2A5E33' : '#3F8F3A';
+  return (
+    <div className="rest-scene">
+      <svg className="rest-scene__bed" aria-hidden="true" viewBox="0 0 540 200">
+        <path d="M20 120 C110 10 420 0 520 90 C430 170 140 200 20 120 Z" fill={leaf} />
+        <path d="M40 118 C200 80 380 70 500 92" stroke={vein} strokeWidth="6" fill="none" strokeLinecap="round" />
+      </svg>
+      <Csepi mood="sleep" width={190} className="rest-scene__guide" />
+      <svg className="rest-scene__cover" aria-hidden="true" viewBox="0 0 380 110">
+        <path d="M0 50 C80 0 300 0 380 40 C300 100 80 110 0 50 Z" fill={cover} />
+        <path d="M20 50 C120 40 260 36 360 42" stroke={vein} strokeWidth="4" fill="none" strokeLinecap="round" />
+      </svg>
+    </div>
+  );
+}
 
 export const DROP_PATH = 'M12 2 C12 2 4 11 4 16 a8 8 0 0 0 16 0 C20 11 12 2 12 2 Z';
 

@@ -458,15 +458,77 @@
 .stage--landscape .time-banner { top: 0; }
 .stage--landscape:has(> .time-banner) .topbar { margin-top: 26px; }
 .stage--landscape:has(> .time-banner) .screen--home .island { margin-top: 18px; }
-.is-phone .rest { gap: 10px; padding-left: calc(1000px + 24px); padding-right: calc(1000px + 24px); }
-.is-phone .rest > svg:not(.rest__moon) { width: 90px; height: 140px; }
-.is-phone .rest__moon { top: calc(1000px + var(--safe-t) + 24px); right: 1020px; width: 80px; height: 80px; }
+/* Rest, upright: the resting guide on top, the words and the day's haul below; it scrolls if a short phone runs out of room. */
+.is-phone .rest__stage { grid-template-columns: minmax(0, 1fr); align-content: start; align-items: start; justify-content: stretch; row-gap: 12px; padding: calc(var(--safe-t) + 64px) 20px calc(var(--safe-b) + 16px); overflow-y: auto; }
+.is-phone .rest__sun { left: 24px; top: calc(var(--safe-t) + 70px); width: 64px; height: 64px; }
+.is-phone .rest__moon { left: 12px; top: calc(var(--safe-t) + 48px); width: 220px; height: 157px; }
+.is-phone .rest__art { width: 300px; justify-self: center; align-self: start; margin: 0; }
+.is-phone .rest__zz { font-size: 30px; }
+.is-phone .rest__body { gap: 12px; }
+.is-phone .rest__head { gap: 14px; }
+.is-phone .rest__replay { width: 56px; height: 56px; }
+.is-phone .rest__replay svg { width: 28px; height: 28px; }
 .is-phone .rest__title { font-size: 36px; }
-.is-phone .rest__text { font-size: 18px; max-width: 340px; margin-bottom: 8px; }
-.is-phone .rest .parents-btn { width: auto; padding: 0 18px; gap: 8px; }
-.is-phone .rest .parents-btn__label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
-.stage--landscape .rest > svg:not(.rest__moon) { width: 64px; height: 99px; }
+.is-phone .rest__text { font-size: 18px; }
+.is-phone .rest__parents { top: calc(var(--safe-t) + 14px); right: 16px; width: auto; height: 44px; padding: 0 14px; gap: 6px; font-size: 15px; }
+.is-phone .rest__parents .parents-btn__label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+.is-phone .rest-today { gap: 10px; padding: 12px 16px 14px; border-radius: 22px; }
+.is-phone .rest-today__title { font-size: 19px; }
+.is-phone .rest-today__row { gap: 16px; }
+.is-phone .rest-today__new .sticker { width: 80px; height: 80px; border-width: 4px; }
+.is-phone .rest-today__new .sticker__mark { font-size: 23px; }
+.is-phone .rest-today__badge { right: -10px; padding: 0 9px; font-size: 15px; line-height: 22px; }
+.is-phone .rest-today__more { gap: 10px; }
+.is-phone .rest-today__ticks { gap: 5px; }
+.is-phone .rest-today__tick { width: 22px; height: 22px; }
+.is-phone .rest-today__tick svg { width: 12px; height: 12px; }
+.is-phone .rest-today__stickers { gap: 8px; }
+.is-phone .rest-today__stickers .sticker { width: 40px; height: 40px; }
+.is-phone .rest-today__stickers .sticker__mark { font-size: 12px; }
+.is-phone .rest-next { justify-content: center; gap: 6px; }
+.is-phone .rest-next__step { width: 76px; gap: 3px; font-size: 14px; }
+.is-phone .rest-next__dot { width: 46px; height: 46px; }
+.is-phone .rest-next__dot > svg:not(.rest-next__guide) { width: 26px; height: 26px; }
+.is-phone .rest-next__guide { width: 20px; }
+.is-phone .rest-next__arrow { width: 28px; margin-bottom: 20px; }
+.is-phone .rest-sibs { gap: 8px; padding-top: 10px; }
+.is-phone .rest-sibs__title { font-size: 15px; }
+.is-phone .rest-sibs__row { gap: 10px; }
+.is-phone .rest-sib { height: 56px; gap: 8px; padding: 0 14px 0 6px; }
+.is-phone .rest-sib .avatar { width: 42px; height: 42px; }
+.is-phone .rest-sib__name { font-size: 17px; }
+.is-phone .rest-sib__note { font-size: 12px; }
+.is-phone .rest-handoff__art { width: 300px; height: 210px; }
+.is-phone .rest-handoff__kid { box-shadow: 0 0 0 7px var(--paper), 0 0 0 10px var(--ring); }
+.is-phone .rest-handoff__kid .avatar { width: 150px; height: 150px; }
+.is-phone .rest-handoff__guide { left: 150px; top: 6px; width: 124px; }
+.is-phone .rest-handoff__time { height: 44px; padding: 0 16px 0 12px; font-size: 18px; }
+.is-phone .rest-handoff__time svg { width: 22px; height: 22px; }
+.is-phone .rest-handoff__start { margin-top: 4px; height: 64px; font-size: 26px; }
+.is-phone .rest-handoff__start svg { width: 26px; height: 26px; }
+/* Rest, sideways: guide on the left, words on the right; the "sleep, then play" strip and the extra stickers make room. */
+.stage--landscape .rest__stage { grid-template-columns: 250px minmax(0, 420px); justify-content: center; align-content: center; align-items: center; column-gap: 28px; padding: 12px max(16px, var(--safe-r)) 12px max(16px, var(--safe-l)); }
+.stage--landscape .rest__sun { left: max(16px, var(--safe-l)); top: 14px; width: 48px; height: 48px; }
+.stage--landscape .rest__moon { left: max(8px, var(--safe-l)); top: 8px; width: 160px; height: 114px; }
+.stage--landscape .rest__art { width: 250px; align-self: center; }
+.stage--landscape .rest__parents { top: 10px; right: max(16px, var(--safe-r)); }
+.stage--landscape .rest__body { gap: 8px; }
+.stage--landscape .rest__replay { width: 48px; height: 48px; }
+.stage--landscape .rest__replay svg { width: 24px; height: 24px; }
 .stage--landscape .rest__title { font-size: 30px; }
+.stage--landscape .rest__text { font-size: 16px; }
+.stage--landscape .rest-today { gap: 8px; padding: 10px 14px; }
+.stage--landscape .rest-today__title { font-size: 17px; }
+.stage--landscape .rest-today__new .sticker { width: 64px; height: 64px; }
+.stage--landscape .rest-today__new .sticker__mark { font-size: 19px; }
+.stage--landscape .rest-next, .stage--landscape .rest-today__stickers { display: none; }
+.stage--landscape .rest-sibs { padding-top: 8px; }
+.stage--landscape .rest-sib { height: 50px; }
+.stage--landscape .rest-sib .avatar { width: 38px; height: 38px; }
+.stage--landscape .rest-handoff__art { width: 250px; height: 180px; }
+.stage--landscape .rest-handoff__kid .avatar { width: 124px; height: 124px; }
+.stage--landscape .rest-handoff__guide { left: 126px; width: 100px; }
+.stage--landscape .rest-handoff__start { height: 56px; font-size: 22px; }
 
 /* ---------- parents' gate ---------- */
 .is-phone .gate { padding: calc(1000px + var(--safe-t) + 12px) calc(1000px + 16px) calc(1000px + var(--safe-b) + 12px); }

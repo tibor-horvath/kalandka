@@ -27,6 +27,11 @@ export function logTask(p: Progress, game: LoggedGame, helped: boolean, day = to
   return { ...p, taskLog: { ...p.taskLog, [game]: marks } };
 }
 
+/** Tasks solved on this day in the logged games; each game keeps only its last LOG_KEEP, so a long day counts low. */
+export function tasksOn(p: Progress, day: string): number {
+  return Object.values(p.taskLog).reduce((n, marks) => n + (marks ?? []).filter((m) => m.d === day).length, 0);
+}
+
 /** The first day still inside the look-back window that ends on `day`. */
 export function windowStart(day: string, days = LOG_DAYS): string {
   const [y, m, d] = day.split('-').map(Number);
