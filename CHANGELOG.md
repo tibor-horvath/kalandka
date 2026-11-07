@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/tibor-horvath/kalandka/compare/v1.7.0...v1.8.0) (2026-11-07)
+
+
+### Added
+
+* Game level extension ([#45](https://github.com/tibor-horvath/kalandka/issues/45)) ([576376f](https://github.com/tibor-horvath/kalandka/commit/576376fdadee4f8f3ae54dac76958c30f32ba8ea))
+
 ## [1.7.0](https://github.com/tibor-horvath/kalandka/compare/v1.6.0...v1.7.0) (2026-11-07)
 
 
