@@ -18,6 +18,8 @@ import {
   takeLayout,
   takeSentence,
   takeTap,
+  UNTIE_HINT,
+  mustUntie,
   tourFeedback,
   tourOrder,
   untie,
@@ -183,6 +185,18 @@ describe('Méhkas (addition)', () => {
     const after = untie(r.items, ten.id);
     expect(after.filter((i) => i.kind === 'one')).toHaveLength(loose.length + 10);
     expect(after.reduce((s, i) => s + i.value, 0)).toBe(r.a);
+  });
+
+  it('shows the untie hint only while the loose flowers are too few and a bouquet is left', () => {
+    const r = buildAddRound(0, 9);
+    const ten = r.items.find((i) => i.kind === 'ten')!;
+    const loose = r.items.filter((i) => i.kind === 'one');
+    expect(mustUntie(r.items, [], loose.length)).toBe(false);
+    expect(mustUntie(r.items, [], loose.length + 1)).toBe(true);
+    expect(mustUntie(r.items, [], 10)).toBe(false);
+    expect(mustUntie(untie(r.items, ten.id), [], loose.length + 1)).toBe(false);
+    expect(questionFeedback(r, 0, true).text).toContain(UNTIE_HINT);
+    expect(questionFeedback(r, 0, false).text).not.toContain(UNTIE_HINT);
   });
 
   it('speaks correct Hungarian', () => {

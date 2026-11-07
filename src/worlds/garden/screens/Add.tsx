@@ -17,6 +17,7 @@ import {
   buildAddRound,
   gatheredSlots,
   hiveX,
+  mustUntie,
   needsMoves,
   questionFeedback,
   rightFeedback,
@@ -168,9 +169,11 @@ export function Add({ onBack }: { onBack: () => void }) {
   /** How much has been moved: flowers over (gather) or value carried away (take). */
   const done = taking ? carriedValue(items, moved) : moved.length;
   const ready = !needsMoves(round) || (done >= round.b && flying === null);
+  /** Too few loose flowers: the bouquets show they can be untied, and Csepi says so. */
+  const untieHint = taking && mustUntie(items, moved, round.b - done);
   /** The flowers that make up the answer, in counting order: the bee's victory lap and the hop wave follow it. */
   const lap = tourOrder(round, taking ? moved : [], items);
-  const fb = phase === 'solved' ? rightFeedback(round, step?.change ?? null) : phase === 'tour' ? tourFeedback(round) : questionFeedback(round, done);
+  const fb = phase === 'solved' ? rightFeedback(round, step?.change ?? null) : phase === 'tour' ? tourFeedback(round) : questionFeedback(round, done, untieHint);
   const layout = taking ? takeLayout(round, items) : null;
   const hasBouquets = round.items.some((i) => i.kind === 'ten');
   const showEquation = round.level.answers !== 'dots' || phase === 'solved';
@@ -186,7 +189,7 @@ export function Add({ onBack }: { onBack: () => void }) {
   };
 
   useEffect(() => {
-    speak(questionFeedback(round).speech);
+    speak(questionFeedback(round, 0, round.level.strategy === 'take' && mustUntie(round.items, [], round.b)).speech);
     const pending = timers.current;
     return () => {
       if (tour.current !== null) window.clearInterval(tour.current);
@@ -233,7 +236,7 @@ export function Add({ onBack }: { onBack: () => void }) {
       }
       later(CARRY_MS, () => {
         setFlying(null);
-        speak(questionFeedback(round, doneNext).speech);
+        speak(questionFeedback(round, doneNext, taking && mustUntie(items, next, round.b - doneNext)).speech);
       });
     });
   };
@@ -377,6 +380,20 @@ export function Add({ onBack }: { onBack: () => void }) {
               <span className="add-hive" style={{ left: place(hive).x, top: place(hive).y }} aria-hidden="true">
                 <Hive />
               </span>
+              {wide && (
+                <div className="add-hive-count" style={{ left: place({ x: hive.x, y: HIVE_Y + 110 }).x, top: place({ x: hive.x, y: HIVE_Y + 110 }).y }} role="img" aria-label={`A kaptárban ${Math.min(done, round.b)} virág van, ${round.b} kell`}>
+                  {round.b <= 10 && (
+                    <span className="add-hive-count__slots" aria-hidden="true">
+                      {Array.from({ length: round.b }, (_, i) => (
+                        <span key={i} className={i < done ? 'is-full' : ''} />
+                      ))}
+                    </span>
+                  )}
+                  <span className={`add-hive-count__num${done >= round.b ? ' is-done' : ''}`}>
+                    {Math.min(done, round.b)} / {round.b}
+                  </span>
+                </div>
+              )}
               {moved.map((id, k) => {
                 const picked = items.find((i) => i.id === id);
                 if (!picked) return null;
@@ -403,9 +420,12 @@ export function Add({ onBack }: { onBack: () => void }) {
             const at = place(spot(item));
             const gone = taking && moved.includes(item.id);
             const waiting = (gathering && item.group === 'b' && !moved.includes(item.id)) || (taking && !ready && !gone);
+            const untieMe = untieHint && item.kind === 'ten' && !gone;
             const label = gone
               ? 'Üres hely – innen elvitte a méhecske'
-              : waiting
+              : untieMe
+                ? 'Csokor: tíz virág – koppints rá, és a méhecske kibontja'
+                : waiting
                 ? gathering
                   ? 'Virág – koppints rá, és a méhecske átviszi'
                   : 'Virág – koppints rá, és a méhecske elviszi'
@@ -418,13 +438,22 @@ export function Add({ onBack }: { onBack: () => void }) {
               <button
                 key={item.id}
                 type="button"
-                className={`add-flower add-flower--${item.kind}${isVisited(item.id) ? ' is-visited' : ''}${gone ? ' is-gone' : ''}${fresh.includes(item.id) ? ' is-fresh' : ''}${gathering && flying === item.id && moved.includes(item.id) ? ' is-flying' : ''}${phase === 'solved' && !gone ? ' is-happy' : ''}`}
+                className={`add-flower add-flower--${item.kind}${isVisited(item.id) ? ' is-visited' : ''}${gone ? ' is-gone' : ''}${fresh.includes(item.id) ? ' is-fresh' : ''}${gathering && flying === item.id && moved.includes(item.id) ? ' is-flying' : ''}${phase === 'solved' && !gone ? ' is-happy' : ''}${untieMe ? ' is-untie' : ''}`}
                 style={{ left: at.x, top: at.y, '--d': `${Math.max(0, lap.indexOf(item)) * CHEER_STEP_MS}ms` } as CSSProperties}
                 onClick={() => tap(item)}
                 disabled={gone}
                 aria-label={label}
               >
                 {item.kind === 'ten' ? <Bouquet petal={petal} width={56} /> : <RoundFlower petal={petal} width={round.level.bundles ? 54 : 64} />}
+                {untieMe && (
+                  <span className="add-untie-badge" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="6" cy="6" r="3" />
+                      <circle cx="6" cy="18" r="3" />
+                      <path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12" />
+                    </svg>
+                  </span>
+                )}
               </button>
             );
           })}
@@ -437,7 +466,7 @@ export function Add({ onBack }: { onBack: () => void }) {
 
       {hasBouquets && (
         <div className="legend" aria-label="Egy csokorban tíz virág van">
-          <Bouquet petal="#FFFFFF" width={26} /> = 10 virág
+          <Bouquet petal="#FFFFFF" width={26} /> = 10 virág{untieHint && ', kibontható'}
         </div>
       )}
 
