@@ -98,7 +98,7 @@ export function StickerPop({ sticker, seen, onDone }: { sticker: Sticker; seen: 
 
       <section className="sticker-pop__card" aria-label={game.name}>
         <h3 className="sticker-pop__game">{game.name}</h3>
-        <div className={`sticker-pop__row${row.length > 4 ? ' sticker-pop__row--long' : ''}`}>
+        <div className={`sticker-pop__row${row.length > 4 ? ' sticker-pop__row--long' : ''}${row.length > 7 ? ' sticker-pop__row--longer' : ''}`}>
           {row.map((s, i) => {
             const isNew = s.id === sticker.id;
             const tilt = [5, -6, 4][i % 3];

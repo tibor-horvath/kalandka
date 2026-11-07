@@ -177,7 +177,8 @@ describe('stickers', () => {
       expect(own[own.length - 1].from).toBeLessThan(levels.length);
       expect(STICKERS.filter((s) => s.game === game).map((s) => s.mark)).toEqual(own.map((s) => s.mark));
     }
-    for (const game of ['learn', 'kiskert', 'robotepito', 'paper-garden', 'paper-robot']) expect(STICKERS.filter((s) => s.game === game)).toHaveLength(3);
+    for (const game of ['learn', 'kiskert', 'robotepito']) expect(STICKERS.filter((s) => s.game === game)).toHaveLength(3);
+    for (const game of ['paper-garden', 'paper-robot']) expect(STICKERS.filter((s) => s.game === game).map((s) => s.mark)).toEqual(['1', '2', '3', '5', '8', '13', '21', '34', '55']);
   });
 
   it('keeps each world’s stickers to its own album page and home screen', () => {
@@ -241,6 +242,13 @@ describe('stickers', () => {
     for (const id of old) expect(carryOverStickers({ ...DEFAULT_PROGRESS, stickersSeen: [id] }).stickersSeen, id).toHaveLength(2);
   });
 
+  it('keeps the old fifteen-page Feladatlapok sticker as the thirteen-page one', () => {
+    for (const world of ['garden', 'robot']) {
+      const p = carryOverStickers({ ...DEFAULT_PROGRESS, stickersSeen: [`paper-${world}-15`] });
+      expect(earnedStickers(p).map((s) => s.id)).toEqual([`paper-${world}-13`]);
+    }
+  });
+
   it('leaves the stickers of a save from before the ladders in place', () => {
     const old = { ...DEFAULT_PROGRESS, waterRound: 18, garden: Array<string>(18).fill('tulipan'), patternRound: 4, patternsSolved: 4, traceRound: 20, traceSolved: 20, traceFadedSolved: 10 };
     expect(ids(old)).toEqual(expect.arrayContaining(['water-level-1', 'water-level-2', 'water-level-3', 'patterns-level-1', 'trace-level-1', 'trace-level-2']));
@@ -275,9 +283,10 @@ describe('stickers', () => {
     const paper = (keys: string[]) => earnedStickers(mark(keys)).filter(isPaper).map((s) => s.id);
     expect(paper(pages('learn', 1))).toEqual(['paper-garden-1']);
     expect(paper(pages('code', 1))).toEqual(['paper-robot-1']);
-    expect(paper(pages('learn', 4))).toEqual(['paper-garden-1']);
-    expect(paper([...pages('learn', 3), ...pages('water', 2)])).toEqual(['paper-garden-1', 'paper-garden-5']);
-    expect(paper(pages('fix', 15))).toEqual(['paper-robot-1', 'paper-robot-5', 'paper-robot-15']);
+    expect(paper(pages('learn', 4))).toEqual(['paper-garden-1', 'paper-garden-2', 'paper-garden-3']);
+    expect(paper([...pages('learn', 3), ...pages('water', 2)])).toEqual(['paper-garden-1', 'paper-garden-2', 'paper-garden-3', 'paper-garden-5']);
+    expect(paper(pages('fix', 15))).toEqual(['paper-robot-1', 'paper-robot-2', 'paper-robot-3', 'paper-robot-5', 'paper-robot-8', 'paper-robot-13']);
+    expect(paper(pages('fix', 55)).at(-1)).toBe('paper-robot-55');
     expect(newStickers(mark(pages('code', 1)), 'robot').filter(isPaper).map((s) => s.id)).toEqual(['paper-robot-1']);
     expect(newStickers(mark(pages('code', 1)), 'garden')).toEqual([]);
   });

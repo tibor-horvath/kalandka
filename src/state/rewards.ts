@@ -484,6 +484,10 @@ export interface Sticker {
   /** Csepi's line when it is collected. */
   praise: string;
   earned: (p: Progress) => boolean;
+  /** Feladatlapok stickers carry a drawn sheet under the mark: one page, or a stack once there are five or more. */
+  sheets?: 'one' | 'stack';
+  /** The last sticker of a row, with a gold ring. */
+  gold?: boolean;
 }
 
 export interface StickerGame {
@@ -716,7 +720,7 @@ const learnSheet = (level: number) => (p: Progress) => sheetTop(p, 'learn') >= l
 
 /**
  * Számmagok has no ladder: its stickers count the numbers the child knows, in the game or on a finished sheet.
- * The reward places and the worksheets count what was done.
+ * The reward places count what was done.
  */
 const OTHER_STICKERS: Sticker[] = [
   { id: 'learn-5', game: 'learn', mark: '1–5', label: 'Ismerem 5-ig', praise: 'Már ötig ismered a számokat!', earned: (p) => p.learnSolved >= 5 || learnSheet(0)(p) },
@@ -727,25 +731,63 @@ const OTHER_STICKERS: Sticker[] = [
   { id: 'kiskert-done', game: 'kiskert', mark: '18', label: 'Kész a kert', praise: 'Kész a kert! Minden lakó megkapta az ajándékát.', earned: gardenDone },
   { id: 'robotepito-part', game: 'robotepito', mark: '1', label: 'Első alkatrész', praise: 'Felszerelted az első új alkatrészt a robotodra!', earned: (p) => boughtCount(p) >= 1 },
   { id: 'robotepito-second', game: 'robotepito', mark: '2', label: 'Második robot', praise: 'Megérkezett a második robotod a munkapadra!', earned: secondRobotOpen },
-  { id: 'robotepito-friends', game: 'robotepito', mark: '6', label: 'Minden barát', praise: 'Mind a hat robotbarát beköltözött a műhelybe!', earned: (p) => friendsOf(p).length === FRIENDS.length },
-  { id: 'paper-garden-1', game: 'paper-garden', mark: '1', label: 'Első lap', praise: 'Kész az első feladatlapod!', earned: pagesIn('garden', 1) },
-  { id: 'paper-garden-5', game: 'paper-garden', mark: '5', label: 'Öt lap', praise: 'Már öt feladatlapot befejeztél!', earned: pagesIn('garden', 5) },
-  { id: 'paper-garden-15', game: 'paper-garden', mark: '15', label: 'Tizenöt lap', praise: 'Már tizenöt feladatlapot befejeztél!', earned: pagesIn('garden', 15) },
-  { id: 'paper-robot-1', game: 'paper-robot', mark: '1', label: 'Első lap', praise: 'Kész az első feladatlapod!', earned: pagesIn('robot', 1) },
-  { id: 'paper-robot-5', game: 'paper-robot', mark: '5', label: 'Öt lap', praise: 'Már öt feladatlapot befejeztél!', earned: pagesIn('robot', 5) },
-  { id: 'paper-robot-15', game: 'paper-robot', mark: '15', label: 'Tizenöt lap', praise: 'Már tizenöt feladatlapot befejeztél!', earned: pagesIn('robot', 15) }
+  { id: 'robotepito-friends', game: 'robotepito', mark: '6', label: 'Minden barát', praise: 'Mind a hat robotbarát beköltözött a műhelybe!', earned: (p) => friendsOf(p).length === FRIENDS.length }
 ];
 
-/** Every sticker, in album order. */
-export const STICKERS: Sticker[] = STICKER_GAMES.flatMap(({ id }) => (isLadderGame(id) ? levelStickers(id) : OTHER_STICKERS.filter((s) => s.game === id)));
+/** Pages done for each Feladatlapok sticker: the Fibonacci numbers, so the first ones come quickly and the later ones ask for a little more each time. */
+export const PAGE_STEPS = [1, 2, 3, 5, 8, 13, 21, 34, 55];
 
-/** The level sticker that took the place of each sticker of the old hand-picked list. */
-const LEGACY_STICKERS: Record<string, string> = Object.fromEntries(
-  LADDER_GAMES.flatMap((game) => LEVEL_STICKERS[game].flatMap((s, i) => (s.legacy ?? []).map((old) => [old, `${game}-level-${i + 1}`])))
+const PAGE_WORDS: Record<number, string> = {
+  2: 'két',
+  3: 'három',
+  5: 'öt',
+  8: 'nyolc',
+  13: 'tizenhárom',
+  21: 'huszonegy',
+  34: 'harmincnégy',
+  55: 'ötvenöt'
+};
+
+const capital = (word: string) => word[0].toUpperCase() + word.slice(1);
+
+/** A world's Feladatlapok stickers, one per step in PAGE_STEPS. */
+function pageStickers(world: WorldId): Sticker[] {
+  const game: StickerGameId = world === 'garden' ? 'paper-garden' : 'paper-robot';
+  return PAGE_STEPS.map((n, i) => {
+    const last = i === PAGE_STEPS.length - 1;
+    const word = PAGE_WORDS[n];
+    return {
+      id: `${game}-${n}`,
+      game,
+      mark: String(n),
+      label: n === 1 ? 'Első lap' : `${capital(word)} lap`,
+      praise: n === 1 ? 'Kész az első feladatlapod!' : last ? `${capital(word)} feladatlap! Igazi lapgyűjtő vagy!` : `Már ${word} feladatlapot befejeztél!`,
+      earned: pagesIn(world, n),
+      sheets: n < 5 ? 'one' : 'stack',
+      gold: last
+    };
+  });
+}
+
+const PAGE_STICKERS = [...pageStickers('garden'), ...pageStickers('robot')];
+
+/** Every sticker, in album order. */
+export const STICKERS: Sticker[] = STICKER_GAMES.flatMap(({ id }) =>
+  isLadderGame(id) ? levelStickers(id) : [...OTHER_STICKERS, ...PAGE_STICKERS].filter((s) => s.game === id)
 );
 
+/** The level sticker that took the place of each sticker of the old hand-picked list. */
+const LEGACY_STICKERS: Record<string, string> = {
+  ...Object.fromEntries(
+    LADDER_GAMES.flatMap((game) => LEVEL_STICKERS[game].flatMap((s, i) => (s.legacy ?? []).map((old) => [old, `${game}-level-${i + 1}`])))
+  ),
+  // The old fifteen-page Feladatlapok sticker: its place went to thirteen pages.
+  'paper-garden-15': 'paper-garden-13',
+  'paper-robot-15': 'paper-robot-13'
+};
+
 /**
- * Saves from before the level stickers: a sticker the child had stuck in stays, as the level sticker that took
+ * Saves from before the level stickers (or the Fibonacci Feladatlapok row): a sticker the child had stuck in stays, as the sticker that took
  * its place, even where that level has no solved task yet (the old list gave some for stepping onto a level).
  */
 export function carryOverStickers(p: Progress): Progress {
