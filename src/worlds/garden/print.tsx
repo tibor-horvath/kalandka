@@ -3,7 +3,7 @@ import { ADD_LEVELS, BOX_W, RIGHT_X, SCENE_H, bedWidth, buildAddRound, hiveX, ty
 import { FIELD_H, FIELD_W, FLASH_PRINT_LEVELS, LEVELS as FLASH_LEVELS, buildFlashRound, type FlashRound } from './games/flash/logic';
 import { diceFace } from './games/flash/layout';
 import { rng } from '../../lib/rng';
-import { CHOICES, FLOWER_LABELS, SHAPES, SHAPE_ORDER, buildRound as buildPatternRound, type FlowerKind } from './games/patterns/logic';
+import { CHOICES, FLOWER_LABELS, PATTERN_PRINT_TOP, SHAPES, SHAPE_ORDER, buildRound as buildPatternRound, type FlowerKind } from './games/patterns/logic';
 import { POTS_LEVELS, POTS_PRINT_LEVELS, boxSize, buildPotsRound, potCells, type PotsRound } from './games/pots/logic';
 import { TRACE_ORDER, arrowPoints, digitShape, heading, lapOrder, pathData, type DigitShape } from './games/trace/logic';
 import { PLANTS, plantForRound, type Plant } from './games/water/logic';
@@ -171,7 +171,7 @@ const patterns = spec<PatternTask>({
   rev: 1,
   levels: ['AB – két virág váltakozik', 'ABC – három virág', 'AAB – kettő-egy', 'ABB – egy-kettő', 'Hiányzik a sorból (vegyes)'],
   // The third level of the ladder holds AAB and ABB, which have a sheet each.
-  current: (p) => [0, 1, 2, SHAPE_ORDER.length][ladderOf(p, 'patterns').level],
+  current: (p) => [0, 1, 2, SHAPE_ORDER.length][Math.min(PATTERN_PRINT_TOP, ladderOf(p, 'patterns').level)],
   grid: (_, d) => pickGrid(d, [1, 6], [1, 8], [2, 10]),
   ask: (level) => (level < SHAPE_ORDER.length ? 'Melyik virág jön ezután? Karikázd be!' : 'Melyik virág hiányzik a sorból? Karikázd be!'),
   tip: (level) =>

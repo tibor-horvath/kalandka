@@ -386,6 +386,9 @@
 .is-phone .bed__slot svg { width: 100%; max-width: 54px; height: auto; }
 .is-phone .bed__question { width: 100%; max-width: 52px; height: 72px; border-radius: 16px; border-width: 4px; font-size: 44px; }
 .is-phone .bed__soil { height: 26px; border-radius: 13px; margin-top: -6px; }
+.is-phone .bed--bunches .bed__slot { height: 150px; }
+.is-phone .bed--bunches .bed__slot svg { height: 118px; }
+.is-phone .bed__count { font-size: 18px; }
 .is-phone .patterns-guide { margin-top: 0; padding: 0 16px; }
 .is-phone .screen--patterns .choices { margin: 0; padding: 0 16px 16px; gap: 10px; flex-wrap: wrap; }
 .is-phone .screen--patterns .choice { flex: 1 1 0; width: auto; height: 140px; border-radius: 24px; border-width: 4px; box-shadow: 0 6px 0 var(--grass-deep); font-size: 18px; }
@@ -409,6 +412,8 @@
 .stage--landscape .bed__slot svg { max-width: 80px; }
 .stage--landscape .bed__question { max-width: 76px; height: 100px; border-radius: 20px; font-size: 56px; }
 .stage--landscape .bed__soil { height: 32px; border-radius: 16px; margin-top: -8px; }
+.stage--landscape .bed--bunches .bed__slot { height: 120px; }
+.stage--landscape .bed--bunches .bed__slot svg { height: 88px; }
 .stage--landscape .patterns-guide { grid-area: guide; padding: 0; }
 .stage--landscape .patterns-guide .guide__csepi { width: 40px; height: 62px; }
 .stage--landscape .patterns-guide .bubble { font-size: 17px; padding: 8px 14px; }
@@ -667,5 +672,6 @@
 .stage--tall-tablet .bed__slot svg { max-width: 84px; }
 .stage--tall-tablet .bed__question { max-width: 80px; height: 110px; border-radius: 20px; font-size: 60px; }
 .stage--tall-tablet .bed__soil { height: 32px; border-radius: 16px; margin-top: -8px; }
+.stage--tall-tablet .bed--bunches .bed__slot svg { height: 104px; }
 .stage--tall-tablet .screen--patterns .choice { height: 170px; font-size: 20px; }
 .stage--tall-tablet .screen--patterns .choice svg { width: 80px; }

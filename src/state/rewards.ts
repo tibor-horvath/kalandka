@@ -612,7 +612,10 @@ export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
     { from: 0, mark: 'AB', label: 'Kettes sor', praise: 'Folytattad az első virágsort!', legacy: ['patterns-ab'] },
     { from: 1, mark: 'ABC', label: 'Hármas sor', praise: 'Már a hármas sort is folytatod!', legacy: ['patterns-abc'] },
     { from: 2, mark: 'AAB', label: 'Kettő-egy', praise: 'Már a kettő-egy sort is kitalálod!' },
-    { from: 3, mark: '?', label: 'Hiányzó virág', praise: 'Megtalálod a hiányzó virágot is!', legacy: ['patterns-all'] }
+    { from: 3, mark: '?', label: 'Hiányzó virág', praise: 'Megtalálod a hiányzó virágot is!', legacy: ['patterns-all'] },
+    { from: 4, mark: 'AABB', label: 'Kettő-kettő', praise: 'Már a kettő-kettő sort is folytatod!' },
+    { from: 5, mark: '+1', label: 'Növő csokor', praise: 'Látod, hogyan nő a csokor!' },
+    { from: 6, mark: '+2', label: 'Kettővel több', praise: 'Már a kettesével növő csokrot is kitalálod!' }
   ],
   flash: [
     { from: 0, mark: '3', label: 'Egy pillantás', praise: 'Egy pillantásra látod, hány mag van!', legacy: ['flash-3'] },

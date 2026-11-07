@@ -1,9 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { PATTERN_LEVELS, buildLevelRound, buildRound, hintFeedback, isEndGap, periodOf, screenTitle } from './logic';
+import {
+  PATTERN_LEVELS,
+  buildGrowRound,
+  buildLevelRound,
+  buildRound,
+  growHintFeedback,
+  growSolvedFeedback,
+  hintFeedback,
+  isEndGap,
+  periodOf,
+  screenTitle
+} from './logic';
 
 describe('flower pattern game', () => {
   it('serves only its own shapes on a level, with the gap at the end until the last level', () => {
-    PATTERN_LEVELS.forEach(({ shapes, inside }, level) => {
+    PATTERN_LEVELS.forEach(({ shapes, inside, grow }, level) => {
+      if (grow) return;
       const rounds = Array.from({ length: 12 }, (_, i) => buildLevelRound(level, i));
       expect([...new Set(rounds.map((r) => r.shape))].sort()).toEqual([...shapes].sort());
       for (const r of rounds) {
@@ -11,6 +23,42 @@ describe('flower pattern game', () => {
         expect(r.sequence[r.gap]).toBe(r.answer);
       }
     });
+  });
+
+  it('continues AABB with the right flower', () => {
+    const level = PATTERN_LEVELS.findIndex((l) => l.shapes.includes('AABB'));
+    for (let round = 0; round < 12; round++) {
+      const r = buildLevelRound(level, round);
+      expect(r.sequence[0]).toBe(r.sequence[1]);
+      expect(r.sequence[2]).toBe(r.sequence[3]);
+      expect(r.sequence[0]).not.toBe(r.sequence[2]);
+      expect(r.answer).toBe(r.sequence[0]);
+    }
+    expect(hintFeedback(buildLevelRound(level, 0), 1).text).toBe('Nézd csak: tulipán, tulipán, napraforgó, napraforgó… mi jön ezután?');
+  });
+
+  it('grows the bunches by one or two, up to ten flowers, with three different choices', () => {
+    for (const step of [1, 2] as const) {
+      const level = PATTERN_LEVELS.findIndex((l) => l.grow === step);
+      for (let round = 0; round < 12; round++) {
+        const r = buildGrowRound(level, round);
+        expect(r.step).toBe(step);
+        r.counts.slice(1).forEach((n, i) => expect(n - r.counts[i]).toBe(step));
+        expect(r.answer).toBe(r.counts[r.counts.length - 1] + step);
+        expect(r.answer).toBeLessThanOrEqual(10);
+        expect(new Set(r.choices).size).toBe(3);
+        expect(r.choices).toContain(r.answer);
+        expect(r.choices.every((c) => c >= 1 && c <= 10)).toBe(true);
+      }
+    }
+  });
+
+  it('talks about the growing bunches in correct Hungarian', () => {
+    const r = buildGrowRound(PATTERN_LEVELS.findIndex((l) => l.grow === 2), 1);
+    expect(r.counts).toEqual([2, 4, 6, 8]);
+    expect(growHintFeedback(r, 1).speech).toBe('Nézd csak: kettő, négy, hat, nyolc… mi jön ezután?');
+    expect(growHintFeedback(r, 2).speech).toBe('Segítek: az utolsó csokorban nyolc virág van. Ha kettővel több jön, az hány?');
+    expect(growSolvedFeedback(r).text).toBe('Ügyes vagy! 10 virág jön: mindig kettővel több.');
   });
 
   it('varies the flowers from row to row on a one-shape level', () => {

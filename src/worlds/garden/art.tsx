@@ -156,6 +156,33 @@ export function PatternFlower({ kind, width = 110 }: { kind: FlowerKind; width?:
   );
 }
 
+/** The flower head of a Virágsor kind, small, for the growing bunches. */
+const BUNCH_PETAL: Record<FlowerKind, string> = { tulip: '#D63B3B', sun: '#FFC93C', star: '#6FA8F0' };
+const BUNCH_HEART: Record<FlowerKind, string> = { tulip: '#FFE08A', sun: '#5A3418', star: '#FFFFFF' };
+
+/**
+ * A growing bunch: up to ten flower heads in rows of two, filled from the bottom, so each step up shows
+ * as a taller bunch and a count in twos reads as whole rows.
+ */
+export function PatternBunch({ kind, n, width = 72 }: { kind: FlowerKind; n: number; width?: number }) {
+  return (
+    <svg aria-hidden="true" width={width} height={Math.round(width * 2.4)} viewBox="0 0 60 144">
+      {Array.from({ length: n }, (_, i) => {
+        const cx = i % 2 === 0 ? 17 : 43;
+        const cy = 130 - Math.floor(i / 2) * 28;
+        return (
+          <g key={i} transform={`translate(${cx} ${cy})`}>
+            {turns(5).map((a) => (
+              <ellipse key={a} cx="0" cy="-7" rx="5.6" ry="7" fill={BUNCH_PETAL[kind]} transform={`rotate(${a})`} />
+            ))}
+            <circle r="4.6" fill={BUNCH_HEART[kind]} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 export function Sprout() {
   return (
     <svg aria-hidden="true" width="110" height="104" viewBox="0 0 110 104">

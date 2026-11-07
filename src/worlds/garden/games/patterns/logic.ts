@@ -1,3 +1,4 @@
+import { numberAttr, numberCount } from '../../../../lib/numbers';
 import type { Mood, Tone } from '../../../../lib/types';
 
 export type FlowerKind = 'tulip' | 'sun' | 'star';
@@ -21,10 +22,12 @@ export const SHAPES = {
   AB: [0, 1, 0, 1, 0, 1],
   ABC: [0, 1, 2, 0, 1, 2],
   AAB: [0, 0, 1, 0, 0, 1],
-  ABB: [0, 1, 1, 0, 1, 1]
+  ABB: [0, 1, 1, 0, 1, 1],
+  AABB: [0, 0, 1, 1, 0, 0]
 } as const;
 
 export type ShapeKey = keyof typeof SHAPES;
+/** The shapes of the first lap and of the mixed "missing flower" level; AABB has a level of its own after them. */
 export const SHAPE_ORDER: ShapeKey[] = ['AB', 'ABC', 'AAB', 'ABB'];
 
 const PERMUTATIONS: FlowerKind[][] = [
@@ -50,7 +53,7 @@ export interface PatternRound {
 }
 
 export function periodOf(shape: ShapeKey): number {
-  return shape === 'AB' ? 2 : 3;
+  return shape === 'AB' ? 2 : shape === 'AABB' ? 4 : 3;
 }
 
 function rowOf(shape: ShapeKey, kinds: FlowerKind[], gap: number): PatternRound {
@@ -77,14 +80,22 @@ export interface PatternLevel {
   shapes: readonly ShapeKey[];
   /** The missing flower is inside the row instead of at its end. */
   inside: boolean;
+  /** Bunches that grow by this many flowers a step, in place of a row of flower kinds (see buildGrowRound). */
+  grow?: 1 | 2;
 }
 
 export const PATTERN_LEVELS: PatternLevel[] = [
   { name: 'Két virág', shapes: ['AB'], inside: false },
   { name: 'Három virág', shapes: ['ABC'], inside: false },
   { name: 'Kettő-egy, egy-kettő', shapes: ['AAB', 'ABB'], inside: false },
-  { name: 'Hiányzó virág', shapes: SHAPE_ORDER, inside: true }
+  { name: 'Hiányzó virág', shapes: SHAPE_ORDER, inside: true },
+  { name: 'Kettő-kettő', shapes: ['AABB'], inside: false },
+  { name: 'Eggyel több virág', shapes: [], inside: false, grow: 1 },
+  { name: 'Kettővel több virág', shapes: [], inside: false, grow: 2 }
 ];
+
+/** The printed sheets stop at the mixed level, so the codes on pages printed before AABB and the bunches still match. */
+export const PATTERN_PRINT_TOP = 3;
 
 /** The row of a round on a level of the ladder. */
 export function buildLevelRound(level: number, round: number): PatternRound {
@@ -92,6 +103,70 @@ export function buildLevelRound(level: number, round: number): PatternRound {
   const { shapes, inside } = PATTERN_LEVELS[level];
   if (inside) return buildRound(SHAPE_ORDER.length + r);
   return rowOf(shapes[r % shapes.length], PERMUTATIONS[r % PERMUTATIONS.length], 5);
+}
+
+// Growing bunches: each bunch has one (or two) more flowers than the one before. The pattern is a number
+// rule now, the step from counting on to counting in twos; bunches stay at ten flowers or fewer.
+
+export interface GrowRound {
+  step: 1 | 2;
+  /** Flowers in each bunch shown; the bunch after the last one is the answer. */
+  counts: number[];
+  answer: number;
+  /** Three distinct bunch sizes, ascending, one of them correct. */
+  choices: number[];
+  flower: FlowerKind;
+}
+
+/** One more each step from 1, 2 or 3 (five bunches shown); two more from 1 or 2 (four shown). */
+export function buildGrowRound(level: number, round: number): GrowRound {
+  const r = Math.max(0, Math.floor(round));
+  const step = PATTERN_LEVELS[level].grow ?? 1;
+  const first = step === 1 ? 1 + (r % 3) : 1 + (r % 2);
+  const shown = step === 1 ? 5 : 4;
+  const counts = Array.from({ length: shown }, (_, i) => first + i * step);
+  const answer = first + shown * step;
+  // The two slips children make: the last bunch again, or one more instead of two (or two more instead of one).
+  const slip = step === 1 ? answer + 1 : answer - 1;
+  const other = r % 2 === 0 && answer + 1 <= 10 && slip !== answer + 1 ? answer + 1 : answer - step;
+  return { step, counts, answer, choices: [answer, slip, other].sort((a, b) => a - b), flower: CHOICES[r % CHOICES.length] };
+}
+
+function more(step: 1 | 2): string {
+  return step === 1 ? 'eggyel' : 'kettővel';
+}
+
+export function growStartFeedback(r: GrowRound): PatternFeedback {
+  const text = `Minden csokorban ${more(r.step)} több virág van. Hány virág jön ezután?`;
+  return { text, speech: `Számold meg a csokrokat! ${text}`, mood: 'smile', tone: 'plain' };
+}
+
+export function growSolvedFeedback(r: GrowRound): PatternFeedback {
+  return {
+    text: `Ügyes vagy! ${r.answer} virág jön: mindig ${more(r.step)} több.`,
+    speech: `Ügyes vagy! ${numberAttr(r.answer)} virág jön: mindig ${more(r.step)} több.`,
+    mood: 'cheer',
+    tone: 'good'
+  };
+}
+
+/** A wrong pick: first the counts read back, then the last bunch and the step. */
+export function growHintFeedback(r: GrowRound, misses: number): PatternFeedback {
+  const last = r.counts[r.counts.length - 1];
+  if (misses >= 2) {
+    return {
+      text: `Segítek: az utolsó csokorban ${last} virág van. Ha ${more(r.step)} több jön, az hány?`,
+      speech: `Segítek: az utolsó csokorban ${numberAttr(last)} virág van. Ha ${more(r.step)} több jön, az hány?`,
+      mood: 'think',
+      tone: 'oops'
+    };
+  }
+  return {
+    text: `Nézd csak: ${r.counts.join(', ')}… mi jön ezután?`,
+    speech: `Nézd csak: ${r.counts.map(numberCount).join(', ')}… mi jön ezután?`,
+    mood: 'oops',
+    tone: 'oops'
+  };
 }
 
 export function isEndGap(round: PatternRound): boolean {
@@ -135,7 +210,7 @@ export function hintFeedback(round: PatternRound, misses: number): PatternFeedba
       const text = `Segítek: ${names(before)}… és most?`;
       return { text, speech: text, mood: 'think', tone: 'oops' };
     }
-    const text = `Nézd csak: ${names(round.sequence.slice(0, 3))}… mi jön ezután?`;
+    const text = `Nézd csak: ${names(round.sequence.slice(0, Math.max(3, periodOf(round.shape))))}… mi jön ezután?`;
     return { text, speech: text, mood: 'oops', tone: 'oops' };
   }
   if (misses >= 2) {
