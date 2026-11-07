@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { ADD_LEVELS_VERSION, migrateAddLevel } from '../games/add/logic';
+import { ADD_LEVELS_VERSION, migrateAddLevel } from '../worlds/garden/games/add/logic';
 import type { GameId } from './games';
 import { carryOverStickers, markEarnedSeen, type Bed, type TreatId, type VisitorId } from './rewards';
 import type { PartSlot } from './robotParts';

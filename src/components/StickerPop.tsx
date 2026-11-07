@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from
 import { chime, fanfare, popBubble } from '../lib/sound';
 import { speak } from '../lib/speech';
 import { STICKERS, gameOf, type Sticker } from '../state/rewards';
-import { StickerDisc, StickerSlot } from './garden';
+import { StickerDisc, StickerSlot } from './stickers';
 import { useModal } from './Modal';
 import { GuideBubble } from './ui';
 

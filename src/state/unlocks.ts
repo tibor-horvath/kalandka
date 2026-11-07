@@ -1,6 +1,6 @@
-import { UNLOCK_ADD_AFTER } from '../games/add/logic';
-import { UNLOCK_FLASH_AFTER } from '../games/learn/logic';
-import { UNLOCK_POTS_AFTER } from '../games/pots/logic';
+import { UNLOCK_ADD_AFTER } from '../worlds/garden/games/add/logic';
+import { UNLOCK_FLASH_AFTER } from '../worlds/garden/games/learn/logic';
+import { UNLOCK_POTS_AFTER } from '../worlds/garden/games/pots/logic';
 import type { GameId } from './games';
 import type { Progress } from './progress';
 

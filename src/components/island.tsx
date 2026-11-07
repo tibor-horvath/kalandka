@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FitBox } from './FitBox';
 import { useForm, type Form } from './Stage';
-import { StickerBookArt } from './garden';
+import { StickerBookArt } from './stickers';
 import { DoneTick, LockIcon, PlayIcon } from './ui';
 
 // A world's home: its island, every game a place along one trail from the boat's dock.

@@ -1,13 +1,13 @@
 import type { ComponentType, LazyExoticComponent } from 'react';
 import type { GameId } from '../state/games';
-import { Add } from './Add';
-import { Flash } from './Flash';
-import { Learn } from './Learn';
-import { Patterns } from './Patterns';
-import { Pots } from './Pots';
-import { Trace } from './Trace';
-import { Water } from './Water';
-import { robotScreen } from './robot/lazy';
+import { Add } from '../worlds/garden/screens/Add';
+import { Flash } from '../worlds/garden/screens/Flash';
+import { Learn } from '../worlds/garden/screens/Learn';
+import { Patterns } from '../worlds/garden/screens/Patterns';
+import { Pots } from '../worlds/garden/screens/Pots';
+import { Trace } from '../worlds/garden/screens/Trace';
+import { Water } from '../worlds/garden/screens/Water';
+import { robotScreen } from '../worlds/robot/screens/lazy';
 
 type GameScreen = ComponentType<{ onBack: () => void }>;
 

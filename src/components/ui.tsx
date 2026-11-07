@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Mood, Tone } from '../lib/types';
 import { Csepi } from './Csepi';
-import { Csavar } from './robot';
+import { Csavar } from '../worlds/robot/art';
 
 const strokeProps = {
   fill: 'none',

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Seed } from '../../components/art';
+import { Seed } from '../../worlds/garden/art';
 import { POD_QUARTERS } from '../../components/LevelMeter';
-import { Bolt } from '../../components/robot';
+import { Bolt } from '../../worlds/robot/art';
 import { TASKS_PER_REWARD } from '../../state/pod';
 import { gameOf, type Sticker } from '../../state/rewards';
 import type { WorldId } from '../../state/worlds';

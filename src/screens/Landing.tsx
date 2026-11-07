@@ -1,8 +1,8 @@
 import { Suspense, lazy, useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
-import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../components/art';
+import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../worlds/garden/art';
 import { Csepi } from '../components/Csepi';
-import { CodeArt, Csavar, FixArt, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../components/robot';
-import { DotFace } from '../components/seeds';
+import { CodeArt, Csavar, FixArt, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../worlds/robot/art';
+import { DotFace } from '../worlds/garden/seeds';
 import { Avatar } from '../components/avatars';
 import { KidFields, type KidDraft } from '../components/KidFields';
 import { useModal } from '../components/Modal';

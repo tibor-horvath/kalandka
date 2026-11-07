@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { RoundFlower, Seed, Sprout, Tree } from '../components/art';
+import { RoundFlower, Seed, Sprout, Tree } from '../worlds/garden/art';
 import { Csepi } from '../components/Csepi';
 import { FitBox } from '../components/FitBox';
 import { ParentsButton } from '../components/hub';
-import { Bolt, Csavar } from '../components/robot';
+import { Bolt, Csavar } from '../worlds/robot/art';
 import { PlayTimer, pausedLabel, useTimeLeft } from '../components/PlayTimer';
 import { useForm } from '../components/Stage';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from '../components/ui';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ADD_LEVELS } from '../games/add/logic';
+import { ADD_LEVELS } from '../worlds/garden/games/add/logic';
 import { PRINT_SHEETS } from '../print/catalog';
 import { LADDER_RULES, ladderOf, type LadderGame } from './ladder';
 import { DEFAULT_PROGRESS } from './progress';

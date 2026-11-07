@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildAddRound } from '../games/add/logic';
+import { buildAddRound } from '../worlds/garden/games/add/logic';
 import { LADDER_RULES, ladderOf } from './ladder';
-import { buildFlashRound } from '../games/flash/logic';
-import { buildLearnRound } from '../games/learn/logic';
-import { buildLevelRound } from '../games/patterns/logic';
-import { plantForLevel } from '../games/water/logic';
+import { buildFlashRound } from '../worlds/garden/games/flash/logic';
+import { buildLearnRound } from '../worlds/garden/games/learn/logic';
+import { buildLevelRound } from '../worlds/garden/games/patterns/logic';
+import { plantForLevel } from '../worlds/garden/games/water/logic';
 import { LADDER_GAMES, type LadderGame } from './games';
 import { LEVEL_SETTINGS, ladderHint, ladderStepLine } from './levels';
 import { DEFAULT_PROGRESS, migrate } from './progress';

@@ -6,7 +6,7 @@ The seventh and last Robotműhely machine (skill: *Hiba a programban*). The robo
 
 | Part | What it is |
 | --- | --- |
-| Padló | Robotút's floor (`components/floor.tsx`): tiles, crates, battery and the robot. On the first two levels the right way is dotted. |
+| Padló | Robotút's floor (`worlds/robot/floor.tsx`): tiles, crates, battery and the robot. On the first two levels the right way is dotted. |
 | Program | The cards, numbered. The card running lights up, so a step on the floor can be matched to a card. |
 | Nyom | Orange dots where the robot went on its last run. They stay after it rolls back, so the child can compare. |
 | Választó | Comes in under the program once the wrong card is found: the arrows or turns, or ×1 ×2 ×3. |
@@ -32,7 +32,7 @@ Seven levels, five rounds each (`FIX_ROUNDS_PER_LEVEL = 5`), on the shared ladde
 | 6 | Fordulós hiba | 6–7 | One wrong card among Előre and Fordulj | 5 × 4, 0–2 crates | 3 |
 | 7 | Két hiba | 7 | Two wrong arrows, found one at a time | 6 × 5, 3–4 crates | 2 |
 
-Generator rules (`src/games/robot/fix.ts`):
+Generator rules (`src/worlds/robot/games/fix.ts`):
 - A task is the shortest program for a random floor with mistakes put in. It is kept only if the program as found fails and **exactly one** change puts it right (`singleFixes`, `doubleFixes` try them all). So the card the child looks for is the card the game means, and a wrong pick can never reach the battery.
 - A task never repeats within a round. Seeded `rng` (from `flash/layout`), so tests are deterministic.
 

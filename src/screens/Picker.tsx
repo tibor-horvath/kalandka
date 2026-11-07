@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Seed } from '../components/art';
+import { Seed } from '../worlds/garden/art';
 import { AVATARS, Avatar } from '../components/avatars';
 import { PrintButton } from '../components/hub';
-import { Bolt } from '../components/robot';
+import { Bolt } from '../worlds/robot/art';
 import { KalandkaIcon, KalandkaWordmark, LockIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import { useForm } from '../components/Stage';
 import { speak, stopSpeaking } from '../lib/speech';
