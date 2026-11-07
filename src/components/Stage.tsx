@@ -1,8 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 export const STAGE_W = 1180;
 export const STAGE_H = 820;
-/** On a screen wider than the tablet stage, the map screens may grow it sideways up to this. */
+/** On a screen wider than the tablet stage, the stage grows sideways up to this. */
 const WIDE_MAX_W = 1720;
 
 /** The phone stage's short side, in CSS px (the phone designs are drawn at 390 × 844). */
@@ -24,15 +24,15 @@ const TURN_MS = 560;
 const TURN_TILT = 10;
 
 /**
- * tablet: the 1180×820 stage (on a wide screen the map screens draw it wider); portrait / landscape: a 390 px-wide or -tall phone stage.
+ * tablet: the 1180×820 stage, drawn wider on a wide screen; portrait / landscape: a 390 px-wide or -tall phone stage.
  * An upright tablet is 'portrait' too, on a wider stage (marked .stage--tall-tablet).
  */
 export type Form = 'tablet' | 'portrait' | 'landscape';
 
 const FormContext = createContext<Form>('tablet');
 
-/** How much wider than STAGE_W the tablet stage is drawn, and the way a screen asks for (+1) or gives up (−1) the wide stage. */
-const WideContext = createContext<{ extra: number; ask: (n: number) => void }>({ extra: 0, ask: () => {} });
+/** How much wider than STAGE_W the tablet stage is drawn. */
+const WideContext = createContext(0);
 
 /** Which layout the current screen is drawn in. */
 export function useForm(): Form {
@@ -40,17 +40,11 @@ export function useForm(): Form {
 }
 
 /**
- * Lets the tablet stage grow sideways to fill a wide screen while this screen is shown (the map screens use it;
- * the games keep the 1180 stage). Returns how many px wider than STAGE_W the stage is: 0 on phones and 4:3 screens.
+ * How many px wider than STAGE_W the tablet stage is drawn on a wide screen, for drawings laid out
+ * across the whole stage (the maps, the harbour). 0 on phones and 4:3 screens.
  */
 export function useWideStage(): number {
-  const { extra, ask } = useContext(WideContext);
-  // Before paint, so the first frame is already drawn at the wide width.
-  useLayoutEffect(() => {
-    ask(1);
-    return () => ask(-1);
-  }, [ask]);
-  return extra;
+  return useContext(WideContext);
 }
 
 interface Fit {
@@ -62,7 +56,7 @@ interface Fit {
   scale: number;
 }
 
-function fit(w: number, h: number, wide: boolean): Fit {
+function fit(w: number, h: number): Fit {
   if (Math.min(w, h) >= PHONE_MAX && h > w) {
     const width = Math.min(TALL_TABLET_MAX_W, Math.max(TALL_TABLET_MIN_W, w / TALL_TABLET_SCALE));
     const scale = w / width;
@@ -70,7 +64,7 @@ function fit(w: number, h: number, wide: boolean): Fit {
   }
   if (Math.min(w, h) >= PHONE_MAX) {
     const scale = Math.min(w / STAGE_W, h / STAGE_H);
-    const width = wide ? Math.round(Math.min(WIDE_MAX_W, Math.max(STAGE_W, w / scale))) : STAGE_W;
+    const width = Math.round(Math.min(WIDE_MAX_W, Math.max(STAGE_W, w / scale)));
     return { form: 'tablet', width, height: STAGE_H, scale };
   }
   // The short side is always 390 px; the long side follows the screen's shape.
@@ -90,7 +84,7 @@ function turnDirection(before: number | null, after: number | null): number {
 }
 
 /**
- * Lays the game out on a fixed stage and scales it to fit any screen: the 1180×820 tablet stage,
+ * Lays the game out on a fixed stage and scales it to fit any screen: the 1180×820 tablet stage (wider on a wide screen),
  * on phones a portrait or landscape phone stage, and on an upright tablet a wider portrait stage.
  * Turning the device re-lays the screen out and the new layout tilts in and springs upright,
  * leaning the way the device turned.
@@ -100,8 +94,6 @@ export function Stage({ children }: { children: ReactNode }) {
   const stage = useRef<HTMLDivElement>(null);
   const lastForm = useRef<Form | null>(null);
   const lastAngle = useRef<number | null>(screen.orientation?.angle ?? null);
-  const [wideAsks, setWideAsks] = useState(0);
-  const ask = useCallback((n: number) => setWideAsks((a) => a + n), []);
 
   useEffect(() => {
     const measure = () => setView({ w: window.innerWidth, h: window.innerHeight });
@@ -111,8 +103,8 @@ export function Stage({ children }: { children: ReactNode }) {
   }, []);
 
   // Worked out while rendering, so a screen never paints a frame in the other layout.
-  const { form, tallTablet, width, height, scale } = fit(view.w, view.h, wideAsks > 0);
-  const wide = useMemo(() => ({ extra: form === 'tablet' ? width - STAGE_W : 0, ask }), [form, width, ask]);
+  const { form, tallTablet, width, height, scale } = fit(view.w, view.h);
+  const extra = form === 'tablet' ? width - STAGE_W : 0;
 
   // Before paint, so the first frame of the new layout is already the start of the motion.
   useLayoutEffect(() => {
@@ -143,7 +135,7 @@ export function Stage({ children }: { children: ReactNode }) {
         style={{ width, height, transform: `translate(-50%, -50%) scale(${scale})` }}
       >
         <FormContext.Provider value={form}>
-          <WideContext.Provider value={wide}>{children}</WideContext.Provider>
+          <WideContext.Provider value={extra}>{children}</WideContext.Provider>
         </FormContext.Provider>
       </div>
     </div>

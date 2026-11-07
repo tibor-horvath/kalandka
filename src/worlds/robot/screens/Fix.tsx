@@ -99,6 +99,7 @@ export function Fix({ onBack }: { onBack: () => void }) {
       title="Hibavadász"
       meter={meter}
       justSolved={solved}
+      tasks={{ at: taskIdx, of: round.tasks.length, done: solved }}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -107,11 +108,6 @@ export function Fix({ onBack }: { onBack: () => void }) {
         <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
           {fb.text}
         </GuideBubble>
-        <ol className="sort-odd__dots seq-dots" aria-label={`${taskIdx + 1}. feladat a ${round.tasks.length}-ből`}>
-          {round.tasks.map((_, i) => (
-            <li key={i} className={`sort-odd__dot${i < taskIdx || (i === taskIdx && solved) ? ' is-done' : i === taskIdx ? ' is-now' : ''}`} />
-          ))}
-        </ol>
       </Task>
 
       {solved && (
@@ -131,7 +127,7 @@ interface TaskProps {
   noteHelp: () => void;
   onDone: () => void;
   later: (fn: () => void, ms: number) => void;
-  /** Csavar's bubble and the task dots, above the program. */
+  /** Csavar's bubble, above the program. */
   children: ReactNode;
 }
 

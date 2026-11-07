@@ -525,6 +525,7 @@ export function Scale({ onBack }: { onBack: () => void }) {
       title="Mérleg"
       meter={meter}
       justSolved={solved}
+      tasks={{ at, of: tasks.length, done: taskDone }}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -533,13 +534,6 @@ export function Scale({ onBack }: { onBack: () => void }) {
         <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
           {fb.text}
         </GuideBubble>
-        {tasks.length > 1 && (
-          <ol className="sort-odd__dots" aria-label={`${at + 1}. feladat a ${tasks.length}-ből`}>
-            {tasks.map((_, i) => (
-              <li key={i} className={`sort-odd__dot${i < at || (i === at && taskDone) ? ' is-done' : i === at ? ' is-now' : ''}`} />
-            ))}
-          </ol>
-        )}
       </div>
 
       <div key={at} className="scale-task">

@@ -168,6 +168,11 @@ h1, h2, p { margin: 0; }
 .level-meter__stairs.is-ramp .level-meter__step:first-child { border-radius: 4px 1px 1px 4px; }
 .level-meter__stairs.is-ramp .level-meter__step:last-child { border-radius: 1px 4px 4px 1px; }
 .level-meter__rule { width: 3px; height: 30px; border-radius: 2px; background: var(--good-tint); }
+/* A round's tasks (the workshop): one pip each, the current one ringed, the solved ones filled. */
+.level-meter__tasks { display: flex; align-items: center; gap: 6px; }
+.level-meter__task { width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; border: 3px solid #9fb3c8; background: var(--paper); }
+.level-meter__task.is-now { border-color: var(--leaf); }
+.level-meter__task.is-done { border-color: var(--leaf); background: var(--leaf); animation: pop 0.38s cubic-bezier(.3, 1.4, .5, 1); }
 
 /* Level-up, played once in the meter (3 s, see LEVEL_UP_MS): the full step locks in dark, a star hops onto
    the next step, which lifts and takes the "current" outline, one sparkle, and an "Új szint!" chip below. */

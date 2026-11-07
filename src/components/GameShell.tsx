@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { GAMES, type GameId } from '../state/games';
 import type { LevelMeterState } from '../state/levelMeter';
-import { LevelMeter } from './LevelMeter';
+import { LevelMeter, type RoundTasks } from './LevelMeter';
 import { BackIcon, RoundButton, SpeakerIcon } from './ui';
 import { WORLD_LOOK } from './worldLook';
 
@@ -31,6 +31,7 @@ export function GameShell({
   aside,
   meter,
   justSolved,
+  tasks,
   onBack,
   onReplay,
   children
@@ -43,13 +44,15 @@ export function GameShell({
   meter: LevelMeterState;
   /** The task was just won: the meter's newest slot fills. */
   justSolved: boolean;
+  /** A round of several tasks: where the child is in it, shown as pips in the meter. */
+  tasks?: RoundTasks;
   onBack: () => void;
   onReplay: () => void;
   children: ReactNode;
 }) {
   const { world } = GAMES[game];
   const look = WORLD_LOOK[world];
-  const levelMeter = <LevelMeter meter={meter} world={world} justSolved={justSolved} />;
+  const levelMeter = <LevelMeter meter={meter} world={world} justSolved={justSolved} tasks={tasks} />;
   const replay = (
     <RoundButton label="Meghallgatom újra" onClick={onReplay}>
       <SpeakerIcon />

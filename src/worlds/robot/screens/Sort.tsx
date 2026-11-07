@@ -48,6 +48,8 @@ export function Sort({ onBack }: { onBack: () => void }) {
   const round = useMemo(() => buildRound(levelIndex, progress.sortRound), [levelIndex, progress.sortRound]);
   const [fb, setFb] = useState<SortFeedback>(() => startFeedback(round));
   const [solved, setSolved] = useState(false);
+  /** Kakukktojás: the row the child is on, and whether its odd part is found, for the meter's pips. */
+  const [oddAt, setOddAt] = useState<OddProgress>({ at: 0, found: false });
   const timers = useRef<number[]>([]);
 
   /** Corrections Csavar gave this round; enough of them and the round needed help (parents' notes). */
@@ -80,6 +82,7 @@ export function Sort({ onBack }: { onBack: () => void }) {
       title={isOdd(round) ? 'Kakukktojás' : 'Válogatógép'}
       meter={meter}
       justSolved={solved}
+      tasks={isOdd(round) ? { at: oddAt.at, of: round.rows.length, done: oddAt.found, unit: 'sor' } : undefined}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -91,7 +94,7 @@ export function Sort({ onBack }: { onBack: () => void }) {
       </div>
 
       {isOdd(round) ? (
-        <OddRows round={round} solved={solved} say={say} onWin={win} later={(fn, ms) => timers.current.push(window.setTimeout(fn, ms))} />
+        <OddRows round={round} solved={solved} say={say} onWin={win} onProgress={setOddAt} later={(fn, ms) => timers.current.push(window.setTimeout(fn, ms))} />
       ) : (
         <Belt round={round} solved={solved} say={say} onWin={win} />
       )}
@@ -216,12 +219,26 @@ function Belt({ round, solved, say, onWin }: PlayProps<SortRound>) {
   );
 }
 
-/** Kakukktojás: rows of four parts; tap the one that is different. */
-function OddRows({ round, solved, say, onWin, later }: PlayProps<OddRound> & { later: (fn: () => void, ms: number) => void }) {
+/** Where Kakukktojás is: the row on now, and whether its odd part is found. */
+interface OddProgress {
+  at: number;
+  found: boolean;
+}
+
+/** Kakukktojás: rows of four parts; tap the one that is different. `onProgress` hears each row's progress for the meter. */
+function OddRows({
+  round,
+  solved,
+  say,
+  onWin,
+  onProgress,
+  later
+}: PlayProps<OddRound> & { onProgress: (p: OddProgress) => void; later: (fn: () => void, ms: number) => void }) {
   const [rowIdx, setRowIdx] = useState(0);
   const [misses, setMisses] = useState(0);
   const [wrong, setWrong] = useState<{ i: number; id: number } | null>(null);
   const [found, setFound] = useState(false);
+  useEffect(() => onProgress({ at: rowIdx, found }), [onProgress, rowIdx, found]);
   const row = round.rows[rowIdx];
   const last = rowIdx === round.rows.length - 1;
   const glow = misses >= SHOW_ODD_AFTER && !found ? row.odd : -1;
@@ -254,11 +271,6 @@ function OddRows({ round, solved, say, onWin, later }: PlayProps<OddRound> & { l
 
   return (
     <div className="sort-odd">
-      <ol className="sort-odd__dots" aria-label={`${rowIdx + 1}. sor a ${round.rows.length}-ből`}>
-        {round.rows.map((_, i) => (
-          <li key={i} className={`sort-odd__dot${i < rowIdx || (i === rowIdx && found) ? ' is-done' : i === rowIdx ? ' is-now' : ''}`} />
-        ))}
-      </ol>
       <div key={rowIdx} className="sort-odd__row">
         {row.parts.map((p, i) => {
           const state = found && i === row.odd ? ' is-right' : found ? ' is-dim' : glow === i ? ' is-glow' : wrong?.i === i ? ' is-wrong' : '';

@@ -203,13 +203,34 @@ function RewardBank({ world, wait, rested }: { world: World; wait: number; reste
   );
 }
 
+/** Where the child is inside a round of several tasks (the workshop's rounds): `at` of `of`, `done` once it is solved. */
+export interface RoundTasks {
+  at: number;
+  of: number;
+  done: boolean;
+  /** What one is called in the spoken label: a task, or a row (Kakukktojás). */
+  unit?: string;
+}
+
+/** One pip per task in the round: the solved ones filled, the current one ringed. */
+function TaskPips({ at, of, done }: RoundTasks) {
+  return (
+    <span className="level-meter__tasks" aria-hidden="true">
+      {Array.from({ length: of }, (_, i) => (
+        <span key={i} className={`level-meter__task${i < at || (i === at && done) ? ' is-done' : i === at ? ' is-now' : ''}`} />
+      ))}
+    </span>
+  );
+}
+
 /**
  * The level meter under a game's title: a staircase with one step per level (the current one gold,
  * filling up with this level's solved rounds), and the reward pod with the seeds (or bolts) to spend
  * beside it; four solved tasks fill the pod and pay one. A win that fills a level's row plays the
- * level-up here, with Csepi saying so, instead of a card between rounds.
+ * level-up here, with Csepi saying so, instead of a card between rounds. A round of several tasks
+ * (`tasks`) shows them as pips in front of the staircase, since the steps and the pod only move once the round is won.
  */
-export function LevelMeter({ meter, world, justSolved = false }: { meter: LevelMeterState; world: World; justSolved?: boolean }) {
+export function LevelMeter({ meter, world, justSolved = false, tasks }: { meter: LevelMeterState; world: World; justSolved?: boolean; tasks?: RoundTasks }) {
   const { level, levels, done, rounds, levelUp, mastered = false, finished = false, rested = false } = meter;
   const { progress } = useProgress();
   const left = TASKS_PER_REWARD - podFill(progress, world);
@@ -232,13 +253,21 @@ export function LevelMeter({ meter, world, justSolved = false }: { meter: LevelM
         ? 'Minden szint kész, vegyes gyakorlás'
         : `${level + 1}. szint, ${rounds} körből ${done} kész`;
   const next = rested ? `mára megvan a gyakorlás öt ${world === 'robot' ? 'csavarja' : 'magja'}` : `még ${left} feladat a következő ${reward}`;
+  const pips = tasks && tasks.of > 1 ? tasks : null;
+  const inRound = pips ? `${pips.at + 1}. ${pips.unit ?? 'feladat'} a ${pips.of}-ből. ` : '';
 
   return (
     <div
       className={`level-meter${levelUp || mastered ? ' is-climbing' : ''}`}
       role="img"
-      aria-label={`${where}. ${balance} van, ${next}.`}
+      aria-label={`${inRound}${where}. ${balance} van, ${next}.`}
     >
+      {pips && (
+        <>
+          <TaskPips {...pips} />
+          <span className="level-meter__rule" aria-hidden="true" />
+        </>
+      )}
       <Stairs level={level} levels={levels} fill={done / rounds} fresh={justSolved && !levelUp} climbing={levelUp} mastering={mastered} finished={finished} />
       <span className="level-meter__rule" aria-hidden="true" />
       <RewardBank world={world} wait={levelUp || mastered ? LEVEL_UP_MS : 0} rested={rested} />
