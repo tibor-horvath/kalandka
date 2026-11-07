@@ -3,6 +3,7 @@ import { CELL, FRAME_H, FRAME_W, FloorCrates, FloorRobot, FloorTiles, useRover }
 import { useLadderRound, WinCard } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
 import { FitBox } from '../../../components/FitBox';
+import { STAGE_W, useWideStage } from '../../../components/Stage';
 import { Battery, CmdIcon } from '../art';
 import { GuideBubble, PlayIcon } from '../../../components/ui';
 import {
@@ -37,11 +38,39 @@ const BACK_MS = 1300;
 /** After the robot reaches the battery it stays a moment, then the next task comes. */
 const NEXT_TASK_MS = 2800;
 
+/**
+ * On a wide stage the board and the program stand side by side as one centred group: the program
+ * column keeps this width, and the board takes what is left (up to ROOMY_BOARD_MAX) and is drawn
+ * bigger to fill it. Narrower than ROOMY_BOARD_MIN, the tablet layout stays as it is.
+ */
+const ROOMY_SIDE = 600;
+const ROOMY_GAP = 64;
+const ROOMY_PAD = 60;
+const ROOMY_BOARD_MIN = 560;
+const ROOMY_BOARD_MAX = 720;
+const ROOMY_BOARD_H = 560;
+/** A small course is drawn at most this much bigger, so its cells don't turn huge. */
+const ROOMY_MAX_SCALE = 1.5;
+/** The board's padding around the floor, both sides (.path-board), and its shadow below. */
+const BOARD_PAD = 28;
+const BOARD_SHADOW = 8;
+
+/** Room for the board on a wide stage, or null when the stage is not wide enough for the split. */
+function useRoomyBoard(): number | null {
+  const extra = useWideStage();
+  const room = Math.min(ROOMY_BOARD_MAX, STAGE_W + extra - 2 * ROOMY_PAD - ROOMY_GAP - ROOMY_SIDE);
+  return room >= ROOMY_BOARD_MIN ? room : null;
+}
+
+/** Program card size on the wide stage: big for a short program, smaller so a long one fits in two rows. */
+const roomyCard = (n: number) => (n <= 4 ? 128 : n <= 8 ? 120 : 100);
+
 const cardName = (c: Card) => `${CMD_LABELS[c.cmd]}${c.times > 1 ? `, ${c.times}-szor` : ''}`;
 
 /** Hibavadász: run the broken program, find the card that is to blame, put it right. */
 export function Fix({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
+  const roomy = useRoomyBoard() !== null;
   const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('fix');
   const round = useMemo(() => buildFixRound(levelIndex, progress.fixRound), [levelIndex, progress.fixRound]);
   const [taskIdx, setTaskIdx] = useState(0);
@@ -95,7 +124,7 @@ export function Fix({ onBack }: { onBack: () => void }) {
   return (
     <GameShell
       game="fix"
-      className="screen--path screen--fix"
+      className={`screen--path screen--fix${roomy ? ' is-roomy' : ''}`}
       title="Hibavadász"
       meter={meter}
       justSolved={solved}
@@ -134,6 +163,7 @@ interface TaskProps {
 /** One broken program: the floor, the cards, and what goes in the wrong card's place. */
 function Task({ level, task, solved, say, noteHelp, onDone, later, children }: TaskProps) {
   const { course } = task;
+  const boardRoom = useRoomyBoard();
   const rover = useRover(course.start, later);
   const [cards, setCards] = useState(task.program);
   /** Wrong cards still to find. */
@@ -282,45 +312,83 @@ function Task({ level, task, solved, say, noteHelp, onDone, later, children }: T
     return tried.includes(i) ? ' is-tried' : '';
   };
 
+  const boardW = course.cols * CELL + BOARD_PAD;
+  const boardH = course.rows * CELL + BOARD_PAD + BOARD_SHADOW;
+  const boardK = boardRoom === null ? 1 : Math.min(ROOMY_MAX_SCALE, boardRoom / boardW, ROOMY_BOARD_H / boardH);
+  const cardPx = roomyCard(cards.length);
+  const iconPx = boardRoom === null ? 40 : Math.round(cardPx * 0.46);
+
+  const board = (
+    <div className="path-frame">
+      <div className={`path-board${finished ? ' is-done' : ''}`}>
+        <svg
+          width={course.cols * CELL}
+          height={course.rows * CELL}
+          viewBox={`0 0 ${course.cols * CELL} ${course.rows * CELL}`}
+          role="img"
+          aria-label={`Pálya: ${course.cols} × ${course.rows} mező, ${course.crates.length} doboz. A robot a(z) ${rover.pose.x + 1}. oszlopban, ${rover.pose.y + 1}. sorban áll. Elem: ${course.goals[0].x + 1}. oszlop, ${course.goals[0].y + 1}. sor.`}
+        >
+          <FloorTiles cols={course.cols} rows={course.rows} />
+          <rect x={course.start.x * CELL + 10} y={course.start.y * CELL + 10} width={CELL - 20} height={CELL - 20} rx="12" className="path-start" />
+          {dots &&
+            task.route.slice(1).map((c, i) => (
+              <circle key={`${c.x},${c.y}`} cx={c.x * CELL + CELL / 2} cy={c.y * CELL + CELL / 2} r="11" className="path-route" style={{ animationDelay: `${i * 0.12}s` }} />
+            ))}
+          {trail.map((c, i) => (
+            <circle key={i} cx={c.x * CELL + CELL / 2} cy={c.y * CELL + CELL / 2} r="7" className="fix-trail" />
+          ))}
+          <FloorCrates crates={course.crates} hit={rover.hit} />
+          {course.goals.map((g, i) => (
+            <g key={i} transform={`translate(${g.x * CELL} ${g.y * CELL})`} className={charged ? 'path-battery is-charged' : 'path-battery'}>
+              <Battery charged={charged} />
+            </g>
+          ))}
+        </svg>
+        <FloorRobot rover={rover} happy={finished} />
+      </div>
+    </div>
+  );
+
+  const choices =
+    open !== null &&
+    openBug &&
+    fixChoices(level, task.program[open]).map((c) => {
+      const used = sameCard(c, task.program[open]) || triedChoices.some((t) => sameCard(t, c));
+      const glow = glowing && !running && sameCard(c, openBug.want!);
+      return level.kind === 'times' ? (
+        <button key={c.times} type="button" className={`path-cmd path-cmd--times${glow ? ' is-glow' : ''}`} onClick={() => pick(c)} disabled={running || used} aria-label={`${c.times}-szor`}>
+          <span className="path-cmd__times">×{c.times}</span>
+        </button>
+      ) : (
+        <button key={c.cmd} type="button" className={`path-cmd path-cmd--${c.cmd}${glow ? ' is-glow' : ''}`} onClick={() => pick(c)} disabled={running || used} aria-label={CMD_LABELS[c.cmd]}>
+          <CmdIcon cmd={c.cmd} size={40} />
+          <span className="path-cmd__label">{CMD_LABELS[c.cmd]}</span>
+        </button>
+      );
+    });
+
   return (
     <div className="path-body is-plan">
       <div className="path-left">
-        <FitBox className="path-fit" width={FRAME_W} height={FRAME_H}>
-          <div className="path-frame">
-            <div className={`path-board${finished ? ' is-done' : ''}`}>
-              <svg
-                width={course.cols * CELL}
-                height={course.rows * CELL}
-                viewBox={`0 0 ${course.cols * CELL} ${course.rows * CELL}`}
-                role="img"
-                aria-label={`Pálya: ${course.cols} × ${course.rows} mező, ${course.crates.length} doboz. A robot a(z) ${rover.pose.x + 1}. oszlopban, ${rover.pose.y + 1}. sorban áll. Elem: ${course.goals[0].x + 1}. oszlop, ${course.goals[0].y + 1}. sor.`}
-              >
-                <FloorTiles cols={course.cols} rows={course.rows} />
-                <rect x={course.start.x * CELL + 10} y={course.start.y * CELL + 10} width={CELL - 20} height={CELL - 20} rx="12" className="path-start" />
-                {dots &&
-                  task.route.slice(1).map((c, i) => (
-                    <circle key={`${c.x},${c.y}`} cx={c.x * CELL + CELL / 2} cy={c.y * CELL + CELL / 2} r="11" className="path-route" style={{ animationDelay: `${i * 0.12}s` }} />
-                  ))}
-                {trail.map((c, i) => (
-                  <circle key={i} cx={c.x * CELL + CELL / 2} cy={c.y * CELL + CELL / 2} r="7" className="fix-trail" />
-                ))}
-                <FloorCrates crates={course.crates} hit={rover.hit} />
-                {course.goals.map((g, i) => (
-                  <g key={i} transform={`translate(${g.x * CELL} ${g.y * CELL})`} className={charged ? 'path-battery is-charged' : 'path-battery'}>
-                    <Battery charged={charged} />
-                  </g>
-                ))}
-              </svg>
-              <FloorRobot rover={rover} happy={finished} />
+        {boardRoom !== null ? (
+          <div className="fix-room" style={{ width: boardRoom, height: ROOMY_BOARD_H }}>
+            <div style={{ width: boardW * boardK, height: boardH * boardK }}>
+              <div className="fix-room__drawing" style={{ width: boardW, height: boardH, transform: `scale(${boardK})` }}>
+                {board}
+              </div>
             </div>
           </div>
-        </FitBox>
+        ) : (
+          <FitBox className="path-fit" width={FRAME_W} height={FRAME_H}>
+            {board}
+          </FitBox>
+        )}
       </div>
 
       <div className="path-side">
         {children}
 
-        <ol className="path-program fix-program" aria-label={`Program: ${cards.length} kártya`} style={{ '--slots': cards.length } as CSSProperties}>
+        <ol className="path-program fix-program" aria-label={`Program: ${cards.length} kártya`} style={{ '--slots': cards.length, '--card': `${cardPx}px` } as CSSProperties}>
           {cards.map((card, i) => (
             <li key={`${i}-${cards.length}`} className="path-slot">
               <button
@@ -332,30 +400,26 @@ function Task({ level, task, solved, say, noteHelp, onDone, later, children }: T
                 aria-label={`${i + 1}. kártya: ${cardName(card)}. Koppints rá, ha ez a hibás.`}
               >
                 <span className="path-card__no">{i + 1}</span>
-                <CmdIcon cmd={card.cmd} size={40} />
+                <CmdIcon cmd={card.cmd} size={iconPx} />
                 {(card.times > 1 || level.kind === 'times') && <span className="path-card__times">×{card.times}</span>}
               </button>
             </li>
           ))}
         </ol>
 
-        {open !== null && openBug && (
-          <div className={`path-palette path-palette--${level.moves}`}>
-            {fixChoices(level, task.program[open]).map((c) => {
-              const used = sameCard(c, task.program[open]) || triedChoices.some((t) => sameCard(t, c));
-              const glow = glowing && !running && sameCard(c, openBug.want!);
-              return level.kind === 'times' ? (
-                <button key={c.times} type="button" className={`path-cmd path-cmd--times${glow ? ' is-glow' : ''}`} onClick={() => pick(c)} disabled={running || used} aria-label={`${c.times}-szor`}>
-                  <span className="path-cmd__times">×{c.times}</span>
-                </button>
-              ) : (
-                <button key={c.cmd} type="button" className={`path-cmd path-cmd--${c.cmd}${glow ? ' is-glow' : ''}`} onClick={() => pick(c)} disabled={running || used} aria-label={CMD_LABELS[c.cmd]}>
-                  <CmdIcon cmd={c.cmd} size={40} />
-                  <span className="path-cmd__label">{CMD_LABELS[c.cmd]}</span>
-                </button>
-              );
-            })}
+        {boardRoom !== null && level.kind !== 'extra' ? (
+          // The wide stage keeps the choices' place, so the buttons below never move when they come.
+          <div className={`fix-tray${choices ? ' is-open' : ''}`}>
+            {choices ? (
+              <div className={`path-palette path-palette--${level.moves}`} role="group" aria-label={`Mi kerüljön a(z) ${(open ?? 0) + 1}. kártya helyére?`}>
+                {choices}
+              </div>
+            ) : (
+              <WrenchIcon />
+            )}
           </div>
+        ) : (
+          choices && <div className={`path-palette path-palette--${level.moves}`}>{choices}</div>
         )}
 
         {!finished && (
@@ -372,5 +436,14 @@ function Task({ level, task, solved, say, noteHelp, onDone, later, children }: T
         )}
       </div>
     </div>
+  );
+}
+
+/** The empty fix tray's quiet mark: a wrench, where the new card will come. */
+function WrenchIcon() {
+  return (
+    <svg className="fix-tray__mark" width="54" height="54" viewBox="0 0 48 48" aria-hidden="true">
+      <path d="M30 6 A10 10 0 0 0 21 20 L7 34 A4 4 0 0 0 14 41 L28 27 A10 10 0 0 0 42 18 L36 22 L30 18 L30 12 Z" fill="none" stroke="currentColor" strokeWidth="4" strokeLinejoin="round" />
+    </svg>
   );
 }

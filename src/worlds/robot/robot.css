@@ -954,6 +954,32 @@ button.workshop__robot { border: none; background: none; padding: 0; font: inher
 .path-card.is-open { border-color: var(--bolt); border-style: dashed; background: #fff4d1; color: #7a5300; transform: translateY(-6px); }
 .path-card.is-fixed { background: var(--leaf); border-color: var(--leaf-deep); color: var(--paper); }
 .path-card.is-glow, .path-cmd.is-glow { background: #fff4d1; box-shadow: 0 0 0 5px #ffe08a; animation: hint-glow 0.9s ease-in-out 2; }
+/* Wide stage (.is-roomy, set in Fix.tsx): the board and the program stand side by side as one centred group.
+   The board is drawn bigger to fill its room (.fix-room); the program column keeps a fixed width, with
+   big cards and a tray that keeps the choices' place so the buttons never move. */
+.screen--fix.is-roomy { display: flex; flex-direction: column; }
+.screen--fix.is-roomy .topbar { flex: none; }
+.screen--fix.is-roomy .path-body { flex: 1; min-height: 0; justify-content: center; align-items: center; gap: 64px; padding: 0 60px 34px; }
+.screen--fix.is-roomy .path-left { flex: none; }
+.fix-room { display: grid; place-items: center; }
+.fix-room__drawing { transform-origin: 0 0; }
+.fix-room .path-frame { width: auto; height: auto; display: block; }
+.screen--fix.is-roomy .path-side { flex: none; width: 600px; gap: 22px; }
+.screen--fix.is-roomy .path-side .bubble { font-size: 27px; }
+.screen--fix.is-roomy .path-program { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; padding: 20px; border-radius: 30px; box-shadow: 0 7px 0 var(--grass-deep); }
+.screen--fix.is-roomy .path-slot { width: var(--card); height: var(--card); border-radius: 26px; }
+.screen--fix.is-roomy .path-card { border-width: 5px; border-radius: 26px; }
+.screen--fix.is-roomy .path-card__no { top: 4px; left: 12px; font-size: 20px; }
+.screen--fix.is-roomy .path-card__times { min-width: 46px; height: 36px; border-radius: 18px; font-size: 24px; line-height: 36px; }
+.fix-tray { height: 136px; box-sizing: border-box; border-radius: 30px; border: 4px dashed #c3d0de; display: grid; place-items: center; }
+.fix-tray.is-open { border: 4px solid #fff4d1; background: #fff4d1; }
+.fix-tray__mark { color: #8aa0b6; opacity: 0.55; }
+.fix-tray .path-palette { flex-wrap: nowrap; gap: 18px; }
+.fix-tray .path-cmd { width: 104px; height: 104px; box-shadow: 0 6px 0 #e3c27a; }
+.fix-tray .path-palette--relative .path-cmd { width: 124px; }
+.fix-tray .path-cmd--times { background: var(--paper); border-color: var(--paper); }
+.screen--fix.is-roomy .path-actions { gap: 22px; }
+.screen--fix.is-roomy .path-actions .big-btn, .screen--fix.is-roomy .path-actions .peek-btn { height: 76px; padding: 0 40px; border-radius: 38px; font-size: 28px; }
 /* The longest title on Robotút's half-width landscape header: both give a little so they fit side by side. */
 .stage--landscape .screen--fix .screen-title { flex: none; font-size: 19px; }
 .stage--landscape .screen--fix .topbar__title { gap: 6px; }
