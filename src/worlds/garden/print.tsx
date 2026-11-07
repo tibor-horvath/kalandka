@@ -123,7 +123,7 @@ function DropOutline({ x, y, filled }: { x: number; y: number; filled: boolean }
 
 const water = spec<Plant>({
   id: 'water',
-  rev: 1,
+  rev: 2,
   levels: ['2–10 csepp (egy tízes keret)', '11–20 csepp (két tízes keret)'],
   current: (p) => (ladderOf(p, 'water').level >= 2 ? 1 : 0),
   grid: (level, d) => (level === 0 ? pickGrid(d, [2, 3], [2, 4], [3, 5]) : pickGrid(d, [2, 2], [2, 3], [3, 4])),
@@ -263,7 +263,7 @@ const DIGIT_FREE = (r: AddRound) => r.level.answers === 'dots';
 
 const add = spec<AddRound>({
   id: 'add',
-  rev: 1,
+  rev: 2,
   levels: ADD_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'add').level,
   grid: (level, d) => (ADD_LEVELS[level].bundles ? pickGrid(d, [1, 5], [2, 5], [2, 7]) : pickGrid(d, [2, 3], [2, 5], [3, 6])),
@@ -460,7 +460,7 @@ const trace = spec<TraceTask>({
 
 const pots = spec<PotsRound>({
   id: 'pots',
-  rev: 1,
+  rev: 2,
   levels: POTS_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'pots').level,
   grid: (level, d) => (POTS_LEVELS[level].total === 5 ? pickGrid(d, [2, 4], [2, 5], [3, 7]) : pickGrid(d, [2, 3], [2, 4], [3, 5])),
