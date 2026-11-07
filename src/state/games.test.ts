@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GAME_IDS, GAMES, LADDER_GAMES, creditSolve, gamesIn, isGameId, nextRound, roundOf, solvedOf, withRound, type GameId } from './games';
-import { TASKS_PER_REWARD } from './pod';
+import { PRACTICE_PAY_PER_DAY, TASKS_PER_REWARD, creditPractice, practicePaid, practiceRested } from './pod';
 import { DEFAULT_PROGRESS, type Progress } from './progress';
 
 describe('game list', () => {
@@ -46,5 +46,36 @@ describe('game counters', () => {
     const p = creditSolve({ ...DEFAULT_PROGRESS, garden: ['tulipan', 'napraforgo'] }, 'water');
     expect(p.gardenTasks).toBe(1);
     expect(solvedOf(p, 'water')).toBe(2);
+  });
+});
+
+describe('practice in a finished game', () => {
+  const day = '2026-11-07';
+  /** Solves `n` practice tasks of a game on one day. */
+  const practise = (p: Progress, game: 'flash' | 'path', n: number, on = day) => {
+    for (let i = 0; i < n; i++) p = creditPractice(p, game, game === 'path' ? 'robot' : 'garden', on);
+    return p;
+  };
+
+  it('pays at most five seeds a day per game, then only moves the clock', () => {
+    const p = practise(DEFAULT_PROGRESS, 'flash', TASKS_PER_REWARD * 8);
+    expect(p.seeds).toBe(PRACTICE_PAY_PER_DAY);
+    expect(p.gardenTasks).toBe(TASKS_PER_REWARD * 8);
+    expect(practicePaid(p, 'flash', day)).toBe(PRACTICE_PAY_PER_DAY);
+    expect(practiceRested(p, 'flash', day)).toBe(true);
+  });
+
+  it('counts each game on its own', () => {
+    const p = practise(practise(DEFAULT_PROGRESS, 'flash', 40), 'path', 40);
+    expect(p.seeds).toBe(PRACTICE_PAY_PER_DAY);
+    expect(p.bolts).toBe(PRACTICE_PAY_PER_DAY);
+    expect(practiceRested(p, 'patterns', day)).toBe(false);
+  });
+
+  it('starts again the next day', () => {
+    const p = practise(practise(DEFAULT_PROGRESS, 'flash', 40), 'flash', 8, '2026-11-08');
+    expect(p.seeds).toBe(PRACTICE_PAY_PER_DAY + 2);
+    expect(practicePaid(p, 'flash', '2026-11-08')).toBe(2);
+    expect(p.practicePay.paid).toEqual({ flash: 2 });
   });
 });

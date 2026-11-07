@@ -11,6 +11,7 @@ import { SEQ_LEVELS, SEQ_ROUNDS_PER_LEVEL } from '../worlds/robot/games/seq';
 import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL } from '../worlds/robot/games/sort';
 import { TRACE_LEVELS, TRACE_ORDER } from '../worlds/garden/games/trace/logic';
 import { PLANTS, WATER_LEVELS } from '../worlds/garden/games/water/logic';
+import { rng } from '../lib/rng';
 import { roundOf, solvedOf, type LadderGame } from './games';
 import type { LevelMeterState } from './levelMeter';
 import type { Progress } from './progress';
@@ -218,15 +219,33 @@ export function placeAt(l: Ladder, level: number): Ladder {
   return { ...startAt(l, level), floor: 0 };
 }
 
+/** Every level was done, the top one too: the game turns into practice with tasks from all its levels. */
+export function isFinished(l: Ladder, rule: LadderRule): boolean {
+  return l.reached >= rule.levels;
+}
+
+/**
+ * A practice task's level: drawn from all the levels by the game's round, never the same level twice in
+ * a row. Each round steps on by 1 … levels − 1 from the one before, so it walks the rounds from the first.
+ */
+export function practiceLevel(levels: number, round: number): number {
+  if (levels < 2) return 0;
+  let level = 0;
+  for (let r = 1; r <= Math.max(0, Math.floor(round)); r++) level = (level + 1 + Math.floor(rng(r)() * (levels - 1))) % levels;
+  return level;
+}
+
 /**
  * The in-game level meter: the staircase, and one slot per task of the streak that steps up. `start` is
- * the ladder when the task began, so the meter stays on that level after a win steps up.
+ * the ladder when the task began, so the meter stays on that level after a win steps up. A finished game
+ * shows the whole staircase done; `rested` is whether practice already paid today's seeds or bolts.
  */
-export function ladderMeter(start: Ladder, rule: LadderRule, step: LadderStep | null): LevelMeterState {
+export function ladderMeter(start: Ladder, rule: LadderRule, step: LadderStep | null, rested = false): LevelMeterState {
   const rounds = upNeed(start, rule);
+  if (isFinished(start, rule)) return { level: rule.levels - 1, levels: rule.levels, done: rounds, rounds, levelUp: false, finished: true, rested };
   const full = step !== null && (step.change === 'up' || step.change === 'mastered' || (!step.helped && start.streak + 1 >= rounds));
   const done = step === null ? start.streak : full ? rounds : step.helped ? 0 : start.streak + 1;
-  return { level: start.level, levels: rule.levels, done, rounds, levelUp: step?.change === 'up' };
+  return { level: start.level, levels: rule.levels, done, rounds, levelUp: step?.change === 'up', mastered: step?.change === 'mastered' };
 }
 
 /** Said after a win that stepped down: no "level lost", just an easier next task. */

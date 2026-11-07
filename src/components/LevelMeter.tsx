@@ -8,6 +8,9 @@ import { boltBalance } from '../state/robotParts';
 
 type World = 'garden' | 'robot';
 
+/** Said when the top level's row fills for the first time; from then on the game is mixed practice. */
+const MASTERED_SPEECH = 'Mester vagy! Minden szintet megcsináltál! Mostantól vegyes feladatokkal gyakorolhatsz.';
+
 /** How long a level-up plays in the meter; a pod filled by the same win pays after it. */
 export const LEVEL_UP_MS = 3000;
 /** How long a full pod takes to pay: the reward colours in, flies into the total, and the pod empties. */
@@ -31,6 +34,15 @@ function MeterBolt() {
   );
 }
 
+/** A resting pod: today's practice seeds or bolts are all paid. */
+function MeterMoon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.2A7 7 0 0 1 15.5 3.5z" fill="#ffd66b" stroke="#2d4a60" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function StairsIcon() {
   return (
     <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -44,37 +56,50 @@ function topOf(el: HTMLElement | undefined): [number, number] {
   return el ? [el.offsetLeft + el.offsetWidth / 2, el.offsetTop] : [0, 0];
 }
 
+const STAR = 'M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17l-6.1 3.4 1.5-6.8L2.2 9l6.9-.7z';
+
 /**
  * One step per level: the levels done dark, the current one gold-outlined and filling up with its
  * solved rounds. On a level-up (`climbing`) the full step locks in dark and a star hops onto the next.
+ * Mastering the top level (`mastering`) locks it in the same way and the star lands on it to stay; a
+ * finished game (`finished`) shows every step done with the star resting on top.
  */
-function Stairs({ level, levels, fill, fresh, climbing }: { level: number; levels: number; fill: number; fresh: boolean; climbing: boolean }) {
+function Stairs({ level, levels, fill, fresh, climbing, mastering, finished }: { level: number; levels: number; fill: number; fresh: boolean; climbing: boolean; mastering: boolean; finished: boolean }) {
   const box = useRef<HTMLSpanElement>(null);
   const [hop, setHop] = useState<CSSProperties>({});
+  const starred = climbing || mastering || finished;
 
   useLayoutEffect(() => {
-    if (!climbing || !box.current) return;
+    if (!starred || !box.current) return;
     const steps = box.current.children as HTMLCollectionOf<HTMLElement>;
     const [x0, y0] = topOf(steps[level]);
-    const [x1, y1] = topOf(steps[level + 1]);
+    const [x1, y1] = topOf(steps[climbing ? level + 1 : level]);
     setHop({ '--x0': `${x0}px`, '--y0': `${y0}px`, '--x1': `${x1}px`, '--y1': `${y1}px`, '--ym': `${Math.min(y0, y1) - 16}px` } as CSSProperties);
-  }, [climbing, level]);
+  }, [starred, climbing, level]);
 
+  const moving = climbing || mastering;
   // Long ladders draw as one stepped ramp so they keep the meter's width.
   return (
-    <span ref={box} className={`level-meter__stairs${levels > 8 ? ' is-ramp' : ''}${climbing ? ' is-climbing' : ''}`} style={hop} aria-hidden="true">
+    <span ref={box} className={`level-meter__stairs${levels > 8 ? ' is-ramp' : ''}${moving ? ' is-climbing' : ''}`} style={hop} aria-hidden="true">
       {Array.from({ length: levels }, (_, i) => (
         <span
           key={i}
-          className={`level-meter__step${i < level ? ' is-past' : i === level ? ' is-now' : ''}${i === level + 1 ? ' is-next' : ''}${i === level && fresh ? ' is-fresh' : ''}`}
+          className={`level-meter__step${i < level || finished ? ' is-past' : i === level ? ' is-now' : ''}${i === level + 1 ? ' is-next' : ''}${i === level && fresh && !finished ? ' is-fresh' : ''}`}
           style={{ height: `${35 + (65 * (i + 1)) / levels}%`, ...(i === level ? { '--fill': `${Math.round(fill * 100)}%` } : {}) } as CSSProperties}
         />
       ))}
-      {climbing && (
+      {(mastering || finished) && (
+        <svg className={`level-meter__star ${mastering ? 'is-landing' : 'is-resting'}`} viewBox="0 0 24 24">
+          <path d={STAR} />
+        </svg>
+      )}
+      {moving && (
         <>
-          <svg className="level-meter__star" viewBox="0 0 24 24">
-            <path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17l-6.1 3.4 1.5-6.8L2.2 9l6.9-.7z" />
-          </svg>
+          {climbing && (
+            <svg className="level-meter__star" viewBox="0 0 24 24">
+              <path d={STAR} />
+            </svg>
+          )}
           <span className="level-meter__rays">
             {[0, 60, 120, 180, 240, 300].map((r) => (
               <span key={r} style={{ '--r': `${r}deg` } as CSSProperties} />
@@ -113,7 +138,7 @@ function middleOf(el: Element | null, bank: HTMLElement): [number, number] {
  * top, around the seed (or bolt) it fills up to. The fourth quarter colours the reward in, it hops into
  * the total, which counts up by one, and the pod empties. A level-up from the same win plays first.
  */
-function RewardBank({ world, wait }: { world: World; wait: number }) {
+function RewardBank({ world, wait, rested }: { world: World; wait: number; rested: boolean }) {
   const { progress } = useProgress();
   const tasks = tasksIn(progress, world);
   const balance = world === 'robot' ? boltBalance(progress) : seedBalance(progress);
@@ -125,6 +150,8 @@ function RewardBank({ world, wait }: { world: World; wait: number }) {
   useEffect(() => {
     if (tasks <= seen.current) return;
     seen.current = tasks;
+    // A resting pod pays nothing more today, so it has nothing to show.
+    if (rested) return;
     const fill = tasks % TASKS_PER_REWARD;
     if (fill !== 0) {
       setFresh({ quarter: fill - 1, paid: false });
@@ -133,7 +160,7 @@ function RewardBank({ world, wait }: { world: World; wait: number }) {
     setFresh({ quarter: TASKS_PER_REWARD - 1, paid: true });
     const empty = window.setTimeout(() => setFresh(null), wait + PAY_MS);
     return () => window.clearTimeout(empty);
-  }, [tasks, wait]);
+  }, [tasks, wait, rested]);
 
   const paid = !!fresh?.paid;
   useLayoutEffect(() => {
@@ -143,19 +170,17 @@ function RewardBank({ world, wait }: { world: World; wait: number }) {
     setFlight({ '--fx0': `${x0}px`, '--fy0': `${y0}px`, '--fx1': `${x1}px`, '--fy1': `${y1}px`, '--fxm': `${(x0 + x1) / 2}px` } as CSSProperties);
   }, [paid]);
 
-  const filled = paid ? TASKS_PER_REWARD : tasks % TASKS_PER_REWARD;
+  const filled = rested ? 0 : paid ? TASKS_PER_REWARD : tasks % TASKS_PER_REWARD;
   const Icon = world === 'robot' ? MeterBolt : MeterSeed;
   return (
-    <span ref={bank} className={`reward-bank${paid ? ' is-paid' : ''}`} style={{ '--pay-wait': `${wait}ms`, ...flight } as CSSProperties} aria-hidden="true">
+    <span ref={bank} className={`reward-bank${paid ? ' is-paid' : ''}${rested ? ' is-rested' : ''}`} style={{ '--pay-wait': `${wait}ms`, ...flight } as CSSProperties} aria-hidden="true">
       <span className="reward-pod">
         <svg className="reward-pod__ring" viewBox="0 0 44 44">
           {POD_QUARTERS.map((d, i) => (
             <path key={i} d={d} className={`reward-pod__quarter${i < filled ? ' is-full' : ''}${fresh?.quarter === i ? ' is-fresh' : ''}`} />
           ))}
         </svg>
-        <span className="reward-pod__reward">
-          <Icon />
-        </span>
+        <span className="reward-pod__reward">{rested ? <MeterMoon /> : <Icon />}</span>
       </span>
       <span className="reward-total">
         <span className="reward-total__icon">
@@ -185,32 +210,42 @@ function RewardBank({ world, wait }: { world: World; wait: number }) {
  * level-up here, with Csepi saying so, instead of a card between rounds.
  */
 export function LevelMeter({ meter, world, justSolved = false }: { meter: LevelMeterState; world: World; justSolved?: boolean }) {
-  const { level, levels, done, rounds, levelUp } = meter;
+  const { level, levels, done, rounds, levelUp, mastered = false, finished = false, rested = false } = meter;
   const { progress } = useProgress();
   const left = TASKS_PER_REWARD - podFill(progress, world);
   const balance = world === 'robot' ? `${boltBalance(progress)} csavarod` : `${seedBalance(progress)} magod`;
   const reward = world === 'robot' ? 'csavarig' : 'magig';
 
   useEffect(() => {
-    if (!levelUp) return;
+    if (!levelUp && !mastered) return;
     // Said as the chip comes up, after the round's own praise.
-    const say = window.setTimeout(() => speak('Új szint! Ügyes vagy!', { queue: true }), 1200);
+    const line = mastered ? MASTERED_SPEECH : 'Új szint! Ügyes vagy!';
+    const say = window.setTimeout(() => speak(line, { queue: true }), 1200);
     return () => window.clearTimeout(say);
-  }, [levelUp]);
+  }, [levelUp, mastered]);
+
+  const where = levelUp
+    ? `Új szint: ${level + 2}. szint`
+    : mastered
+      ? 'Minden szint kész, mester vagy'
+      : finished
+        ? 'Minden szint kész, vegyes gyakorlás'
+        : `${level + 1}. szint, ${rounds} körből ${done} kész`;
+  const next = rested ? `mára megvan a gyakorlás öt ${world === 'robot' ? 'csavarja' : 'magja'}` : `még ${left} feladat a következő ${reward}`;
 
   return (
     <div
-      className={`level-meter${levelUp ? ' is-climbing' : ''}`}
+      className={`level-meter${levelUp || mastered ? ' is-climbing' : ''}`}
       role="img"
-      aria-label={`${levelUp ? `Új szint: ${level + 2}. szint` : `${level + 1}. szint, ${rounds} körből ${done} kész`}. ${balance} van, még ${left} feladat a következő ${reward}.`}
+      aria-label={`${where}. ${balance} van, ${next}.`}
     >
-      <Stairs level={level} levels={levels} fill={done / rounds} fresh={justSolved && !levelUp} climbing={levelUp} />
+      <Stairs level={level} levels={levels} fill={done / rounds} fresh={justSolved && !levelUp} climbing={levelUp} mastering={mastered} finished={finished} />
       <span className="level-meter__rule" aria-hidden="true" />
-      <RewardBank world={world} wait={levelUp ? LEVEL_UP_MS : 0} />
-      {levelUp && (
+      <RewardBank world={world} wait={levelUp || mastered ? LEVEL_UP_MS : 0} rested={rested} />
+      {(levelUp || mastered) && (
         <span className="level-meter__chip" aria-hidden="true">
           <StairsIcon />
-          Új szint!
+          {mastered ? 'Mester!' : 'Új szint!'}
         </span>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { creditTasks } from './pod';
+import { creditPractice, creditTasks } from './pod';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';
 
@@ -78,9 +78,9 @@ export function nextRound(p: Progress, id: GameId): Progress {
   return withRound(p, id, roundOf(p, id) + 1);
 }
 
-/** A solved task: the game's count, and a quarter of its world's reward pod (see pod.ts). */
-export function creditSolve(p: Progress, id: GameId): Progress {
+/** A solved task: the game's count, and a quarter of its world's reward pod (see pod.ts); `practice` caps the day's pay. */
+export function creditSolve(p: Progress, id: GameId, practice = false): Progress {
   const { world, solvedKey } = GAMES[id];
-  const paid = creditTasks(p, world);
+  const paid = practice && isLadderGame(id) ? creditPractice(p, id, world) : creditTasks(p, world);
   return solvedKey ? { ...paid, [solvedKey]: paid[solvedKey] + 1 } : paid;
 }
