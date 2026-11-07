@@ -9,7 +9,8 @@
     "build": "tsc -b && vite build && npm run check:offline",
     "check:offline": "node scripts/check-precache.mjs",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@fontsource/baloo-2": "^5.2.5",
@@ -24,7 +25,10 @@
     "@types/react-dom": "^19.0.0",
     "@vite-pwa/assets-generator": "^1.0.4",
     "@vitejs/plugin-react": "^4.4.1",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "typescript": "~5.8.3",
+    "typescript-eslint": "^8.72.1",
     "vite": "^6.4.5",
     "vite-plugin-pwa": "^1.0.0",
     "vitest": "^5.0.5"

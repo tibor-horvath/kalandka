@@ -55,6 +55,7 @@ export function StickerPop({ sticker, seen, onDone }: { sticker: Sticker; seen: 
     if (phase !== 'landed') return;
     chime();
     speak(sticker.praise);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Said once, when the sticker lands; the sticker does not change while it pops.
   }, [phase]);
 
   const replay = () => {

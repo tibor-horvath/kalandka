@@ -70,7 +70,7 @@ export function Door({ place, world, way, onDone }: { place: DoorPlace; world: W
       cancelAnimationFrame(frame);
       anim?.cancel();
     };
-    // Plays once, when the door appears.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Plays once, when the door appears.
   }, []);
 
   return (

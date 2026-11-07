@@ -31,6 +31,7 @@ export function Pots({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     speak(askFeedback(round).speech);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- One round per mount: App keys this screen by round.
   }, []);
 
   const fb =

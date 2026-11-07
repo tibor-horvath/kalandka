@@ -1,11 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROGRESS } from './progress';
-import { BONUS_SECONDS, addBonus, addPlay, formatMinutes, isEveningRest, lastSevenDays, playedToday, remainingSeconds, restNow, today } from './screenTime';
+import { BONUS_SECONDS, addBonus, addPlay, formatMinutes, isEveningRest, lastSevenDays, playedIn, playedToday, remainingSeconds, restNow, today } from './screenTime';
 
 const DAY = '2026-10-12';
 const NEXT = '2026-10-13';
 
 describe('screen time', () => {
+  it('counts the time between two looks at the clock, carrying the part of a second', () => {
+    expect(playedIn(5000)).toEqual({ seconds: 5, usedMs: 5000 });
+    // Leaving a game halfway through a tick still counts what was played.
+    expect(playedIn(3700)).toEqual({ seconds: 3, usedMs: 3000 });
+    expect(playedIn(400)).toEqual({ seconds: 0, usedMs: 0 });
+    // A tablet that slept for an hour counts one tick, not the hour.
+    expect(playedIn(3_600_000)).toEqual({ seconds: 5, usedMs: 3_600_000 });
+  });
+
+
   it('formats the local day', () => {
     expect(today(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
   });

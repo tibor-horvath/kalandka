@@ -106,8 +106,9 @@ export function Path({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     speak(startFeedback(level).speech);
-    return () => timers.current.forEach((t) => window.clearTimeout(t));
-    // One course per mount: App keys this screen by round.
+    const pending = timers.current;
+    return () => pending.forEach((t) => window.clearTimeout(t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- One course per mount: App keys this screen by round.
   }, []);
 
   const win = () => {

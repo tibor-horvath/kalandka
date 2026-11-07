@@ -123,16 +123,18 @@ export function Workshop({ onBack }: { onBack: () => void }) {
       setAnswer(null);
     }, 1500);
     return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Each tap restarts the timer by its count, not by a new object.
   }, [motion?.n, answer?.n]);
 
   useEffect(() => {
     if (!friend && !robotArrived) speak(say.speech);
-    // Runs once per visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once per visit.
   }, []);
 
   // Each newly arrived friend is greeted in turn, the earliest first.
   useEffect(() => {
     if (friend) speak(friend.speech);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Greeted once per friend, not on every render of the same one.
   }, [friend?.id]);
 
   useEffect(() => {

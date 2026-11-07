@@ -58,6 +58,7 @@ export function useModal<T extends HTMLElement>(onEscape?: () => void) {
       for (const node of quieted) node.inert = false;
       if (back && back.isConnected && back !== document.body) back.focus({ preventScroll: true });
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Set up once while the dialog is open; Escape is read through a ref.
   }, []);
 
   return ref;

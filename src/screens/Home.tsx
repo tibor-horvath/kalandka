@@ -190,7 +190,7 @@ export function Home({ onOpen, onReward, ...actions }: HubActions & { onOpen: (g
     return () => {
       if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
     };
-    // Runs once per visit to the home screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once per visit to the home screen.
   }, []);
 
   const welcomeOnce = () => {

@@ -93,8 +93,9 @@ export function Mirror({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     speak(startFeedback(round.level, first).speech);
-    return () => timers.current.forEach((t) => window.clearTimeout(t));
-    // One round per mount: App keys this screen by round.
+    const pending = timers.current;
+    return () => pending.forEach((t) => window.clearTimeout(t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- One round per mount: App keys this screen by round.
   }, []);
 
   const done = (right: MirrorFeedback) => {

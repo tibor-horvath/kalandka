@@ -295,6 +295,7 @@ function Boat({ at, sail, flipTo }: { at: Pt & { flip: boolean }; sail?: string;
     };
     frame = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frame);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- One sail per trip: the start and turn are read from the render that set sail.
   }, [sail]);
 
   return (
@@ -399,8 +400,9 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
 
   useEffect(() => {
     speak(speech(progress.world));
-    // Said once when the map opens; the speaker button repeats it.
+    // Reads the ref at unmount on purpose: a trip replaces the timers with its own.
     return () => timers.current.forEach((t) => window.clearTimeout(t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Said once when the map opens; the speaker button repeats it.
   }, []);
 
   // One trip per visit: a second tap while the boat is out is ignored, so the trip always finishes.

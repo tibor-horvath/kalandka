@@ -36,6 +36,7 @@ export function useLandingRoute(named: boolean) {
   namedNow.current = named;
 
   // The address matches the page from the start: /jatek without a named child goes to /, an installed app at / to /jatek.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- The address is set once, for the page the app opened on.
   useEffect(() => goTo(landing ? LANDING_PATH : GAME_PATH), []);
   useEffect(() => {
     const onPop = () => setLanding(!namedNow.current || !onGamePath());

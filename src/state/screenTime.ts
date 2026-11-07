@@ -38,6 +38,19 @@ function prune(history: Record<string, number>): Record<string, number> {
   return Object.fromEntries(keys.slice(-HISTORY_DAYS).map((k) => [k, history[k]]));
 }
 
+/** The play clock looks at the time this often, in seconds. */
+export const TICK_SECONDS = 5;
+
+/**
+ * Whole seconds played in a gap between two looks at the clock, and how much of the gap they use up (the rest
+ * carries to the next look). A gap far longer than a tick means the tablet slept: it counts as one tick.
+ */
+export function playedIn(gapMs: number): { seconds: number; usedMs: number } {
+  if (gapMs > TICK_SECONDS * 3000) return { seconds: TICK_SECONDS, usedMs: gapMs };
+  const seconds = Math.max(0, Math.floor(gapMs / 1000));
+  return { seconds, usedMs: seconds * 1000 };
+}
+
 export function addPlay(p: Progress, seconds: number, day: string): Progress {
   const q = rollDay(p, day);
   const history = prune({ ...q.playHistory, [day]: (q.playHistory[day] ?? 0) + seconds });

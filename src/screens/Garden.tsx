@@ -150,12 +150,13 @@ export function Garden({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     if (!visitor) speak(say.speech);
-    // Runs once per visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once per visit.
   }, []);
 
   // Each newly arrived visitor is greeted in turn, the earliest first.
   useEffect(() => {
     if (visitor) speak(visitor.speech);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Greeted once per visitor, not on every render of the same one.
   }, [visitor?.id]);
 
   const tapBed = (i: number) => {
@@ -588,7 +589,7 @@ function Pantry({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     speak(intro);
-    // Runs once per visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once per visit.
   }, []);
 
   const tell = (text: string, speech = text) => {
@@ -712,7 +713,7 @@ function GiftCard({ id, onGive, onClose }: { id: VisitorId; onGive: () => void; 
 
   useEffect(() => {
     speak(line);
-    // Runs once per visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once per visit.
   }, []);
 
   const tell = (text: string, speech = text) => {
