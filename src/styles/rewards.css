@@ -91,6 +91,11 @@
 .sticker { --sticker: var(--oops); --sticker-ink: #ffffff; --tilt: 0deg; width: 96px; height: 96px; border-radius: 50%; background: var(--sticker); color: var(--sticker-ink); border: 5px solid #ffffff; box-shadow: 0 0 0 2px #ead9a8, 0 5px 0 #ead9a8; display: grid; place-items: center; transform: rotate(var(--tilt)); flex: none; }
 .sticker-slot { width: 96px; height: 96px; border-radius: 50%; border: 4px dashed #c9b27a; color: #8a6d2a; display: grid; place-items: center; flex: none; }
 .sticker__mark { font-family: var(--display); font-size: 29px; font-weight: 800; line-height: 1; white-space: nowrap; }
+/* Feladatlapok: the mark sits on a drawn page, a little smaller so two digits fit on it; the last of the row has a gold rim. */
+.sticker--sheet, .sticker-slot--sheet { position: relative; }
+.sticker__art { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sticker--sheet .sticker__mark, .sticker-slot--sheet .sticker__mark { position: relative; transform: translateY(8%) scale(0.72); }
+.sticker--gold { border-color: var(--sun); }
 
 /* ---------- album ---------- */
 .screen--album { background: #fff8e6; }
@@ -134,6 +139,10 @@
 .album__game--ladder .sticker__mark { font-size: 18px; }
 .album__game--ladder .album__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .album__game--ladder .album__sticker { padding: 1px; }
+/* Feladatlapok' nine stickers: smaller still, so the ladder fits the card's height. */
+.album__game--long .sticker, .album__game--long .sticker-slot { width: 42px; height: 42px; }
+.album__game--long .sticker__mark { font-size: 17px; }
+.album__game--long .album__link { min-height: 3px; }
 .album__guide { display: flex; align-items: center; gap: 12px; padding: 0 32px 24px; }
 .album__guide .bubble { font-size: 22px; padding: 12px 20px; box-shadow: 0 4px 0 #ead9a8; }
 
@@ -164,6 +173,10 @@
 .sticker-pop__row--long .sticker-pop__place .sticker, .sticker-pop__row--long .sticker-pop__place .sticker-slot { width: 80px; height: 80px; }
 .sticker-pop__row--long .sticker-pop__place .sticker__mark { font-size: 26px; }
 .sticker-pop__row--long .sticker-pop__label { font-size: 14px; }
+.sticker-pop__row--longer { gap: 6px; }
+.sticker-pop__row--longer .sticker-pop__place { width: 86px; }
+.sticker-pop__row--longer .sticker-pop__place .sticker, .sticker-pop__row--longer .sticker-pop__place .sticker-slot { width: 68px; height: 68px; }
+.sticker-pop__row--longer .sticker-pop__label { font-size: 13px; }
 .sticker-pop__label { font-family: var(--body); font-size: 16px; font-weight: 700; text-align: center; }
 .sticker-pop__label.is-open { color: #6b5520; }
 .sticker-pop__stuck { position: relative; padding: 0; border: none; background: none; border-radius: 50%; cursor: pointer; }
@@ -254,17 +267,17 @@
 .stage--landscape .visitor-pop__title { font-size: 34px; }
 
 /*
- * Portrait album: the whole page fits without scrolling. The rows share the height (Mézút's five stickers
- * get a full-width row); on short cards the captions go, since tapping a sticker says its name anyway.
+ * Portrait album: the rows share the height (Mézút's five stickers get a full-width row), and the page fits
+ * without scrolling unless the cards would be shorter than 80px; on short cards the captions go, since tapping
+ * a sticker says its name anyway.
  */
-.stage--portrait .album { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); grid-auto-flow: row dense; gap: 10px; padding: 12px 16px; }
+.stage--portrait .album { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(80px, 1fr); overflow-y: auto; overscroll-behavior: contain; grid-auto-flow: row dense; gap: 10px; padding: 12px 16px; }
 .stage--portrait .album__game { min-height: 0; container: album-game / size; }
 .stage--portrait .album__game--more { grid-column: 1 / -1; }
 .stage--portrait .album__game--more .album__stickers { flex-wrap: nowrap; }
 .stage--portrait .album__game--ladder { grid-column: 1 / -1; }
 .stage--portrait .album__game--ladder .album__stickers { flex-direction: row; flex-wrap: nowrap; }
 @container album-game (max-height: 130px) { .album__label { display: none; } .album__stickers { align-items: center; } }
-@container album-game (max-height: 96px) { .stage--portrait .album .sticker, .stage--portrait .album .sticker-slot { width: 44px; height: 44px; } }
 .stage--landscape .album { grid-template-columns: repeat(var(--cols, 7), minmax(0, 1fr)); gap: 6px; padding: 8px 0; }
 .is-phone .album__worlds { padding: 4px 16px 0; gap: 8px; }
 .is-phone .album__world { height: 44px; padding: 0 8px 0 14px; font-size: 16px; }
@@ -275,14 +288,33 @@
 .is-phone .album__link { border-left-width: 4px; }
 .stage--portrait .album__stickers { flex-direction: row; justify-content: center; align-items: flex-start; gap: 2px; }
 /* Portrait ladders run sideways: the line joins the stickers' middles. */
-.stage--portrait .album__link { width: auto; height: 0; min-width: 6px; max-width: 24px; margin-top: 26px; border-left: none; border-top: 4px dashed var(--deep); }
+.stage--portrait .album__link { width: auto; height: 0; min-width: 6px; max-width: 24px; margin-top: calc(var(--s, 52px) / 2 - 1px); border-left: none; border-top: 4px dashed var(--deep); }
 .stage--portrait .album__link.is-on { border-top-style: solid; }
 .is-phone .album .sticker, .is-phone .album .sticker-slot { width: 52px; height: 52px; border-width: 3px; }
 .is-phone .album .sticker__mark { font-size: 16px; }
 .is-phone .album__label { font-size: 11px; }
 .stage--landscape .album__stickers { gap: 2px; }
 .stage--landscape .album__name { font-size: 13px; }
-.stage--landscape .album .sticker, .stage--landscape .album .sticker-slot { width: 46px; height: 46px; }
+/*
+ * Landscape phones: the cards are short, so each ladder sizes its stickers from its own height (--n stickers,
+ * from Album), between 28px and 46px. A ladder too long even then (Méhkas, Feladatlapok) scrolls in its card,
+ * opening at the bottom, so level 1 and the stickers earned first are always in view.
+ */
+.stage--landscape .album__stickers { min-height: 0; align-self: stretch; container: album-ladder / size; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.stage--landscape .album .sticker, .stage--landscape .album .sticker-slot { --s: max(28px, min(46px, calc(100cqh / var(--n, 3) - 10px), calc(100cqw - 8px))); width: var(--s); height: var(--s); border-width: clamp(2px, calc(var(--s) / 14), 3px); }
+.stage--landscape .album .sticker__mark { font-size: calc(var(--s) * 0.34); }
+.stage--landscape .album__link { min-height: 2px; }
+/*
+ * Portrait rows run sideways across the card: its stickers (--n from Album) share its width and height, up to 52px.
+ * Cards are at least 80px tall, so a page of many ladders (Robotműhely) scrolls rather than shrinking them away.
+ */
+.stage--portrait .album__stickers { --s: min(52px, calc((100cqw - 8px) / var(--n, 3) - 12px), calc(100cqh - 44px)); }
+.stage--portrait .album .sticker, .stage--portrait .album .sticker-slot { width: var(--s); height: var(--s); }
+.stage--portrait .album .sticker__mark { font-size: min(16px, calc(var(--s) * 0.36)); }
+.stage--portrait .album__game--long .album__stickers { --s: min(34px, calc(100cqh - 44px)); gap: 0; }
+.stage--portrait .album__game--long .sticker, .stage--portrait .album__game--long .sticker-slot { border-width: 2px; }
+.stage--portrait .album__game--long .sticker__mark { font-size: 14px; }
+.stage--portrait .album__game--long .album__link { min-width: 2px; }
 .stage--landscape .album__label { display: none; }
 .is-phone .album__guide { padding: 0 16px 12px; }
 .stage--landscape .album__guide { padding: 0 0 4px; }
@@ -305,6 +337,10 @@
 .is-phone .sticker-pop__row--long .sticker-pop__place .sticker, .is-phone .sticker-pop__row--long .sticker-pop__place .sticker-slot { width: 48px; height: 48px; border-width: 3px; }
 .is-phone .sticker-pop__row--long .sticker-pop__place .sticker__mark { font-size: 16px; }
 .is-phone .sticker-pop__row--long .sticker-pop__label { display: none; }
+.is-phone .sticker-pop__row--longer { gap: 2px; }
+.is-phone .sticker-pop__row--longer .sticker-pop__place { width: 36px; }
+.is-phone .sticker-pop__row--longer .sticker-pop__place .sticker, .is-phone .sticker-pop__row--longer .sticker-pop__place .sticker-slot { width: 34px; height: 34px; border-width: 2px; }
+.is-phone .sticker-pop__row--longer .sticker-pop__place .sticker__mark { font-size: 13px; }
 .is-phone .sticker-pop__label { font-size: 13px; }
 .stage--portrait .sticker-pop__foot { flex-direction: column; gap: 12px; padding: 0 16px; }
 .is-phone .sticker-pop__say .bubble { font-size: 17px; }
