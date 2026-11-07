@@ -9,8 +9,20 @@ export function maxDropsFor(target: number): number {
 /** The watering can pours this many at once (only offered on two ten-frames). */
 export const CAN_DROPS = 5;
 
+/** The watering game's flowers; each is drawn as its real species (see blooms.tsx). */
+export type SpeciesId =
+  | 'harangvirag'
+  | 'tulipan'
+  | 'napraforgo'
+  | 'szazszorszep'
+  | 'pipacs'
+  | 'ibolya'
+  | 'margareta'
+  | 'kankalin'
+  | 'bazsarozsa';
+
 export interface Plant {
-  id: string;
+  id: SpeciesId;
   /** Nominative, lower case: "harangvirág". */
   name: string;
   /** Dative with article, sentence start: "A harangvirágnak". */
@@ -20,14 +32,14 @@ export interface Plant {
 }
 
 export const PLANTS: Plant[] = [
-  { id: 'harangvirag', name: 'harangvirág', dative: 'A harangvirágnak', target: 6, petal: '#7DA7F5' },
+  { id: 'harangvirag', name: 'harangvirág', dative: 'A harangvirágnak', target: 6, petal: '#8C86E8' },
   { id: 'tulipan', name: 'tulipán', dative: 'A tulipánnak', target: 3, petal: '#F2709C' },
   { id: 'napraforgo', name: 'napraforgó', dative: 'A napraforgónak', target: 8, petal: '#FFC93C' },
   { id: 'szazszorszep', name: 'százszorszép', dative: 'A százszorszépnek', target: 5, petal: '#FFFFFF' },
-  { id: 'pipacs', name: 'pipacs', dative: 'A pipacsnak', target: 9, petal: '#F2603A' },
-  { id: 'ibolya', name: 'ibolya', dative: 'Az ibolyának', target: 4, petal: '#B07CE8' },
-  { id: 'margareta', name: 'margaréta', dative: 'A margarétának', target: 7, petal: '#FFF4B8' },
-  { id: 'kankalin', name: 'kankalin', dative: 'A kankalinnak', target: 2, petal: '#FFB347' },
+  { id: 'pipacs', name: 'pipacs', dative: 'A pipacsnak', target: 9, petal: '#E2382B' },
+  { id: 'ibolya', name: 'ibolya', dative: 'Az ibolyának', target: 4, petal: '#7B4FC9' },
+  { id: 'margareta', name: 'margaréta', dative: 'A margarétának', target: 7, petal: '#FFFFFF' },
+  { id: 'kankalin', name: 'kankalin', dative: 'A kankalinnak', target: 2, petal: '#F7DC6F' },
   { id: 'bazsarozsa', name: 'bazsarózsa', dative: 'A bazsarózsának', target: 10, petal: '#F79AB8' }
 ];
 

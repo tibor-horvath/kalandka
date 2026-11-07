@@ -57,9 +57,9 @@ export function potCells(total: number): PotCell[] {
 /** Petal colours for the flowers already there; the new friends bloom in the paired colour. */
 const PETAL_PAIRS: [string, string][] = [
   ['#E8577D', '#FFC93C'],
-  ['#8E6BD6', '#FF9F43'],
-  ['#2E86DE', '#F06292'],
-  ['#FF7043', '#7CC35C']
+  ['#B83D8F', '#FF9F43'],
+  ['#9E2A4A', '#F8BBD0'],
+  ['#FF7043', '#FFFFFF']
 ];
 
 export interface PotsRound {

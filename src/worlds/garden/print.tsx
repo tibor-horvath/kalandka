@@ -1,4 +1,4 @@
-import { Basket, Bouquet, DROP_PATH, Hive, PatternFlower, RoundFlower, Seed, SmallPot } from './art';
+import { Basket, Bouquet, DROP_PATH, GrowingPlant, Hive, PatternFlower, RoundFlower, Seed, SmallPot } from './art';
 import { ADD_LEVELS, BOX_W, RIGHT_X, SCENE_H, bedWidth, buildAddRound, hiveX, type AddItem, type AddRound } from './games/add/logic';
 import { FIELD_H, FIELD_W, LEVELS as FLASH_LEVELS, buildFlashRound, type FlashRound } from './games/flash/logic';
 import { diceFace } from './games/flash/layout';
@@ -123,7 +123,7 @@ function DropOutline({ x, y, filled }: { x: number; y: number; filled: boolean }
 
 const water = spec<Plant>({
   id: 'water',
-  rev: 1,
+  rev: 2,
   levels: ['2–10 csepp (egy tízes keret)', '11–20 csepp (két tízes keret)'],
   current: (p) => (ladderOf(p, 'water').level >= 2 ? 1 : 0),
   grid: (level, d) => (level === 0 ? pickGrid(d, [2, 3], [2, 4], [3, 5]) : pickGrid(d, [2, 2], [2, 3], [3, 4])),
@@ -142,7 +142,7 @@ const water = spec<Plant>({
     return (
       <Pic w={570} h={h}>
         <At x={10} y={h / 2 - 150}>
-          <RoundFlower petal={paper(plant.petal)} width={120} />
+          <GrowingPlant species={plant.id} petal={paper(plant.petal)} bloom width={104} />
         </At>
         <Num x={70} y={h / 2 + 30} n={t} size={70} />
         <Dots n={t} x={0} y={h / 2 + 80} w={140} h={60} />
@@ -263,7 +263,7 @@ const DIGIT_FREE = (r: AddRound) => r.level.answers === 'dots';
 
 const add = spec<AddRound>({
   id: 'add',
-  rev: 1,
+  rev: 2,
   levels: ADD_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'add').level,
   grid: (level, d) => (ADD_LEVELS[level].bundles ? pickGrid(d, [1, 5], [2, 5], [2, 7]) : pickGrid(d, [2, 3], [2, 5], [3, 6])),
@@ -460,7 +460,7 @@ const trace = spec<TraceTask>({
 
 const pots = spec<PotsRound>({
   id: 'pots',
-  rev: 1,
+  rev: 2,
   levels: POTS_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'pots').level,
   grid: (level, d) => (POTS_LEVELS[level].total === 5 ? pickGrid(d, [2, 4], [2, 5], [3, 7]) : pickGrid(d, [2, 3], [2, 4], [3, 5])),
