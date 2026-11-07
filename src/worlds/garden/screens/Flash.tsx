@@ -18,8 +18,13 @@ export function Flash({ onBack }: { onBack: () => void }) {
   const { level, win, meter, goNext } = useLadderRound('flash');
   const [round] = useState(() => buildFlashRound(progress.flashRound, level));
   // Portrait phones: the two groups stand one above the other, so the seeds can be bigger.
-  const folded = useForm() === 'portrait' ? foldSeeds(round.seeds) : null;
+  // One big ten-frame (6–10 on a frame level) stays as it is: folding splits the field down the middle.
+  const fold = useForm() === 'portrait' && !(round.cells && round.count <= 10);
+  const folded = fold ? foldSeeds(round.seeds) : null;
   const field = folded ?? { width: FIELD_W, height: FIELD_H, seeds: round.seeds };
+  const cells = round.cells && (fold ? foldSeeds(round.cells)?.seeds : round.cells);
+  // The two ten-frames of 11–20 stand close: their seeds are drawn a little smaller.
+  const seedSize = round.cells && round.count > 10 ? 36 : 44;
   const [phase, setPhase] = useState<Phase>('ready');
   const [wrong, setWrong] = useState<number | null>(null);
   /** A wrong pick or "Mutasd újra!" before the answer: the task needed help. */
@@ -33,7 +38,8 @@ export function Flash({ onBack }: { onBack: () => void }) {
     };
   }, []);
 
-  const fb = phase === 'solved' ? rightFeedback(round.count) : phase === 'reveal' ? revealFeedback(round.count) : phase === 'ask' ? ASK : READY;
+  const framed = round.cells !== undefined;
+  const fb = phase === 'solved' ? rightFeedback(round.count) : phase === 'reveal' ? revealFeedback(round.count, framed) : phase === 'ask' ? ASK : READY;
 
   const show = () => {
     setPhase('flash');
@@ -54,7 +60,7 @@ export function Flash({ onBack }: { onBack: () => void }) {
       helped.current = true;
       setWrong(n);
       setPhase('reveal');
-      speak(revealFeedback(round.count).speech);
+      speak(revealFeedback(round.count, framed).speech);
     }
   };
 
@@ -76,9 +82,11 @@ export function Flash({ onBack }: { onBack: () => void }) {
       <FitBox className="seedbed-box" width={field.width} height={field.height}>
         <div className="seedbed" style={{ width: field.width, height: field.height }}>
           {seedsVisible &&
+            cells?.map((c, i) => <span key={`cell${i}`} className={`seedbed__cell${round.count <= 10 ? ' seedbed__cell--big' : ''}`} style={{ left: c.x, top: c.y }} />)}
+          {seedsVisible &&
             field.seeds.map((s, i) => (
               <span key={i} className="seedbed__seed" style={{ left: s.x, top: s.y, transform: `translate(-50%, -50%) rotate(${s.rot}deg)` }}>
-                {phase === 'solved' ? <MiniSprout /> : <Seed size={44} />}
+                {phase === 'solved' ? <MiniSprout /> : <Seed size={seedSize} />}
               </span>
             ))}
           {(phase === 'ready' || phase === 'ask') && (

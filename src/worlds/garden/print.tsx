@@ -1,6 +1,6 @@
 import { Basket, Bouquet, DROP_PATH, GrowingPlant, Hive, PatternFlower, RoundFlower, Seed, SmallPot } from './art';
 import { ADD_LEVELS, BOX_W, RIGHT_X, SCENE_H, bedWidth, buildAddRound, hiveX, type AddItem, type AddRound } from './games/add/logic';
-import { FIELD_H, FIELD_W, LEVELS as FLASH_LEVELS, buildFlashRound, type FlashRound } from './games/flash/logic';
+import { FIELD_H, FIELD_W, FLASH_PRINT_LEVELS, LEVELS as FLASH_LEVELS, buildFlashRound, type FlashRound } from './games/flash/logic';
 import { diceFace } from './games/flash/layout';
 import { rng } from '../../lib/rng';
 import { CHOICES, FLOWER_LABELS, SHAPES, SHAPE_ORDER, buildRound as buildPatternRound, type FlowerKind } from './games/patterns/logic';
@@ -232,8 +232,8 @@ const patterns = spec<PatternTask>({
 const flash = spec<FlashRound>({
   id: 'flash',
   rev: 1,
-  levels: FLASH_LEVELS.map((l) => l.name),
-  current: (p) => ladderOf(p, 'flash').level,
+  levels: FLASH_LEVELS.slice(0, FLASH_PRINT_LEVELS).map((l) => l.name),
+  current: (p) => Math.min(FLASH_PRINT_LEVELS - 1, ladderOf(p, 'flash').level),
   grid: (_, d) => pickGrid(d, [2, 4], [3, 4], [4, 5]),
   ask: () => 'Hány magot látsz? Karikázd be a számot!',
   tip: () => 'Játszhatják villantósan is: mutassa meg a képet három másodpercig, aztán takarja le a kezével, és kérdezze meg, hány magot látott.',

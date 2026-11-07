@@ -618,7 +618,9 @@ export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
     { from: 0, mark: '3', label: 'Egy pillantás', praise: 'Egy pillantásra látod, hány mag van!', legacy: ['flash-3'] },
     { from: 1, mark: '5', label: 'Öt mag', praise: 'Már öt magot is egy pillantásra látsz!' },
     { from: 2, mark: '•5', label: 'Szórt magok', praise: 'A szórt magokat is egy pillantásra látod!', legacy: ['flash-5'] },
-    { from: 3, mark: '10', label: 'Tíz mag', praise: 'Már tíz magot is egy pillantásra látsz!', legacy: ['flash-10'] }
+    { from: 3, mark: '10', label: 'Tíz mag', praise: 'Már tíz magot is egy pillantásra látsz!', legacy: ['flash-10'] },
+    { from: 4, mark: '5+3', label: 'Tízes keret', praise: 'A tízes keretet is egy pillantásra látod!' },
+    { from: 5, mark: '20', label: 'Húsz mag', praise: 'Már húsz magot is egy pillantásra látsz!' }
   ],
   add: [
     { from: 0, mark: '5', label: 'Ötig', praise: 'Már ötig adsz össze és veszel el!' },

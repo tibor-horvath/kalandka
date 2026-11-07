@@ -1,12 +1,12 @@
 import { numberAttr, numberCount } from '../../../../lib/numbers';
 import type { Mood, Tone } from '../../../../lib/types';
 import { rng } from '../../../../lib/rng';
-import { layoutSeeds, type Layout, type SeedPos } from './layout';
+import { frameCells, layoutSeeds, type Layout, type SeedPos } from './layout';
 
 // Villámszem: seeds show for a few seconds, then the child says how many (subitizing).
 // It opens once the child has met the numbers 1–5 in Számmagok.
 
-export { FIELD_H, FIELD_W, diceFace, foldSeeds } from './layout';
+export { FIELD_H, FIELD_W, diceFace, foldSeeds, frameCells } from './layout';
 
 export interface Level {
   /** Shown to parents. */
@@ -24,8 +24,13 @@ export const LEVELS: Level[] = [
   { name: '1–3, kockaminta', min: 1, max: 3, layout: 'dice', flashMs: 3000, dotChoices: true },
   { name: '1–5, kockaminta', min: 1, max: 5, layout: 'dice', flashMs: 2500, dotChoices: true },
   { name: '1–5, szórva', min: 1, max: 5, layout: 'scatter', flashMs: 2500, dotChoices: false },
-  { name: '6–10, csoportban', min: 6, max: 10, layout: 'groups', flashMs: 3000, dotChoices: false }
+  { name: '6–10, csoportban', min: 6, max: 10, layout: 'groups', flashMs: 3000, dotChoices: false },
+  { name: '6–10, tízes keretben', min: 6, max: 10, layout: 'frame', flashMs: 3000, dotChoices: false },
+  { name: '11–20, tízes keretben', min: 11, max: 20, layout: 'frame', flashMs: 3000, dotChoices: false }
 ];
+
+/** The printed sheets keep the first four levels, so the codes on pages printed before the ten-frame levels still match. */
+export const FLASH_PRINT_LEVELS = 4;
 
 export const FLASH_ROUNDS_PER_LEVEL = 4;
 
@@ -40,6 +45,8 @@ export interface FlashRound {
   seeds: SeedPos[];
   /** Three distinct answers, ascending, one of them correct. */
   choices: number[];
+  /** Frame levels: every space of the ten-frames, drawn empty under the seeds. */
+  cells?: SeedPos[];
 }
 
 /** A round on this level (0-based; the level comes from the game's ladder, see state/ladder.ts). */
@@ -56,7 +63,7 @@ export function buildFlashRound(round: number, levelIndex: number): FlashRound {
   }
   const choices = [count, ...picks].sort((a, b) => a - b);
 
-  return { count, level, seeds, choices };
+  return level.layout === 'frame' ? { count, level, seeds, choices, cells: frameCells(count) } : { count, level, seeds, choices };
 }
 
 export interface FlashFeedback {
@@ -89,8 +96,21 @@ export function rightFeedback(count: number): FlashFeedback {
   };
 }
 
-/** A wrong answer uncovers the seeds and counts them together; no "wrong" word. */
-export function revealFeedback(count: number): FlashFeedback {
+/**
+ * A wrong answer uncovers the seeds and counts them together; no "wrong" word. In a ten-frame Csepi reads
+ * its shape instead: a full row or a full ten, and how many more.
+ */
+export function revealFeedback(count: number, framed = false): FlashFeedback {
+  if (framed && count > 5) {
+    const ten = count > 10;
+    const more = count - (ten ? 10 : 5);
+    return {
+      text: `Nézzük meg újra együtt! ${ten ? 'Egy teli tízes' : '5 az első sorban,'} meg még ${more}: ez ${count}.`,
+      speech: `Nézzük meg újra együtt! ${ten ? 'Egy teli tízes' : 'Öt az első sorban,'} meg még ${numberAttr(more)}: ez ${numberCount(count)}.`,
+      mood: 'oops',
+      tone: 'oops'
+    };
+  }
   const counting = Array.from({ length: count }, (_, i) => numberCount(i + 1)).join(', ');
   return {
     text: 'Nézzük meg újra együtt! Számold meg a magokat.',

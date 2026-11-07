@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FIELD_H, FIELD_W, LEVELS, buildFlashRound, levelFor, revealFeedback, rightFeedback } from './logic';
+import { FIELD_H, FIELD_W, LEVELS, buildFlashRound, frameCells, levelFor, revealFeedback, rightFeedback } from './logic';
 import { rng } from '../../../../lib/rng';
 import { foldSeeds, layoutSeeds } from './layout';
 
@@ -8,7 +8,7 @@ describe('Villámszem', () => {
     expect(levelFor(0)).toBe(LEVELS[0]);
     expect(levelFor(4)).toBe(LEVELS[1]);
     expect(levelFor(12)).toBe(LEVELS[3]);
-    expect(levelFor(99)).toBe(LEVELS[3]);
+    expect(levelFor(99)).toBe(LEVELS[LEVELS.length - 1]);
   });
 
   it('shows seeds for at least 2.5 seconds', () => {
@@ -50,6 +50,27 @@ describe('Villámszem', () => {
         }
       }
     }
+  });
+
+  it('puts the seeds of a frame level into the spaces of its ten-frames, the first ten full first', () => {
+    const frameLevels = LEVELS.flatMap((l, i) => (l.layout === 'frame' ? [i] : []));
+    expect(frameLevels).toHaveLength(2);
+    for (const level of frameLevels) {
+      for (let round = 0; round < 40; round++) {
+        const r = buildFlashRound(round, level);
+        expect(r.cells).toHaveLength(r.count > 10 ? 20 : 10);
+        r.seeds.forEach((s, i) => expect(r.cells![i]).toMatchObject({ x: s.x, y: s.y }));
+      }
+    }
+    expect(buildFlashRound(0, 0).cells).toBeUndefined();
+    expect(frameCells(14)).toHaveLength(20);
+  });
+
+  it('reads the shape of a ten-frame after a wrong answer', () => {
+    expect(revealFeedback(8, true).speech).toBe('Nézzük meg újra együtt! Öt az első sorban, meg még három: ez nyolc.');
+    expect(revealFeedback(17, true).text).toBe('Nézzük meg újra együtt! Egy teli tízes meg még 7: ez 17.');
+    expect(revealFeedback(17, true).speech).toBe('Nézzük meg újra együtt! Egy teli tízes meg még hét: ez tizenhét.');
+    expect(revealFeedback(3, true)).toEqual(revealFeedback(3));
   });
 
   it('speaks correct Hungarian', () => {
