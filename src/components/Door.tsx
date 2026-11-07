@@ -1,27 +1,15 @@
 import { useEffect, useRef } from 'react';
 import type { GameId } from '../state/games';
+import type { WorldId } from '../state/worlds';
 import { GameBackdrop } from './GameShell';
+import { PlaceBackdrop } from './PlaceShell';
 
 /** What a place on the island opens: one of the world's games, or its reward place (Kiskertem, Robotépítő). */
-export type DoorPlace = GameId | 'garden' | 'workshop';
+export type DoorPlace = GameId | 'reward';
 
 /** The place's screen, empty: its sky and ground without anything on them. */
-function Backdrop({ place }: { place: DoorPlace }) {
-  if (place === 'garden') {
-    return (
-      <div className="screen screen--garden">
-        <div className="meadow" />
-      </div>
-    );
-  }
-  if (place === 'workshop') {
-    return (
-      <div className="screen screen--workshop world--robot">
-        <div className="hill floor" />
-      </div>
-    );
-  }
-  return <GameBackdrop game={place} />;
+function Backdrop({ place, world }: { place: DoorPlace; world: WorldId }) {
+  return place === 'reward' ? <PlaceBackdrop world={world} /> : <GameBackdrop game={place} />;
 }
 
 /** Opening (ms): the game's backdrop grows out of the tapped place, after the place's first hop. */
@@ -35,7 +23,7 @@ const CLOSE_MS = 320;
  * `in` grows it from the place until it fills the screen; `out` starts full and shrinks back into the place,
  * then tells the island it has landed. It lies over the whole page and never takes a tap.
  */
-export function Door({ place, way, onDone }: { place: DoorPlace; way: 'in' | 'out'; onDone?: () => void }) {
+export function Door({ place, world, way, onDone }: { place: DoorPlace; world: WorldId; way: 'in' | 'out'; onDone?: () => void }) {
   const el = useRef<HTMLDivElement>(null);
   const done = useRef(onDone);
   done.current = onDone;
@@ -87,7 +75,7 @@ export function Door({ place, way, onDone }: { place: DoorPlace; way: 'in' | 'ou
 
   return (
     <div ref={el} className={`door door--${way}`} aria-hidden="true">
-      <Backdrop place={place} />
+      <Backdrop place={place} world={world} />
     </div>
   );
 }

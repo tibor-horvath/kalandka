@@ -1,23 +1,19 @@
 import type { ReactNode } from 'react';
 import { GAMES, type GameId } from '../state/games';
 import type { LevelMeterState } from '../state/levelMeter';
-import type { WorldId } from '../state/worlds';
 import { LevelMeter } from './LevelMeter';
 import { BackIcon, RoundButton, SpeakerIcon } from './ui';
+import { WORLD_LOOK } from './worldLook';
 
-const LOOK: Record<WorldId, { back: string; backdrop: string; className: string }> = {
-  garden: { back: 'Vissza a kertbe', backdrop: 'meadow', className: '' },
-  robot: { back: 'Vissza a műhelybe', backdrop: 'floor', className: ' world--robot' }
-};
 /** Games drawn on another backdrop than their world's own (Locsolás's lawn). */
 const OWN_BACKDROP: Partial<Record<GameId, string>> = { water: 'lawn' };
 
 /** A game's empty screen, without its play: what a place on the island opens into, and closes back from. */
 export function GameBackdrop({ game }: { game: GameId }) {
-  const look = LOOK[GAMES[game].world];
+  const look = WORLD_LOOK[GAMES[game].world];
   return (
     <div className={`screen${look.className}`}>
-      <div className={OWN_BACKDROP[game] ?? look.backdrop} />
+      <div className={OWN_BACKDROP[game] ?? look.gameGround} />
     </div>
   );
 }
@@ -52,7 +48,7 @@ export function GameShell({
   children: ReactNode;
 }) {
   const { world } = GAMES[game];
-  const look = LOOK[world];
+  const look = WORLD_LOOK[world];
   const levelMeter = <LevelMeter meter={meter} world={world} justSolved={justSolved} />;
   const replay = (
     <RoundButton label="Meghallgatom újra" onClick={onReplay}>
@@ -62,7 +58,7 @@ export function GameShell({
 
   return (
     <div className={`screen ${className}${look.className}`}>
-      <div className={OWN_BACKDROP[game] ?? look.backdrop} aria-hidden="true" />
+      <div className={OWN_BACKDROP[game] ?? look.gameGround} aria-hidden="true" />
 
       <header className={title !== undefined ? 'topbar topbar--meter' : 'topbar'}>
         <RoundButton label={look.back} onClick={onBack}>

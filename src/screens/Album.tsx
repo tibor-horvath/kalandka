@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState, type CSSProperties } from 'react';
 import { StickerDisc, StickerSlot } from '../components/garden';
-import { BackIcon, GuideBubble, RoundButton, SpeakerIcon } from '../components/ui';
+import { GuideSay } from '../components/GuideSay';
+import { PlaceShell } from '../components/PlaceShell';
 import { popBubble } from '../lib/sound';
 import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
@@ -39,17 +40,17 @@ export function Album({ onBack, world: startWorld = 'garden' }: { onBack: () => 
   };
 
   return (
-    <div className="screen screen--album">
-      <header className="topbar">
-        <RoundButton label="Vissza" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <h1 className="screen-title">Matricáim</h1>
+    <PlaceShell
+      className="screen--album"
+      title="Matricáim"
+      onBack={onBack}
+      counters={
         <div className="pill album__count" aria-label={`${earned.length} matrica`}>
           {earned.length}
           <span className="pill__unit"> matrica</span>
         </div>
-      </header>
+      }
+    >
 
       <div className="album__worlds" role="tablist" aria-label="Világok">
         {WORLDS.map((w) => (
@@ -107,14 +108,7 @@ export function Album({ onBack, world: startWorld = 'garden' }: { onBack: () => 
         })}
       </div>
 
-      <div className="album__guide">
-        <GuideBubble guide={world === 'robot' ? 'csavar' : 'csepi'} mood="smile" csepiWidth={56}>
-          {line}
-        </GuideBubble>
-        <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(line)}>
-          <SpeakerIcon />
-        </RoundButton>
-      </div>
-    </div>
+      <GuideSay world={world} mood="smile" text={line} className="album__guide" />
+    </PlaceShell>
   );
 }

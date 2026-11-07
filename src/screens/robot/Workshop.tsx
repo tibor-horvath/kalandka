@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrivalRing } from '../../components/ArrivalRing';
+import { GuideSay, type Say } from '../../components/GuideSay';
 import { Modal } from '../../components/Modal';
+import { PlaceShell } from '../../components/PlaceShell';
 import { Bolt } from '../../components/robot';
 import { FriendArt, RobotFigure, SlotIcon, type PartMotion } from '../../components/robotParts';
-import { BackIcon, GuideBubble, RoundButton, SpeakerIcon } from '../../components/ui';
 import { chime, fanfare, popBubble, robotChirp } from '../../lib/sound';
 import { capitalize, numberCount } from '../../lib/numbers';
 import { speak } from '../../lib/speech';
-import type { Mood, Tone } from '../../lib/types';
 import { useProgress } from '../../state/progress';
 import {
   BATTERY_BARS,
@@ -44,13 +44,6 @@ import {
 } from '../../state/robotParts';
 
 const ROBOT_NAMES: Record<RobotIdx, string> = { 0: 'Első robot', 1: 'Második robot' };
-
-interface Say {
-  text: string;
-  speech: string;
-  mood: Mood;
-  tone: Tone;
-}
 
 /** "egy csavar", "három csavar" for the speech; the bubble shows the digit. */
 function boltsWord(n: number): string {
@@ -267,29 +260,26 @@ export function Workshop({ onBack }: { onBack: () => void }) {
   const slotName = PART_SLOTS.find((s) => s.id === slot)!.name;
 
   return (
-    <div className="screen screen--workshop world--robot">
-      <div className="hill floor" aria-hidden="true" />
-
-      <header className="topbar">
-        <RoundButton label="Vissza a műhelybe" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <h1 className="screen-title">Robotépítő</h1>
-        <div className="topbar__right">
-          <div className={`pill workshop__bolts${answer?.kind === 'nope' ? ` is-short-${answer.n % 2 ? 'a' : 'b'}` : ''}`} aria-label={`${balance} csavar`}>
-            <Bolt />
-            <span>
-              {balance}
-              <span className="pill__unit"> csavar</span>
+    <PlaceShell
+      world="robot"
+      className="screen--workshop"
+      title="Robotépítő"
+      onBack={onBack}
+      counters={
+        <div className={`pill workshop__bolts${answer?.kind === 'nope' ? ` is-short-${answer.n % 2 ? 'a' : 'b'}` : ''}`} aria-label={`${balance} csavar`}>
+          <Bolt />
+          <span>
+            {balance}
+            <span className="pill__unit"> csavar</span>
+          </span>
+          {answer?.kind === 'got' && (
+            <span key={answer.n} className="workshop__spent" aria-hidden="true">
+              −{answer.cost}
             </span>
-            {answer?.kind === 'got' && (
-              <span key={answer.n} className="workshop__spent" aria-hidden="true">
-                −{answer.cost}
-              </span>
-            )}
-          </div>
+          )}
         </div>
-      </header>
+      }
+    >
 
       <div className="workshop">
         <div className="workshop__stage">
@@ -362,14 +352,7 @@ export function Workshop({ onBack }: { onBack: () => void }) {
         </div>
 
         <aside className="workshop__panel">
-          <div className="kiskert__say">
-            <GuideBubble guide="csavar" mood={say.mood} tone={say.tone} csepiWidth={56}>
-              {say.text}
-            </GuideBubble>
-            <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(say.speech)}>
-              <SpeakerIcon />
-            </RoundButton>
-          </div>
+          <GuideSay world="robot" {...say} />
 
           <div className="workshop__slots" role="tablist" aria-label="A robot részei">
             {PART_SLOTS.map((s) => (
@@ -464,7 +447,7 @@ export function Workshop({ onBack }: { onBack: () => void }) {
           </button>
         </Modal>
       )}
-    </div>
+    </PlaceShell>
   );
 }
 

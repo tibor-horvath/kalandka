@@ -35,9 +35,9 @@ export interface HubBubble {
   tone?: Tone;
 }
 
-const LOOK: Record<WorldId, { className: string; guide: 'csepi' | 'csavar'; accent?: string; reward: DoorPlace }> = {
-  garden: { className: 'screen screen--home screen--island', guide: 'csepi', reward: 'garden' },
-  robot: { className: 'screen screen--home screen--robot-home world--robot screen--island', guide: 'csavar', accent: '#0C6E6A', reward: 'workshop' }
+const LOOK: Record<WorldId, { className: string; guide: 'csepi' | 'csavar'; accent?: string }> = {
+  garden: { className: 'screen screen--home screen--island', guide: 'csepi' },
+  robot: { className: 'screen screen--home screen--robot-home world--robot screen--island', guide: 'csavar', accent: '#0C6E6A' }
 };
 
 /**
@@ -75,7 +75,7 @@ export function WorldHub({
   const [landed, setLanded] = useState(() => back !== null && returned === null);
   const look = LOOK[world];
   const doors = places.map((p) => (p.onOpen ? { ...p, onOpen: () => enter(p.id, p.onOpen!) } : p));
-  const rewardDoor = { ...reward, id: look.reward, onClick: () => enter(look.reward, reward.onClick) };
+  const rewardDoor = { ...reward, id: 'reward', onClick: () => enter('reward', reward.onClick) };
   const info = WORLDS.find((w) => w.id === world)!;
   // With a daily limit, the island shows today's time left in this world's gauge; the clock stands at home.
   const time = useTimeLeft();
@@ -128,8 +128,8 @@ export function WorldHub({
 
         {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}
       </div>
-      {opening && <Door place={opening as DoorPlace} way="in" />}
-      {returned && !landed && <Door place={returned.place} way="out" onDone={() => setLanded(true)} />}
+      {opening && <Door place={opening as DoorPlace} world={world} way="in" />}
+      {returned && !landed && <Door place={returned.place} world={world} way="out" onDone={() => setLanded(true)} />}
     </>
   );
 }

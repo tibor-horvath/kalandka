@@ -30,10 +30,10 @@ import { WARN_SECONDS } from './state/screenTime';
 import { WORLDS, currentWorld, type WorldId } from './state/worlds';
 
 /**
- * 'home' is the current world's home screen. The Kalandka map, each world's reward place (the Kiskert,
- * Robotépítő) and the sticker album sit beside it: no task runs there.
+ * 'home' is the current world's home screen and 'reward' its reward place (the Kiskert, Robotépítő). The Kalandka
+ * map and the sticker album, which shows every world, sit beside them: no task runs there.
  */
-type Screen = 'home' | 'map' | 'garden' | 'workshop' | 'album' | GameId;
+type Screen = 'home' | 'map' | 'reward' | 'album' | GameId;
 /** 'print' is the printable sheets, opened without the gate; like the parents' corner it pauses the play clock. */
 type Parents = 'closed' | 'gate' | 'open' | 'print';
 
@@ -43,9 +43,9 @@ const ParentArea = lazy(async () => ({ default: (await loadParentArea()).ParentA
 const PrintArea = lazy(async () => ({ default: (await import('./screens/PrintArea')).PrintArea }));
 const Answers = lazy(async () => ({ default: (await import('./screens/Answers')).Answers }));
 
-/** Each world's home screen, and the screen of its reward place. */
+/** Each world's home screen, and its reward place. */
 const HUBS = { garden: Home, robot: RobotHome } as const;
-const REWARD_SCREEN: Record<WorldId, 'garden' | 'workshop'> = { garden: 'garden', robot: 'workshop' };
+const REWARDS = { garden: Garden, robot: Workshop } as const;
 
 /** Screens a child rests on when time is up, and where an update may reload the app. */
 function isHub(s: Screen): boolean {
@@ -55,10 +55,8 @@ function isHub(s: Screen): boolean {
 /** The world a screen belongs to, and so whose guide talks there; the map belongs to none (Csepi talks). */
 function worldOfScreen(s: Screen, home: WorldId, album: WorldId): WorldId | null {
   if (isGameId(s)) return GAMES[s].world;
-  if (s === 'garden') return 'garden';
-  if (s === 'workshop') return 'robot';
   if (s === 'album') return album;
-  return s === 'home' ? home : null;
+  return s === 'home' || s === 'reward' ? home : null;
 }
 
 /** Leaving a place (ms): its play sinks away before the island's door closes back into the place. */
@@ -140,7 +138,7 @@ function Game() {
       atHub: isHub(screen),
       away: route.landing || showPicker,
       paused: inParents,
-      playing: isGameId(screen) || screen === 'garden' || screen === 'workshop'
+      playing: isGameId(screen) || screen === 'reward'
     },
     profiles.activeId,
     () => go('home')
@@ -195,6 +193,7 @@ function Game() {
   if (route.landing) return <Landing onStart={start} onResume={named ? route.openGame : undefined} />;
 
   const Hub = HUBS[world];
+  const Reward = REWARDS[world];
   const game = isGameId(screen) ? screen : null;
   const GameScreen = game ? GAME_SCREENS[game] : null;
 
@@ -211,7 +210,7 @@ function Game() {
           <Hub
             key={profiles.activeId}
             onOpen={openPlace}
-            onReward={() => openPlace(REWARD_SCREEN[world])}
+            onReward={() => openPlace('reward')}
             onParents={() => openGate()}
             onPrint={openPrint}
             onSwitch={switchKid}
@@ -221,8 +220,7 @@ function Game() {
           />
         )}
         {screen === 'map' && !showPicker && <WorldMap onPick={pickWorld} onParents={() => openGate()} />}
-        {screen === 'garden' && <Garden onBack={() => leavePlace('garden')} />}
-        {screen === 'workshop' && <Workshop onBack={() => leavePlace('workshop')} />}
+        {screen === 'reward' && <Reward onBack={() => leavePlace('reward')} />}
         {screen === 'album' && <Album key={albumWorld} world={albumWorld} onBack={() => go('home')} />}
         {game && GameScreen && <GameScreen key={roundOf(progress, game)} onBack={() => leavePlace(game)} />}
       </PageMotion>
