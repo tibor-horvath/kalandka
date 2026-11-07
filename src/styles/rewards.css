@@ -9,10 +9,12 @@
 .plot__trio--kiskert .gplant-icon { width: 34px; height: 47px; }
 .plot__trio--kiskert .gplant-icon + .gplant-icon { width: 62px; height: 86px; margin-left: -6px; }
 
+/* ---------- places: the frame of the reward places and the album ---------- */
+.screen--place { display: flex; flex-direction: column; }
+.screen--place .screen-title { flex: 1; color: var(--leaf-deep); }
+.screen--place .topbar { gap: 20px; justify-content: flex-start; }
+
 /* ---------- Kiskert ---------- */
-.screen--garden { display: flex; flex-direction: column; }
-.screen--garden .screen-title { flex: 1; color: var(--leaf-deep); }
-.screen--garden .topbar { gap: 20px; justify-content: flex-start; }
 
 
 .kiskert { position: relative; flex: 1; min-height: 0; display: flex; gap: 24px; padding: 14px 40px 28px; }
@@ -55,11 +57,11 @@
 @keyframes arrive-pop { 0% { transform: scale(1); } 45% { transform: scale(1.18); } 100% { transform: none; } }
 
 .kiskert__panel { width: 330px; flex: none; background: var(--paper); border-radius: 32px; box-shadow: 0 6px 0 var(--grass-deep); padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-.kiskert__say { display: flex; align-items: center; gap: 10px; }
-.kiskert__say .guide { flex: 1; min-width: 0; gap: 14px; }
-.kiskert__say .bubble { --bubble-bg: #f3f7f4; font-size: 22px; padding: 12px 16px; }
-.kiskert__say .bubble--good { --bubble-bg: var(--good-tint); }
-.kiskert__say .round-btn { width: 52px; height: 52px; }
+.guide-say { display: flex; align-items: center; gap: 10px; }
+.guide-say .guide { flex: 1; min-width: 0; gap: 14px; }
+.guide-say .bubble { --bubble-bg: #f3f7f4; font-size: 22px; padding: 12px 16px; }
+.guide-say .bubble--good { --bubble-bg: var(--good-tint); }
+.guide-say .round-btn { width: 52px; height: 52px; }
 .plant-options { display: flex; flex-direction: column; gap: 10px; }
 .plant-option { display: flex; flex-direction: column; gap: 2px; }
 .plant-option__btn { min-height: 76px; padding: 6px 12px 6px 8px; border-radius: 22px; border: 3px solid var(--grass-deep); background: var(--good-tint); color: var(--leaf-deep); box-shadow: 0 4px 0 var(--grass-deep); display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; }
@@ -91,10 +93,9 @@
 .sticker__mark { font-family: var(--display); font-size: 29px; font-weight: 800; line-height: 1; white-space: nowrap; }
 
 /* ---------- album ---------- */
-.screen--album { background: #fff8e6; display: flex; flex-direction: column; }
+.screen--album { background: #fff8e6; }
 .screen--album::before { background: #fff8e6; }
 .screen--album .screen-title { flex: 1; color: var(--oops-ink); }
-.screen--album .topbar { gap: 20px; justify-content: flex-start; }
 .screen--album .round-btn--white, .screen--album .pill { box-shadow: 0 4px 0 #ead9a8; }
 .album { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--cols, 7), minmax(0, 1fr)); gap: 14px; padding: 12px 32px 12px; }
 /* One page per world. */
@@ -193,7 +194,7 @@
 
 /* ---------- phones ---------- */
 
-.is-phone .screen--garden .topbar, .is-phone .screen--album .topbar { gap: 8px; flex: none; }
+.is-phone .screen--place .topbar { gap: 8px; flex: none; }
 
 .stage--portrait .kiskert { flex-direction: column; gap: 12px; padding: 8px 16px 16px; }
 .stage--portrait .kiskert__field { justify-content: center; }
@@ -218,7 +219,7 @@
 .stage--portrait .plant-option__hint { padding: 0; font-size: 13px; text-align: center; }
 .stage--portrait .plant-options__pick { font-size: 14px; }
 .stage--portrait .kiskert__note { display: none; }
-.stage--portrait .kiskert__say .bubble { font-size: 18px; }
+.stage--portrait .guide-say .bubble { font-size: 18px; }
 
 .stage--landscape .kiskert { gap: 12px; padding: 8px 0 0; }
 .stage--landscape .kbeds { padding-top: 0; gap: 4px 8px; }
@@ -234,9 +235,9 @@
 .stage--landscape .visitors__badge { padding: 5px; }
 .stage--landscape .visitors__seg { stroke-width: 7; }
 .stage--landscape .kiskert__panel { width: 250px; padding: 10px; gap: 6px; border-radius: 20px; }
-.stage--landscape .kiskert__say .guide__csepi { display: none; }
-.stage--landscape .kiskert__say .bubble { font-size: 16px; padding: 8px 12px; }
-.stage--landscape .kiskert__say .bubble::before { display: none; }
+.stage--landscape .guide-say .guide__csepi { display: none; }
+.stage--landscape .guide-say .bubble { font-size: 16px; padding: 8px 12px; }
+.stage--landscape .guide-say .bubble::before { display: none; }
 .stage--landscape .plant-options { gap: 4px; }
 .stage--landscape .plant-option__btn { min-height: 48px; padding: 2px 8px 2px 4px; border-radius: 16px; }
 .stage--landscape .gplant-icon { width: 30px; height: 41px; }

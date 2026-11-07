@@ -2,12 +2,13 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { ArrivalRing } from '../components/ArrivalRing';
 import { Seed } from '../components/art';
 import { BerryIcon, CanIcon, DecorArt, DropIcon, GardenPlant, PearIcon, PlantIcon, TreatArt, VisitorArt } from '../components/garden';
+import { GuideSay, type Say } from '../components/GuideSay';
 import { Modal, useModal } from '../components/Modal';
-import { BackIcon, GuideBubble, RoundButton, SpeakerIcon } from '../components/ui';
+import { PlaceShell } from '../components/PlaceShell';
+import { BackIcon, RoundButton } from '../components/ui';
 import { chime, fanfare, popBubble } from '../lib/sound';
 import { article, capitalize, numberAttr, numberCount } from '../lib/numbers';
 import { speak } from '../lib/speech';
-import type { Mood, Tone } from '../lib/types';
 import { useProgress, type Progress } from '../state/progress';
 import {
   PLANT_OPTIONS,
@@ -58,13 +59,6 @@ import {
   type VisitorId,
   visitorProgress
 } from '../state/rewards';
-
-interface Say {
-  text: string;
-  speech: string;
-  mood: Mood;
-  tone: Tone;
-}
 
 const CHEAPEST = Math.min(...PLANT_OPTIONS.map((o) => o.cost));
 
@@ -272,15 +266,13 @@ export function Garden({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="screen screen--garden">
-      <div className="meadow" aria-hidden="true" />
-
-      <header className="topbar">
-        <RoundButton label="Vissza a kezdőképre" onClick={onBack}>
-          <BackIcon />
-        </RoundButton>
-        <h1 className="screen-title">Kiskertem</h1>
-        <div className="topbar__right">
+    <PlaceShell
+      world="garden"
+      className="screen--garden"
+      title="Kiskertem"
+      onBack={onBack}
+      counters={
+        <>
           {pears + berries > 0 && (
             <div className="pill pill--basket" aria-label={`A kosárban ${pears} körte és ${berries} áfonya`}>
               <PearIcon size={26} />
@@ -296,8 +288,9 @@ export function Garden({ onBack }: { onBack: () => void }) {
               <span className="pill__unit"> mag</span>
             </span>
           </div>
-        </div>
-      </header>
+        </>
+      }
+    >
 
       <div className="kiskert">
         <div className="kiskert__field">
@@ -419,14 +412,7 @@ export function Garden({ onBack }: { onBack: () => void }) {
         </div>
 
         <aside className="kiskert__panel">
-          <div className="kiskert__say">
-            <GuideBubble mood={say.mood} tone={say.tone} csepiWidth={56}>
-              {say.text}
-            </GuideBubble>
-            <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(say.speech)}>
-              <SpeakerIcon />
-            </RoundButton>
-          </div>
+          <GuideSay world="garden" {...say} />
           {showPantry && (
             <button
               type="button"
@@ -552,7 +538,7 @@ export function Garden({ onBack }: { onBack: () => void }) {
           </button>
         </Modal>
       )}
-    </div>
+    </PlaceShell>
   );
 }
 
@@ -650,14 +636,7 @@ function Pantry({ onClose }: { onClose: () => void }) {
           </div>
         </header>
 
-        <div className="kiskert__say">
-          <GuideBubble mood="cheer" tone="plain" csepiWidth={56}>
-            {line}
-          </GuideBubble>
-          <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(line)}>
-            <SpeakerIcon />
-          </RoundButton>
-        </div>
+        <GuideSay world="garden" mood="cheer" text={line} />
 
         <div className="pantry__recipes">
           {RECIPES.map((r) => {
@@ -771,14 +750,7 @@ function GiftCard({ id, onGive, onClose }: { id: VisitorId; onGive: () => void; 
           </div>
         </header>
 
-        <div className="kiskert__say">
-          <GuideBubble mood="cheer" tone="plain" csepiWidth={56}>
-            {line}
-          </GuideBubble>
-          <RoundButton label="Meghallgatom újra" tint="blue" onClick={() => speak(line)}>
-            <SpeakerIcon />
-          </RoundButton>
-        </div>
+        <GuideSay world="garden" mood="cheer" text={line} />
 
         <div className="gift__main">
           <div className="gift__guest" aria-hidden="true">

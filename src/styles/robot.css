@@ -698,9 +698,6 @@
 .stage--landscape .scale-task { grid-area: task; padding: 8px 12px 10px 0; gap: 6px; }
 .stage--landscape .scale-answer, .stage--landscape .scale-tray__btn { height: 48px; }
 
-.screen--workshop { display: flex; flex-direction: column; }
-.screen--workshop .screen-title { flex: 1; color: var(--leaf-deep); }
-.screen--workshop .topbar { gap: 20px; justify-content: flex-start; }
 .workshop { position: relative; flex: 1; min-height: 0; display: flex; gap: 24px; padding: 14px 40px 28px; }
 .workshop__stage { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px; padding: 20px; border-radius: 32px; background: #f4f7fb; box-shadow: 0 6px 0 var(--grass-deep); }
 .workshop__robot { position: relative; display: flex; flex-direction: column; align-items: center; margin-top: auto; }
@@ -764,7 +761,7 @@
 @container workshop-stage (max-height: 220px) { .stage--portrait .workshop__robot svg { width: 74px; } .stage--portrait .workshop__friend svg { width: 48px; } }
 .stage--portrait .workshop__panel { width: auto; padding: 14px; gap: 10px; border-radius: 24px; }
 .stage--portrait .workshop__panel .kiskert__note { display: none; }
-.stage--portrait .kiskert__say .bubble { font-size: 17px; }
+.stage--portrait .guide-say .bubble { font-size: 17px; }
 .stage--landscape .workshop { gap: 12px; padding: 8px 0 0; }
 .stage--landscape .workshop__stage { padding: 8px; gap: 4px; border-radius: 20px; }
 .stage--landscape .workshop__robot svg { width: 110px; height: auto; }
