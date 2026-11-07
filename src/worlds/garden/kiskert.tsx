@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import type { DecorId, PlantKind, TreatId, VisitorId } from '../../state/rewards';
+import type { DecorId, FlowerId, PlantKind, TreatId, VisitorId } from '../../state/rewards';
 
 // Artwork for the Kiskert. Plants share one 160 × 220 box standing on its
 // bottom edge, so beds line up whatever grows in them.
@@ -23,21 +23,140 @@ const PEARS = [
   [44, 124]
 ];
 
-function Flower() {
+/** Each flower kind's main colour, for its head and its seed packet. They differ in lightness too, not only in hue. */
+export const FLOWER_COLORS: Record<FlowerId, string> = {
+  malva: '#F4A3C4',
+  tulip: '#E8603C',
+  primrose: '#F2C230',
+  cornflower: '#3F74C9',
+  bellflower: '#8A5CC2'
+};
+
+/** A flower's head, in the flower's own 120 × 165 box (the stem runs up to y 70). */
+function FlowerHead({ id }: { id: FlowerId }) {
+  const color = FLOWER_COLORS[id];
+  switch (id) {
+    case 'tulip':
+      return (
+        <>
+          <path d="M28 28 L44 50 L60 18 L76 50 L92 28 C96 70 82 94 60 94 C38 94 24 70 28 28 Z" fill={color} />
+          <path d="M44 50 L60 18 L76 50 C70 66 50 66 44 50 Z" fill="#C9452A" />
+        </>
+      );
+    case 'primrose':
+      return (
+        <>
+          <g fill={color}>
+            <circle cx="60" cy="32" r="19" />
+            <circle cx="87" cy="52" r="19" />
+            <circle cx="77" cy="83" r="19" />
+            <circle cx="43" cy="83" r="19" />
+            <circle cx="33" cy="52" r="19" />
+          </g>
+          <g stroke="#C99A12" strokeWidth="3" strokeLinecap="round">
+            <path d="M60 18v8M97 46l-7 3M86 96l-4-6M34 96l4-6M23 46l7 3" />
+          </g>
+          <circle cx="60" cy="60" r="13" fill="#E8851A" />
+        </>
+      );
+    case 'cornflower':
+      return (
+        <>
+          <g fill={color}>
+            {[0, 40, 80, 120, 160, 200, 240, 280, 320].map((a) => (
+              <path key={a} d="M60 58 L48 16 L56 22 L60 12 L64 22 L72 16 Z" transform={`rotate(${a} 60 58)`} />
+            ))}
+          </g>
+          <circle cx="60" cy="58" r="13" fill="#26315F" />
+        </>
+      );
+    case 'bellflower':
+      return (
+        <>
+          <path d="M60 72 C60 40 70 26 92 22 M60 50 C52 40 40 36 26 40" stroke={LEAF} strokeWidth="5" fill="none" strokeLinecap="round" />
+          {[
+            [92, 24],
+            [28, 42],
+            [66, 64]
+          ].map(([x, y]) => (
+            <path
+              key={`${x},${y}`}
+              d="M0 0 C-12 0 -16 14 -18 30 L-12 26 L-6 31 L0 26 L6 31 L12 26 L18 30 C16 14 12 0 0 0 Z"
+              transform={`translate(${x} ${y})`}
+              fill={color}
+            />
+          ))}
+        </>
+      );
+    default:
+      return (
+        <>
+          <g fill={color}>
+            <circle cx="60" cy="34" r="18" />
+            <circle cx="86" cy="54" r="18" />
+            <circle cx="76" cy="82" r="18" />
+            <circle cx="44" cy="82" r="18" />
+            <circle cx="34" cy="54" r="18" />
+          </g>
+          <circle cx="60" cy="60" r="15" fill="#FFC93C" />
+        </>
+      );
+  }
+}
+
+function Flower({ id = 'malva' }: { id?: FlowerId }) {
   return (
     <g transform="translate(20 50)">
       <path d="M60 165V70" stroke={LEAF} strokeWidth="7" strokeLinecap="round" />
       <ellipse cx="40" cy="120" rx="20" ry="9" fill={LEAF_LIGHT} transform="rotate(-30 40 120)" />
       <ellipse cx="80" cy="105" rx="20" ry="9" fill={LEAF_LIGHT} transform="rotate(30 80 105)" />
-      <g fill="#F4A3C4">
-        <circle cx="60" cy="34" r="18" />
-        <circle cx="86" cy="54" r="18" />
-        <circle cx="76" cy="82" r="18" />
-        <circle cx="44" cy="82" r="18" />
-        <circle cx="34" cy="54" r="18" />
-      </g>
-      <circle cx="60" cy="60" r="15" fill="#FFC93C" />
+      <FlowerHead id={id} />
     </g>
+  );
+}
+
+/** A flower kind's head on its own: the choice buttons and the Magtár's seed packets. */
+export function FlowerIcon({ id, size = 40 }: { id: FlowerId; size?: number }) {
+  return (
+    <svg aria-hidden="true" className="flower-icon" width={size} height={size} viewBox="12 6 96 96">
+      <FlowerHead id={id} />
+    </svg>
+  );
+}
+
+/** A small flower of the Kiskert's border: the whole flower, stem and all. */
+export function BorderFlower({ id }: { id: FlowerId }) {
+  return (
+    <svg aria-hidden="true" className="border-flower" viewBox="24 52 112 150">
+      <Flower id={id} />
+    </svg>
+  );
+}
+
+/** A paper packet of flower seeds with the flower printed on it (Magtár). */
+export function SeedPacket({ id, owned }: { id: FlowerId; owned: boolean }) {
+  return (
+    <svg aria-hidden="true" className="seed-packet" viewBox="0 0 92 112">
+      <path d="M8 10 H84 L80 108 H12 Z" fill={owned ? '#F3E3B3' : '#FBF4E2'} stroke="#C98443" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M8 10 L16 2 L24 10 L32 2 L40 10 L48 2 L56 10 L64 2 L72 10 L80 2 L84 10" fill="none" stroke="#C98443" strokeWidth="3" strokeLinejoin="round" />
+      <rect x="18" y="22" width="56" height="62" rx="12" fill="#FFFFFF" />
+      <g transform="translate(16 24) scale(0.5)">
+        <FlowerHead id={id} />
+      </g>
+    </svg>
+  );
+}
+
+/** The seed sack the child counts seeds out of. */
+export function SeedSack({ size = 96 }: { size?: number }) {
+  return (
+    <svg aria-hidden="true" className="seed-sack" width={size} height={size} viewBox="0 0 96 96">
+      <path d="M30 26 C24 40 16 54 16 70 C16 84 30 90 48 90 C66 90 80 84 80 70 C80 54 72 40 66 26 Z" fill="#D9B27A" stroke="#A9783F" strokeWidth="3" />
+      <path d="M30 26 C38 20 58 20 66 26 C60 30 36 30 30 26 Z" fill="#B88A50" />
+      <path d="M34 24 C40 12 56 12 62 24" stroke="#7A5236" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <ellipse cx="48" cy="60" rx="10" ry="13" fill="#B77B45" />
+      <path d="M48 49 C45 55 45 64 48 72" stroke="#8A5A2E" strokeWidth="2" fill="none" />
+    </svg>
   );
 }
 
@@ -142,13 +261,25 @@ function Seedling() {
 }
 
 /** A planting in the Kiskert: a seedling until it has grown, then the plant with its ripe fruit. */
-export function GardenPlant({ kind, grown, fruit = 0, thirsty = false }: { kind: PlantKind; grown: boolean; fruit?: number; thirsty?: boolean }) {
+export function GardenPlant({
+  kind,
+  grown,
+  fruit = 0,
+  thirsty = false,
+  flower = 'malva'
+}: {
+  kind: PlantKind;
+  grown: boolean;
+  fruit?: number;
+  thirsty?: boolean;
+  flower?: FlowerId;
+}) {
   return (
     <svg aria-hidden="true" className={`gplant gplant--${grown ? kind : 'sprout'}${thirsty ? ' gplant--thirsty' : ''}`} viewBox="0 0 160 220">
       {!grown ? (
         <Seedling />
       ) : kind === 'flower' ? (
-        <Flower />
+        <Flower id={flower} />
       ) : kind === 'bush' ? (
         <Bush fruit={fruit} dry={thirsty} />
       ) : (
@@ -217,10 +348,10 @@ export function DropIcon({ size = 22 }: { size?: number }) {
 }
 
 /** The plant on a choice button in the Kiskert. */
-export function PlantIcon({ kind }: { kind: PlantKind }) {
+export function PlantIcon({ kind, flower = 'malva' }: { kind: PlantKind; flower?: FlowerId }) {
   return (
     <svg aria-hidden="true" className="gplant-icon" viewBox="0 0 160 220">
-      {kind === 'flower' ? <Flower /> : kind === 'bush' ? <Bush /> : <PearTree />}
+      {kind === 'flower' ? <Flower id={flower} /> : kind === 'bush' ? <Bush /> : <PearTree />}
     </svg>
   );
 }

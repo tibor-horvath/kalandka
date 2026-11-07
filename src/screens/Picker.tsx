@@ -4,7 +4,7 @@ import { AVATARS, Avatar } from '../components/avatars';
 import { PrintButton } from '../components/hub';
 import { Bolt } from '../worlds/robot/art';
 import { KalandkaIcon, KalandkaWordmark, LockIcon, RoundButton, SpeakerIcon } from '../components/ui';
-import { useForm } from '../components/Stage';
+import { useForm, useWideStage } from '../components/Stage';
 import { speak, stopSpeaking } from '../lib/speech';
 import { MAX_KIDS, kidName, progressOf, useProfiles } from '../state/profiles';
 import { remainingSeconds, today } from '../state/screenTime';
@@ -21,6 +21,7 @@ const PICK_MS_STILL = 300;
 export function Picker({ onPick, onAdd, onParents, onPrint }: { onPick: (id: string) => void; onAdd: () => void; onParents: () => void; onPrint: () => void }) {
   const { profiles } = useProfiles();
   const phone = useForm() !== 'tablet';
+  const extra = useWideStage();
   const day = today();
   const [picked, setPicked] = useState<string | null>(null);
   const timer = useRef(0);
@@ -129,13 +130,23 @@ export function Picker({ onPick, onAdd, onParents, onPrint }: { onPick: (id: str
         )}
       </nav>
 
-      <Harbour phone={phone} />
+      <Harbour phone={phone} extra={extra} />
     </div>
   );
 }
 
-/** Kalandka's harbour: both world islands on the horizon, the dock the cards stand on, and the boat waiting. */
-function Harbour({ phone }: { phone: boolean }) {
+/** A gentle swell across `w`, its crest line at `y`, filled down to the art's bottom. */
+const swell = (w: number, y: number) => {
+  let d = `M0 ${y}`;
+  for (let x = 0, up = true; x < w; x += 295, up = !up) d += ` Q${x + 147.5} ${up ? y - 14 : y + 14} ${x + 295} ${y}`;
+  return `${d} V340 H0 Z`;
+};
+
+/**
+ * Kalandka's harbour: both world islands on the horizon, the dock the cards stand on, and the boat waiting.
+ * On a wide stage (`extra` px wider) the islands and the boat keep to the edges and the dock stays under the cards.
+ */
+function Harbour({ phone, extra }: { phone: boolean; extra: number }) {
   if (phone) {
     return (
       <div className="harbour" aria-hidden="true">
@@ -164,7 +175,7 @@ function Harbour({ phone }: { phone: boolean }) {
   }
   return (
     <div className="harbour" aria-hidden="true">
-      <svg className="harbour__art" width="1180" height="340" viewBox="0 0 1180 340">
+      <svg className="harbour__art" width={1180 + extra} height="340" viewBox={`0 0 ${1180 + extra} 340`}>
         <g className="harbour__islands">
           <ellipse cx="100" cy="60" rx="110" ry="26" fill="#A6D676" />
           <rect x="92" y="12" width="10" height="34" rx="4" fill="#8A5A3B" />
@@ -172,23 +183,25 @@ function Harbour({ phone }: { phone: boolean }) {
           <circle cx="68" cy="24" r="16" fill="#5BAA4A" />
           <circle cx="150" cy="40" r="9" fill="#F26B4F" />
           <circle cx="172" cy="46" r="7" fill="#FFC93C" />
-          <ellipse cx="1080" cy="60" rx="120" ry="26" fill="#B8C8DA" />
-          <rect x="1040" y="8" width="70" height="44" rx="8" fill="#7E93AB" />
-          <path d="M1034 12 L1075 -12 L1116 12 Z" fill="#5E7184" />
-          <rect x="1062" y="24" width="26" height="28" rx="4" fill="#FFC93C" />
-          <circle cx="1138" cy="34" r="13" fill="#B7C4D2" stroke="#5E7184" strokeWidth="4" />
-          <circle cx="1138" cy="34" r="4" fill="#5E7184" />
+          <g transform={`translate(${extra} 0)`}>
+            <ellipse cx="1080" cy="60" rx="120" ry="26" fill="#B8C8DA" />
+            <rect x="1040" y="8" width="70" height="44" rx="8" fill="#7E93AB" />
+            <path d="M1034 12 L1075 -12 L1116 12 Z" fill="#5E7184" />
+            <rect x="1062" y="24" width="26" height="28" rx="4" fill="#FFC93C" />
+            <circle cx="1138" cy="34" r="13" fill="#B7C4D2" stroke="#5E7184" strokeWidth="4" />
+            <circle cx="1138" cy="34" r="4" fill="#5E7184" />
+          </g>
         </g>
-        <path d="M0 60 Q147.5 46 295 60 T590 60 T885 60 T1180 60 V340 H0 Z" fill="#9FD1F2" />
-        <path d="M0 140 Q147.5 128 295 140 T590 140 T885 140 T1180 140 V340 H0 Z" fill="#7DBDEB" />
-        <g className="harbour__dock">
+        <path d={swell(1180 + extra, 60)} fill="#9FD1F2" />
+        <path d={swell(1180 + extra, 140)} fill="#7DBDEB" />
+        <g className="harbour__dock" transform={`translate(${extra / 2} 0)`}>
           <rect x="190" y="72" width="800" height="30" rx="8" fill="#B98454" />
           <rect x="190" y="94" width="800" height="8" rx="4" fill="#8A5A3B" />
           <rect x="226" y="102" width="18" height="90" rx="6" fill="#8A5A3B" />
           <rect x="581" y="102" width="18" height="90" rx="6" fill="#8A5A3B" />
           <rect x="936" y="102" width="18" height="90" rx="6" fill="#8A5A3B" />
         </g>
-        <g className="harbour__boat">
+        <g className="harbour__boat" transform={`translate(${extra} 0)`}>
           <path d="M1010 230 H1120 L1102 260 H1028 Z" fill="#F26B4F" />
           <rect x="1062" y="170" width="6" height="60" fill="#10233A" />
           <path d="M1068 174 L1108 222 H1068 Z" fill="#FFFFFF" />

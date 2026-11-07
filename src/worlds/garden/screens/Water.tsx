@@ -17,7 +17,10 @@ export function Water({ onBack }: { onBack: () => void }) {
   const { level, step, win, meter, goNext } = useLadderRound('water');
   // One plant object per round: effects below key on it, so it must not change between renders.
   const plant = useMemo(() => plantForLevel(level, round), [level, round]);
-  const [count, setCount] = useState(0);
+  /** Drops already in the frame (counting on), and drops per tap of the cloud (counting in twos). */
+  const given = plant.given ?? 0;
+  const perTap = plant.step ?? 1;
+  const [count, setCount] = useState(given);
   /** Drops currently in the air; dx spreads a can's pour so the drops don't overlap. */
   const [falling, setFalling] = useState<{ id: number; dx: number }[]>([]);
   const dropId = useRef(0);
@@ -41,7 +44,7 @@ export function Water({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     stopPouring();
-    setCount(0);
+    setCount(plant.given ?? 0);
     setFalling([]);
     overflowed.current = false;
     speak(introSpeech(plant));
@@ -65,6 +68,8 @@ export function Water({ onBack }: { onBack: () => void }) {
 
   const maxDrops = maxDropsFor(plant.target);
   const double = maxDrops > 10;
+  // Counting on and counting in twos have only the cloud: the child counts each tap, not a pour of five.
+  const showCan = double && perTap === 1 && given === 0;
 
   const dropOne = (dx = 0) => {
     const id = ++dropId.current;
@@ -72,10 +77,12 @@ export function Water({ onBack }: { onBack: () => void }) {
     window.setTimeout(() => setFalling((f) => f.filter((d) => d.id !== id)), 650);
   };
 
-  const add = (amount = 1) => {
+  const add = (amount = perTap) => {
     if (pouring.current || count >= maxDrops) return;
     const end = addDrop(count, plant.target, amount);
     const steps = end - count;
+    // The can counts every drop it pours; a pair from the cloud is counted as its total ("kettő, négy, hat").
+    const inTwos = amount === perTap && perTap > 1;
     if (steps === 1) {
       dropOne();
       change(end);
@@ -90,7 +97,7 @@ export function Water({ onBack }: { onBack: () => void }) {
           const n = count + i;
           dropOne((i - (steps + 1) / 2) * 26);
           setCount(n);
-          speak(numberCount(n), { queue: i > 1 });
+          if (!inTwos || i === steps) speak(numberCount(n), { queue: i > 1 && !inTwos });
           if (i === steps) {
             pouring.current = false;
             setIsPouring(false);
@@ -104,7 +111,7 @@ export function Water({ onBack }: { onBack: () => void }) {
     }
   };
   const remove = () => {
-    if (!pouring.current) change(removeDrop(count));
+    if (!pouring.current) change(removeDrop(count, given, perTap));
   };
 
   const guide = (
@@ -113,7 +120,7 @@ export function Water({ onBack }: { onBack: () => void }) {
     </GuideBubble>
   );
 
-  const kinds = slotKinds(count, plant.target);
+  const kinds = slotKinds(count, plant.target, given);
   const scale = growth(count, plant.target);
 
   return (
@@ -130,13 +137,13 @@ export function Water({ onBack }: { onBack: () => void }) {
         {phone && <div className="water-guide">{guide}</div>}
         <div className="scene">
           <div className="sky-tools">
-            <button type="button" className="cloud-btn" onClick={() => add()} aria-label="Koppints a felhőre egy cseppért">
+            <button type="button" className="cloud-btn" onClick={() => add()} aria-label={perTap > 1 ? 'Koppints a felhőre két cseppért' : 'Koppints a felhőre egy cseppért'}>
               <Cloud />
               <span className="cloud-btn__label">
-                <Drop size={16} /> {double ? '1 csepp' : 'Koppints rám egy cseppért!'}
+                <Drop size={16} /> {perTap > 1 ? `${perTap} csepp` : double ? '1 csepp' : 'Koppints rám egy cseppért!'}
               </span>
             </button>
-            {double && (
+            {showCan && (
               <button
                 type="button"
                 className={`can-btn${isPouring ? ' is-pouring' : ''}`}
@@ -191,15 +198,17 @@ export function Water({ onBack }: { onBack: () => void }) {
           <div className={`ten-frame${double ? ' ten-frame--double' : ''}`}>
             {kinds.map((kind, k) => {
               const filled = kind === 'filled' || kind === 'extra';
+              const label =
+                kind === 'given' ? `${k + 1}. csepp, már ott volt.` : filled ? `${k + 1}. csepp. Koppints rá, és elveszed.` : `${k + 1}. üres hely. Koppints rá egy cseppért.`;
               return (
                 <button
                   key={k}
                   type="button"
                   className={`slot slot--${kind}`}
-                  onClick={filled ? remove : () => add()}
-                  aria-label={filled ? `${k + 1}. csepp. Koppints rá, és elveszed.` : `${k + 1}. üres hely. Koppints rá egy cseppért.`}
+                  onClick={kind === 'given' ? undefined : filled ? remove : () => add()}
+                  aria-label={label}
                 >
-                  {filled && <Drop size={double ? 28 : 40} />}
+                  {(filled || kind === 'given') && <Drop size={double ? 28 : 40} />}
                 </button>
               );
             })}
@@ -208,7 +217,13 @@ export function Water({ onBack }: { onBack: () => void }) {
           {!phone && guide}
 
           <div className="panel__foot">
-            {!done && <p className="panel__hint">Koppints egy cseppre, és elveszed. Koppints egy üres helyre, és adsz egyet.</p>}
+            {!done && (
+              <p className="panel__hint">
+                {perTap > 1
+                  ? 'Koppints egy cseppre, és elveszel kettőt. Koppints egy üres helyre, és adsz kettőt.'
+                  : 'Koppints egy cseppre, és elveszed. Koppints egy üres helyre, és adsz egyet.'}
+              </p>
+            )}
             {done && (
               <button type="button" className="big-btn" onClick={goNext}>
                 Következő virág <NextIcon />

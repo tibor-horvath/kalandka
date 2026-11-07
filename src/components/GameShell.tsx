@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { GAMES, type GameId } from '../state/games';
 import type { LevelMeterState } from '../state/levelMeter';
-import { LevelMeter } from './LevelMeter';
+import { LevelMeter, type RoundTasks } from './LevelMeter';
 import { BackIcon, RoundButton, SpeakerIcon } from './ui';
 import { WORLD_LOOK } from './worldLook';
 
@@ -19,10 +19,10 @@ export function GameBackdrop({ game }: { game: GameId }) {
 }
 
 /**
- * Every game's frame: the backdrop and the top bar (back, the title with the level meter, replay); a
+ * Every game's frame: the backdrop and the top bar (back, the level meter on top of the title, replay); a
  * level-up plays in the meter itself. The game's world sets the look; the screen brings only its play.
- * Without a title the meter sits alone between the buttons; `aside` takes the title's place (Méhkas's
- * sum) and moves the meter beside the replay button.
+ * Without a title the meter sits alone between the buttons; `aside` takes the title's place under the
+ * meter (Méhkas's sum).
  */
 export function GameShell({
   game,
@@ -31,6 +31,7 @@ export function GameShell({
   aside,
   meter,
   justSolved,
+  tasks,
   onBack,
   onReplay,
   children
@@ -43,13 +44,15 @@ export function GameShell({
   meter: LevelMeterState;
   /** The task was just won: the meter's newest slot fills. */
   justSolved: boolean;
+  /** A round of several tasks: where the child is in it, shown as pips in the meter. */
+  tasks?: RoundTasks;
   onBack: () => void;
   onReplay: () => void;
   children: ReactNode;
 }) {
   const { world } = GAMES[game];
   const look = WORLD_LOOK[world];
-  const levelMeter = <LevelMeter meter={meter} world={world} justSolved={justSolved} />;
+  const levelMeter = <LevelMeter meter={meter} world={world} justSolved={justSolved} tasks={tasks} />;
   const replay = (
     <RoundButton label="Meghallgatom újra" onClick={onReplay}>
       <SpeakerIcon />
@@ -60,25 +63,18 @@ export function GameShell({
     <div className={`screen ${className}${look.className}`}>
       <div className={OWN_BACKDROP[game] ?? look.gameGround} aria-hidden="true" />
 
-      <header className={title !== undefined ? 'topbar topbar--meter' : 'topbar'}>
+      <header className={title !== undefined || aside !== undefined ? 'topbar topbar--meter' : 'topbar'}>
         <RoundButton label={look.back} onClick={onBack}>
           <BackIcon />
         </RoundButton>
-        {title !== undefined ? (
+        {title !== undefined || aside !== undefined ? (
           <>
+            {/* The meter always comes first, on top of the title (or the aside). */}
             <div className="topbar__title">
-              <h1 className="screen-title">{title}</h1>
               {levelMeter}
+              {title !== undefined ? <h1 className="screen-title">{title}</h1> : aside}
             </div>
             {replay}
-          </>
-        ) : aside !== undefined ? (
-          <>
-            {aside}
-            <div className="topbar__right">
-              {levelMeter}
-              {replay}
-            </div>
           </>
         ) : (
           <>

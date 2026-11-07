@@ -60,7 +60,8 @@ describe('visitor gifts', () => {
     expect(give(p, 'ladybug')).toBe(p);
     const later = give(give(p, 'hedgehog'), 'butterfly');
     expect(giftsOf(later, 'butterfly')).toBe(0);
-    expect(giftsReady(shelf({ jam: 1 })).map((v) => v.id)).toEqual(['hedgehog', 'butterfly']);
+    // No seeds in the bag, so the birds (who also take a handful of seeds) are not ready.
+    expect(giftsReady(shelf({ jam: 1 }, { seeds: 0 })).map((v) => v.id)).toEqual(['hedgehog', 'butterfly']);
   });
 
   it('takes gifts only from visitors already welcomed', () => {

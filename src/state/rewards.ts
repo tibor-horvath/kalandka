@@ -39,6 +39,8 @@ export const BEDS = PLOT_BEDS * PLOTS;
 
 export interface Bed {
   kind: PlantKind;
+  /** A flower's kind (see FLOWERS); none is the first one, Mályva. */
+  flower?: FlowerId;
   /** Garden tasks solved in total when it was planted; growth counts the tasks solved since. */
   at: number;
   /** Garden tasks solved in total when it was last watered; none yet: care counts from when it grew. */
@@ -97,13 +99,125 @@ export function canPlant(p: Progress, i: number, kind: PlantKind): boolean {
   return !!option && i >= 0 && i < openBeds(p) && !bedAt(p, i) && seedBalance(p) >= option.cost;
 }
 
-/** Plants in an empty bed; unchanged when the bed is taken or the seeds are not enough. */
-export function plant(p: Progress, i: number, kind: PlantKind): Progress {
+/**
+ * Plants in an empty bed; unchanged when the bed is taken or the seeds are not enough. A flower is of the kind
+ * asked for when the child has its seeds (see FLOWERS), else Mályva. The child counts the seeds out first (SeedCount).
+ */
+export function plant(p: Progress, i: number, kind: PlantKind, flower: FlowerId = FIRST_FLOWER): Progress {
   if (!canPlant(p, i, kind)) return p;
   const cost = PLANT_OPTIONS.find((o) => o.id === kind)!.cost;
   const beds = Array.from({ length: BEDS }, (_, k) => bedAt(p, k));
-  beds[i] = { kind, at: p.gardenTasks };
+  const kept = kind === 'flower' && flower !== FIRST_FLOWER && ownsFlower(p, flower) ? { flower } : {};
+  beds[i] = { kind, at: p.gardenTasks, ...kept };
   return { ...p, beds, seedsSpent: p.seedsSpent + cost };
+}
+
+// ---------- flower kinds (Magtár) ----------
+// Every child has Mályva. The other flower kinds' seeds are bought once in the Magtár, counted out like any
+// planting, and are the child's for good: from then on a flower in a bed or in the border can be of that kind.
+
+export type FlowerId = 'malva' | 'tulip' | 'primrose' | 'cornflower' | 'bellflower';
+
+export interface FlowerKind {
+  id: FlowerId;
+  name: string;
+  /** "mályvát": the flower as the thing planted, in Csepi's lines. */
+  planted: string;
+  /** Seeds for the packet; 0: every child has it. */
+  cost: number;
+}
+
+export const FLOWERS: FlowerKind[] = [
+  { id: 'malva', name: 'Mályva', planted: 'mályvát', cost: 0 },
+  { id: 'tulip', name: 'Tulipán', planted: 'tulipánt', cost: 3 },
+  { id: 'primrose', name: 'Kankalin', planted: 'kankalint', cost: 4 },
+  { id: 'cornflower', name: 'Búzavirág', planted: 'búzavirágot', cost: 5 },
+  { id: 'bellflower', name: 'Harangvirág', planted: 'harangvirágot', cost: 6 }
+];
+
+export const FIRST_FLOWER: FlowerId = 'malva';
+
+export function flowerOf(id: FlowerId): FlowerKind {
+  return FLOWERS.find((f) => f.id === id) ?? FLOWERS[0];
+}
+
+/** The flower kind growing in a bed (Mályva unless another was planted). */
+export function bedFlower(bed: Bed): FlowerId {
+  return bed.flower ?? FIRST_FLOWER;
+}
+
+export function ownsFlower(p: Progress, id: FlowerId): boolean {
+  return flowerOf(id).cost === 0 || p.flowersOwned.includes(id);
+}
+
+/** Flower kinds the child can plant, in the Magtár's order. */
+export function ownedFlowers(p: Progress): FlowerKind[] {
+  return FLOWERS.filter((f) => ownsFlower(p, f.id));
+}
+
+export function canBuyFlower(p: Progress, id: FlowerId): boolean {
+  return !ownsFlower(p, id) && seedBalance(p) >= flowerOf(id).cost;
+}
+
+/** Buys a packet of flower seeds for good; unchanged when it is already the child's or the seeds are not enough. */
+export function buyFlower(p: Progress, id: FlowerId): Progress {
+  if (!canBuyFlower(p, id)) return p;
+  return { ...p, flowersOwned: [...p.flowersOwned, id], seedsSpent: p.seedsSpent + flowerOf(id).cost };
+}
+
+// ---------- the border (Szegély) ----------
+// In front of each open plot runs a border of ten small flowers. An empty spot takes one seed; a flower already
+// there can be changed to another kind the child has, free, so trying out a pattern never costs anything.
+// When all ten make a repeating pattern, Csepi says so. Nothing in the border ever goes away on its own.
+
+/** Spots in the border of one plot. */
+export const BORDER_SPOTS = PLOT_BEDS;
+export const BORDER_COST = 1;
+
+export function borderAt(p: Progress, i: number): FlowerId | null {
+  return p.border[i] ?? null;
+}
+
+/** Border spots open now: one row per open plot. */
+export function openBorder(p: Progress): number {
+  return (openBeds(p) / PLOT_BEDS) * BORDER_SPOTS;
+}
+
+/** Empty border spots in one plot's row, in order. */
+export function emptyBorder(p: Progress, plot: number): number[] {
+  return Array.from({ length: BORDER_SPOTS }, (_, k) => plot * BORDER_SPOTS + k).filter((i) => i < openBorder(p) && !borderAt(p, i));
+}
+
+export function canPlantBorder(p: Progress, i: number, id: FlowerId): boolean {
+  if (i < 0 || i >= openBorder(p) || !ownsFlower(p, id)) return false;
+  const now = borderAt(p, i);
+  return now ? now !== id : seedBalance(p) >= BORDER_COST;
+}
+
+/** Plants a border flower (one seed) or changes the kind of the one there (free); unchanged when it cannot. */
+export function plantBorder(p: Progress, i: number, id: FlowerId): Progress {
+  if (!canPlantBorder(p, i, id)) return p;
+  const border = Array.from({ length: openBorder(p) }, (_, k) => borderAt(p, k));
+  const paid = border[i] ? 0 : BORDER_COST;
+  border[i] = id;
+  return { ...p, border, seedsSpent: p.seedsSpent + paid };
+}
+
+/**
+ * The repeating unit of a full border row, shortest first ("malva, tulip" for ABABABABAB), when its ten flowers
+ * repeat a unit of two to five flowers with at least two kinds in it; null otherwise. The tenth flower may end
+ * part-way through the unit, as a pattern written out does.
+ */
+export function borderPattern(p: Progress, plot: number): FlowerId[] | null {
+  const row = Array.from({ length: BORDER_SPOTS }, (_, k) => borderAt(p, plot * BORDER_SPOTS + k));
+  if (row.some((f) => !f)) return null;
+  const spots = row as FlowerId[];
+  for (let n = 2; n <= 5; n++) {
+    const unit = spots.slice(0, n);
+    if (new Set(unit).size < 2) continue;
+    if (spots.every((f, k) => f === unit[k % n])) return unit;
+  }
+  return null;
 }
 
 // ---------- care: thirst and fruit ----------
@@ -459,9 +573,37 @@ export function give(p: Progress, id: VisitorId): Progress {
   };
 }
 
-/** Welcomed visitors whose next gift is on the shelf. */
+// The birds of the garden also eat seeds: instead of a treat from the shelf, the blackbird and Mókus take a
+// handful of seeds, three for each treat they ask for (3, then 6, then 9), counted out like a planting. So the
+// blackbird, who likes the seed loaf, need not wait for the garden to be planted full.
+
+export const SEED_EATERS: VisitorId[] = ['blackbird', 'squirrel'];
+/** Seeds standing in for one treat. */
+export const SEEDS_PER_TREAT = 3;
+
+export function eatsSeeds(id: VisitorId): boolean {
+  return SEED_EATERS.includes(id);
+}
+
+/** Seeds the visitor's next gift takes as a handful; 0 when they take no seeds or have had every gift. */
+export function seedGiftSize(p: Progress, id: VisitorId): number {
+  return eatsSeeds(id) ? giftSize(p, id) * SEEDS_PER_TREAT : 0;
+}
+
+export function canGiveSeeds(p: Progress, id: VisitorId): boolean {
+  const n = seedGiftSize(p, id);
+  return n > 0 && welcomedVisitors(p).some((v) => v.id === id) && seedBalance(p) >= n;
+}
+
+/** Gives the visitor their next gift as a handful of seeds; it leaves the same decoration a treat would. */
+export function giveSeeds(p: Progress, id: VisitorId): Progress {
+  if (!canGiveSeeds(p, id)) return p;
+  return { ...p, seedsSpent: p.seedsSpent + seedGiftSize(p, id), gifts: { ...p.gifts, [id]: giftsOf(p, id) + 1 } };
+}
+
+/** Welcomed visitors whose next gift is on the shelf (or, for the birds, in the seed bag). */
 export function giftsReady(p: Progress): Visitor[] {
-  return welcomedVisitors(p).filter((v) => canGive(p, v.id));
+  return welcomedVisitors(p).filter((v) => canGive(p, v.id) || canGiveSeeds(p, v.id));
 }
 
 export function decorCount(p: Progress): number {
@@ -603,19 +745,27 @@ export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
   water: [
     { from: 0, mark: '1', label: 'Első virág', praise: 'Kinőtt az első virágod!', legacy: ['water-1'] },
     { from: 1, mark: '10', label: 'Tízes keret', praise: 'Már tíz cseppig locsolsz!', legacy: ['water-10'] },
-    { from: 2, mark: '20', label: 'Két keret', praise: 'Már húsz cseppig locsolsz!', legacy: ['water-20'] }
+    { from: 2, mark: '20', label: 'Két keret', praise: 'Már húsz cseppig locsolsz!', legacy: ['water-20'] },
+    { from: 3, mark: '+', label: 'Továbbszámolás', praise: 'Már tovább tudsz számolni!' },
+    { from: 4, mark: '10+', label: 'Tízen át', praise: 'Már a tízesen is átlocsolsz!' },
+    { from: 5, mark: '2, 4', label: 'Kettesével', praise: 'Már kettesével is számolsz!' }
   ],
   patterns: [
     { from: 0, mark: 'AB', label: 'Kettes sor', praise: 'Folytattad az első virágsort!', legacy: ['patterns-ab'] },
     { from: 1, mark: 'ABC', label: 'Hármas sor', praise: 'Már a hármas sort is folytatod!', legacy: ['patterns-abc'] },
     { from: 2, mark: 'AAB', label: 'Kettő-egy', praise: 'Már a kettő-egy sort is kitalálod!' },
-    { from: 3, mark: '?', label: 'Hiányzó virág', praise: 'Megtalálod a hiányzó virágot is!', legacy: ['patterns-all'] }
+    { from: 3, mark: '?', label: 'Hiányzó virág', praise: 'Megtalálod a hiányzó virágot is!', legacy: ['patterns-all'] },
+    { from: 4, mark: 'AABB', label: 'Kettő-kettő', praise: 'Már a kettő-kettő sort is folytatod!' },
+    { from: 5, mark: '+1', label: 'Növő csokor', praise: 'Látod, hogyan nő a csokor!' },
+    { from: 6, mark: '+2', label: 'Kettővel több', praise: 'Már a kettesével növő csokrot is kitalálod!' }
   ],
   flash: [
     { from: 0, mark: '3', label: 'Egy pillantás', praise: 'Egy pillantásra látod, hány mag van!', legacy: ['flash-3'] },
     { from: 1, mark: '5', label: 'Öt mag', praise: 'Már öt magot is egy pillantásra látsz!' },
     { from: 2, mark: '•5', label: 'Szórt magok', praise: 'A szórt magokat is egy pillantásra látod!', legacy: ['flash-5'] },
-    { from: 3, mark: '10', label: 'Tíz mag', praise: 'Már tíz magot is egy pillantásra látsz!', legacy: ['flash-10'] }
+    { from: 3, mark: '10', label: 'Tíz mag', praise: 'Már tíz magot is egy pillantásra látsz!', legacy: ['flash-10'] },
+    { from: 4, mark: '5+3', label: 'Tízes keret', praise: 'A tízes keretet is egy pillantásra látod!' },
+    { from: 5, mark: '20', label: 'Húsz mag', praise: 'Már húsz magot is egy pillantásra látsz!' }
   ],
   add: [
     { from: 0, mark: '5', label: 'Ötig', praise: 'Már ötig adsz össze és veszel el!' },
@@ -635,7 +785,10 @@ export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
   pots: [
     { from: 0, mark: '5', label: 'Öt barátai', praise: 'Ismered az öt barátait!', legacy: ['pots-5'] },
     { from: 1, mark: '10', label: 'Tíz barátai', praise: 'Ismered a tíz barátait!', legacy: ['pots-10'] },
-    { from: 2, mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', legacy: ['pots-mix'] }
+    { from: 2, mark: '10?', label: 'Szórt cserepek', praise: 'A szórt cserepeknél is megtalálod a tíz barátait!', legacy: ['pots-mix'] },
+    { from: 3, mark: '6–9', label: 'Új barátok', praise: 'Már a hat, hét, nyolc és kilenc barátait is ismered!' },
+    { from: 4, mark: '20', label: 'Húsz barátai', praise: 'Ismered a húsz barátait!' },
+    { from: 5, mark: '?', label: 'Fejből', praise: 'Fejből tudod a tíz barátait!' }
   ],
   path: [
     { from: 0, mark: '1', label: 'Első út', praise: 'Elvezetted a robotot az elemhez!', legacy: ['path-first'] },

@@ -13,6 +13,7 @@ import '@fontsource/nunito/latin-700.css';
 import '@fontsource/nunito/latin-ext-700.css';
 import './styles/global.css';
 import './styles/rewards.css';
+import './styles/seeds.css';
 import './worlds/robot/robot.css';
 import './styles/island.css';
 // Here rather than in the parents' area, which loads later: the gate needs it too, and phone.css must come after it.

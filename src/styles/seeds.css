@@ -1,0 +1,112 @@
+/*
+ * Kiskert seeds: the border (Szegély), the Magtár's flower packets, a bird's handful of seeds and counting
+ * seeds out for every planting. Tablet first; the phone layouts follow at the end of this file.
+ */
+
+/* The border: ten small flowers in front of the plot, a row like a number line. Tapping a spot selects it
+   (the same blue ring as a bed) and the panel offers the flower kinds the child has. */
+.kborder { flex: none; height: 74px; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; padding: 0 6px; border-radius: 16px; background: var(--grass-deep); }
+.kborder__spot { position: relative; min-width: 0; height: 100%; padding: 0 0 6px; border: none; border-radius: 14px; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; cursor: pointer; }
+.kborder__spot::after { content: ""; width: 70%; max-width: 40px; height: 8px; margin-top: -4px; border-radius: 50%; background: var(--soil); flex: none; }
+.kborder__spot.is-selected { background: rgba(255, 255, 255, 0.6); box-shadow: inset 0 0 0 4px var(--drop); }
+.kborder__flower { position: relative; z-index: 1; display: flex; flex: 1; min-height: 0; }
+.border-flower { display: block; height: 100%; width: auto; }
+.kborder__dot { width: 26px; height: 26px; margin-bottom: 8px; border-radius: 50%; border: 3px dashed var(--leaf-deep); background: rgba(255, 255, 255, 0.6); }
+.kborder__spot.is-selected .kborder__dot { border: none; background: var(--drop); }
+
+/* Kamra and Magtár side by side. */
+.kiskert__places { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.kiskert__places.is-one { grid-template-columns: minmax(0, 1fr); }
+.kiskert__places .pantry-btn { min-height: 60px; padding: 0 8px; gap: 6px; font-size: 21px; }
+.kiskert__places .pantry-btn .water-btn__count { min-width: 30px; height: 30px; font-size: 17px; padding: 0 6px; }
+.shed-btn__packet { display: inline-flex; flex: none; }
+.shed-btn__packet .seed-packet { width: 30px; height: 37px; }
+
+/* The flower kinds in the panel, for a border spot. */
+.border-options { display: flex; flex-direction: column; gap: 8px; }
+.border-options__title { margin: 0; font-size: 21px; font-weight: 800; line-height: 1.1; color: var(--leaf-deep); }
+.border-options__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.border-option { min-height: 86px; padding: 6px 4px 8px; border-radius: 20px; border: 3px solid var(--grass-deep); background: var(--good-tint); color: var(--leaf-deep); box-shadow: 0 4px 0 var(--grass-deep); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; }
+.border-option:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--grass-deep); }
+.border-option.is-here { border-color: var(--drop); background: var(--drop-tint); box-shadow: 0 4px 0 var(--drop-deep); cursor: default; }
+.border-option:disabled:not(.is-here) { background: #f2f6f9; border-color: #d6e4ee; box-shadow: none; color: #4a5e70; cursor: default; }
+.border-option:disabled:not(.is-here) .flower-icon { opacity: 0.55; }
+.border-option__name { font-size: 18px; font-weight: 800; line-height: 1.05; text-align: center; }
+.border-option .plant-option__cost { font-size: 16px; padding: 0 10px 0 6px; }
+.border-option--shed { border-style: dashed; border-color: #d9b968; background: #fff8e4; color: var(--oops-ink); box-shadow: none; }
+.flower-icon { flex: none; }
+
+/* Counting seeds out: a ten-frame of holes in the soil and the sack, all one big button. */
+.seed-count { display: flex; align-items: center; justify-content: center; gap: 28px; padding: 18px 22px; border: none; border-radius: 24px; background: #e9f4df; box-shadow: inset 0 -10px 0 var(--grass-deep); cursor: pointer; color: var(--ink); }
+.seed-count__tray { display: grid; grid-template-columns: repeat(5, 60px); grid-auto-rows: 60px; gap: 10px; padding: 14px; border-radius: 22px; background: var(--soil); box-shadow: inset 0 -6px 0 #6e4529; }
+.seed-count__hole { width: 60px; height: 60px; border-radius: 50%; background: #5e3a22; box-shadow: inset 0 6px 0 #3f2616; display: grid; place-items: center; }
+.seed-count__hole.is-full { background: #f3e3b3; box-shadow: inset 0 3px 0 #d9c58f; }
+.seed-count__seed { display: inline-flex; animation: seed-drop 0.35s cubic-bezier(.3, 1.4, .5, 1) both; }
+.seed-count__sack { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 14px 10px; border-radius: 22px; background: #fff8e4; border: 3px solid #d9b968; box-shadow: 0 5px 0 #d9b968; }
+.seed-count:active .seed-count__sack { transform: translateY(3px); box-shadow: 0 2px 0 #d9b968; }
+.seed-count__left { display: flex; align-items: center; gap: 4px; font-size: 26px; font-weight: 800; }
+.seed-count.is-done { cursor: default; }
+.seed-count.is-done .seed-count__tray { box-shadow: inset 0 -6px 0 #6e4529, 0 0 0 6px var(--sun); }
+@keyframes seed-drop { from { transform: translateY(-26px) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.sow__kinds { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.sow__kind { height: 52px; padding: 0 16px 0 8px; border: 3px solid #d6e4ee; border-radius: 26px; background: var(--paper); color: var(--ink); display: flex; align-items: center; gap: 6px; font-size: 20px; font-weight: 800; cursor: pointer; }
+.sow__kind.is-on { border-color: var(--drop); background: var(--drop-tint); }
+.sow__kind:disabled:not(.is-on) { opacity: 0.45; cursor: default; }
+.sow__stage { display: flex; align-items: center; justify-content: center; gap: 20px; }
+.sow__plant { display: inline-flex; opacity: 0.35; }
+.sow__plant .gplant-icon { width: 96px; height: 132px; }
+.sow__help { margin: 0; text-align: center; font-family: var(--body); font-size: 16px; font-weight: 700; color: var(--ink-soft); }
+
+/* Magtár: the seed packets on a shelf. */
+.shed__packets { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; padding: 14px; border-radius: 20px; background: #f6ead0; border-bottom: 10px solid #c98443; }
+.shed__packet { padding: 8px 4px 10px; border: 3px solid #d6e4ee; border-radius: 22px; background: var(--paper); color: var(--ink); display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+.shed__packet .seed-packet { width: 84px; height: 102px; display: block; }
+.shed__packet.is-owned { border-color: var(--grass-deep); background: var(--good-tint); }
+.shed__packet.is-on { border-color: var(--drop); background: var(--drop-tint); box-shadow: 0 4px 0 var(--drop-deep); }
+.shed__packet.is-later .seed-packet { opacity: 0.55; }
+.shed__name { font-size: 20px; font-weight: 800; line-height: 1.05; }
+.shed__owned { padding: 1px 12px; border-radius: 999px; background: var(--leaf-deep); color: var(--paper); font-size: 16px; font-weight: 800; }
+.shed__count { display: flex; justify-content: center; }
+
+/* A bird's handful of seeds, next to the treat. */
+.gift__or { font-size: 22px; font-weight: 800; color: var(--ink-soft); }
+.gift__name-big { font-size: 22px; font-weight: 800; }
+.gift__seeds { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; max-width: 200px; }
+.gift__main .seed-count { flex: none; }
+
+/* ---------- phones ---------- */
+.is-phone .kborder { height: 44px; gap: 2px; padding: 0 4px; border-radius: 12px; }
+.is-phone .kborder__spot { padding-bottom: 4px; border-radius: 10px; }
+.is-phone .kborder__dot { width: 16px; height: 16px; border-width: 2px; margin-bottom: 4px; }
+.is-phone .kiskert__places .pantry-btn { min-height: 44px; font-size: 16px; border-radius: 16px; }
+.is-phone .kiskert__places .pantry-btn .treat-art { width: 28px; height: 28px; }
+.is-phone .kiskert__places .pantry-btn .water-btn__count { min-width: 24px; height: 24px; font-size: 14px; }
+.is-phone .shed-btn__packet .seed-packet { width: 22px; height: 27px; }
+.is-phone .border-options__title { font-size: 16px; }
+.stage--portrait .border-options__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stage--landscape .border-options__grid { gap: 4px; }
+.is-phone .border-option { min-height: 0; padding: 4px 2px 6px; border-radius: 14px; }
+.is-phone .border-option .flower-icon { width: 26px; height: 26px; }
+.is-phone .border-option__name { font-size: 14px; }
+.is-phone .border-option .plant-option__cost { font-size: 13px; }
+.is-phone .seed-count { gap: 12px; padding: 10px; }
+.is-phone .seed-count__tray { grid-template-columns: repeat(5, 40px); grid-auto-rows: 40px; gap: 6px; padding: 8px; border-radius: 16px; }
+.is-phone .seed-count__hole { width: 40px; height: 40px; }
+.is-phone .seed-count__seed svg { width: 22px; height: 22px; }
+.is-phone .seed-count__sack { padding: 4px 8px 6px; }
+.is-phone .seed-count__sack .seed-sack { width: 60px; height: 60px; }
+.is-phone .seed-count__left { font-size: 20px; }
+.is-phone .sow__plant { display: none; }
+.is-phone .sow__kind { height: 44px; font-size: 16px; padding: 0 12px 0 6px; }
+.is-phone .shed__packets { gap: 4px; padding: 8px; }
+.stage--portrait .shed__packets { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.is-phone .shed__packet { padding: 4px 2px 6px; border-radius: 16px; }
+.is-phone .shed__packet .seed-packet { width: 52px; height: 63px; }
+.is-phone .shed__name { font-size: 14px; }
+.is-phone .shed__owned { font-size: 12px; padding: 1px 8px; }
+.stage--portrait .gift__main { flex-wrap: wrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .seed-count__seed { animation: none; }
+}

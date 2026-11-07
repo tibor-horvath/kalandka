@@ -32,7 +32,8 @@ import { buzz, chime, fanfare, popBubble } from '../../../lib/sound';
 const PAD_X = 30;
 const PAD_Y = 22;
 const VIEW = `${-PAD_X} ${-PAD_Y} ${BOX_W + 2 * PAD_X} ${BOX_H + 2 * PAD_Y}`;
-const BOARD_H = 628;
+/** Sized to the room under the meter and title on the 820 px tablet stage, with air below the shadow. */
+const BOARD_H = 596;
 const BOARD_W = Math.round((BOARD_H * (BOX_W + 2 * PAD_X)) / (BOX_H + 2 * PAD_Y));
 /** The white board around the trail, with its padding and shadow: what FitBox scales on phones. */
 const CARD_W = BOARD_W + 44;

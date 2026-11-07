@@ -361,6 +361,13 @@ export function takeTap(items: AddItem[], gone: string[], item: AddItem, need: n
   return looseLeft < need ? 'untie' : 'too-many';
 }
 
+/** Take levels: the loose flowers left are too few, so a bouquet has to be untied before the bee can go on. */
+export function mustUntie(items: AddItem[], gone: string[], need: number): boolean {
+  if (need <= 0 || need >= 10) return false;
+  const left = items.filter((i) => !gone.includes(i.id));
+  return left.some((i) => i.kind === 'ten') && left.filter((i) => i.kind === 'one').length < need;
+}
+
 /** Value already carried to the hive. */
 export function carriedValue(items: AddItem[], gone: string[]): number {
   return items.filter((i) => gone.includes(i.id)).reduce((s, i) => s + i.value, 0);
@@ -442,8 +449,19 @@ function words(r: AddRound, fb: AddFeedback): AddFeedback {
   return r.level.answers === 'dots' ? { ...fb, text: fb.speech } : fb;
 }
 
-/** `moved` = flowers already carried over (gather) or away (take). */
-export function questionFeedback(r: AddRound, moved = 0): AddFeedback {
+/** Added to the take prompt while a bouquet has to be untied first (see mustUntie). */
+export const UNTIE_HINT = 'Kevés a szál virág? Koppints a csokorra, és a méhecske kibontja!';
+
+/**
+ * `moved` = flowers already carried over (gather) or away (take).
+ * `untieHint`: take levels where the loose flowers are too few; Csepi says the bouquet can be untied.
+ */
+export function questionFeedback(r: AddRound, moved = 0, untieHint = false): AddFeedback {
+  const fb = baseQuestion(r, moved);
+  return untieHint && r.level.strategy === 'take' && moved < r.b ? { ...fb, text: `${fb.text} ${UNTIE_HINT}`, speech: `${fb.speech} ${UNTIE_HINT}` } : fb;
+}
+
+function baseQuestion(r: AddRound, moved: number): AddFeedback {
   const plain = { mood: 'smile' as const, tone: 'plain' as const };
   if (r.level.strategy === 'gather') {
     if (moved === 0) {

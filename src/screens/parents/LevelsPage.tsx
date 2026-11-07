@@ -13,7 +13,7 @@ const ABOUT: Record<GameId, { skill: string; mode?: string; glyph: string; tile:
   trace: { skill: 'számírás', glyph: '1–5', tile: 'pa-tile--sun' },
   flash: { skill: 'mennyiség ránézésre', glyph: '5', tile: 'pa-tile--sand' },
   add: { skill: 'összeadás és kivonás', glyph: '+', tile: 'pa-tile--sun' },
-  pots: { skill: 'tízes barátok', glyph: '3+7', tile: 'pa-tile--pink' },
+  pots: { skill: 'számbarátok 5–20', glyph: '3+7', tile: 'pa-tile--pink' },
   path: { skill: 'programozás', glyph: '↑→', tile: 'pa-tile--sky' },
   sort: { skill: 'csoportosítás, szabályok', glyph: '●▲', tile: 'pa-tile--sand' },
   scale: { skill: 'több, kevesebb, egyenlő', glyph: '=', tile: 'pa-tile--sun' },

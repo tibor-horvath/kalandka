@@ -90,6 +90,11 @@ export function setSpeechEnabled(on: boolean): void {
   if (!on) synth()?.cancel();
 }
 
+/** True when a voice can actually be heard: the browser speaks and parents haven't switched it off. */
+export function canSpeak(): boolean {
+  return enabled && synth() !== null;
+}
+
 interface SpeakOptions {
   /** Wait for the current sentence instead of interrupting it. */
   queue?: boolean;

@@ -279,7 +279,7 @@
 }
 
 @media (max-width: 600px) {
-  .landing__dialog .pa-avatars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .landing__dialog .pa-avatars { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .landing__dialog-head > svg { display: none; }
   .landing__lead { font-size: 18px; }
   .landing__island { width: 150px; height: 150px; }

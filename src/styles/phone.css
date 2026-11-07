@@ -52,15 +52,17 @@
 .is-phone .screen-title { font-size: 22px; line-height: 1.05; text-align: center; min-width: 0; }
 .stage--landscape .screen-title { font-size: 26px; }
 
-/* Level meter: a smaller meter under the title; in landscape it sits beside the title to save height. */
+/* Level meter: a smaller meter on top of the title; in landscape it sits first, beside the title, to save height. */
 .is-phone .topbar__title { flex: 1 1 auto; gap: 6px; }
 .stage--landscape .topbar__title { flex-direction: row; justify-content: center; gap: 12px; }
 .stage--landscape .topbar--meter { align-items: center; }
-.is-phone .level-meter { height: 38px; gap: 8px; padding: 0 8px 0 10px; border-radius: 19px; box-shadow: 0 3px 0 var(--grass-deep); }
-.is-phone .level-meter__stairs { height: 24px; max-width: 56px; gap: 2px; }
-/* Up to ten levels: the steps share a capped width so the meter fits between the buttons. */
-.is-phone .level-meter__step { width: 9px; flex: 0 1 auto; min-width: 3px; border-radius: 3px; }
-.is-phone .level-meter__rule { height: 22px; }
+/* A phone meter may shrink to fit between the buttons: the steps give way down to 3 px before anything overflows. */
+.is-phone .level-meter { height: 42px; gap: 10px; padding: 0 10px 0 12px; border-radius: 21px; box-shadow: 0 3px 0 var(--grass-deep); flex: 0 1 auto; min-width: 0; max-width: 100%; }
+.is-phone .level-meter__stairs { --track: 112px; --gap: 2px; --step-min: 5px; --step-max: 11px; height: 28px; flex: 0 1 auto; min-width: 0; }
+.is-phone .level-meter__step { flex: 0 1 auto; min-width: 3px; border-radius: 3px; }
+.is-phone .level-meter__rule { height: 24px; flex: none; }
+.is-phone .level-meter__tasks { gap: 4px; }
+.is-phone .level-meter__task { width: 11px; height: 11px; border-width: 2px; }
 .is-phone .reward-bank { gap: 5px; }
 .is-phone .reward-pod { width: 32px; height: 32px; }
 .is-phone .reward-pod__reward, .is-phone .reward-total__icon, .is-phone .reward-bank__flyer { width: 16px; height: 16px; }
@@ -68,8 +70,6 @@
 .is-phone .reward-total { height: 28px; padding: 0 9px 0 5px; border-radius: 14px; font-size: 16px; gap: 3px; }
 .is-phone .level-meter__star { width: 10px; height: 10px; margin: -5px 0 0 -5px; }
 .is-phone .level-meter__chip { font-size: 14px; top: calc(100% + 6px); }
-.is-phone .level-meter__stairs.is-ramp { width: 56px; gap: 1px; }
-.is-phone .level-meter__stairs.is-ramp .level-meter__step { flex: 1 1 0; min-width: 0; width: auto; }
 
 /* ---------- home ---------- */
 .is-phone .brand { gap: 10px; }
@@ -258,8 +258,7 @@
 .is-phone .choices--add .big-btn { flex-basis: 100%; }
 .is-phone .add-wait { height: 84px; }
 
-.stage--portrait .screen--add .topbar { flex-wrap: wrap; row-gap: 10px; }
-.stage--portrait .screen--add .equation { order: 3; flex-basis: 100%; }
+.stage--portrait .screen--add .equation { align-self: stretch; }
 /* A margin, not padding: FitBox fits the drawing to the box's clientWidth, which counts padding. */
 .stage--portrait .screen--add .add-scene-box { margin: 0 16px; }
 
@@ -296,7 +295,7 @@
 .is-phone .meadow { left: -100px; right: -100px; height: calc(1000px + 70%); }
 .stage--landscape .meadow { height: calc(1000px + 80%); }
 .is-phone .seedbed { margin: 0; }
-.is-phone .potbox { margin: 0; }
+.is-phone .potbox, .is-phone .potbox-scaled { margin: 0; }
 .stage--portrait .seedbed-box { margin: 0 16px; }
 /* Buttons drawn on the bed keep their real size however small the bed is drawn. */
 .is-phone .seedbed__cover > button { transform: scale(calc(1 / var(--fit-k, 1))); }
@@ -386,6 +385,9 @@
 .is-phone .bed__slot svg { width: 100%; max-width: 54px; height: auto; }
 .is-phone .bed__question { width: 100%; max-width: 52px; height: 72px; border-radius: 16px; border-width: 4px; font-size: 44px; }
 .is-phone .bed__soil { height: 26px; border-radius: 13px; margin-top: -6px; }
+.is-phone .bed--bunches .bed__slot { height: 150px; }
+.is-phone .bed--bunches .bed__slot svg { height: 118px; }
+.is-phone .bed__count { font-size: 18px; }
 .is-phone .patterns-guide { margin-top: 0; padding: 0 16px; }
 .is-phone .screen--patterns .choices { margin: 0; padding: 0 16px 16px; gap: 10px; flex-wrap: wrap; }
 .is-phone .screen--patterns .choice { flex: 1 1 0; width: auto; height: 140px; border-radius: 24px; border-width: 4px; box-shadow: 0 6px 0 var(--grass-deep); font-size: 18px; }
@@ -409,6 +411,8 @@
 .stage--landscape .bed__slot svg { max-width: 80px; }
 .stage--landscape .bed__question { max-width: 76px; height: 100px; border-radius: 20px; font-size: 56px; }
 .stage--landscape .bed__soil { height: 32px; border-radius: 16px; margin-top: -8px; }
+.stage--landscape .bed--bunches .bed__slot { height: 120px; }
+.stage--landscape .bed--bunches .bed__slot svg { height: 88px; }
 .stage--landscape .patterns-guide { grid-area: guide; padding: 0; }
 .stage--landscape .patterns-guide .guide__csepi { width: 40px; height: 62px; }
 .stage--landscape .patterns-guide .bubble { font-size: 17px; padding: 8px 14px; }
@@ -643,7 +647,7 @@
   .pa-kid__actions { flex-basis: 100%; justify-content: flex-end; }
   .pa-kidform { flex-direction: column; align-items: stretch; }
   .pa-kidform__preview { display: none; }
-  .pa-avatars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .pa-avatars { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .ps-layout { grid-template-columns: minmax(0, 1fr); }
 }
 
@@ -667,5 +671,6 @@
 .stage--tall-tablet .bed__slot svg { max-width: 84px; }
 .stage--tall-tablet .bed__question { max-width: 80px; height: 110px; border-radius: 20px; font-size: 60px; }
 .stage--tall-tablet .bed__soil { height: 32px; border-radius: 16px; margin-top: -8px; }
+.stage--tall-tablet .bed--bunches .bed__slot svg { height: 104px; }
 .stage--tall-tablet .screen--patterns .choice { height: 170px; font-size: 20px; }
 .stage--tall-tablet .screen--patterns .choice svg { width: 80px; }

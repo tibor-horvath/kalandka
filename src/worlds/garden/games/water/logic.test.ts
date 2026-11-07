@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLANTS, WATER_LEVELS, addDrop, feedback, growth, introSpeech, plantForLevel, plantForRound, removeDrop, slotKinds, statusOf } from './logic';
+import { PLANTS, WATER_LEVELS, maxDropsFor, addDrop, feedback, growth, introSpeech, plantForLevel, plantForRound, removeDrop, slotKinds, statusOf } from './logic';
 
 const bluebell = PLANTS[0];
 
@@ -68,5 +68,46 @@ describe('watering game', () => {
     expect(slotKinds(3, 6)).toHaveLength(10);
     expect(feedback(13, { ...bluebell, target: 15 }).speech).toBe('Még két csepp kell!');
     expect(feedback(15, { ...bluebell, target: 15 }).speech).toBe('Hurrá! Pont tizenöt csepp. Kivirágzott a harangvirág!');
+  });
+  const roundsOf = (kind: string) => {
+    const level = WATER_LEVELS.findIndex((l) => l.kind === kind);
+    return Array.from({ length: 60 }, (_, round) => plantForLevel(level, round));
+  };
+
+  it('counts on from the drops already there, without crossing ten', () => {
+    for (const { target, given = 0 } of roundsOf('on')) {
+      expect(target - given).toBeGreaterThanOrEqual(2);
+      expect(target - given).toBeLessThanOrEqual(6);
+      expect(given > 10 || target <= 10 || given === 10).toBe(true);
+    }
+  });
+
+  it('crosses ten from six to nine drops', () => {
+    for (const { target, given = 0 } of roundsOf('cross')) {
+      expect(given).toBeGreaterThanOrEqual(6);
+      expect(given).toBeLessThanOrEqual(9);
+      expect(target).toBeGreaterThan(10);
+      expect(maxDropsFor(target)).toBe(20);
+    }
+  });
+
+  it('counts in twos to an even number', () => {
+    for (const plant of roundsOf('twos')) {
+      expect(plant.step).toBe(2);
+      expect(plant.target % 2).toBe(0);
+      expect(plant.given).toBeUndefined();
+    }
+  });
+
+  it('says what is already there and how to count', () => {
+    expect(introSpeech({ ...bluebell, target: 12, given: 7 })).toBe('A harangvirágnak tizenkét csepp kell. Hét csepp már ott van. Számolj tovább, és koppints a felhőre!');
+    expect(introSpeech({ ...bluebell, target: 8, step: 2 })).toBe('A harangvirágnak nyolc csepp kell. A felhő most kettesével csepeg: számolj kettesével!');
+  });
+
+  it('keeps the drops that were already there', () => {
+    expect(slotKinds(8, 12, 7).slice(0, 9)).toEqual(['given', 'given', 'given', 'given', 'given', 'given', 'given', 'filled', 'target']);
+    expect(removeDrop(7, 7)).toBe(7);
+    expect(removeDrop(9, 7)).toBe(8);
+    expect(removeDrop(10, 0, 2)).toBe(8);
   });
 });

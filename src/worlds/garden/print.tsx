@@ -1,10 +1,10 @@
 import { Basket, Bouquet, DROP_PATH, GrowingPlant, Hive, PatternFlower, RoundFlower, Seed, SmallPot } from './art';
 import { ADD_LEVELS, BOX_W, RIGHT_X, SCENE_H, bedWidth, buildAddRound, hiveX, type AddItem, type AddRound } from './games/add/logic';
-import { FIELD_H, FIELD_W, LEVELS as FLASH_LEVELS, buildFlashRound, type FlashRound } from './games/flash/logic';
+import { FIELD_H, FIELD_W, FLASH_PRINT_LEVELS, LEVELS as FLASH_LEVELS, buildFlashRound, type FlashRound } from './games/flash/logic';
 import { diceFace } from './games/flash/layout';
 import { rng } from '../../lib/rng';
-import { CHOICES, FLOWER_LABELS, SHAPES, SHAPE_ORDER, buildRound as buildPatternRound, type FlowerKind } from './games/patterns/logic';
-import { POTS_LEVELS, boxSize, buildPotsRound, potCells, type PotsRound } from './games/pots/logic';
+import { CHOICES, FLOWER_LABELS, PATTERN_PRINT_TOP, SHAPES, SHAPE_ORDER, buildRound as buildPatternRound, type FlowerKind } from './games/patterns/logic';
+import { POTS_LEVELS, POTS_PRINT_LEVELS, boxSize, buildPotsRound, potCells, type PotsRound } from './games/pots/logic';
 import { TRACE_ORDER, arrowPoints, digitShape, heading, lapOrder, pathData, type DigitShape } from './games/trace/logic';
 import { PLANTS, plantForRound, type Plant } from './games/water/logic';
 import { ladderOf } from '../../state/ladder';
@@ -171,7 +171,7 @@ const patterns = spec<PatternTask>({
   rev: 1,
   levels: ['AB – két virág váltakozik', 'ABC – három virág', 'AAB – kettő-egy', 'ABB – egy-kettő', 'Hiányzik a sorból (vegyes)'],
   // The third level of the ladder holds AAB and ABB, which have a sheet each.
-  current: (p) => [0, 1, 2, SHAPE_ORDER.length][ladderOf(p, 'patterns').level],
+  current: (p) => [0, 1, 2, SHAPE_ORDER.length][Math.min(PATTERN_PRINT_TOP, ladderOf(p, 'patterns').level)],
   grid: (_, d) => pickGrid(d, [1, 6], [1, 8], [2, 10]),
   ask: (level) => (level < SHAPE_ORDER.length ? 'Melyik virág jön ezután? Karikázd be!' : 'Melyik virág hiányzik a sorból? Karikázd be!'),
   tip: (level) =>
@@ -232,8 +232,8 @@ const patterns = spec<PatternTask>({
 const flash = spec<FlashRound>({
   id: 'flash',
   rev: 1,
-  levels: FLASH_LEVELS.map((l) => l.name),
-  current: (p) => ladderOf(p, 'flash').level,
+  levels: FLASH_LEVELS.slice(0, FLASH_PRINT_LEVELS).map((l) => l.name),
+  current: (p) => Math.min(FLASH_PRINT_LEVELS - 1, ladderOf(p, 'flash').level),
   grid: (_, d) => pickGrid(d, [2, 4], [3, 4], [4, 5]),
   ask: () => 'Hány magot látsz? Karikázd be a számot!',
   tip: () => 'Játszhatják villantósan is: mutassa meg a képet három másodpercig, aztán takarja le a kezével, és kérdezze meg, hány magot látott.',
@@ -461,8 +461,8 @@ const trace = spec<TraceTask>({
 const pots = spec<PotsRound>({
   id: 'pots',
   rev: 2,
-  levels: POTS_LEVELS.map((l) => l.name),
-  current: (p) => ladderOf(p, 'pots').level,
+  levels: POTS_LEVELS.slice(0, POTS_PRINT_LEVELS).map((l) => l.name),
+  current: (p) => Math.min(POTS_PRINT_LEVELS - 1, ladderOf(p, 'pots').level),
   grid: (level, d) => (POTS_LEVELS[level].total === 5 ? pickGrid(d, [2, 4], [2, 5], [3, 7]) : pickGrid(d, [2, 3], [2, 4], [3, 5])),
   ask: () => 'Rajzolj virágot minden üres cserépbe! Hány virág kellett? Karikázd be!',
   tip: (level) =>

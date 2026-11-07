@@ -27,7 +27,7 @@ describe('Cserépbarátok', () => {
     for (let level = 0; level < POTS_LEVELS.length; level++) {
       for (let round = 0; round < 80; round++) {
         const r = buildPotsRound(round, level);
-        expect(r.total).toBe(POTS_LEVELS[level].total);
+        expect(POTS_LEVELS[level].totals ?? [POTS_LEVELS[level].total]).toContain(r.total);
         expect(r.have).toBeGreaterThanOrEqual(1);
         expect(r.need).toBeGreaterThanOrEqual(1);
         expect(r.have + r.need).toBe(r.total);
@@ -73,5 +73,41 @@ describe('Cserépbarátok', () => {
     expect(rightFeedback(five).speech).toContain('ötös barátok');
     expect(revealFeedback(five).speech).toBe('Hoppá! Számoljuk meg együtt az üres cserepeket! Egy, kettő, három.');
     expect(potsLockedSpeech(8)).toContain('még két számot');
+  });
+  const levelWhere = (test: (l: (typeof POTS_LEVELS)[number]) => boolean) => POTS_LEVELS.findIndex(test);
+
+  it('meets every box from six to nine and all their friends', () => {
+    const level = levelWhere((l) => l.totals !== undefined);
+    const pairs = new Set(Array.from({ length: 200 }, (_, round) => buildPotsRound(round, level)).map((r) => `${r.have}+${r.need}`));
+    for (const total of [6, 7, 8, 9]) for (let have = 1; have < total; have++) expect(pairs).toContain(`${have}+${total - have}`);
+  });
+
+  it('keeps the first ten full on the twenty level', () => {
+    const level = levelWhere((l) => l.total === 20);
+    const needs = new Set(Array.from({ length: 80 }, (_, round) => buildPotsRound(round, level)).map((r) => r.need));
+    expect([...needs].sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(rightFeedback(buildPotsRound(0, level)).text).toMatch(/Ők húszas barátok!$/);
+  });
+
+  it('hides the box and talks about the cover on the last level', () => {
+    const r = buildPotsRound(3, levelWhere((l) => l.hidden === true));
+    expect(r.total).toBe(10);
+    expect(askFeedback(r).speech).not.toContain('koppints');
+    expect(askFeedback(r).text).toMatch(/^A takaró alatt \d virág nyílik\./);
+    expect(revealFeedback(r).text).toContain('Vegyük le a takarót');
+  });
+
+  it('lays twenty pots out as two ten-frames side by side', () => {
+    const { width, height } = boxSize(20);
+    const cells = potCells(20);
+    expect(height).toBe(boxSize(10).height);
+    expect(new Set(cells.map((c) => c.y)).size).toBe(2);
+    expect(cells[10].x - cells[4].x).toBeGreaterThan(cells[1].x - cells[0].x);
+    for (const c of cells) expect(c.x).toBeLessThan(width);
+  });
+
+  it('names the friends of every box', () => {
+    const r = buildPotsRound(0, 0);
+    expect(rightFeedback({ ...r, have: 3, need: 4, total: 7 }).speech).toBe('Igen! Három meg négy, az hét. Ők hetes barátok!');
   });
 });

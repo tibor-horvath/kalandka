@@ -133,6 +133,7 @@ export function Code({ onBack }: { onBack: () => void }) {
       title="Kódzár"
       meter={meter}
       justSolved={solved}
+      tasks={{ at: taskIdx, of: round.tasks.length, done: solved }}
       onBack={onBack}
       onReplay={() => speak(fb.speech)}
     >
@@ -142,12 +143,6 @@ export function Code({ onBack }: { onBack: () => void }) {
           {fb.text}
         </GuideBubble>
       </div>
-
-      <ol className="sort-odd__dots seq-dots" aria-label={`${taskIdx + 1}. feladat a ${round.tasks.length}-ből`}>
-        {round.tasks.map((_, i) => (
-          <li key={i} className={`sort-odd__dot${i < taskIdx || (i === taskIdx && solved) ? ' is-done' : i === taskIdx ? ' is-now' : ''}`} />
-        ))}
-      </ol>
 
       <Task key={taskIdx} level={round.level} task={round.tasks[taskIdx]} n={taskIdx} solved={solved} say={say} noteHelp={noteHelp} onDone={done} later={later} />
 

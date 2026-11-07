@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FitBox } from './FitBox';
-import { useForm, type Form } from './Stage';
+import { useForm, useWideStage, type Form } from './Stage';
 import { StickerBookArt } from './stickers';
 import { DoneTick, LockIcon, PlayIcon } from './ui';
 
@@ -286,6 +286,49 @@ const GEOMETRY: Record<IslandWorld, Record<Form, Geometry>> = {
   robot: { tablet: ROBOT_TABLET, portrait: mirrored(GARDEN_PORTRAIT), landscape: mirrored(GARDEN_LANDSCAPE) }
 };
 
+/** How far the tablet island may be drawn out sideways on a wide stage. */
+const WIDE_STRETCH = 1.45;
+/** The tablet island's own width, inside the stage's margins. */
+const ISLAND_SPAN = 950;
+
+/** Maps every x of an absolute path (M, L, C, S and Z only, as the tablet paths are drawn), leaving each y. */
+const mapPath = (d: string, fx: (x: number) => number) => {
+  let i = 0;
+  return d.replace(/-?\d+(\.\d+)?/g, (n) => (i++ % 2 ? n : String(Math.round(fx(Number(n))))));
+};
+
+/**
+ * The tablet island on a stage `extra` px wider: the shore and the trail are drawn out sideways and the places,
+ * trees and the dock move along with them, while every picture keeps its own size.
+ */
+function widen(g: Geometry, extra: number): Geometry {
+  if (extra <= 0) return g;
+  const w = g.w + extra;
+  const k = Math.min(WIDE_STRETCH, Math.max(1, (w - (g.w - ISLAND_SPAN)) / ISLAND_SPAN));
+  const X = (x: number) => w / 2 + (x - g.w / 2) * k;
+  const at = <T extends Pt>(p: T): T => ({ ...p, x: Math.round(X(p.x)) });
+  // The pier and the boat keep their shape and move with the walk's start, where the trail leaves the dock.
+  const dock = Number(/^M(-?[\d.]+)/.exec(g.walk)?.[1] ?? 0);
+  const shift = Math.round(X(dock) - dock);
+  return {
+    ...g,
+    w,
+    shore: g.shoreMirror ? mapPath(g.shore, (x) => X(g.w - x)) : mapPath(g.shore, X),
+    shoreMirror: false,
+    meadows: g.meadows.map((m) => ({ ...at(m), rx: m.rx * k })),
+    props: g.props.map(at),
+    dots: g.dots.map(at),
+    pier: { ...g.pier, planks: g.pier.planks.map((d) => mapPath(d, (x) => x + shift)), deck: mapPath(g.pier.deck, (x) => x + shift) },
+    walk: mapPath(g.walk, X),
+    trail: mapPath(g.trail, X),
+    boat: `translate(${shift} 0) ${g.boat}`,
+    waves: g.waves.map((p) => ({ ...p, x: Math.round((p.x * w) / g.w) })),
+    spots: g.spots.map(at),
+    book: at(g.book),
+    timer: at(g.timer)
+  };
+}
+
 /** The arrival (s): the island rises, the trail draws, then the places pop up along it one by one. */
 const FIRST_SPOT = 0.35;
 const SPOT_STEP = 0.07;
@@ -466,7 +509,8 @@ export function Island({
   timer?: ReactNode;
 }) {
   const form = useForm();
-  const g = GEOMETRY[world][form];
+  const extra = useWideStage();
+  const g = form === 'tablet' ? widen(GEOMETRY[world].tablet, extra) : GEOMETRY[world][form];
   const last = g.spots.length - 1;
   const phone = form !== 'tablet';
   const board = useRef<HTMLDivElement>(null);
