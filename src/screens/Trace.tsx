@@ -167,7 +167,7 @@ export function Trace({ onBack }: { onBack: () => void }) {
       if (demoFrame.current !== null) cancelAnimationFrame(demoFrame.current);
       if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
     };
-    // One round per mount: App keys this screen by round.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- One round per mount: App keys this screen by round.
   }, []);
 
   const toTrail = (e: PointerEvent): Pt | null => {

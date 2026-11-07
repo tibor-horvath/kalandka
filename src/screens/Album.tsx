@@ -29,7 +29,7 @@ export function Album({ onBack, world: startWorld = 'garden' }: { onBack: () => 
 
   useEffect(() => {
     speak(earned.length === 0 ? intro : `Már ${earned.length} matricád van! Koppints egy matricára!`);
-    // Runs once per visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once per visit.
   }, []);
 
   const tap = (s: Sticker, got: boolean) => {

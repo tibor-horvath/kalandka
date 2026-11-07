@@ -187,9 +187,10 @@ export function Add({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     speak(questionFeedback(round).speech);
+    const pending = timers.current;
     return () => {
       if (tour.current !== null) window.clearInterval(tour.current);
-      timers.current.forEach((t) => window.clearTimeout(t));
+      pending.forEach((t) => window.clearTimeout(t));
     };
   }, [round]);
 

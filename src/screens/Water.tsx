@@ -51,6 +51,7 @@ export function Water({ onBack }: { onBack: () => void }) {
   // First time this round's plant blooms: a seed and a flower for the garden.
   useEffect(() => {
     if (done) win(overflowed.current, { extra: (p) => ({ ...p, garden: [...p.garden, plant.id] }) });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once, when the plant blooms; win and the plant are read from that render.
   }, [done]);
 
   const change = (next: number) => {

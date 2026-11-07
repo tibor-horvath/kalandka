@@ -792,7 +792,13 @@ const LEGACY_STICKERS: Record<string, string> = {
  */
 export function carryOverStickers(p: Progress): Progress {
   const carried = [...new Set(p.stickersSeen.map((id) => LEGACY_STICKERS[id]).filter((id) => id && !p.stickersSeen.includes(id)))];
-  return carried.length === 0 ? p : { ...p, stickersSeen: [...p.stickersSeen, ...carried] };
+  const seen = [...p.stickersSeen, ...carried];
+  // The Fibonacci row put new steps between the old 1, 5 and 15 pages: below a sticker already stuck in, they count as
+  // celebrated, so the child does not get a row of pops for pages finished long ago. Stickers come in album order, so a
+  // new save never has a later step seen before an earlier one.
+  const between = PAGE_STICKERS.filter((s) => !seen.includes(s.id) && PAGE_STICKERS.some((t) => t.game === s.game && seen.includes(t.id) && Number(t.mark) > Number(s.mark)));
+  const added = [...carried, ...between.map((s) => s.id)];
+  return added.length === 0 ? p : { ...p, stickersSeen: [...p.stickersSeen, ...added] };
 }
 
 export function gameOf(s: Sticker): StickerGame {

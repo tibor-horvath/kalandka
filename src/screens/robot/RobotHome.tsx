@@ -43,7 +43,7 @@ export function RobotHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
 
   useEffect(() => {
     if (!sticker) sayIntro();
-    // Runs once per visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once per visit.
   }, []);
 
   const welcomeOnce = () => {

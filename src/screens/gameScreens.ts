@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, LazyExoticComponent } from 'react';
 import type { GameId } from '../state/games';
 import { Add } from './Add';
 import { Flash } from './Flash';
@@ -7,16 +7,12 @@ import { Patterns } from './Patterns';
 import { Pots } from './Pots';
 import { Trace } from './Trace';
 import { Water } from './Water';
-import { Code } from './robot/Code';
-import { Fix } from './robot/Fix';
-import { Mirror } from './robot/Mirror';
-import { Path } from './robot/Path';
-import { Scale } from './robot/Scale';
-import { Seq } from './robot/Seq';
-import { Sort } from './robot/Sort';
+import { robotScreen } from './robot/lazy';
 
-/** Each game's screen. App keys it by the game's round, so every task starts with fresh state. */
-export const GAME_SCREENS: Record<GameId, ComponentType<{ onBack: () => void }>> = {
+type GameScreen = ComponentType<{ onBack: () => void }>;
+
+/** Each game's screen. App keys it by the game's round, so every task starts with fresh state. The workshop's load with their world (see robot/lazy.ts). */
+export const GAME_SCREENS: Record<GameId, GameScreen | LazyExoticComponent<GameScreen>> = {
   learn: Learn,
   water: Water,
   patterns: Patterns,
@@ -24,11 +20,11 @@ export const GAME_SCREENS: Record<GameId, ComponentType<{ onBack: () => void }>>
   add: Add,
   trace: Trace,
   pots: Pots,
-  path: Path,
-  sort: Sort,
-  scale: Scale,
-  seq: Seq,
-  mirror: Mirror,
-  code: Code,
-  fix: Fix
+  path: robotScreen('Path'),
+  sort: robotScreen('Sort'),
+  scale: robotScreen('Scale'),
+  seq: robotScreen('Seq'),
+  mirror: robotScreen('Mirror'),
+  code: robotScreen('Code'),
+  fix: robotScreen('Fix')
 };

@@ -245,8 +245,19 @@ describe('stickers', () => {
   it('keeps the old fifteen-page Feladatlapok sticker as the thirteen-page one', () => {
     for (const world of ['garden', 'robot']) {
       const p = carryOverStickers({ ...DEFAULT_PROGRESS, stickersSeen: [`paper-${world}-15`] });
-      expect(earnedStickers(p).map((s) => s.id)).toEqual([`paper-${world}-13`]);
+      expect(earnedStickers(p).map((s) => s.id)).toEqual([1, 2, 3, 5, 8, 13].map((n) => `paper-${world}-${n}`));
     }
+  });
+
+  it('does not celebrate the new Feladatlapok steps below a sticker the child already has', () => {
+    const pages = (n: number) => Array.from({ length: n }, (_, i) => `learn.1.0.n.7.${i}`);
+    const old = (n: number, seen: string[]) => carryOverStickers({ ...DEFAULT_PROGRESS, pagesDone: pages(n), stickersSeen: seen });
+    const paperNew = (p: Progress) => newStickers(p).filter((s) => s.game === 'paper-garden').map((s) => s.id);
+    expect(paperNew(old(6, ['paper-garden-1', 'paper-garden-5']))).toEqual([]);
+    expect(paperNew(old(16, ['paper-garden-1', 'paper-garden-5', 'paper-garden-15']))).toEqual([]);
+    // Steps above the last sticker stuck in still pop, as do steps not earned yet once they are.
+    expect(paperNew(old(9, ['paper-garden-1', 'paper-garden-5']))).toEqual(['paper-garden-8']);
+    expect(paperNew(old(3, ['paper-garden-1']))).toEqual(['paper-garden-2', 'paper-garden-3']);
   });
 
   it('leaves the stickers of a save from before the ladders in place', () => {

@@ -475,6 +475,7 @@ export function Island({
   // The place the child came back to takes the focus once it has landed, so the next tap or Tab starts there.
   useEffect(() => {
     if (landed) board.current?.querySelector<HTMLElement>(`[data-place="${landed.id}"]`)?.focus({ preventScroll: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Focus moves once per place landed on, not on every new back object.
   }, [landed?.id]);
 
   const state = `${leaving ? ' is-leaving' : ''}${opening ? ' is-opening' : ''}${back ? ' is-back' : ''}`;

@@ -20,7 +20,7 @@ export function Patterns({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     speak(startFeedback(round).speech);
-    // One row per mount: App keys this screen by round.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- One row per mount: App keys this screen by round.
   }, []);
 
   const pick = (kind: FlowerKind) => {

@@ -56,7 +56,7 @@ export function PageMotion({ page, depth, door, settling, children }: { page: st
       ],
       { duration: SLIDE_MS, easing: EASING }
     );
-    // `page` is the trigger; `depth` is read from the same render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `page` is the trigger; `depth` is read from the same render.
   }, [page]);
 
   // Focus starts on the new page's heading, not lost on the old page that just went away, unless the page already

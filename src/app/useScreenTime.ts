@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
-import { GRACE_SECONDS, WARN_SECONDS, addPlay, isEveningRest, remainingSeconds, today } from '../state/screenTime';
-
-/** The play clock ticks in steps of this many seconds. */
-const TICK_SECONDS = 5;
+import { GRACE_SECONDS, TICK_SECONDS, WARN_SECONDS, addPlay, isEveningRest, playedIn, remainingSeconds, today } from '../state/screenTime';
 
 interface Where {
   /** The screen on show; moving to another one checks again whether it may stay open. */
@@ -46,13 +43,32 @@ export function useScreenTime({ screen, round, atHome, atHub, away, paused, play
   }, []);
 
   // Play clock: only while the app is on screen, a game or reward place is open and the parents' area is closed.
-  // Choosing where to go (home, map, album) does not count as play.
+  // Choosing where to go (home, map, album) does not count as play. It counts the time that passed, not ticks,
+  // so the part of a tick before leaving a game is counted too; a long gap (a sleeping tablet) counts as one tick.
   useEffect(() => {
     if (!playing || away || paused) return;
-    const id = window.setInterval(() => {
-      if (document.visibilityState === 'visible') update((p) => addPlay(p, TICK_SECONDS, today()));
-    }, TICK_SECONDS * 1000);
-    return () => window.clearInterval(id);
+    let since: number | null = document.visibilityState === 'visible' ? Date.now() : null;
+    const count = () => {
+      if (since === null) return;
+      const { seconds, usedMs } = playedIn(Date.now() - since);
+      since += usedMs;
+      if (seconds > 0) update((p) => addPlay(p, seconds, today()));
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        since = Date.now();
+      } else {
+        count();
+        since = null;
+      }
+    };
+    const id = window.setInterval(count, TICK_SECONDS * 1000);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisibility);
+      count();
+    };
   }, [playing, away, paused, update]);
 
   // A gentle spoken warning once per day and child, two minutes before the end (parents can switch it off).
@@ -84,7 +100,7 @@ export function useScreenTime({ screen, round, atHome, atHub, away, paused, play
       window.clearInterval(id);
       document.removeEventListener('visibilitychange', check);
     };
-    // The screen, not the round: moving on to the next task is handled below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- The screen, not the round: moving on to the next task is handled below.
   }, [timeUp, screen, paused, progress.graceToFinish]);
 
   // "Ez az utolsó feladat!": once the task in progress is done, the next one does not start.
@@ -95,6 +111,7 @@ export function useScreenTime({ screen, round, atHome, atHub, away, paused, play
     }
     if (graceRound.current === null) graceRound.current = round;
     else if (round !== graceRound.current) sendHome();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- sendHome only calls stable setters; the round is the trigger.
   }, [timeUp, round, paused]);
 
   return { remaining, evening, timeUp, resting };

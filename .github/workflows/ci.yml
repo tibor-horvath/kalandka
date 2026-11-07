@@ -18,8 +18,9 @@ jobs:
     uses: tibor-horvath/ci-toolkit/.github/workflows/node-build-test.yml@v1
     with:
       node-version: "22.x"
-      # No ESLint yet; `npm run build` already type-checks with `tsc -b`.
-      lint-script: ""
+      # `npm run lint`: the React hooks rules (eslint.config.js).
+      lint-script: lint
+      # `npm run build` already type-checks with `tsc -b`.
       typecheck-script: ""
       # `npm test` is `vitest` (watch mode locally); run once in CI.
       test-args: --run
