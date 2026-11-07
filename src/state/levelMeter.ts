@@ -11,6 +11,12 @@ export interface LevelMeterState {
   rounds: number;
   /** This win fills the row and the next round is on a new level. */
   levelUp: boolean;
+  /** This win fills the top level's row for the first time: every level is done ("Mester!"). */
+  mastered?: boolean;
+  /** Every level was done before this task: the game is practice now, with no row to fill. */
+  finished?: boolean;
+  /** Practice already paid today's seeds or bolts (see PRACTICE_PAY_PER_DAY): the pod rests until tomorrow. */
+  rested?: boolean;
 }
 
 /** `count` levels of `rounds` rounds each: the shape of most games' level ladders. */

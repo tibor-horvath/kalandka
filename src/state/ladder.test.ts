@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildTraceRound } from '../worlds/garden/games/trace/logic';
-import { LADDER_RULES, afterSolve, ladderMeter, ladderOf, placeAt, startAt, type Ladder, type LadderRule } from './ladder';
+import { LADDER_RULES, afterSolve, isFinished, ladderMeter, ladderOf, placeAt, practiceLevel, startAt, type Ladder, type LadderRule } from './ladder';
 import { DEFAULT_PROGRESS } from './progress';
 
 const rule: LadderRule = { levels: 4, up: 4, down: 2, cooldown: 3 };
@@ -72,6 +72,37 @@ describe('difficulty ladder', () => {
     expect(ladderMeter(l, rule, null)).toMatchObject({ level: 1, levels: 4, done: 3, rounds: 4, levelUp: false });
     expect(ladderMeter(l, rule, afterSolve(l, rule, false))).toMatchObject({ level: 1, done: 4, levelUp: true });
     expect(ladderMeter(l, rule, afterSolve(l, rule, true))).toMatchObject({ done: 0, levelUp: false });
+  });
+});
+
+describe('a finished game', () => {
+  it('plays the mastering on the meter once, when the top row fills the first time', () => {
+    const l = at(3, { streak: 3 });
+    expect(ladderMeter(l, rule, afterSolve(l, rule, false))).toMatchObject({ level: 3, done: 4, levelUp: false, mastered: true });
+    const again = at(3, { streak: 3, reached: 3 });
+    expect(ladderMeter(again, rule, afterSolve(again, rule, true))).toMatchObject({ mastered: false });
+  });
+
+  it('shows every level done afterwards, with no row to fill', () => {
+    const l = afterSolve(at(3, { streak: 3 }), rule, false).ladder;
+    expect(isFinished(l, rule)).toBe(true);
+    expect(ladderMeter(l, rule, null)).toMatchObject({ level: 3, levelUp: false, finished: true, rested: false });
+    expect(ladderMeter(l, rule, null, true)).toMatchObject({ finished: true, rested: true });
+    expect(ladderMeter(l, rule, null).mastered).toBeUndefined();
+  });
+
+  it('stays finished after stepping down, since how far the child got never shrinks', () => {
+    const { l } = play(at(3, { reached: 4 }), [true, true, true, true, true, true]);
+    expect(l.level).toBeLessThan(3);
+    expect(isFinished(l, rule)).toBe(true);
+  });
+
+  it('mixes practice tasks from every level, never the same one twice in a row', () => {
+    const levels = Array.from({ length: 200 }, (_, r) => practiceLevel(4, r));
+    expect(new Set(levels)).toEqual(new Set([0, 1, 2, 3]));
+    levels.slice(1).forEach((lv, i) => expect(lv).not.toBe(levels[i]));
+    expect(practiceLevel(4, 57)).toBe(levels[57]);
+    expect(practiceLevel(1, 9)).toBe(0);
   });
 });
 

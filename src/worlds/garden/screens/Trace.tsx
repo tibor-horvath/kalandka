@@ -89,8 +89,8 @@ function TrailArrow({ at, angle }: { at: Pt; angle: number }) {
  * On the upper levels the trail is faded (Halvány út) and the see-through bee only comes when asked or after a quiet spell.
  */
 export function Trace({ onBack }: { onBack: () => void }) {
-  const { start, step, win, meter, goNext } = useLadderRound('trace');
-  const shape = useMemo(() => buildTraceRound(start.level, start.sinceChange), [start]);
+  const { level, index, step, win, meter, goNext } = useLadderRound('trace');
+  const shape = useMemo(() => buildTraceRound(level, index), [level, index]);
   const drops = useMemo(() => shape.strokes.map(checkpoints), [shape]);
   const multi = shape.strokes.length > 1;
 

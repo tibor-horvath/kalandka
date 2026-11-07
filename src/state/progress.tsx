@@ -4,6 +4,7 @@ import type { GameId } from './games';
 import { carryOverStickers, markEarnedSeen, type Bed, type TreatId, type VisitorId } from './rewards';
 import type { PartSlot } from './robotParts';
 import type { Ladder, LadderGame } from './ladder';
+import type { PracticePay } from './pod';
 import type { TaskLog } from './taskLog';
 import type { WorldId } from './worlds';
 
@@ -151,6 +152,8 @@ export interface Progress {
   taskLog: TaskLog;
   /** Each levelled game's difficulty ladder; a game missing here starts from its older save fields (see ladder.ts). */
   ladders: Partial<Record<LadderGame, Ladder>>;
+  /** Seeds and bolts the finished games' practice paid today (see PRACTICE_PAY_PER_DAY in pod.ts). */
+  practicePay: PracticePay;
 }
 
 export const DEFAULT_PROGRESS: Progress = {
@@ -240,7 +243,8 @@ export const DEFAULT_PROGRESS: Progress = {
   robotOiledAt: 0,
   robotCharges: 0,
   taskLog: {},
-  ladders: {}
+  ladders: {},
+  practicePay: { day: '', paid: {} }
 };
 
 /** Saves from before the gather and take levels: keep the child on the same sums. */

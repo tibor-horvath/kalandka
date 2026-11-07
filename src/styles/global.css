@@ -194,6 +194,16 @@ h1, h2, p { margin: 0; }
   62%, 78% { opacity: 1; translate: var(--x1) calc(var(--y1) - 6px); scale: 1; }
   90%, 100% { opacity: 0; translate: var(--x1) calc(var(--y1) + 4px); scale: 0.4; }
 }
+/* Mastering the top level: the star pops up on the top step and stays there; a finished game shows it resting. */
+.level-meter__star.is-landing { animation: lu-land 3s linear both; }
+.level-meter__star.is-resting { animation: none; translate: var(--x1) calc(var(--y1) - 6px); }
+@keyframes lu-land {
+  0%, 28% { opacity: 0; translate: var(--x1) calc(var(--y1) - 6px); scale: 0.3; }
+  36% { opacity: 1; translate: var(--x1) var(--ym); scale: 1.1; }
+  52% { translate: var(--x1) calc(var(--y1) - 6px); scale: 1; }
+  56% { scale: 1.25; }
+  62%, 100% { opacity: 1; translate: var(--x1) calc(var(--y1) - 6px); scale: 1; }
+}
 @keyframes lu-rays { 0%, 52% { opacity: 0; transform: rotate(var(--r)) translateY(-7px) scaleY(0.4); } 57% { opacity: 1; transform: rotate(var(--r)) translateY(-11px) scaleY(1); } 72%, 100% { opacity: 0; transform: rotate(var(--r)) translateY(-17px) scaleY(0.5); } }
 @keyframes lu-chip { 0%, 40% { opacity: 0; transform: translateY(-10px) scale(0.6); } 47% { opacity: 1; transform: translateY(0) scale(1.08); } 52% { opacity: 1; transform: none; } 82% { opacity: 1; transform: none; } 96%, 100% { opacity: 0; transform: translateY(4px); } }
 
@@ -208,6 +218,8 @@ h1, h2, p { margin: 0; }
 .reward-pod__quarter.is-fresh { stroke-dasharray: 30; animation: pod-draw 0.45s ease-out both; }
 .reward-pod__reward { width: 22px; height: 22px; display: grid; place-items: center; opacity: 0.35; filter: grayscale(1); }
 .reward-pod__reward svg, .reward-total__icon svg, .reward-bank__flyer svg { width: 100%; height: 100%; display: block; }
+/* Practice paid today's seeds or bolts: the ring stays empty and a moon rests in the pod till tomorrow. */
+.reward-bank.is-rested .reward-pod__reward { opacity: 1; filter: none; }
 .reward-total { display: inline-flex; align-items: center; gap: 4px; height: 36px; padding: 0 12px 0 7px; border-radius: 18px; background: var(--good-tint); color: var(--leaf-deep); font: 800 20px/1 var(--display); }
 .reward-total__icon { width: 22px; height: 22px; flex: none; }
 .reward-total__roll { display: block; height: 22px; overflow: hidden; min-width: 12px; }
