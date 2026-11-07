@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrivalRing } from '../../../components/ArrivalRing';
 import { Seed } from '../art';
-import { BerryIcon, CanIcon, DecorArt, DropIcon, GardenPlant, PearIcon, PlantIcon, TreatArt, VisitorArt } from '../kiskert';
+import { BerryIcon, BorderFlower, CanIcon, DecorArt, DropIcon, FlowerIcon, GardenPlant, PearIcon, PlantIcon, SeedPacket, TreatArt, VisitorArt } from '../kiskert';
+import { SeedCount } from '../SeedCount';
 import { GuideSay, type Say } from '../../../components/GuideSay';
 import { Modal, useModal } from '../../../components/Modal';
 import { PlaceShell } from '../../../components/PlaceShell';
@@ -11,8 +12,28 @@ import { article, capitalize, numberAttr, numberCount } from '../../../lib/numbe
 import { speak } from '../../../lib/speech';
 import { useProgress, type Progress } from '../../../state/progress';
 import {
+  BORDER_COST,
+  BORDER_SPOTS,
+  FIRST_FLOWER,
+  FLOWERS,
   PLANT_OPTIONS,
   PLOT_BEDS,
+  bedFlower,
+  borderAt,
+  borderPattern,
+  buyFlower,
+  canBuyFlower,
+  canGiveSeeds,
+  canPlantBorder,
+  eatsSeeds,
+  emptyBorder,
+  flowerOf,
+  giveSeeds,
+  ownedFlowers,
+  ownsFlower,
+  plantBorder,
+  seedGiftSize,
+  type FlowerId,
   RECIPES,
   TREAT_WANTED,
   VISITORS,
@@ -79,6 +100,12 @@ export function Garden({ onBack }: { onBack: () => void }) {
   // The plot on show: the one with the next empty bed, so planting picks up where it left off.
   const [plot, setPlot] = useState(() => Math.floor((empty[0] ?? 0) / PLOT_BEDS));
   const [pantryOpen, setPantryOpen] = useState(false);
+  const [shedOpen, setShedOpen] = useState(false);
+  // The border spot chosen for a flower; choosing one clears the chosen bed, and the other way round.
+  const [spot, setSpot] = useState<number | null>(null);
+  // The planting whose seeds are being counted out, and the flower kind last chosen for a flower.
+  const [sowing, setSowing] = useState<PlantKind | null>(null);
+  const [lastFlower, setLastFlower] = useState<FlowerId>(FIRST_FLOWER);
   const showPantry = pears + berries > 0 || pantryCount(progress) > 0 || gardenFull(progress);
   const [say, setSay] = useState<Say>(() => opening());
   // The last plant or visitor the child tapped; the count restarts its little reaction on every tap.
@@ -115,6 +142,14 @@ export function Garden({ onBack }: { onBack: () => void }) {
       };
     }
     const ready = giftsReady(progress)[0];
+    if (ready && !canGive(progress, ready.id)) {
+      return {
+        text: `${ready.name} ajándékot vár! Koppints rá.`,
+        speech: `${ready.name} egy marék magnak is örülne! Koppints rá, és számolj ki neki ${numberAttr(seedGiftSize(progress, ready.id))} magot.`,
+        mood: 'cheer',
+        tone: 'plain'
+      };
+    }
     if (ready) {
       return {
         text: `${ready.name} ajándékot vár! Koppints rá.`,
@@ -162,6 +197,7 @@ export function Garden({ onBack }: { onBack: () => void }) {
   const tapBed = (i: number) => {
     const bed = bedAt(progress, i);
     if (bed) pokeAt(`bed${i}`);
+    setSpot(null);
     if (!bed) {
       setSelected(i);
       if (balance >= CHEAPEST) tell({ text: 'Mit ültessünk ide?', speech: 'Mit ültessünk ide?', mood: 'smile', tone: 'plain' });
@@ -192,15 +228,25 @@ export function Garden({ onBack }: { onBack: () => void }) {
       tell({ text: 'Köszöni! Megint teremni fog.', speech: `Megöntözted! A ${name} köszöni. Ha tovább játszol, megint terem.`, mood: 'cheer', tone: 'good' });
       return;
     }
+    const shown = bed.kind === 'flower' ? flowerOf(bedFlower(bed)).name.toLowerCase() : name;
     if (left > 0) tell({ text: tasksLeft(left), speech: `Ebből ${name} lesz. ${tasksLeft(left)}`, mood: 'smile', tone: 'plain' });
-    else tell({ text: `Szép ${name}!`, speech: `Milyen szép ${name}!`, mood: 'cheer', tone: 'good' });
+    else tell({ text: `Szép ${shown}!`, speech: `Milyen szép ${shown}!`, mood: 'cheer', tone: 'good' });
   };
 
+  // Choosing a plant opens the seed count; it is planted once every seed is counted in.
   const choose = (kind: PlantKind) => {
     if (selected === null || !canPlant(progress, selected, kind)) return;
-    const name = PLANT_OPTIONS.find((o) => o.id === kind)!.name.toLowerCase();
-    const after = plant(progress, selected, kind);
-    update((p) => plant(p, selected, kind));
+    popBubble(1);
+    setSowing(kind);
+  };
+
+  const sown = (kind: PlantKind, flower: FlowerId) => {
+    setSowing(null);
+    if (selected === null || !canPlant(progress, selected, kind)) return;
+    if (kind === 'flower') setLastFlower(flower);
+    const name = kind === 'flower' ? flowerOf(flower).name.toLowerCase() : PLANT_OPTIONS.find((o) => o.id === kind)!.name.toLowerCase();
+    const after = plant(progress, selected, kind, flower);
+    update((p) => plant(p, selected, kind, flower));
     // Ready for the next planting when there are seeds for it.
     const nextBed = emptyBeds(after)[0];
     setSelected(nextBed !== undefined && seedBalance(after) >= CHEAPEST ? nextBed : null);
@@ -223,6 +269,52 @@ export function Garden({ onBack }: { onBack: () => void }) {
       mood: 'cheer',
       tone: 'good'
     });
+  };
+
+  const tapSpot = (i: number) => {
+    popBubble(1);
+    setSelected(null);
+    setSpot(i);
+    const now = borderAt(progress, i);
+    if (now) {
+      tell({ text: 'Milyen virág legyen itt?', speech: `Itt ${article(flowerOf(now).name)} ${flowerOf(now).name.toLowerCase()} nyílik. Ha szeretnéd, ingyen kicseréljük egy másikra.`, mood: 'smile', tone: 'plain' });
+    } else if (balance >= BORDER_COST) {
+      tell({ text: 'Milyen virág legyen itt?', speech: 'Milyen virág legyen itt a szegélyben? Egy magba kerül.', mood: 'smile', tone: 'plain' });
+    } else {
+      tell({ text: 'Egy mag kell hozzá.', speech: 'Ide egy mag kell. Gyűjts egyet a játékokban!', mood: 'smile', tone: 'plain' });
+    }
+  };
+
+  const chooseBorder = (id: FlowerId) => {
+    if (spot === null) return;
+    const now = borderAt(progress, spot);
+    if (now === id) return;
+    if (!canPlantBorder(progress, spot, id)) {
+      popBubble(1);
+      tell({ text: 'Egy mag kell hozzá.', speech: 'Ide egy mag kell. Gyűjts egyet a játékokban!', mood: 'smile', tone: 'plain' });
+      return;
+    }
+    const after = plantBorder(progress, spot, id);
+    update((p) => plantBorder(p, spot, id));
+    const row = Math.floor(spot / BORDER_SPOTS);
+    const pattern = borderPattern(after, row);
+    if (pattern && !borderPattern(progress, row)) {
+      // The row has just become a pattern: say it the way a pattern is read, then where it goes on.
+      fanfare();
+      const names = [...pattern, ...pattern].map((f) => flowerOf(f).name.toLowerCase()).join(', ');
+      tell({ text: 'Mintás szegély lett!', speech: `Mintás szegély lett! ${capitalize(names)}, és így tovább. Ügyes!`, mood: 'cheer', tone: 'good' });
+    } else if (now) {
+      chime();
+      tell({ text: `Itt most ${flowerOf(id).name.toLowerCase()} nyílik.`, speech: `Kicseréltük! Itt most ${flowerOf(id).name.toLowerCase()} nyílik.`, mood: 'cheer', tone: 'plain' });
+    } else {
+      chime();
+      tell({ text: 'Egy! Elültettük.', speech: `Egy! Elültettük ${article(flowerOf(id).name)} ${flowerOf(id).planted}.`, mood: 'cheer', tone: 'good' });
+    }
+    // A new flower moves on to the next empty spot of the row, while there are seeds for it.
+    if (!now) {
+      const next = emptyBorder(after, row)[0];
+      setSpot(next !== undefined && seedBalance(after) >= BORDER_COST ? next : null);
+    }
   };
 
   const waterThirsty = () => {
@@ -250,9 +342,10 @@ export function Garden({ onBack }: { onBack: () => void }) {
     });
   };
 
-  const gave = (v: VisitorId) => {
-    const after = give(progress, v);
-    update((p) => give(p, v));
+  const gave = (v: VisitorId, seeds: boolean) => {
+    const giving = seeds ? giveSeeds : give;
+    const after = giving(progress, v);
+    update((p) => giving(p, v));
     // It pops into the visitor's corner once the card is closed and the garden is in view again.
     givenDecor.current = decorOf(after, v).at(-1)!.id;
     if (gardenDone(after)) {
@@ -319,7 +412,7 @@ export function Garden({ onBack }: { onBack: () => void }) {
               const grown = !!bed && growth >= needs;
               const dry = !!bed && isThirsty(bed, progress.gardenTasks);
               const ripe = bed ? ripeFruit(bed, progress.gardenTasks) : 0;
-              const name = bed ? PLANT_OPTIONS.find((o) => o.id === bed.kind)!.name : '';
+              const name = !bed ? '' : bed.kind === 'flower' ? flowerOf(bedFlower(bed)).name : PLANT_OPTIONS.find((o) => o.id === bed.kind)!.name;
               const care = `${ripe > 0 ? `, ${ripe} érett ${fruitName(bed!.kind)}` : ''}${dry ? ', szomjas' : ''}`;
               const label = !bed
                 ? `Üres ágyás, ${i + 1}.${selected === i ? ', kiválasztva' : ''}`
@@ -343,7 +436,7 @@ export function Garden({ onBack }: { onBack: () => void }) {
                           className={`kbed__sway${poked(`bed${i}`) ? ' is-poked' : ''}`}
                           style={{ '--sway-delay': `${-((i * 0.7) % 4.5)}s` } as CSSProperties}
                         >
-                          <GardenPlant kind={bed.kind} grown={grown} fruit={ripe} thirsty={dry} />
+                          <GardenPlant kind={bed.kind} grown={grown} fruit={ripe} thirsty={dry} flower={bedFlower(bed)} />
                         </span>
                       </span>
                     ) : (
@@ -372,13 +465,39 @@ export function Garden({ onBack }: { onBack: () => void }) {
             })}
           </div>
 
+          <div className="kborder" aria-label="Szegély">
+            {Array.from({ length: BORDER_SPOTS }, (_, k) => {
+              const i = plot * BORDER_SPOTS + k;
+              const f = borderAt(progress, i);
+              const on = spot === i;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  className={`kborder__spot${on ? ' is-selected' : ''}${f ? '' : ' is-empty'}`}
+                  aria-label={`${f ? flowerOf(f).name : 'Üres hely'} a szegélyben, ${k + 1}.${on ? ', kiválasztva' : ''}`}
+                  aria-pressed={on}
+                  onClick={() => tapSpot(i)}
+                >
+                  {f ? (
+                    <span key={f} className="kborder__flower pop-in">
+                      <BorderFlower id={f} />
+                    </span>
+                  ) : (
+                    <span className="kborder__dot" aria-hidden="true" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="visitors" aria-label="A kert lakói">
             {welcomed.map((v, k) => (
               <button
                 key={v.id}
                 type="button"
                 className="visitors__one pop-in"
-                aria-label={`${v.name}${canGive(progress, v.id) ? ', ajándékot vár' : ''}`}
+                aria-label={`${v.name}${canGive(progress, v.id) || canGiveSeeds(progress, v.id) ? ', ajándékot vár' : ''}`}
                 onClick={() => {
                   pokeAt(v.id);
                   popBubble(3);
@@ -392,10 +511,16 @@ export function Garden({ onBack }: { onBack: () => void }) {
                     </span>
                   ))}
                 </span>
-                {canGive(progress, v.id) && (
+                {canGive(progress, v.id) ? (
                   <span className="visitors__gift" aria-hidden="true">
                     <TreatArt id={wishOf(v.id).treat} size={34} />
                   </span>
+                ) : (
+                  canGiveSeeds(progress, v.id) && (
+                    <span className="visitors__gift" aria-hidden="true">
+                      <Seed size={26} />
+                    </span>
+                  )
                 )}
                 <span className={`visitors__roam visitors__roam--${v.id}`} style={{ '--roam-delay': `${-k * 3.5}s` } as CSSProperties}>
                   <span key={poked(v.id)} className={`visitors__hop${poked(v.id) ? ' is-poked' : ''}`}>
@@ -410,22 +535,40 @@ export function Garden({ onBack }: { onBack: () => void }) {
 
         <aside className="kiskert__panel">
           <GuideSay world="garden" {...say} />
-          {showPantry && (
+          <div className={`kiskert__places${showPantry ? '' : ' is-one'}`}>
+            {showPantry && (
+              <button
+                type="button"
+                className={`pantry-btn${canMakeAnything(progress) ? ' is-ready' : ''}`}
+                onClick={() => {
+                  popBubble(2);
+                  setPantryOpen(true);
+                }}
+              >
+                <TreatArt id="jam" size={40} />
+                <span>Kamra</span>
+                <span className="water-btn__count" aria-label={`${pantryCount(progress)} finomság a polcon`}>
+                  {pantryCount(progress)}
+                </span>
+              </button>
+            )}
             <button
               type="button"
-              className={`pantry-btn${canMakeAnything(progress) ? ' is-ready' : ''}`}
+              className="pantry-btn shed-btn"
               onClick={() => {
                 popBubble(2);
-                setPantryOpen(true);
+                setShedOpen(true);
               }}
             >
-              <TreatArt id="jam" size={44} />
-              <span>Kamra</span>
-              <span className="water-btn__count" aria-label={`${pantryCount(progress)} finomság a polcon`}>
-                {pantryCount(progress)}
+              <span className="shed-btn__packet" aria-hidden="true">
+                <SeedPacket id={ownedFlowers(progress).at(-1)!.id} owned />
+              </span>
+              <span>Magtár</span>
+              <span className="water-btn__count" aria-label={`${ownedFlowers(progress).length} virágfajta, ${FLOWERS.length} közül`}>
+                {ownedFlowers(progress).length}
               </span>
             </button>
-          )}
+          </div>
           {thirsty.length > 0 && (
             <button type="button" className="water-btn" onClick={waterThirsty}>
               <CanIcon />
@@ -435,6 +578,45 @@ export function Garden({ onBack }: { onBack: () => void }) {
               </span>
             </button>
           )}
+          {spot !== null ? (
+            <div className="border-options">
+              <h2 className="border-options__title">Szegély: milyen virág legyen?</h2>
+              <div className="border-options__grid">
+                {ownedFlowers(progress).map((f) => {
+                  const now = borderAt(progress, spot);
+                  const here = now === f.id;
+                  const ok = here || canPlantBorder(progress, spot, f.id);
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      className={`border-option${here ? ' is-here' : ''}`}
+                      disabled={!ok}
+                      aria-pressed={here}
+                      onClick={() => chooseBorder(f.id)}
+                      aria-label={`${f.name}${here ? ', ez nyílik itt' : now ? ', csere ingyen' : `, ${BORDER_COST} mag`}`}
+                    >
+                      <FlowerIcon id={f.id} size={40} />
+                      <span className="border-option__name">{f.name}</span>
+                      <span className="plant-option__cost">{now ? (here ? '✓' : 'csere') : <><Seed size={16} />{BORDER_COST}</>}</span>
+                    </button>
+                  );
+                })}
+                {ownedFlowers(progress).length < FLOWERS.length && (
+                  <button
+                    type="button"
+                    className="border-option border-option--shed"
+                    onClick={() => {
+                      popBubble(2);
+                      setShedOpen(true);
+                    }}
+                  >
+                    <span className="border-option__name">Több virág a Magtárban</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
           <div className="plant-options">
             {PLANT_OPTIONS.map((o) => {
               const short = o.cost - balance;
@@ -449,7 +631,7 @@ export function Garden({ onBack }: { onBack: () => void }) {
                     onClick={() => choose(o.id)}
                     aria-label={`${o.name}, ${o.cost} mag${hint ? `. ${hint}` : ''}`}
                   >
-                    <PlantIcon kind={o.id} />
+                    <PlantIcon kind={o.id} flower={ownsFlower(progress, lastFlower) ? lastFlower : FIRST_FLOWER} />
                     <span className="plant-option__name">{o.name}</span>
                     <span className="plant-option__cost">
                       <Seed size={22} />
@@ -462,11 +644,12 @@ export function Garden({ onBack }: { onBack: () => void }) {
             })}
             {selected === null && empty.length > 0 && balance >= CHEAPEST && <p className="plant-options__pick">Koppints egy üres ágyásra!</p>}
           </div>
+          )}
           {/* With both care buttons up the panel is full: the note for grown-ups makes way. */}
           {!(showPantry && thirsty.length > 0) && (
             <p className="kiskert__note">
-              A palánta minden megoldott feladattal nő egy kicsit. A virág 3, a bokor 5, a fa 8 feladat alatt nő ki. A kinőtt bokor és fa
-              termést hoz; néhány feladat után megszomjazik, de sosem hervad el. A termésből a kamrában finomság lesz.
+              Ültetéskor a gyerek egyenként számolja ki a magokat. A palánta minden megoldott feladattal nő egy kicsit; a kinőtt bokor és fa
+              termést hoz, és néhány feladat után megszomjazik, de sosem hervad el. A szegélybe 1 magért kerül virág, a színe ingyen cserélhető.
             </p>
           )}
         </aside>
@@ -481,10 +664,32 @@ export function Garden({ onBack }: { onBack: () => void }) {
         />
       )}
 
+      {sowing && !visitor && (
+        <SowCard
+          kind={sowing}
+          flower={ownsFlower(progress, lastFlower) ? lastFlower : FIRST_FLOWER}
+          onDone={(f) => sown(sowing, f)}
+          onClose={() => {
+            popBubble(1);
+            setSowing(null);
+          }}
+        />
+      )}
+
+      {shedOpen && !visitor && (
+        <FlowerShed
+          onBought={setLastFlower}
+          onClose={() => {
+            popBubble(1);
+            setShedOpen(false);
+          }}
+        />
+      )}
+
       {guest && !visitor && (
         <GiftCard
           id={guest}
-          onGive={() => gave(guest)}
+          onGive={(seeds) => gave(guest, seeds)}
           onClose={() => {
             popBubble(1);
             setGuest(null);
@@ -690,13 +895,200 @@ function wishLine(p: Progress, id: VisitorId): string {
   const { treat } = wishOf(id);
   const ask = `${v.name} ${numberAttr(n)} ${TREAT_WANTED[treat]} kér.`;
   if (canGive(p, id)) return `${ask} Add oda neki!`;
+  // The birds also take a handful of seeds instead.
+  const seeds = seedGiftSize(p, id);
+  const handful = seeds > 0 ? (canGiveSeeds(p, id) ? ` De ${numberAttr(seeds)} magnak is örül!` : ` Vagy ${numberAttr(seeds)} magnak is örül, ha összegyűjtöd.`) : '';
+  if (!recipeOpen(p, treat)) return `${ask} Kalácsot akkor sütünk, ha tele a kert.${handful}`;
   const short = n - treatsOf(p, treat);
-  const later = recipeOpen(p, treat) ? 'Főzz a kamrában!' : 'Kalácsot akkor sütünk, ha tele a kert.';
-  return `${ask} Még ${numberCount(short)} kell. ${later}`;
+  return `${ask} Még ${numberCount(short)} kell. Főzz a kamrában!${handful}`;
+}
+
+/** Counting out the seeds for a planting: a flower's kind is chosen above the tray from the ones the child has. */
+function SowCard({ kind, flower, onDone, onClose }: { kind: PlantKind; flower: FlowerId; onDone: (f: FlowerId) => void; onClose: () => void }) {
+  const { progress } = useProgress();
+  const modal = useModal<HTMLDivElement>(onClose);
+  const option = PLANT_OPTIONS.find((o) => o.id === kind)!;
+  const owned = ownedFlowers(progress);
+  const [pick, setPick] = useState<FlowerId>(flower);
+  const [counted, setCounted] = useState(0);
+  const balance = seedBalance(progress);
+  const what = kind === 'flower' ? flowerOf(pick).name : option.name;
+  const intro = `Tegyünk ${numberAttr(option.cost)} magot a földbe! Koppints a zsákra.`;
+  const line = counted === 0 ? intro : counted >= option.cost ? `${capitalize(numberCount(counted))}! Elültettük!` : `${capitalize(numberCount(counted))}!`;
+
+  useEffect(() => {
+    speak(intro);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once per visit.
+  }, []);
+
+  return (
+    <div ref={modal} className="pantry sow" role="dialog" aria-modal="true" aria-labelledby="sow-title">
+      <div className="pantry__card">
+        <header className="pantry__top">
+          <RoundButton label="Vissza a kertbe, a magok a zsákban maradnak" onClick={onClose}>
+            <BackIcon />
+          </RoundButton>
+          <h2 id="sow-title" className="pantry__title">
+            {what}
+          </h2>
+          <div className="pill pill--basket" aria-label={`${balance - counted} mag a zsákban`}>
+            <Seed size={26} />
+            <span>{balance - counted}</span>
+          </div>
+        </header>
+
+        <GuideSay world="garden" mood="cheer" tone={counted >= option.cost ? 'good' : 'plain'} text={line} />
+
+        {kind === 'flower' && owned.length > 1 && (
+          <div className="sow__kinds" role="group" aria-label="Milyen virág legyen?">
+            {owned.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                className={`sow__kind${pick === f.id ? ' is-on' : ''}`}
+                aria-pressed={pick === f.id}
+                disabled={counted > 0}
+                onClick={() => {
+                  popBubble(1);
+                  setPick(f.id);
+                  speak(f.name);
+                }}
+              >
+                <FlowerIcon id={f.id} size={34} />
+                {f.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="sow__stage">
+          <span className="sow__plant" aria-hidden="true">
+            <PlantIcon kind={kind} flower={pick} />
+          </span>
+          <SeedCount cost={option.cost} balance={balance} label={what} onCount={setCounted} onDone={() => onDone(pick)} />
+        </div>
+        <p className="sow__help">Koppints a zsákra vagy a lyukakra. Ha visszalépsz, minden mag a zsákban marad.</p>
+      </div>
+    </div>
+  );
+}
+
+/** Magtár: packets of flower seeds, each bought once for good by counting its seeds in. */
+function FlowerShed({ onBought, onClose }: { onBought: (f: FlowerId) => void; onClose: () => void }) {
+  const { progress, update } = useProgress();
+  const modal = useModal<HTMLDivElement>(onClose);
+  const balance = seedBalance(progress);
+  const intro = ownedFlowers(progress).length === FLOWERS.length ? 'Minden virágmagod megvan! Nézd, milyen szépek.' : 'Melyik virág magját vegyük meg? Koppints egy zacskóra!';
+  const [line, setLine] = useState(intro);
+  // The packet whose seeds are being counted in, and the one just bought (it pops once).
+  const [buying, setBuying] = useState<FlowerId | null>(null);
+  const [fresh, setFresh] = useState<FlowerId | null>(null);
+
+  useEffect(() => {
+    speak(intro);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once per visit.
+  }, []);
+
+  const tell = (text: string, speech = text) => {
+    setLine(text);
+    speak(speech);
+  };
+
+  const tap = (id: FlowerId) => {
+    const f = flowerOf(id);
+    popBubble(1);
+    if (ownsFlower(progress, id)) {
+      setBuying(null);
+      tell(`Megvan a ${f.name.toLowerCase()}magod! Ültethetsz belőle.`, `Megvan a ${f.name.toLowerCase()}magod! Ültethetsz belőle az ágyásba vagy a szegélybe.`);
+      return;
+    }
+    if (!canBuyFlower(progress, id)) {
+      setBuying(null);
+      const short = f.cost - balance;
+      tell(`Ehhez még ${short} mag kell.`, `A ${f.name.toLowerCase()}maghoz ${numberAttr(f.cost)} mag kell. Gyűjts még ${short === 1 ? 'egyet' : numberAttr(short)} a játékokban!`);
+      return;
+    }
+    setBuying(id);
+    tell(`Számolj bele ${f.cost} magot!`, `A ${f.name.toLowerCase()}maghoz ${numberAttr(f.cost)} mag kell. Számold bele őket!`);
+  };
+
+  const bought = (id: FlowerId) => {
+    const f = flowerOf(id);
+    fanfare();
+    update((p) => buyFlower(p, id));
+    onBought(id);
+    setBuying(null);
+    setFresh(id);
+    tell(`Megvan a ${f.name.toLowerCase()}mag!`, `Megvan a ${f.name.toLowerCase()}mag! Most már ${f.planted} is ültethetsz.`);
+  };
+
+  const active = buying ? flowerOf(buying) : null;
+  return (
+    <div ref={modal} className="pantry shed" role="dialog" aria-modal="true" aria-labelledby="shed-title">
+      <div className="pantry__card">
+        <header className="pantry__top">
+          <RoundButton label="Vissza a kertbe" onClick={onClose}>
+            <BackIcon />
+          </RoundButton>
+          <h2 id="shed-title" className="pantry__title">
+            Magtár
+          </h2>
+          <div className="pill pill--basket" aria-label={`${balance} mag`}>
+            <Seed size={26} />
+            <span>{balance}</span>
+          </div>
+        </header>
+
+        <GuideSay world="garden" mood="cheer" text={line} />
+
+        <div className="shed__packets">
+          {FLOWERS.map((f) => {
+            const owned = ownsFlower(progress, f.id);
+            const short = f.cost - balance;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                className={`shed__packet${owned ? ' is-owned' : ''}${buying === f.id ? ' is-on' : ''}${!owned && short > 0 ? ' is-later' : ''}`}
+                onClick={() => tap(f.id)}
+                aria-label={`${f.name}${owned ? ', megvan' : `, ${f.cost} mag${short > 0 ? `, még ${short} kell` : ''}`}`}
+              >
+                <span key={fresh === f.id ? 'new' : 'old'} className={fresh === f.id ? 'pop-in' : ''}>
+                  <SeedPacket id={f.id} owned={owned} />
+                </span>
+                <span className="shed__name">{f.name}</span>
+                {owned ? (
+                  <span className="shed__owned">Megvan</span>
+                ) : (
+                  <span className="plant-option__cost">
+                    <Seed size={18} />
+                    {f.cost}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {active && (
+          <div className="shed__count">
+            <SeedCount
+              key={active.id}
+              cost={active.cost}
+              balance={balance}
+              label={`${active.name}mag`}
+              onDone={() => bought(active.id)}
+            />
+          </div>
+        )}
+        {!active && <p className="sow__help">Amit egyszer megvettél, az örökre a tiéd. Az ágyásba és a szegélybe is ültethetsz belőle.</p>}
+      </div>
+    </div>
+  );
 }
 
 /** A visitor's corner: the gift they ask for next, counted out from the shelf, and the three things they make in return. */
-function GiftCard({ id, onGive, onClose }: { id: VisitorId; onGive: () => void; onClose: () => void }) {
+function GiftCard({ id, onGive, onClose }: { id: VisitorId; onGive: (seeds: boolean) => void; onClose: () => void }) {
   const { progress } = useProgress();
   const modal = useModal<HTMLDivElement>(onClose);
   const v = VISITORS.find((x) => x.id === id)!;
@@ -706,6 +1098,9 @@ function GiftCard({ id, onGive, onClose }: { id: VisitorId; onGive: () => void; 
   const made = decorOf(progress, id).length;
   const [line, setLine] = useState(() => wishLine(progress, id));
   const [fresh, setFresh] = useState(-1);
+  // Counting a handful of seeds out for a bird.
+  const [counting, setCounting] = useState(false);
+  const seeds = seedGiftSize(progress, id);
 
   useEffect(() => {
     speak(line);
@@ -724,11 +1119,25 @@ function GiftCard({ id, onGive, onClose }: { id: VisitorId; onGive: () => void; 
       return;
     }
     const counted = Array.from({ length: n }, (_, k) => capitalize(numberCount(k + 1))).join('! ');
+    thanks(false, `${counted}! `);
+  };
+
+  const thanks = (bySeeds: boolean, counted: string) => {
     const decor = wish.decor[made];
     fanfare();
     setFresh(made);
-    onGive();
-    tell(`${v.name} köszöni! Készített neked valamit.`, `${counted}! ${v.name} köszöni. Nézd, mit készített neked: egy ${decor.name.toLowerCase()}!`);
+    onGive(bySeeds);
+    tell(`${v.name} köszöni! Készített neked valamit.`, `${counted}${v.name} köszöni. Nézd, mit készített neked: egy ${decor.name.toLowerCase()}!`);
+  };
+
+  const offerSeeds = () => {
+    popBubble(1);
+    if (!canGiveSeeds(progress, id)) {
+      tell(`${v.name} ${numberAttr(seeds)} magnak örülne. Még ${seeds - seedBalance(progress)} kell.`);
+      return;
+    }
+    setCounting(true);
+    tell(`Számolj ki ${seeds} magot!`, `Számolj ki ${numberAttr(seeds)} magot ${v.name === 'Rigó' ? 'a rigónak' : `${v.name}nak`}! Koppints a zsákra.`);
   };
 
   return (
@@ -753,7 +1162,19 @@ function GiftCard({ id, onGive, onClose }: { id: VisitorId; onGive: () => void; 
           <div className="gift__guest" aria-hidden="true">
             <VisitorArt id={id} width={180} />
           </div>
-          {n > 0 && (
+          {counting && seeds > 0 && (
+            <SeedCount
+              cost={seeds}
+              balance={seedBalance(progress)}
+              label={`${numberAttr(seeds)} mag ${v.name} ajándékának`}
+              onCount={(k) => setLine(`${capitalize(numberCount(k))}!`)}
+              onDone={() => {
+                setCounting(false);
+                thanks(true, '');
+              }}
+            />
+          )}
+          {!counting && n > 0 && (
             <button type="button" className={`gift__offer${canGive(progress, id) ? ' is-ready' : ''}`} onClick={offer} aria-label={`Odaadom: ${n} ${recipeOf(wish.treat).name.toLowerCase()}. A polcon ${have} van.`}>
               <span className="gift__treats" aria-hidden="true">
                 {Array.from({ length: n }, (_, k) => (
@@ -762,8 +1183,29 @@ function GiftCard({ id, onGive, onClose }: { id: VisitorId; onGive: () => void; 
                   </span>
                 ))}
               </span>
-              <span className="gift__label">Odaadom!</span>
+              <span className="gift__label">{recipeOpen(progress, wish.treat) ? 'Odaadom!' : 'Ha tele a kert'}</span>
             </button>
+          )}
+          {!counting && n > 0 && eatsSeeds(id) && (
+            <>
+              <span className="gift__or">vagy</span>
+              <button
+                type="button"
+                className={`gift__offer${canGiveSeeds(progress, id) ? ' is-ready' : ''}`}
+                onClick={offerSeeds}
+                aria-label={`Egy marék mag: ${seeds} mag. A zsákban ${seedBalance(progress)} van.`}
+              >
+                <span className="gift__name-big">Egy marék mag</span>
+                <span className="gift__seeds" aria-hidden="true">
+                  {Array.from({ length: seeds }, (_, k) => (
+                    <span key={k} className={`pantry__thing${k < seedBalance(progress) ? '' : ' is-missing'}`}>
+                      <Seed size={26} />
+                    </span>
+                  ))}
+                </span>
+                <span className="gift__label">Odaadom!</span>
+              </button>
+            </>
           )}
         </div>
 

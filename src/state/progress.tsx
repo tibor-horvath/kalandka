@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../worlds/garden/games/add/logic';
 import type { GameId } from './games';
-import { carryOverStickers, markEarnedSeen, type Bed, type TreatId, type VisitorId } from './rewards';
+import { carryOverStickers, markEarnedSeen, type Bed, type FlowerId, type TreatId, type VisitorId } from './rewards';
 import type { PartSlot } from './robotParts';
 import type { Ladder, LadderGame } from './ladder';
 import type { PracticePay } from './pod';
@@ -17,6 +17,10 @@ export interface Progress {
   seedsSpent: number;
   /** The Kiskert's beds (see BEDS in rewards.ts); null is an empty bed. */
   beds: (Bed | null)[];
+  /** Flower kinds bought in the Magtár, for good; Mályva is every child's and is not listed (see FLOWERS in rewards.ts). */
+  flowersOwned: FlowerId[];
+  /** The Kiskert's border flowers, ten in front of each open plot (see the border section in rewards.ts); null is an empty spot. */
+  border: (FlowerId | null)[];
   /** Fruit picked in the Kiskert, kept for good (see the care section in rewards.ts). */
   pears: number;
   berries: number;
@@ -161,6 +165,8 @@ export const DEFAULT_PROGRESS: Progress = {
   gardenTasks: 0,
   seedsSpent: 0,
   beds: [],
+  flowersOwned: [],
+  border: [],
   pears: 0,
   berries: 0,
   pearsUsed: 0,
