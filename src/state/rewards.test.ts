@@ -31,6 +31,7 @@ import {
   pageReward,
   markStickerSeen,
   newStickers,
+  todaysStickers,
   newVisitor,
   visitorProgress,
   pagesDoneIn,
@@ -271,6 +272,18 @@ describe('stickers', () => {
     p = markStickerSeen(p, 'learn-5');
     expect(newStickers(p)).toEqual([]);
     expect(markStickerSeen(p, 'learn-5')).toBe(p);
+  });
+
+  it('lists the day’s stickers newest first, the uncelebrated ones before the rest', () => {
+    let p: Progress = { ...DEFAULT_PROGRESS, learnSolved: 5 };
+    p = markStickerSeen(p, 'learn-5', '2026-11-06');
+    expect(todaysStickers(p, '2026-11-07')).toEqual([]);
+    p = solvedUpTo('path', 0, { ...p, learnSolved: 10 });
+    p = markStickerSeen(p, 'learn-10', '2026-11-07');
+    expect(todaysStickers(p, '2026-11-07').map((s) => s.id)).toEqual(['path-level-1', 'learn-10']);
+    p = markStickerSeen(p, 'path-level-1', '2026-11-07');
+    expect(p.stickersToday).toEqual(['learn-10', 'path-level-1']);
+    expect(todaysStickers(p, '2026-11-07').map((s) => s.id)).toEqual(['path-level-1', 'learn-10']);
   });
 
   it('files away stickers from a jump in progress without a celebration', () => {
