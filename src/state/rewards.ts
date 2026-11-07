@@ -603,7 +603,10 @@ export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
   water: [
     { from: 0, mark: '1', label: 'Első virág', praise: 'Kinőtt az első virágod!', legacy: ['water-1'] },
     { from: 1, mark: '10', label: 'Tízes keret', praise: 'Már tíz cseppig locsolsz!', legacy: ['water-10'] },
-    { from: 2, mark: '20', label: 'Két keret', praise: 'Már húsz cseppig locsolsz!', legacy: ['water-20'] }
+    { from: 2, mark: '20', label: 'Két keret', praise: 'Már húsz cseppig locsolsz!', legacy: ['water-20'] },
+    { from: 3, mark: '+', label: 'Továbbszámolás', praise: 'Már tovább tudsz számolni!' },
+    { from: 4, mark: '10+', label: 'Tízen át', praise: 'Már a tízesen is átlocsolsz!' },
+    { from: 5, mark: '2, 4', label: 'Kettesével', praise: 'Már kettesével is számolsz!' }
   ],
   patterns: [
     { from: 0, mark: 'AB', label: 'Kettes sor', praise: 'Folytattad az első virágsort!', legacy: ['patterns-ab'] },

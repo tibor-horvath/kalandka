@@ -136,6 +136,9 @@ h1, h2, p { margin: 0; }
 .slot--extra { background: var(--oops-tint); border-color: var(--oops); }
 .slot--target { background: var(--paper); border-color: #6fa8dc; border-style: dashed; }
 .slot--empty { background: #f1f4f2; border-color: #f1f4f2; }
+/* Drops that were there when the plant came: paler and still, so the child counts on from them. */
+.slot--given { background: #eef4fa; border-color: #a9c9e6; cursor: default; }
+.slot--given svg { opacity: 0.55; animation: none; }
 .slot svg { animation: pop 0.3s cubic-bezier(.34, 1.56, .64, 1); }
 .panel .guide .bubble { flex: 1; --bubble-bg: #f3f7f4; }
 .panel .guide .bubble--good { --bubble-bg: var(--good-tint); }
