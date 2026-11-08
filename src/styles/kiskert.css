@@ -1,0 +1,258 @@
+/*
+ * Kiskertem, redesigned: one job per view. A plot (or the Rét) fills the width; Csepi and the tabs sit above it,
+ * and below it a dock with the garden's places, which gives way to a sheet while a bed, a border spot or a
+ * Veteményes spot is chosen. Tablet first; the phone layouts follow at the end of this file.
+ */
+
+.kk { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 4px 40px 18px; }
+
+/* ---------- top: tabs and Csepi ---------- */
+.kk__bar { flex: none; display: flex; align-items: center; gap: 20px; }
+.kk__bar .guide-say { flex: 1; min-width: 0; justify-content: flex-end; }
+.kk__bar .guide-say .guide { flex: 0 1 auto; }
+.kk__bar .guide-say .bubble { font-size: 20px; padding: 10px 16px; }
+.kk-tabs { flex: none; display: flex; gap: 6px; padding: 6px; border-radius: 30px; background: var(--paper); box-shadow: 0 4px 0 var(--grass-deep); }
+.kk-tab { height: 48px; padding: 0 20px; border: none; border-radius: 24px; background: transparent; color: var(--leaf-deep); display: inline-flex; align-items: center; gap: 8px; font-size: 21px; font-weight: 800; cursor: pointer; }
+.kk-tab.is-on { background: var(--leaf); color: var(--paper); }
+.kk-tab:disabled { cursor: default; }
+.kk-tab:disabled:not(.is-on) { opacity: 0.5; }
+.kk-tab--ret { padding: 0 14px 0 12px; }
+.kk-tab__count { min-width: 28px; height: 28px; padding: 0 6px; border-radius: 14px; background: var(--good-tint); color: var(--leaf-deep); display: grid; place-items: center; font-size: 16px; }
+.kk-tab.is-on .kk-tab__count { background: var(--paper); }
+.kk-tab__count.is-waiting { background: var(--sun); color: var(--ink); }
+
+/* ---------- a plot ---------- */
+.kk-field { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.kk-beds { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 4px 14px; }
+.kk-beds .kbed { padding-bottom: 8px; }
+.kk-beds .gplant { max-height: 150px; }
+.kk-beds .kbed__soil { max-width: 120px; height: 24px; margin-top: -10px; }
+.kk-beds .kbed__plus { width: 44px; height: 44px; margin-bottom: 12px; }
+.kk-beds .kbed__growth span { width: 10px; height: 10px; }
+.kk-beds .kbed:disabled { cursor: default; }
+
+/* Calm: plants stand still; a tap makes one sway once. */
+.kk .kbed .gplant { animation: none; }
+
+/* Thirst shows in the plant itself (paler leaves) and the soil: lighter, with a small drop at its edge. */
+.kk-beds .kbed.is-thirsty .kbed__soil { background: #c49a6c; box-shadow: inset 0 -4px 0 #a57b52; }
+.kk-beds .kbed__thirst { top: auto; bottom: 4px; right: 12%; width: 30px; height: 30px; border-width: 3px; animation: none; }
+.kk-beds .kbed__thirst svg { width: 12px; }
+
+/* Guests on the flowers: they sit still; a tap on their flower makes them hop once. */
+.kbed__guest { position: absolute; z-index: 2; top: 2px; right: 16%; display: inline-flex; transform-origin: 50% 100%; pointer-events: none; }
+.kbed__guest--butterfly { right: auto; left: 16%; top: 8px; }
+.kbed__guest.is-poked { animation: visitor-happy 0.7s cubic-bezier(.3, 1.4, .5, 1); }
+.kbed__guest.is-landing, .kborder__bee.is-landing { animation: bee-land 0.6s ease-out both; }
+.kbed.is-visited, .kborder__spot.is-visited { background: rgba(255, 244, 209, 0.85); box-shadow: inset 0 0 0 4px var(--sun); }
+.kborder__bee { position: absolute; z-index: 2; top: -10px; right: 0; display: inline-flex; pointer-events: none; }
+@keyframes bee-land { from { transform: translate(-40px, -50px) rotate(-20deg); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* The front row: the flower border (ten) and the Veteményes (five). */
+.kk-front { position: relative; flex: none; display: flex; gap: 14px; }
+.kk-front .kborder { flex: 2 1 0; min-width: 0; height: 70px; }
+.kveg { position: relative; flex: 1 1 0; min-width: 0; height: 70px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 0 6px; border-radius: 16px; background: #b98b5e; box-shadow: inset 0 -6px 0 #8a5a3b; }
+.kveg__spot { position: relative; min-width: 0; height: 100%; padding: 0 0 8px; border: none; border-radius: 12px; background: transparent; display: flex; align-items: flex-end; justify-content: center; cursor: pointer; }
+.kveg__spot.is-selected { background: rgba(255, 255, 255, 0.55); box-shadow: inset 0 0 0 4px var(--drop); }
+.kveg__spot:disabled { cursor: default; }
+.kveg__art { display: inline-flex; width: 100%; max-width: 64px; }
+.kveg__art .veg-art { width: 100%; height: auto; display: block; }
+.kveg__art--2 .veg-art { clip-path: inset(0 30% 0 0); }
+.kveg__art--1 .veg-art { clip-path: inset(0 60% 0 0); }
+.kveg__plus { width: 32px; height: 32px; margin-bottom: 4px; border-radius: 50%; background: rgba(255, 255, 255, 0.65); color: #6b4a2b; display: grid; place-items: center; }
+.kveg__spot.is-selected .kveg__plus { background: var(--drop); color: var(--paper); }
+/* Who is eating stands over the patch; every bite squashes it once. */
+.kveg__eater { position: absolute; z-index: 3; right: 8px; bottom: 58px; display: inline-flex; pointer-events: none; }
+.kveg__chew { display: inline-flex; transform-origin: 50% 100%; animation: chew 0.45s ease-out; }
+@keyframes chew { 0% { transform: none; } 40% { transform: scale(1.06, 0.92); } 100% { transform: none; } }
+.kk-count { position: absolute; z-index: 4; top: 8px; left: 50%; width: 96px; height: 96px; margin-left: -48px; border-radius: 50%; background: var(--paper); border: 5px solid var(--sun); display: grid; place-items: center; font-size: 52px; font-weight: 800; color: var(--leaf-deep); }
+
+/*
+ * ---------- the Rét ----------
+ * One meadow, reaching to the screen's edges, with a home for each of the twelve visitors in staggered rows of
+ * four. A home scales with its cell (container units): a light clearing, the animal in the middle, its
+ * decorations around it, and its name on a pill below.
+ */
+.kk-ret { flex: 1; min-height: 0; margin: 0 -40px -18px; padding: 24px 56px 16px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 6px 26px; background: #a6d676; border-radius: 50% 50% 0 0 / 36px 36px 0 0; }
+.kk-home { position: relative; min-width: 0; min-height: 0; padding: 0; border: none; background: transparent; container-type: size; cursor: pointer; }
+.kk-home:nth-child(-n+4), .kk-home:nth-child(n+9) { transform: translateX(-16px); }
+.kk-home:nth-child(n+5):nth-child(-n+8) { transform: translateX(16px); }
+.kk-home__clearing { position: absolute; left: 6%; right: 6%; bottom: 17%; height: 30%; border-radius: 50%; background: #c9e8a8; box-shadow: inset 0 -5px 0 #b3db8a; }
+.kk-home__animal { position: absolute; z-index: 2; left: 50%; bottom: 21%; width: min(46%, 72cqh); translate: -50% 0; display: block; transform-origin: 50% 100%; }
+.kk-home__animal .visitor-art { display: block; width: 100%; height: auto; }
+.kk-home__thing { position: absolute; z-index: 1; width: min(22%, 34cqh); display: block; }
+.kk-home__thing .decor-art { display: block; width: 100%; height: auto; }
+.kk-home__thing--0 { left: 5%; bottom: 36%; }
+.kk-home__thing--1 { right: 5%; bottom: 36%; }
+.kk-home__thing--2 { z-index: 3; left: 0; bottom: 13%; }
+.kk-home__thing--3 { z-index: 3; right: 0; bottom: 13%; }
+.kk-home__thing--4 { left: 50%; bottom: 58%; translate: -50% 0; }
+.kk-home__pill { position: absolute; z-index: 4; left: 50%; bottom: 0; translate: -50% 0; height: 34px; padding: 0 12px; border-radius: 17px; background: var(--paper); box-shadow: 0 3px 0 #8cc45e; display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 19px; font-weight: 800; color: var(--leaf-deep); }
+.kk-home.is-waiting .kk-home__pill { background: #ffe08a; box-shadow: 0 0 0 3px #e0a800; }
+.kk-home__dots { display: flex; gap: 3px; }
+.kk-home__dots span { width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; border: 2px solid #6a9f45; }
+.kk-home__dots span.is-given { border: none; background: #e0a800; }
+.kk-home__wants { display: inline-flex; align-items: center; gap: 3px; font-size: 14px; color: var(--oops-ink); }
+.kk-home:active .kk-home__animal { scale: 0.97; }
+.kk-home--next, .kk-home--empty { cursor: default; }
+.kk-home--next .kk-home__clearing { background: transparent; box-shadow: none; border: 3px dashed #4f7f33; }
+.kk-home--next .visitors__next { position: absolute; z-index: 2; left: 50%; bottom: 8%; translate: -50% 0; margin: 0; }
+.kk-home__tuft { position: absolute; left: 50%; bottom: 30%; width: 22%; translate: -50% 0; fill: none; stroke: #6a9f45; stroke-width: 4; stroke-linecap: round; opacity: 0.7; }
+/* The visitors keep still on the Rét; tapping one makes it hop once. */
+.kk-ret .vis-part { animation: none; }
+.kk-kamra { min-height: 56px; padding: 0 12px 0 8px; font-size: 21px; gap: 8px; }
+.kk-kamra .water-btn__count { min-width: 32px; height: 32px; font-size: 17px; }
+
+/* ---------- the dock and the sheet ---------- */
+.kk-dock { flex: none; min-height: 84px; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 8px 14px; border-radius: 26px; background: var(--paper); box-shadow: 0 5px 0 var(--grass-deep); }
+.kk-dock .water-btn, .kk-dock .pantry-btn { min-height: 64px; min-width: 210px; }
+.kk-dock button:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+.kk-sheet { flex: none; display: flex; flex-direction: column; gap: 10px; padding: 14px 20px 18px; border-radius: 26px; background: var(--paper); box-shadow: 0 -4px 20px rgba(16, 35, 58, 0.16), 0 5px 0 var(--grass-deep); animation: sheet-up 0.25s ease-out both; }
+@keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.kk-sheet__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.kk-sheet__title { margin: 0; font-size: 25px; font-weight: 800; color: var(--leaf-deep); }
+.kk-sheet__cancel { height: 48px; padding: 0 22px; border: none; border-radius: 24px; background: #eef3f6; color: var(--ink); font-size: 19px; font-weight: 800; cursor: pointer; }
+.kk-sheet__cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.kk-sheet__cards--many { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.kk-card { position: relative; min-height: 78px; padding: 6px 12px 6px 8px; border-radius: 22px; border: 3px solid var(--grass-deep); background: var(--good-tint); color: var(--leaf-deep); box-shadow: 0 4px 0 var(--grass-deep); display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; }
+.kk-card:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--grass-deep); }
+.kk-card:disabled { border-style: dashed; border-color: #c3d3de; background: #f4f7f9; box-shadow: none; color: #4a5e70; cursor: default; transform: none; }
+.kk-card:disabled .gplant-icon, .kk-card:disabled .kk-card__veg { opacity: 0.45; }
+.kk-card.is-here { border-color: var(--drop); background: var(--drop-tint); box-shadow: 0 4px 0 var(--drop-deep); }
+.kk-card--small { min-height: 66px; flex-direction: column; justify-content: center; gap: 2px; padding: 6px 4px 8px; text-align: center; }
+.kk-card--small .kk-card__name { font-size: 17px; }
+.kk-card--shed { border-style: dashed; border-color: #d9b968; background: #fff8e4; color: var(--oops-ink); box-shadow: none; }
+.kk-card__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.kk-card__name { font-size: 24px; font-weight: 800; line-height: 1.05; }
+.kk-card__hint { font-family: var(--body); font-size: 15px; font-weight: 800; color: var(--oops-ink); }
+.kk-card__hint--soft { color: var(--ink-soft); }
+.kk-card__new { position: absolute; top: -12px; right: 14px; height: 26px; padding: 0 10px; border-radius: 13px; background: #b4560b; color: var(--paper); display: grid; place-items: center; font-size: 15px; font-weight: 800; }
+.kk-card__veg { display: inline-flex; width: 56px; flex: none; }
+.kk-card__veg .veg-art { width: 100%; height: auto; }
+.kk-card .gplant-icon { width: 44px; height: 60px; }
+
+/* ---------- cards: basket, sowing, gifts, welcome ---------- */
+.kk-basket { border: none; cursor: pointer; font: inherit; }
+.kbasket__card { width: min(460px, 100%); }
+.kbasket__rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.kbasket__row { display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-radius: 18px; background: #f6ead0; }
+.kbasket__name { flex: 1; font-size: 22px; font-weight: 800; }
+.kbasket__count { min-width: 44px; height: 44px; padding: 0 10px; border-radius: 22px; background: var(--paper); font-size: 24px; font-weight: 800; display: grid; place-items: center; }
+
+.sow__new { margin-left: 2px; padding: 0 8px; border-radius: 10px; background: #b4560b; color: var(--paper); font-size: 13px; line-height: 20px; }
+.sow__plant--veg { width: 120px; }
+.sow__plant--veg .veg-art { width: 100%; height: auto; }
+
+.gift__offers { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.gift__offers .gift__or { align-self: center; }
+.gift__treats--food { flex-wrap: wrap; justify-content: center; max-width: 340px; }
+.gift__decor { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.visitor-pop__art--with { display: flex; align-items: flex-end; gap: 28px; }
+.visitor-pop__packet { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.visitor-pop__packet .seed-packet { width: 110px; height: 134px; }
+.visitor-pop__new { padding: 2px 14px; border-radius: 999px; background: #b4560b; color: var(--paper); font-size: 17px; font-weight: 800; }
+.visitor-pop__brought { position: relative; margin: 0; font-size: 30px; font-weight: 800; color: var(--oops-ink); }
+.done-pop__all { flex-wrap: wrap; justify-content: center; max-width: 720px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .kk-sheet, .kbed__guest, .kborder__bee, .kveg__chew { animation: none !important; }
+}
+
+/* ---------- phones ---------- */
+.is-phone .kk { padding: 4px 12px 12px; gap: 8px; }
+.is-phone .kk__bar { gap: 8px; }
+.is-phone .kk-tab { height: 40px; padding: 0 12px; font-size: 16px; }
+.is-phone .kk-tab__count { min-width: 22px; height: 22px; font-size: 13px; }
+.is-phone .kk-dock { min-height: 0; padding: 6px 8px; gap: 8px; border-radius: 18px; }
+.is-phone .kk-dock .water-btn, .is-phone .kk-dock .pantry-btn { min-width: 0; min-height: 48px; padding: 0 10px; font-size: 18px; border-radius: 16px; gap: 6px; }
+.is-phone .kk-dock .treat-art { width: 30px; height: 30px; }
+.is-phone .kk-sheet { padding: 10px 12px 12px; gap: 8px; border-radius: 18px; }
+.is-phone .kk-sheet__title { font-size: 18px; }
+.is-phone .kk-sheet__cancel { height: 40px; padding: 0 14px; font-size: 16px; }
+.is-phone .kk-card { min-height: 0; padding: 6px; gap: 2px; flex-direction: column; text-align: center; border-radius: 16px; }
+.is-phone .kk-card__name { font-size: 16px; }
+.is-phone .kk-card__hint { font-size: 12px; }
+.is-phone .kk-card .gplant-icon { width: 30px; height: 41px; }
+.is-phone .kk-sheet__cards { gap: 8px; }
+.is-phone .kk-count { width: 64px; height: 64px; margin-left: -32px; font-size: 34px; border-width: 4px; }
+.is-phone .kveg__eater .visitor-art { width: 70px; height: 58px; }
+.is-phone .kk-home__pill { height: 26px; padding: 0 8px; gap: 5px; font-size: 14px; box-shadow: 0 2px 0 #8cc45e; }
+.is-phone .kk-home__dots span { width: 7px; height: 7px; border-width: 1.5px; }
+.is-phone .kk-home__wants { font-size: 12px; }
+.is-phone .kk-kamra { min-height: 48px; font-size: 16px; padding: 0 10px 0 6px; }
+.is-phone .kk-kamra .treat-art { width: 26px; height: 26px; }
+.is-phone .kk-kamra .water-btn__count { min-width: 24px; height: 24px; font-size: 13px; }
+/* Upright phones: the Kamra shows its jar and count only, so it fits on the tabs' row. */
+.stage--portrait .kk-kamra > span:nth-child(2) { display: none; }
+.is-phone .visitor-pop__packet .seed-packet { width: 70px; height: 85px; }
+.is-phone .visitor-pop__brought { font-size: 22px; }
+
+.stage--portrait .kk__bar { flex-wrap: wrap; justify-content: center; gap: 8px; }
+.stage--portrait .kk__bar .guide-say { flex: 1 1 100%; justify-content: flex-start; }
+.stage--portrait .kk-beds { gap: 2px 4px; }
+.stage--portrait .kk-beds .kbed__soil { height: 14px; margin-top: -6px; }
+.stage--portrait .kk-beds .kbed__plus { width: 30px; height: 30px; margin-bottom: 6px; }
+.stage--portrait .kk-beds .kbed__plus svg { width: 16px; height: 16px; }
+.stage--portrait .kk-beds .kbed__growth span { width: 7px; height: 7px; }
+.stage--portrait .kk-front { flex-direction: column; gap: 6px; }
+.stage--portrait .kk-front .kborder, .stage--portrait .kveg { flex: none; height: 46px; }
+.stage--portrait .kk-sheet__cards--many { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* Portrait dock: three equal buttons, the picture over the word and the count as a badge in the corner. */
+.stage--portrait .kk-dock .water-btn, .stage--portrait .kk-dock .pantry-btn { position: relative; flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: center; gap: 0; padding: 4px 4px 6px; font-size: 15px; }
+.stage--portrait .kk-dock .water-btn > span:nth-child(2) { flex: none; text-align: center; }
+.stage--portrait .kk-dock .water-btn svg, .stage--portrait .kk-dock .treat-art { width: 26px; height: 26px; }
+.stage--portrait .kk-dock .shed-btn__packet .seed-packet { width: 22px; height: 27px; }
+.stage--portrait .kk-dock .water-btn__count { position: absolute; top: -8px; right: -4px; min-width: 24px; height: 24px; padding: 0 5px; font-size: 13px; box-shadow: 0 0 0 2px currentColor; }
+/* Portrait Rét: two homes to a row, staggered, and the meadow scrolls. */
+.stage--portrait .kk-ret { margin: 0 -12px -12px; padding: 18px 16px 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: 150px; overflow-y: auto; overscroll-behavior: contain; gap: 4px 14px; border-radius: 50% 50% 0 0 / 24px 24px 0 0; }
+.stage--portrait .kk-home { transform: none; }
+.stage--portrait .kk-home:nth-child(4n+1), .stage--portrait .kk-home:nth-child(4n+2) { transform: translateX(-6px); }
+.stage--portrait .kk-home:nth-child(4n+3), .stage--portrait .kk-home:nth-child(4n+4) { transform: translateX(6px); }
+
+/*
+ * Phone held sideways: Csepi is a one-line strip, and the tabs and the dock move into a rail on the right, so
+ * the beds get the height (about 80px each instead of 50px).
+ */
+.stage--landscape .kk { display: grid; grid-template-columns: minmax(0, 1fr) 92px; grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "main tabs" "main dock"; gap: 6px 10px; padding: 2px 0 8px; }
+.stage--landscape .kk__bar { display: contents; }
+/* Csepi's line sits in the top bar, between the title and the counters. */
+.stage--landscape .kk__bar .guide-say { position: absolute; z-index: 3; top: -50px; left: 184px; right: 175px; height: 44px; justify-content: flex-start; gap: 6px; }
+.stage--landscape .screen--garden .screen-title { text-align: left; }
+.stage--landscape .kk__bar .guide-say .guide { flex: 1 1 auto; min-width: 0; }
+.stage--landscape .kk__bar .guide-say .guide__csepi { display: none; }
+.stage--landscape .kk__bar .guide-say .bubble { min-width: 0; font-size: 14px; padding: 6px 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stage--landscape .kk__bar .guide-say .bubble::before { display: none; }
+.stage--landscape .kk__bar .guide-say .round-btn { width: 44px; height: 44px; margin: -6px 0; }
+.stage--landscape .kk-field, .stage--landscape .kk-ret { grid-area: main; }
+.stage--landscape .kk-tabs { grid-area: tabs; flex-direction: column; gap: 3px; padding: 4px; border-radius: 16px; box-shadow: 0 3px 0 var(--grass-deep); }
+.stage--landscape .kk-tab { height: 44px; padding: 0 4px; justify-content: center; gap: 4px; border-radius: 12px; font-size: 14px; }
+.stage--landscape .kk-tab--ret svg { display: none; }
+.stage--landscape .kk-tab__count { min-width: 20px; height: 20px; font-size: 11px; }
+.stage--landscape .kk-dock { grid-area: dock; min-height: 0; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 6px; padding: 6px 4px; border-radius: 16px; box-shadow: 0 3px 0 var(--grass-deep); }
+.stage--landscape .kk-dock .water-btn, .stage--landscape .kk-dock .pantry-btn { position: relative; flex: 1 1 0; max-height: 64px; min-height: 44px; min-width: 0; flex-direction: column; justify-content: center; gap: 0; padding: 2px; border-radius: 12px; font-size: 12px; box-shadow: none; }
+.stage--landscape .kk-dock .water-btn > span:nth-child(2) { flex: none; text-align: center; }
+.stage--landscape .kk-dock .water-btn svg, .stage--landscape .kk-dock .treat-art { width: 22px; height: 22px; }
+.stage--landscape .kk-dock .shed-btn__packet .seed-packet { width: 18px; height: 22px; }
+.stage--landscape .kk-dock .water-btn__count { position: absolute; top: -6px; right: -2px; min-width: 20px; height: 20px; padding: 0 4px; font-size: 11px; box-shadow: 0 0 0 2px currentColor; }
+.stage--landscape .kk-sheet { grid-area: main; align-self: end; z-index: 5; padding: 8px 10px 10px; gap: 6px; }
+.stage--landscape .kk-sheet__title { font-size: 16px; }
+.stage--landscape .kk-sheet__cancel { height: 44px; }
+.stage--landscape .kk-card { min-height: 56px; flex-direction: row; text-align: left; }
+.stage--landscape .kk-card--small { flex-direction: column; text-align: center; }
+.stage--landscape .kk-count { width: 56px; height: 56px; margin-left: -28px; font-size: 30px; }
+.stage--landscape .kk-beds { gap: 0 8px; }
+.stage--landscape .kk-beds .kbed__soil { height: 12px; margin-top: -6px; }
+.stage--landscape .kk-beds .kbed__plus { width: 26px; height: 26px; margin-bottom: 4px; }
+.stage--landscape .kk-beds .kbed__growth span { width: 6px; height: 6px; }
+.stage--landscape .kk-front .kborder, .stage--landscape .kveg { height: 40px; }
+.stage--landscape .kk-ret { margin: 0; padding: 10px 14px 4px; gap: 2px 12px; border-radius: 50% 50% 16px 16px / 20px 20px 16px 16px; }
+.stage--landscape .kk-home:nth-child(-n+4), .stage--landscape .kk-home:nth-child(n+9) { transform: translateX(-6px); }
+.stage--landscape .kk-home:nth-child(n+5):nth-child(-n+8) { transform: translateX(6px); }
+.stage--landscape .kk-home__pill { height: 22px; font-size: 12px; padding: 0 6px; gap: 3px; }
+.stage--landscape .kk-home__dots { gap: 2px; }
+.stage--landscape .kk-home__dots span { width: 5px; height: 5px; border-width: 1px; }
+.stage--landscape .kk-home--next .visitors__next { scale: 0.7; transform-origin: 50% 100%; }
+/* On the Rét the rail's lower half holds the Kamra. */
+.stage--landscape .kk-kamra { grid-area: dock; align-self: start; min-height: 64px; flex-direction: column; justify-content: center; gap: 0; padding: 4px; border-radius: 16px; font-size: 13px; }

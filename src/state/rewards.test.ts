@@ -336,9 +336,9 @@ describe('stickers', () => {
     const once = markPageDone(DEFAULT_PROGRESS, 'learn.1.0.n.7.0', 9);
     expect(markPageDone(once, 'learn.1.0.n.7.0', 9)).toBe(once);
     expect(pagesDoneIn(once, 'garden')).toBe(1);
-    expect(once).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['learn.1.0.n.7.0'], gardenTasks: 9, seeds: 2 });
+    expect(once).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['learn.1.0.n.7.0'], gardenTasks: 9, seeds: 4 });
     expect(markPageDone(DEFAULT_PROGRESS, 'code.1.0.b.3.1', 4)).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['code.1.0.b.3.1'], robotTasks: 4, bolts: 1 });
-    // A part-filled pod: three tasks already in it, so a two-task page pays one.
+    // A part-filled pod: half of it full already, so a two-task page pays one.
     const filled = { ...DEFAULT_PROGRESS, gardenTasks: 3 };
     expect(pageReward(filled, 'water.1.0.n.7.0', 2)).toEqual({ seeds: 1, bolts: 0 });
     expect(markPageDone(filled, 'water.1.0.n.7.0', 2)).toMatchObject({ gardenTasks: 5, seeds: 1 });

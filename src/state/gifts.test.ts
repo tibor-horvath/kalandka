@@ -19,28 +19,28 @@ import {
 
 /** A garden where every visitor has been welcomed, with these treats on the shelf. */
 const shelf = (pantry: Progress['pantry'], extra: Partial<Progress> = {}): Progress => {
-  const beds = Array.from({ length: 20 }, () => ({ kind: 'flower' as const, at: 0 }));
+  const beds = Array.from({ length: 30 }, () => ({ kind: 'flower' as const, at: 0 }));
   return { ...DEFAULT_PROGRESS, seeds: 100, gardenTasks: 100, beds, visitorsSeen: VISITORS.length, pantry, ...extra };
 };
 
 describe('visitor gifts', () => {
-  it('has a wish with three decorations for every visitor, all different', () => {
+  it('has a wish with five decorations for every visitor, all different', () => {
     expect(WISHES.map((w) => w.visitor)).toEqual(VISITORS.map((v) => v.id));
     const ids = WISHES.flatMap((w) => w.decor.map((d) => d.id));
     expect(ids).toHaveLength(VISITORS.length * GIFTS_EACH);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('asks for one treat, then two, then three', () => {
-    let p = shelf({ jam: 10 });
+  it('asks for one treat, then two, up to five', () => {
+    let p = shelf({ jam: 20 });
     expect(giftSize(p, 'hedgehog')).toBe(1);
     p = give(p, 'hedgehog');
-    expect(treatsOf(p, 'jam')).toBe(9);
+    expect(treatsOf(p, 'jam')).toBe(19);
     expect(giftSize(p, 'hedgehog')).toBe(2);
     p = give(p, 'hedgehog');
-    expect(treatsOf(p, 'jam')).toBe(7);
-    p = give(p, 'hedgehog');
-    expect(treatsOf(p, 'jam')).toBe(4);
+    expect(treatsOf(p, 'jam')).toBe(17);
+    p = give(give(give(p, 'hedgehog'), 'hedgehog'), 'hedgehog');
+    expect(treatsOf(p, 'jam')).toBe(5);
     expect(giftsOf(p, 'hedgehog')).toBe(GIFTS_EACH);
     expect(giftSize(p, 'hedgehog')).toBe(0);
     expect(give(p, 'hedgehog')).toBe(p);
@@ -61,7 +61,9 @@ describe('visitor gifts', () => {
     const later = give(give(p, 'hedgehog'), 'butterfly');
     expect(giftsOf(later, 'butterfly')).toBe(0);
     // No seeds in the bag, so the birds (who also take a handful of seeds) are not ready.
-    expect(giftsReady(shelf({ jam: 1 }, { seeds: 0 })).map((v) => v.id)).toEqual(['hedgehog', 'butterfly']);
+    // Bushes only, so Méhecske finds no pollen and waits for jam like the others.
+    const bushes = Array.from({ length: 30 }, () => ({ kind: 'bush' as const, at: 0, watered: 100 }));
+    expect(giftsReady(shelf({ jam: 1 }, { seeds: 0, beds: bushes })).map((v) => v.id)).toEqual(['hedgehog', 'butterfly', 'bee', 'rabbit']);
   });
 
   it('takes gifts only from visitors already welcomed', () => {
@@ -72,7 +74,8 @@ describe('visitor gifts', () => {
   });
 
   it('is done when every visitor has had every gift, with a sticker for each step', () => {
-    let p = shelf({ jam: 12, pie: 6, loaf: 12, compote: 6 });
+    // Fifteen treats per visitor: jam for four of them, pie and the loaf for three, compote for two.
+    let p = shelf({ jam: 60, pie: 45, loaf: 45, compote: 30 });
     expect(earnedStickers(p).filter((s) => s.game === 'kiskert')).toEqual([]);
     p = give(p, 'hedgehog');
     expect(earnedStickers(p).filter((s) => s.game === 'kiskert').map((s) => s.id)).toEqual(['kiskert-gift']);

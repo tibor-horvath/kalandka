@@ -3,6 +3,7 @@ import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
 import {
   BORDER_SPOTS,
   FLOWERS,
+  PLOT_BEDS,
   VISITORS,
   bedAt,
   bedFlower,
@@ -77,7 +78,7 @@ describe('the border (Szegély)', () => {
 
   it('opens ten spots per open plot', () => {
     expect(openBorder(DEFAULT_PROGRESS)).toBe(BORDER_SPOTS);
-    const firstFull = { beds: Array.from({ length: 10 }, () => ({ kind: 'flower' as const, at: 0 })) };
+    const firstFull = { beds: Array.from({ length: PLOT_BEDS }, () => ({ kind: 'flower' as const, at: 0 })) };
     expect(openBorder(withSeeds(0, firstFull))).toBe(BORDER_SPOTS * 2);
   });
 
@@ -145,7 +146,8 @@ describe('a handful of seeds for the birds', () => {
     p = giveSeeds(giveSeeds(p, 'blackbird'), 'blackbird');
     expect(seedBalance(p)).toBe(17 - 6 - 9);
     expect(giftsOf(p, 'blackbird')).toBe(3);
-    expect(seedGiftSize(p, 'blackbird')).toBe(0);
+    expect(seedGiftSize(p, 'blackbird')).toBe(12);
+    // Two seeds left in the bag: not enough for the fourth handful.
     expect(giveSeeds(p, 'blackbird')).toBe(p);
   });
 

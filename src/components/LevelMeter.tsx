@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { speak } from '../lib/speech';
 import type { LevelMeterState } from '../state/levelMeter';
-import { TASKS_PER_REWARD, podFill, tasksIn } from '../state/pod';
+import { podFill, tasksIn, tasksPerReward } from '../state/pod';
 import { useProgress } from '../state/progress';
 import { seedBalance } from '../state/rewards';
 import { boltBalance } from '../state/robotParts';
@@ -111,17 +111,19 @@ function Stairs({ level, levels, fill, fresh, climbing, mastering, finished }: {
   );
 }
 
-/** The pod's four quarters as ring arcs around the reward, with a small gap between them; the parents' page receipt draws the same pod. */
+/** The pod's parts (halves in the garden, quarters in the workshop) as ring arcs around the reward, with a small gap between them; the parents' page receipt draws the same pod. */
 const POD_R = 17;
 const POD_GAP = 14;
-export const POD_QUARTERS = Array.from({ length: TASKS_PER_REWARD }, (_, i) => {
-  const at = (deg: number) => {
-    const a = ((deg - 90) * Math.PI) / 180;
-    return `${(22 + POD_R * Math.cos(a)).toFixed(2)} ${(22 + POD_R * Math.sin(a)).toFixed(2)}`;
-  };
-  const step = 360 / TASKS_PER_REWARD;
-  return `M ${at(i * step + POD_GAP / 2)} A ${POD_R} ${POD_R} 0 0 1 ${at((i + 1) * step - POD_GAP / 2)}`;
-});
+export function podArcs(parts: number): string[] {
+  return Array.from({ length: parts }, (_, i) => {
+    const at = (deg: number) => {
+      const a = ((deg - 90) * Math.PI) / 180;
+      return `${(22 + POD_R * Math.cos(a)).toFixed(2)} ${(22 + POD_R * Math.sin(a)).toFixed(2)}`;
+    };
+    const step = 360 / parts;
+    return `M ${at(i * step + POD_GAP / 2)} A ${POD_R} ${POD_R} 0 0 1 ${at((i + 1) * step - POD_GAP / 2)}`;
+  });
+}
 
 /** Where an element's middle is inside the bank, for the reward's flight into the total. */
 function middleOf(el: Element | null, bank: HTMLElement): [number, number] {
@@ -141,6 +143,7 @@ function middleOf(el: Element | null, bank: HTMLElement): [number, number] {
 function RewardBank({ world, wait, rested }: { world: World; wait: number; rested: boolean }) {
   const { progress } = useProgress();
   const tasks = tasksIn(progress, world);
+  const parts = tasksPerReward(world);
   const balance = world === 'robot' ? boltBalance(progress) : seedBalance(progress);
   const seen = useRef(tasks);
   const bank = useRef<HTMLSpanElement>(null);
@@ -152,15 +155,15 @@ function RewardBank({ world, wait, rested }: { world: World; wait: number; reste
     seen.current = tasks;
     // A resting pod pays nothing more today, so it has nothing to show.
     if (rested) return;
-    const fill = tasks % TASKS_PER_REWARD;
+    const fill = tasks % parts;
     if (fill !== 0) {
       setFresh({ quarter: fill - 1, paid: false });
       return;
     }
-    setFresh({ quarter: TASKS_PER_REWARD - 1, paid: true });
+    setFresh({ quarter: parts - 1, paid: true });
     const empty = window.setTimeout(() => setFresh(null), wait + PAY_MS);
     return () => window.clearTimeout(empty);
-  }, [tasks, wait, rested]);
+  }, [tasks, wait, rested, parts]);
 
   const paid = !!fresh?.paid;
   useLayoutEffect(() => {
@@ -170,13 +173,13 @@ function RewardBank({ world, wait, rested }: { world: World; wait: number; reste
     setFlight({ '--fx0': `${x0}px`, '--fy0': `${y0}px`, '--fx1': `${x1}px`, '--fy1': `${y1}px`, '--fxm': `${(x0 + x1) / 2}px` } as CSSProperties);
   }, [paid]);
 
-  const filled = rested ? 0 : paid ? TASKS_PER_REWARD : tasks % TASKS_PER_REWARD;
+  const filled = rested ? 0 : paid ? parts : tasks % parts;
   const Icon = world === 'robot' ? MeterBolt : MeterSeed;
   return (
     <span ref={bank} className={`reward-bank${paid ? ' is-paid' : ''}${rested ? ' is-rested' : ''}`} style={{ '--pay-wait': `${wait}ms`, ...flight } as CSSProperties} aria-hidden="true">
       <span className="reward-pod">
         <svg className="reward-pod__ring" viewBox="0 0 44 44">
-          {POD_QUARTERS.map((d, i) => (
+          {podArcs(parts).map((d, i) => (
             <path key={i} d={d} className={`reward-pod__quarter${i < filled ? ' is-full' : ''}${fresh?.quarter === i ? ' is-fresh' : ''}`} />
           ))}
         </svg>
@@ -233,7 +236,7 @@ function TaskPips({ at, of, done }: RoundTasks) {
 export function LevelMeter({ meter, world, justSolved = false, tasks }: { meter: LevelMeterState; world: World; justSolved?: boolean; tasks?: RoundTasks }) {
   const { level, levels, done, rounds, levelUp, mastered = false, finished = false, rested = false } = meter;
   const { progress } = useProgress();
-  const left = TASKS_PER_REWARD - podFill(progress, world);
+  const left = tasksPerReward(world) - podFill(progress, world);
   const balance = world === 'robot' ? `${boltBalance(progress)} csavarod` : `${seedBalance(progress)} magod`;
   const reward = world === 'robot' ? 'csavarig' : 'magig';
 
