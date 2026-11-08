@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GAME_IDS, GAMES, LADDER_GAMES, creditSolve, gamesIn, isGameId, nextRound, roundOf, solvedOf, withRound, type GameId } from './games';
-import { PRACTICE_PAY_PER_DAY, TASKS_PER_REWARD, creditPractice, practicePaid, practiceRested } from './pod';
+import { PRACTICE_PAY_PER_DAY, TASKS_PER_REWARD, TASKS_PER_SEED, creditPractice, practicePaid, practiceRested } from './pod';
 import { DEFAULT_PROGRESS, type Progress } from './progress';
 
 describe('game list', () => {
@@ -35,10 +35,10 @@ describe('game counters', () => {
     expect(roundOf(p, 'sort')).toBe(0);
   });
 
-  it('fills its world’s reward pod: a seed in the garden and a bolt in the workshop for every four tasks', () => {
+  it('fills its world’s reward pod: a seed in the garden for every two tasks and a bolt in the workshop for every four', () => {
     const solveN = (id: GameId, n: number) => Array.from({ length: n }).reduce<Progress>((p) => creditSolve(p, id), DEFAULT_PROGRESS);
     expect(solveN('flash', 1)).toMatchObject({ gardenTasks: 1, seeds: 0, robotTasks: 0, bolts: 0, flashSolved: 1 });
-    expect(solveN('flash', TASKS_PER_REWARD)).toMatchObject({ gardenTasks: TASKS_PER_REWARD, seeds: 1, bolts: 0 });
+    expect(solveN('flash', TASKS_PER_SEED)).toMatchObject({ gardenTasks: TASKS_PER_SEED, seeds: 1, bolts: 0 });
     expect(solveN('code', TASKS_PER_REWARD * 2 + 1)).toMatchObject({ robotTasks: TASKS_PER_REWARD * 2 + 1, bolts: 2, seeds: 0, codeSolved: 9 });
   });
 
@@ -74,8 +74,8 @@ describe('practice in a finished game', () => {
 
   it('starts again the next day', () => {
     const p = practise(practise(DEFAULT_PROGRESS, 'flash', 40), 'flash', 8, '2026-11-08');
-    expect(p.seeds).toBe(PRACTICE_PAY_PER_DAY + 2);
-    expect(practicePaid(p, 'flash', '2026-11-08')).toBe(2);
-    expect(p.practicePay.paid).toEqual({ flash: 2 });
+    expect(p.seeds).toBe(PRACTICE_PAY_PER_DAY + 4);
+    expect(practicePaid(p, 'flash', '2026-11-08')).toBe(4);
+    expect(p.practicePay.paid).toEqual({ flash: 4 });
   });
 });

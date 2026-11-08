@@ -4,7 +4,7 @@ import { pageKey, readScanned } from '../../print/link';
 import { AnswerList, OtherAnswers } from '../../print/sheet';
 import { kidName, useProfiles } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
-import { TASKS_PER_REWARD, podFill } from '../../state/pod';
+import { podFill, tasksPerReward } from '../../state/pod';
 import { earnedStickers, markPageDone, pageReward, pagesDoneIn, seedBalance } from '../../state/rewards';
 import { boltBalance } from '../../state/robotParts';
 import { WORLDS } from '../../state/worlds';
@@ -125,7 +125,7 @@ function ScannedPage({ kidId, opened, onAgain }: { kidId: string; opened: Opened
       <section className="pa-card ps-done">
         <p className="pa-muted">
           Nézd végig a lapot a megoldásokkal, és pipáld ki, amit átnéztetek. A kész lap {tasks.length} feladata úgy tölti a jutalomtartót, mint a játékban a megoldott feladatok: minden{' '}
-          {TASKS_PER_REWARD}. feladatért jár egy {unit}{pay > 0 && `, most ${pay} ${unit}`}. A befejezés számít, nem az, hány feladat lett jó.
+          {tasksPerReward(spec.world)}. feladatért jár egy {unit}{pay > 0 && `, most ${pay} ${unit}`}. A befejezés számít, nem az, hány feladat lett jó.
         </p>
         <div className="pa-row">
           <button type="button" className={`pa-btn${done ? ' pa-btn--go' : ''}${won ? ' ps-done__btn' : ''}`} disabled={done} onClick={mark}>

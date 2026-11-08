@@ -7,7 +7,7 @@ import { FRIENDS, boughtCount, friendsOf, secondRobotOpen } from './robotParts';
 import { creditTasks, rewardFor } from './pod';
 import { today } from './screenTime';
 
-// The reward loop: every four solved tasks fill a pod that pays a seed (see pod.ts); seeds are planted in the child's own garden
+// The reward loop: every two solved tasks fill a pod that pays a seed (see pod.ts); seeds are planted in the child's own garden
 // (Kiskert); plants grow as the child keeps playing; a grown garden brings visitors; picked fruit
 // (and, once the garden is full, spare seeds) is made into treats for the pantry shelf; and each new
 // skill earns a sticker for the album. Grown bushes and trees also ask for care (see below), but
@@ -27,12 +27,12 @@ export interface PlantOption {
 export const PLANT_OPTIONS: PlantOption[] = [
   { id: 'flower', name: 'Virág', cost: 3, grows: 3 },
   { id: 'bush', name: 'Áfonyabokor', cost: 6, grows: 5 },
-  { id: 'tree', name: 'Körtefa', cost: 10, grows: 8 }
+  { id: 'tree', name: 'Fa', cost: 10, grows: 8 }
 ];
 
-/** Beds in one plot, five in a row like a ten-frame. */
-export const PLOT_BEDS = 10;
-/** The Kiskert's plots: the second opens once every bed of the first is planted. */
+/** Beds in one plot: three rows of five. */
+export const PLOT_BEDS = 15;
+/** The Kiskert's plots: the second opens once every bed of the first is planted, and stays open. */
 export const PLOTS = 2;
 /** Beds in the whole garden, both plots. */
 export const BEDS = PLOT_BEDS * PLOTS;
@@ -41,6 +41,8 @@ export interface Bed {
   kind: PlantKind;
   /** A flower's kind (see FLOWERS); none is the first one, Mályva. */
   flower?: FlowerId;
+  /** A tree's kind (see TREES); none is the first one, the pear tree. */
+  tree?: TreeId;
   /** Garden tasks solved in total when it was planted; growth counts the tasks solved since. */
   at: number;
   /** Garden tasks solved in total when it was last watered; none yet: care counts from when it grew. */
@@ -74,14 +76,44 @@ export function isGrown(bed: Bed, tasks: number): boolean {
   return growthOf(bed, tasks) >= growAfter(bed.kind);
 }
 
+/**
+ * Beds that have grown something. A bed is never emptied (vegetables grow in the Veteményes, not in the beds),
+ * so this only ever goes up: visitors and their ring never step back.
+ */
 export function grownCount(p: Progress): number {
   return p.beds.filter((b): b is Bed => !!b && isGrown(b, p.gardenTasks)).length;
 }
 
-/** Beds the child can plant in: the first plot, and the second too once the first is planted full. */
+/**
+ * Beds the child can plant in: the first plot, and the second too once the first has been planted full. A bed
+ * planted in the second plot keeps it open, so a save carried over from the ten-bed plots never loses it.
+ */
 export function openBeds(p: Progress): number {
   const firstFull = Array.from({ length: PLOT_BEDS }, (_, i) => bedAt(p, i)).every(Boolean);
-  return firstFull ? BEDS : PLOT_BEDS;
+  const secondUsed = p.beds.slice(PLOT_BEDS).some(Boolean);
+  return firstFull || secondUsed ? BEDS : PLOT_BEDS;
+}
+
+/** Plots open now, 1 or 2. */
+export function openPlots(p: Progress): number {
+  return openBeds(p) / PLOT_BEDS;
+}
+
+/** Ten-bed plots of the old layout, for carrying a save over. */
+const OLD_PLOT_BEDS = 10;
+
+/**
+ * A save from the ten-bed plots: each bed stays in the plot it was in (the first plot's ten stay where they were,
+ * the second plot's move to its new start), and the five new beds of each plot start empty.
+ */
+export function carryOverBeds(beds: (Bed | null)[]): (Bed | null)[] {
+  const out: (Bed | null)[] = Array.from({ length: BEDS }, () => null);
+  beds.forEach((b, i) => {
+    if (!b || i >= OLD_PLOT_BEDS * PLOTS) return;
+    const plot = Math.floor(i / OLD_PLOT_BEDS);
+    out[plot * PLOT_BEDS + (i % OLD_PLOT_BEDS)] = b;
+  });
+  return out;
 }
 
 /** Empty beds the child can plant in now, in order. */
@@ -100,16 +132,76 @@ export function canPlant(p: Progress, i: number, kind: PlantKind): boolean {
 }
 
 /**
- * Plants in an empty bed; unchanged when the bed is taken or the seeds are not enough. A flower is of the kind
- * asked for when the child has its seeds (see FLOWERS), else Mályva. The child counts the seeds out first (SeedCount).
+ * Plants in an empty bed; unchanged when the bed is taken or the seeds are not enough. A flower (or a tree) is of the
+ * kind asked for when the child has it (see FLOWERS, TREES), else the first kind. The child counts the seeds out first (SeedCount).
  */
-export function plant(p: Progress, i: number, kind: PlantKind, flower: FlowerId = FIRST_FLOWER): Progress {
+export function plant(p: Progress, i: number, kind: PlantKind, flower: FlowerId = FIRST_FLOWER, tree: TreeId = FIRST_TREE): Progress {
   if (!canPlant(p, i, kind)) return p;
   const cost = PLANT_OPTIONS.find((o) => o.id === kind)!.cost;
   const beds = Array.from({ length: BEDS }, (_, k) => bedAt(p, k));
-  const kept = kind === 'flower' && flower !== FIRST_FLOWER && ownsFlower(p, flower) ? { flower } : {};
+  const kept =
+    kind === 'flower' && flower !== FIRST_FLOWER && ownsFlower(p, flower)
+      ? { flower }
+      : kind === 'tree' && tree !== FIRST_TREE && ownsTree(p, tree)
+        ? { tree }
+        : {};
   beds[i] = { kind, at: p.gardenTasks, ...kept };
   return { ...p, beds, seedsSpent: p.seedsSpent + cost };
+}
+
+// ---------- tree kinds ----------
+// Every child has the pear tree. The other trees' seeds come with a visitor who loves their fruit: Süni brings the
+// apple, the blackbird the cherry, Mókus the walnut. Their fruit is picked into the basket like pears and is given
+// straight to that visitor, a handful at a time; it goes into no recipe.
+
+export type TreeId = 'pear' | 'apple' | 'cherry' | 'walnut';
+
+export interface TreeKind {
+  id: TreeId;
+  name: string;
+  /** "almafát": the tree as the thing planted, in Csepi's lines. */
+  planted: string;
+  fruit: FruitKind;
+  /** The visitor who brings its seeds; none: every child has it. */
+  bringer?: VisitorId;
+}
+
+export const TREES: TreeKind[] = [
+  { id: 'pear', name: 'Körtefa', planted: 'körtefát', fruit: 'pear' },
+  { id: 'apple', name: 'Almafa', planted: 'almafát', fruit: 'apple', bringer: 'hedgehog' },
+  { id: 'cherry', name: 'Cseresznyefa', planted: 'cseresznyefát', fruit: 'cherry', bringer: 'blackbird' },
+  { id: 'walnut', name: 'Diófa', planted: 'diófát', fruit: 'nut', bringer: 'squirrel' }
+];
+
+export const FIRST_TREE: TreeId = 'pear';
+
+export function treeOf(id: TreeId): TreeKind {
+  return TREES.find((t) => t.id === id) ?? TREES[0];
+}
+
+/** The tree kind growing in a bed (the pear tree unless another was planted). */
+export function bedTree(bed: Bed): TreeId {
+  return bed.tree ?? FIRST_TREE;
+}
+
+function isWelcomed(p: Progress, id: VisitorId): boolean {
+  return welcomedVisitors(p).some((v) => v.id === id);
+}
+
+export function ownsTree(p: Progress, id: TreeId): boolean {
+  const bringer = treeOf(id).bringer;
+  return !bringer || isWelcomed(p, bringer);
+}
+
+export function ownedTrees(p: Progress): TreeKind[] {
+  return TREES.filter((t) => ownsTree(p, t.id));
+}
+
+/** "Körtefa", "Mályva", "Áfonyabokor": what grows in a bed, by its own kind. */
+export function bedName(bed: Bed): string {
+  if (bed.kind === 'flower') return flowerOf(bedFlower(bed)).name;
+  if (bed.kind === 'tree') return treeOf(bedTree(bed)).name;
+  return PLANT_OPTIONS.find((o) => o.id === bed.kind)!.name;
 }
 
 // ---------- flower kinds (Magtár) ----------
@@ -171,7 +263,7 @@ export function buyFlower(p: Progress, id: FlowerId): Progress {
 // When all ten make a repeating pattern, Csepi says so. Nothing in the border ever goes away on its own.
 
 /** Spots in the border of one plot. */
-export const BORDER_SPOTS = PLOT_BEDS;
+export const BORDER_SPOTS = 10;
 export const BORDER_COST = 1;
 
 export function borderAt(p: Progress, i: number): FlowerId | null {
@@ -180,7 +272,7 @@ export function borderAt(p: Progress, i: number): FlowerId | null {
 
 /** Border spots open now: one row per open plot. */
 export function openBorder(p: Progress): number {
-  return (openBeds(p) / PLOT_BEDS) * BORDER_SPOTS;
+  return openPlots(p) * BORDER_SPOTS;
 }
 
 /** Empty border spots in one plot's row, in order. */
@@ -230,18 +322,24 @@ export function borderPattern(p: Progress, plot: number): FlowerId[] | null {
 /** Solved tasks after watering (or growing) until a bush or tree is thirsty again. */
 export const THIRSTY_AFTER = 5;
 
-export type FruitKind = 'pear' | 'berry';
+export type FruitKind = 'pear' | 'berry' | 'apple' | 'cherry' | 'nut';
+/** Fruit that goes into no recipe: each is given straight to the visitor who loves it. */
+export type GiftFruit = 'apple' | 'cherry' | 'nut';
 
 /** Fruit a plant ripens between two waterings; a flower ripens none and needs no care. */
 export const FRUIT_MAX: Record<PlantKind, number> = { flower: 0, bush: 3, tree: 5 };
 
-export function fruitOf(kind: PlantKind): FruitKind | null {
-  return kind === 'tree' ? 'pear' : kind === 'bush' ? 'berry' : null;
+/** "körte", "áfonya": the fruit, as Csepi says it. */
+export const FRUIT_NAMES: Record<FruitKind, string> = { pear: 'körte', berry: 'áfonya', apple: 'alma', cherry: 'cseresznye', nut: 'dió' };
+
+export function fruitOf(bed: Bed): FruitKind | null {
+  return bed.kind === 'tree' ? treeOf(bedTree(bed)).fruit : bed.kind === 'bush' ? 'berry' : null;
 }
 
 /** "körte", "áfonya": what the child picks from this plant. */
-export function fruitName(kind: PlantKind): string {
-  return kind === 'tree' ? 'körte' : 'áfonya';
+export function fruitName(bed: Bed): string {
+  const f = fruitOf(bed);
+  return f ? FRUIT_NAMES[f] : '';
 }
 
 /** The task count care is measured from: the last watering, or when it grew. */
@@ -279,15 +377,29 @@ function withBed(p: Progress, i: number, bed: Bed): (Bed | null)[] {
   return beds;
 }
 
-function addFruit(p: Progress, kind: PlantKind, n: number): Progress {
-  return fruitOf(kind) === 'pear' ? { ...p, pears: p.pears + n } : { ...p, berries: p.berries + n };
+function addFruit(p: Progress, bed: Bed, n: number): Progress {
+  const f = fruitOf(bed);
+  if (f === 'pear') return { ...p, pears: p.pears + n };
+  if (f === 'berry') return { ...p, berries: p.berries + n };
+  if (!f) return p;
+  return { ...p, basket: { ...p.basket, [f]: basketOf(p, f) + n } };
+}
+
+/** Apples, cherries or walnuts in the basket, waiting for the visitor who loves them. */
+export function basketOf(p: Progress, f: GiftFruit): number {
+  return p.basket[f] ?? 0;
+}
+
+/** Everything in the basket, for the one basket pill in the top bar. */
+export function basketTotal(p: Progress): number {
+  return basketPears(p) + basketBerries(p) + basketOf(p, 'apple') + basketOf(p, 'cherry') + basketOf(p, 'nut');
 }
 
 /** Picks one ripe fruit into the basket; unchanged when there is none. */
 export function pickFruit(p: Progress, i: number): Progress {
   const bed = bedAt(p, i);
   if (!bed || ripeFruit(bed, p.gardenTasks) === 0) return p;
-  return addFruit({ ...p, beds: withBed(p, i, { ...bed, picked: pickedFruit(bed) + 1 }) }, bed.kind, 1);
+  return addFruit({ ...p, beds: withBed(p, i, { ...bed, picked: pickedFruit(bed) + 1 }) }, bed, 1);
 }
 
 /** Waters a thirsty plant; fruit still on it stays there to pick. Unchanged when it is not thirsty. */
@@ -376,12 +488,24 @@ export function canMakeAnything(p: Progress): boolean {
 
 // ---------- visitors ----------
 
-export type VisitorId = 'hedgehog' | 'ladybug' | 'butterfly' | 'blackbird' | 'frog' | 'squirrel';
+export type VisitorId =
+  | 'hedgehog'
+  | 'ladybug'
+  | 'butterfly'
+  | 'blackbird'
+  | 'frog'
+  | 'squirrel'
+  | 'snail'
+  | 'bee'
+  | 'rabbit'
+  | 'mole'
+  | 'lizard'
+  | 'owl';
 
 export interface Visitor {
   id: VisitorId;
   name: string;
-  /** Grown plants that bring it. */
+  /** Beds that have grown something, which bring it. */
   after: number;
   /** Csepi's line when it arrives. */
   speech: string;
@@ -392,9 +516,19 @@ export const VISITORS: Visitor[] = [
   { id: 'ladybug', name: 'Katica', after: 5, speech: 'Nézd, ki jött! Katica leszállt a kertedbe. Itt marad veled.' },
   { id: 'butterfly', name: 'Pillangó', after: 8, speech: 'Nézd, ki jött! Egy pillangó táncol a virágaid között.' },
   { id: 'blackbird', name: 'Rigó', after: 10, speech: 'Nézd, ki jött! A rigó fészket rakott a kertedben. Itt marad veled.' },
-  { id: 'frog', name: 'Béka', after: 14, speech: 'Nézd, ki jött! Egy kis béka ugrált be a kertedbe. Itt marad veled.' },
-  { id: 'squirrel', name: 'Mókus', after: 20, speech: 'Nézd, ki jött! Mókus beköltözött a kertedbe. Tele van a kert!' }
+  { id: 'frog', name: 'Béka', after: 13, speech: 'Nézd, ki jött! Egy kis béka ugrált be a kertedbe. Itt marad veled.' },
+  { id: 'squirrel', name: 'Mókus', after: 16, speech: 'Nézd, ki jött! Mókus beköltözött a kertedbe. Itt marad veled.' },
+  { id: 'snail', name: 'Csiga', after: 18, speech: 'Nézd, ki jött! Egy kis csiga mászott be a kertedbe. Itt marad veled.' },
+  { id: 'bee', name: 'Méhecske', after: 20, speech: 'Nézd, ki jött! Egy méhecske zümmög a virágaid között. Itt marad veled.' },
+  { id: 'rabbit', name: 'Nyuszi', after: 22, speech: 'Nézd, ki jött! Nyuszi beugrott a kertedbe. Itt marad veled.' },
+  { id: 'mole', name: 'Vakond', after: 25, speech: 'Nézd, ki jött! Vakond kidugta a fejét a földből. Itt marad veled.' },
+  { id: 'lizard', name: 'Gyík', after: 27, speech: 'Nézd, ki jött! Egy kis gyík napozik a kertedben. Itt marad veled.' },
+  { id: 'owl', name: 'Bagoly', after: 30, speech: 'Nézd, ki jött! Bagoly költözött a kertedbe. Tele van a kert!' }
 ];
+
+export function visitorOf(id: VisitorId): Visitor {
+  return VISITORS.find((v) => v.id === id)!;
+}
 
 export function visitorsOf(p: Progress): Visitor[] {
   const grown = grownCount(p);
@@ -432,33 +566,190 @@ export function welcomedVisitors(p: Progress): Visitor[] {
   return visitorsOf(p).slice(0, p.visitorsSeen);
 }
 
-// ---------- gifts and decorations ----------
-// Treats from the pantry shelf are gifts for the visitors. Each visitor likes one treat and takes
-// three gifts: one treat, then two, then three, counted out together. Every gift leaves a
-// decoration in the visitor's corner for good, the third one their own home. When all eighteen are
-// there, the garden is done (Kész a kert!). Giving is always the child's choice, like cooking.
+// ---------- the Veteményes ----------
+// Next to the flower border each open plot has a vegetable patch of five spots. Carrots and lettuce come with the
+// visitors who eat them (Nyuszi, Csiga): their seeds open the patch. A spot grows three of its vegetable in two
+// tasks, never gets thirsty, and keeps them there until that visitor eats them; then the spot is free to plant
+// again. The beds themselves are never emptied, and the patch never counts toward visitors.
 
-export const GIFTS_EACH = 3;
+export type VegId = 'carrot' | 'lettuce';
+
+export interface VegKind {
+  id: VegId;
+  name: string;
+  /** "répát": the vegetable as the thing planted, in Csepi's lines. */
+  planted: string;
+  /** The visitor who brings its seeds, and eats it. */
+  bringer: VisitorId;
+}
+
+export const VEGS: VegKind[] = [
+  { id: 'carrot', name: 'Répa', planted: 'répát', bringer: 'rabbit' },
+  { id: 'lettuce', name: 'Saláta', planted: 'salátát', bringer: 'snail' }
+];
+
+/** Spots of the Veteményes in one plot. */
+export const VEG_SPOTS = 5;
+export const VEG_COST = 2;
+/** Solved tasks after planting until a spot is ripe. */
+export const VEG_GROWS = 2;
+/** Vegetables one ripe spot holds. */
+export const VEG_HELPINGS = 3;
+
+export interface VegSpot {
+  kind: VegId;
+  /** Garden tasks solved in total when it was planted. */
+  at: number;
+}
+
+export function vegOf(id: VegId): VegKind {
+  return VEGS.find((v) => v.id === id)!;
+}
+
+export function ownsVeg(p: Progress, id: VegId): boolean {
+  return isWelcomed(p, vegOf(id).bringer);
+}
+
+export function ownedVegs(p: Progress): VegKind[] {
+  return VEGS.filter((v) => ownsVeg(p, v.id));
+}
+
+/** Veteményes spots open now: none until a vegetable visitor has come, then five per open plot. */
+export function openVeg(p: Progress): number {
+  return ownedVegs(p).length > 0 ? openPlots(p) * VEG_SPOTS : 0;
+}
+
+export function vegAt(p: Progress, i: number): VegSpot | null {
+  return p.veg[i] ?? null;
+}
+
+export function vegRipe(spot: VegSpot, tasks: number): boolean {
+  return tasks - spot.at >= VEG_GROWS;
+}
+
+export function canPlantVeg(p: Progress, i: number, id: VegId): boolean {
+  return i >= 0 && i < openVeg(p) && !vegAt(p, i) && ownsVeg(p, id) && seedBalance(p) >= VEG_COST;
+}
+
+export function plantVeg(p: Progress, i: number, id: VegId): Progress {
+  if (!canPlantVeg(p, i, id)) return p;
+  const veg = Array.from({ length: VEG_SPOTS * PLOTS }, (_, k) => vegAt(p, k));
+  veg[i] = { kind: id, at: p.gardenTasks };
+  return { ...p, veg, seedsSpent: p.seedsSpent + VEG_COST };
+}
+
+/** Ripe spots of this vegetable, in order. */
+export function ripeVegSpots(p: Progress, id: VegId): number[] {
+  return p.veg.flatMap((s, i) => (s && s.kind === id && vegRipe(s, p.gardenTasks) ? [i] : []));
+}
+
+/** Ripe vegetables of this kind, three to a spot. */
+export function ripeVeg(p: Progress, id: VegId): number {
+  return ripeVegSpots(p, id).length * VEG_HELPINGS;
+}
+
+/** The first ripe spots of a vegetable, as many as `n` vegetables fill; they are eaten. */
+function eatVeg(p: Progress, id: VegId, n: number): Progress {
+  const spots = ripeVegSpots(p, id).slice(0, Math.ceil(n / VEG_HELPINGS));
+  const veg = Array.from({ length: VEG_SPOTS * PLOTS }, (_, k) => (spots.includes(k) ? null : vegAt(p, k)));
+  return { ...p, veg };
+}
+
+// ---------- pollen ----------
+// Méhecske gathers pollen: the bee flies from flower to flower by itself and Csepi counts. Flowers in the beds and
+// in the border both give it, and every flower stays; one that gave pollen has more again a few tasks later.
+
+export const POLLEN_REST = 3;
+
+/** Flowers with pollen now: "b3" is a grown flower in bed 3, "s7" the border flower in spot 7. */
+export function pollenFlowers(p: Progress): string[] {
+  const ready = (key: string) => {
+    const at = p.pollen[key];
+    return at === undefined || p.gardenTasks - at >= POLLEN_REST;
+  };
+  const beds = p.beds.flatMap((b, i) => (b && b.kind === 'flower' && isGrown(b, p.gardenTasks) ? [`b${i}`] : []));
+  const border = p.border.flatMap((f, i) => (f ? [`s${i}`] : []));
+  return [...beds, ...border].filter(ready);
+}
+
+function takePollen(p: Progress, n: number): Progress {
+  const taken = pollenFlowers(p).slice(0, n);
+  return { ...p, pollen: { ...p.pollen, ...Object.fromEntries(taken.map((k) => [k, p.gardenTasks])) } };
+}
+
+// ---------- gifts and decorations ----------
+// Each visitor takes five gifts. A treat from the pantry shelf is one, then two, up to five; a visitor who loves
+// something from the garden (its vegetable, its tree's fruit, pollen) or seeds takes three of it, then six, up to
+// fifteen, counted out together. Every gift leaves a decoration in the visitor's corner for good. When all sixty
+// are there, the garden is done (Kész a kert!). Giving is always the child's choice, like cooking.
+
+export const GIFTS_EACH = 5;
+/** Garden food (or seeds) standing in for one treat. */
+export const FOOD_PER_TREAT = 3;
+
+export type FoodId = VegId | GiftFruit | 'pollen';
 
 export type DecorId =
   | 'mushroom'
   | 'leaves'
   | 'hedgehog-house'
+  | 'apple-basket'
+  | 'brushwood'
   | 'spotted-stone'
   | 'fence'
   | 'daisies'
+  | 'poppies'
+  | 'bug-hotel'
   | 'lavender'
   | 'sunflower'
   | 'arch'
+  | 'dandelions'
+  | 'flag'
   | 'feeder'
   | 'birdbath'
   | 'birdhouse'
+  | 'nest'
+  | 'cherry-branch'
   | 'reeds'
   | 'stepping-stones'
   | 'pond'
+  | 'waterlily'
+  | 'bridge'
   | 'pinecone'
   | 'stump'
-  | 'swing';
+  | 'swing'
+  | 'nut-pile'
+  | 'rope-bridge'
+  | 'lettuce-leaf'
+  | 'mossy-stone'
+  | 'puddle'
+  | 'toadstool'
+  | 'snail-stairs'
+  | 'hive'
+  | 'honey-pot'
+  | 'flower-box'
+  | 'bee-bath'
+  | 'sunflower-row'
+  | 'clover'
+  | 'burrow'
+  | 'flower-basket'
+  | 'carrot-cart'
+  | 'straw-hat'
+  | 'molehill'
+  | 'spade'
+  | 'worm-house'
+  | 'miner-hat'
+  | 'tunnel'
+  | 'sun-stone'
+  | 'stone-wall'
+  | 'fern'
+  | 'sandbox'
+  | 'cactus'
+  | 'hollow'
+  | 'moon-lamp'
+  | 'feather'
+  | 'branch-swing'
+  | 'star-spinner';
 
 export interface Decor {
   id: DecorId;
@@ -467,65 +758,82 @@ export interface Decor {
 
 export interface Wish {
   visitor: VisitorId;
+  /** The treat from the pantry shelf it likes. */
   treat: TreatId;
+  /** What it loves from the garden, offered first on its gift card. */
+  food?: FoodId;
   /** What the visitor leaves after each gift, in order. */
-  decor: [Decor, Decor, Decor];
+  decor: Decor[];
 }
+
+const d = (id: DecorId, name: string): Decor => ({ id, name });
 
 export const WISHES: Wish[] = [
   {
     visitor: 'hedgehog',
     treat: 'jam',
-    decor: [
-      { id: 'mushroom', name: 'Gomba' },
-      { id: 'leaves', name: 'Levélkupac' },
-      { id: 'hedgehog-house', name: 'Sünház' }
-    ]
+    food: 'apple',
+    decor: [d('mushroom', 'Gomba'), d('leaves', 'Levélkupac'), d('hedgehog-house', 'Sünház'), d('apple-basket', 'Almás kosár'), d('brushwood', 'Rőzserakás')]
   },
   {
     visitor: 'ladybug',
     treat: 'pie',
-    decor: [
-      { id: 'spotted-stone', name: 'Pöttyös kő' },
-      { id: 'fence', name: 'Kis kerítés' },
-      { id: 'daisies', name: 'Százszorszép-csokor' }
-    ]
+    decor: [d('spotted-stone', 'Pöttyös kő'), d('fence', 'Kis kerítés'), d('daisies', 'Százszorszép-csokor'), d('poppies', 'Pipacs'), d('bug-hotel', 'Rovarhotel')]
   },
   {
     visitor: 'butterfly',
     treat: 'jam',
-    decor: [
-      { id: 'lavender', name: 'Levendula' },
-      { id: 'sunflower', name: 'Napraforgó' },
-      { id: 'arch', name: 'Virágkapu' }
-    ]
+    decor: [d('lavender', 'Levendula'), d('sunflower', 'Napraforgó'), d('arch', 'Virágkapu'), d('dandelions', 'Pitypang'), d('flag', 'Szivárványzászló')]
   },
   {
     visitor: 'blackbird',
     treat: 'loaf',
-    decor: [
-      { id: 'feeder', name: 'Madáretető' },
-      { id: 'birdbath', name: 'Madáritató' },
-      { id: 'birdhouse', name: 'Madárodú' }
-    ]
+    food: 'cherry',
+    decor: [d('feeder', 'Madáretető'), d('birdbath', 'Madáritató'), d('birdhouse', 'Madárodú'), d('nest', 'Fészek'), d('cherry-branch', 'Cseresznyeág')]
   },
   {
     visitor: 'frog',
     treat: 'compote',
-    decor: [
-      { id: 'reeds', name: 'Kis nádas' },
-      { id: 'stepping-stones', name: 'Ugróköves ösvény' },
-      { id: 'pond', name: 'Kis tó' }
-    ]
+    decor: [d('reeds', 'Kis nádas'), d('stepping-stones', 'Ugróköves ösvény'), d('pond', 'Kis tó'), d('waterlily', 'Tündérrózsa'), d('bridge', 'Kis híd')]
   },
   {
     visitor: 'squirrel',
     treat: 'loaf',
-    decor: [
-      { id: 'pinecone', name: 'Toboz' },
-      { id: 'stump', name: 'Fatönk' },
-      { id: 'swing', name: 'Hinta' }
-    ]
+    food: 'nut',
+    decor: [d('pinecone', 'Toboz'), d('stump', 'Fatönk'), d('swing', 'Hinta'), d('nut-pile', 'Mogyorókupac'), d('rope-bridge', 'Kötélhíd')]
+  },
+  {
+    visitor: 'snail',
+    treat: 'pie',
+    food: 'lettuce',
+    decor: [d('lettuce-leaf', 'Salátalevél'), d('mossy-stone', 'Mohás kő'), d('puddle', 'Tócsa'), d('toadstool', 'Gombaernyő'), d('snail-stairs', 'Csigalépcső')]
+  },
+  {
+    visitor: 'bee',
+    treat: 'jam',
+    food: 'pollen',
+    decor: [d('hive', 'Kaptár'), d('honey-pot', 'Mézescsupor'), d('flower-box', 'Virágláda'), d('bee-bath', 'Méhitató'), d('sunflower-row', 'Napraforgósor')]
+  },
+  {
+    visitor: 'rabbit',
+    treat: 'jam',
+    food: 'carrot',
+    decor: [d('clover', 'Lóhere'), d('burrow', 'Üreg'), d('flower-basket', 'Virágos kosár'), d('carrot-cart', 'Répás szekér'), d('straw-hat', 'Szalmakalap')]
+  },
+  {
+    visitor: 'mole',
+    treat: 'compote',
+    decor: [d('molehill', 'Túrás'), d('spade', 'Kis lapát'), d('worm-house', 'Gilisztaház'), d('miner-hat', 'Bányászsisak'), d('tunnel', 'Alagút')]
+  },
+  {
+    visitor: 'lizard',
+    treat: 'pie',
+    decor: [d('sun-stone', 'Napozó kő'), d('stone-wall', 'Kőfal'), d('fern', 'Páfrány'), d('sandbox', 'Homokozó'), d('cactus', 'Kaktusz')]
+  },
+  {
+    visitor: 'owl',
+    treat: 'loaf',
+    decor: [d('hollow', 'Odú'), d('moon-lamp', 'Holdlámpa'), d('feather', 'Toll'), d('branch-swing', 'Ág-hinta'), d('star-spinner', 'Csillagforgó')]
   }
 ];
 
@@ -537,6 +845,16 @@ export const TREAT_WANTED: Record<TreatId, string> = {
   loaf: 'magos kalácsot'
 };
 
+/** Garden food: its name, one of it and many of it, as Csepi says them ("répa", "répát", "répát"). */
+export const FOOD_NAMES: Record<FoodId, { name: string; wanted: string }> = {
+  carrot: { name: 'répa', wanted: 'répát' },
+  lettuce: { name: 'saláta', wanted: 'salátát' },
+  apple: { name: 'alma', wanted: 'almát' },
+  cherry: { name: 'cseresznye', wanted: 'cseresznyét' },
+  nut: { name: 'dió', wanted: 'diót' },
+  pollen: { name: 'virágpor', wanted: 'virágport' }
+};
+
 export function wishOf(id: VisitorId): Wish {
   return WISHES.find((w) => w.visitor === id)!;
 }
@@ -546,7 +864,7 @@ export function giftsOf(p: Progress, id: VisitorId): number {
   return Math.min(GIFTS_EACH, p.gifts[id] ?? 0);
 }
 
-/** Treats the visitor's next gift takes (one, then two, then three); 0 once they have had them all. */
+/** Treats the visitor's next gift takes (one, then two, up to five); 0 once they have had them all. */
 export function giftSize(p: Progress, id: VisitorId): number {
   const given = giftsOf(p, id);
   return given >= GIFTS_EACH ? 0 : given + 1;
@@ -559,7 +877,7 @@ export function decorOf(p: Progress, id: VisitorId): Decor[] {
 
 export function canGive(p: Progress, id: VisitorId): boolean {
   const n = giftSize(p, id);
-  return n > 0 && welcomedVisitors(p).some((v) => v.id === id) && treatsOf(p, wishOf(id).treat) >= n;
+  return n > 0 && isWelcomed(p, id) && treatsOf(p, wishOf(id).treat) >= n;
 }
 
 /** Gives the visitor their next gift from the shelf; unchanged when it is not there yet. */
@@ -573,13 +891,44 @@ export function give(p: Progress, id: VisitorId): Progress {
   };
 }
 
-// The birds of the garden also eat seeds: instead of a treat from the shelf, the blackbird and Mókus take a
-// handful of seeds, three for each treat they ask for (3, then 6, then 9), counted out like a planting. So the
-// blackbird, who likes the seed loaf, need not wait for the garden to be planted full.
+/** Garden food the visitor's next gift takes (3, 6 … 15); 0 when it loves nothing from the garden or has had every gift. */
+export function foodGiftSize(p: Progress, id: VisitorId): number {
+  return wishOf(id).food ? giftSize(p, id) * FOOD_PER_TREAT : 0;
+}
 
-export const SEED_EATERS: VisitorId[] = ['blackbird', 'squirrel'];
+/** How much of a garden food there is to give now. */
+export function foodOnHand(p: Progress, food: FoodId): number {
+  if (food === 'carrot' || food === 'lettuce') return ripeVeg(p, food);
+  if (food === 'pollen') return pollenFlowers(p).length;
+  return basketOf(p, food);
+}
+
+export function canGiveFood(p: Progress, id: VisitorId): boolean {
+  const { food } = wishOf(id);
+  const n = foodGiftSize(p, id);
+  return !!food && n > 0 && isWelcomed(p, id) && foodOnHand(p, food) >= n;
+}
+
+function spendFood(p: Progress, food: FoodId, n: number): Progress {
+  if (food === 'carrot' || food === 'lettuce') return eatVeg(p, food, n);
+  if (food === 'pollen') return takePollen(p, n);
+  return { ...p, basket: { ...p.basket, [food]: basketOf(p, food) - n } };
+}
+
+/** Gives the visitor their next gift from the garden; it leaves the same decoration a treat would. */
+export function giveFood(p: Progress, id: VisitorId): Progress {
+  if (!canGiveFood(p, id)) return p;
+  const used = spendFood(p, wishOf(id).food!, foodGiftSize(p, id));
+  return { ...used, gifts: { ...p.gifts, [id]: giftsOf(p, id) + 1 } };
+}
+
+// The birds of the garden also eat seeds: instead of a treat from the shelf, the blackbird, Mókus and Bagoly take a
+// handful of seeds, three for each treat they ask for (3, then 6 … 15), counted out like a planting. So the
+// birds, who like the seed loaf, need not wait for the garden to be planted full.
+
+export const SEED_EATERS: VisitorId[] = ['blackbird', 'squirrel', 'owl'];
 /** Seeds standing in for one treat. */
-export const SEEDS_PER_TREAT = 3;
+export const SEEDS_PER_TREAT = FOOD_PER_TREAT;
 
 export function eatsSeeds(id: VisitorId): boolean {
   return SEED_EATERS.includes(id);
@@ -592,7 +941,7 @@ export function seedGiftSize(p: Progress, id: VisitorId): number {
 
 export function canGiveSeeds(p: Progress, id: VisitorId): boolean {
   const n = seedGiftSize(p, id);
-  return n > 0 && welcomedVisitors(p).some((v) => v.id === id) && seedBalance(p) >= n;
+  return n > 0 && isWelcomed(p, id) && seedBalance(p) >= n;
 }
 
 /** Gives the visitor their next gift as a handful of seeds; it leaves the same decoration a treat would. */
@@ -601,9 +950,28 @@ export function giveSeeds(p: Progress, id: VisitorId): Progress {
   return { ...p, seedsSpent: p.seedsSpent + seedGiftSize(p, id), gifts: { ...p.gifts, [id]: giftsOf(p, id) + 1 } };
 }
 
-/** Welcomed visitors whose next gift is on the shelf (or, for the birds, in the seed bag). */
+/** Welcomed visitors whose next gift is ready: on the shelf, in the garden, or (for the birds) in the seed bag. */
 export function giftsReady(p: Progress): Visitor[] {
-  return welcomedVisitors(p).filter((v) => canGive(p, v.id) || canGiveSeeds(p, v.id));
+  return welcomedVisitors(p).filter((v) => canGive(p, v.id) || canGiveFood(p, v.id) || canGiveSeeds(p, v.id));
+}
+
+// After its five gifts, a vegetable visitor still eats a snack: tapping it offers one ripe spot of its vegetable,
+// once a day. It is only ever offered on a tap, never as a reminder.
+
+/** Vegetables in one snack: one spot. */
+export const SNACK_SIZE = VEG_HELPINGS;
+
+export function canSnack(p: Progress, id: VisitorId, day = today()): boolean {
+  const { food } = wishOf(id);
+  if (food !== 'carrot' && food !== 'lettuce') return false;
+  return giftsOf(p, id) >= GIFTS_EACH && p.snacked[id] !== day && ripeVeg(p, food) >= SNACK_SIZE;
+}
+
+/** The visitor eats one ripe spot of its vegetable; unchanged when it cannot today. */
+export function snack(p: Progress, id: VisitorId, day = today()): Progress {
+  if (!canSnack(p, id, day)) return p;
+  const food = wishOf(id).food as VegId;
+  return { ...eatVeg(p, food, SNACK_SIZE), snacked: { ...p.snacked, [id]: day } };
 }
 
 export function decorCount(p: Progress): number {
@@ -613,6 +981,13 @@ export function decorCount(p: Progress): number {
 /** Every visitor has had every gift: the garden is done. */
 export function gardenDone(p: Progress): boolean {
   return decorCount(p) === VISITORS.length * GIFTS_EACH;
+}
+
+/** What a visitor brings when it arrives: the seeds of its tree or vegetable, if any. */
+export function broughtBy(id: VisitorId): { tree?: TreeKind; veg?: VegKind } | null {
+  const tree = TREES.find((t) => t.bringer === id);
+  const veg = VEGS.find((v) => v.bringer === id);
+  return tree ? { tree } : veg ? { veg } : null;
 }
 
 // ---------- stickers ----------
@@ -883,8 +1258,8 @@ const OTHER_STICKERS: Sticker[] = [
   { id: 'learn-10', game: 'learn', mark: '1–10', label: 'Ismerem 10-ig', praise: 'Már tízig ismered a számokat!', earned: (p) => p.learnSolved >= 10 || learnSheet(1)(p) },
   { id: 'learn-20', game: 'learn', mark: '1–20', label: 'Ismerem 20-ig', praise: 'Már húszig ismered a számokat!', earned: (p) => p.learnSolved >= LEARN_MAX || learnSheet(3)(p) },
   { id: 'kiskert-gift', game: 'kiskert', mark: '1', label: 'Első ajándék', praise: 'Megajándékoztad az első lakót a kertedben!', earned: (p) => decorCount(p) >= 1 },
-  { id: 'kiskert-all', game: 'kiskert', mark: '6', label: 'Minden lakónak', praise: 'Mind a hat lakó kapott tőled ajándékot!', earned: (p) => VISITORS.every((v) => giftsOf(p, v.id) >= 1) },
-  { id: 'kiskert-done', game: 'kiskert', mark: '18', label: 'Kész a kert', praise: 'Kész a kert! Minden lakó megkapta az ajándékát.', earned: gardenDone },
+  { id: 'kiskert-all', game: 'kiskert', mark: '12', label: 'Minden lakónak', praise: 'Mind a tizenkét lakó kapott tőled ajándékot!', earned: (p) => VISITORS.every((v) => giftsOf(p, v.id) >= 1) },
+  { id: 'kiskert-done', game: 'kiskert', mark: '60', label: 'Kész a kert', praise: 'Kész a kert! Minden lakó megkapta az ajándékát.', earned: gardenDone },
   { id: 'robotepito-part', game: 'robotepito', mark: '1', label: 'Első alkatrész', praise: 'Felszerelted az első új alkatrészt a robotodra!', earned: (p) => boughtCount(p) >= 1 },
   { id: 'robotepito-second', game: 'robotepito', mark: '2', label: 'Második robot', praise: 'Megérkezett a második robotod a munkapadra!', earned: secondRobotOpen },
   { id: 'robotepito-friends', game: 'robotepito', mark: '6', label: 'Minden barát', praise: 'Mind a hat robotbarát beköltözött a műhelybe!', earned: (p) => friendsOf(p).length === FRIENDS.length }

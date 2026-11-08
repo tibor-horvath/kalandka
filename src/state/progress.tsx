@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../worlds/garden/games/add/logic';
 import type { GameId } from './games';
-import { carryOverStickers, markEarnedSeen, type Bed, type FlowerId, type TreatId, type VisitorId } from './rewards';
+import { carryOverBeds, carryOverStickers, markEarnedSeen, type Bed, type FlowerId, type GiftFruit, type TreatId, type VegSpot, type VisitorId } from './rewards';
 import type { PartSlot } from './robotParts';
 import type { Ladder, LadderGame } from './ladder';
 import type { PracticePay } from './pod';
@@ -21,6 +21,16 @@ export interface Progress {
   flowersOwned: FlowerId[];
   /** The Kiskert's border flowers, ten in front of each open plot (see the border section in rewards.ts); null is an empty spot. */
   border: (FlowerId | null)[];
+  /** The Veteményes, five spots per open plot (see rewards.ts); null is an empty spot. */
+  veg: (VegSpot | null)[];
+  /** Beds per plot the save was made with; missing: the old ten (see carryOverBeds). */
+  plotBeds: number;
+  /** Apples, cherries and walnuts in the basket, given straight to the visitors who love them. */
+  basket: Partial<Record<GiftFruit, number>>;
+  /** When each flower last gave Méhecske pollen, by "b<bed>" or "s<border spot>": the garden task count then. */
+  pollen: Record<string, number>;
+  /** The day (local YYYY-MM-DD) each vegetable visitor last had a snack. */
+  snacked: Partial<Record<VisitorId, string>>;
   /** Fruit picked in the Kiskert, kept for good (see the care section in rewards.ts). */
   pears: number;
   berries: number;
@@ -167,6 +177,11 @@ export const DEFAULT_PROGRESS: Progress = {
   beds: [],
   flowersOwned: [],
   border: [],
+  veg: [],
+  plotBeds: 15,
+  basket: {},
+  pollen: {},
+  snacked: {},
   pears: 0,
   berries: 0,
   pearsUsed: 0,
@@ -266,6 +281,8 @@ export function readProgress(saved: unknown): Progress {
   let p = migrate({ ...DEFAULT_PROGRESS, addLevelsVersion: 1, ...raw });
   // Saves from before the 15-minute default: switch "no limit" to it once; parents can turn it off again.
   if (!raw.limitDefaulted) p = { ...p, screenLimitMin: p.screenLimitMin || DEFAULT_PROGRESS.screenLimitMin, limitDefaulted: true };
+  // Saves from the ten-bed plots: every bed stays in its plot, and each plot gets five new empty beds.
+  if (raw.plotBeds === undefined) p = { ...p, beds: carryOverBeds(p.beds), plotBeds: DEFAULT_PROGRESS.plotBeds };
   // Saves from before the reward pod paid one seed or bolt per task, which was the clock then: the clock starts there.
   if (raw.gardenTasks === undefined) p = { ...p, gardenTasks: p.seeds, robotTasks: p.bolts };
   // Saves from before the stickers: what was already earned goes into the album without a celebration each.

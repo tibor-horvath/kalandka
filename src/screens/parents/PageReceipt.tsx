@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Seed } from '../../worlds/garden/art';
-import { POD_QUARTERS } from '../../components/LevelMeter';
+import { podArcs } from '../../components/LevelMeter';
 import { Bolt } from '../../worlds/robot/art';
-import { TASKS_PER_REWARD } from '../../state/pod';
+import { tasksPerReward } from '../../state/pod';
 import { gameOf, type Sticker } from '../../state/rewards';
 import type { WorldId } from '../../state/worlds';
 
@@ -34,7 +34,7 @@ const prefersLess = () => typeof window !== 'undefined' && window.matchMedia?.('
  * The timeline of a marked page: its tasks drop into the child's pod one by one, as in the games, and every
  * full pod turns gold and sends a seed (or bolt) into the total. A long page goes faster, so it stays a few seconds.
  */
-function timeline(win: PageWin): { at: number; frame: Partial<Frame> }[] {
+function timeline(win: PageWin, parts: number): { at: number; frame: Partial<Frame> }[] {
   const taskMs = Math.max(60, Math.min(140, 1600 / Math.max(1, win.tasks)));
   const payMs = win.pay > 3 ? 450 : 700;
   const steps: { at: number; frame: Partial<Frame> }[] = [];
@@ -43,14 +43,14 @@ function timeline(win: PageWin): { at: number; frame: Partial<Frame> }[] {
   let t = 450;
   for (let used = 1; used <= win.tasks; used++) {
     fill += 1;
-    if (fill < TASKS_PER_REWARD) {
+    if (fill < parts) {
       steps.push({ at: t, frame: { used, fill } });
       t += taskMs;
       continue;
     }
     paid += 1;
     const n = paid;
-    steps.push({ at: t, frame: { used, fill: TASKS_PER_REWARD, gold: true } });
+    steps.push({ at: t, frame: { used, fill: parts, gold: true } });
     steps.push({ at: t + payMs * 0.37, frame: { flying: Array.from({ length: n }, (_, k) => k + 1) } });
     steps.push({ at: t + payMs * 0.9, frame: { total: win.total + n, fill: 0, gold: false, bump: n } });
     fill = 0;
@@ -60,8 +60,8 @@ function timeline(win: PageWin): { at: number; frame: Partial<Frame> }[] {
   return steps;
 }
 
-function endFrame(win: PageWin): Frame {
-  return { used: win.tasks, fill: (win.fill + win.tasks) % TASKS_PER_REWARD, total: win.total + win.pay, gold: false, flying: [], bump: 0, finished: true };
+function endFrame(win: PageWin, parts: number): Frame {
+  return { used: win.tasks, fill: (win.fill + win.tasks) % parts, total: win.total + win.pay, gold: false, flying: [], bump: 0, finished: true };
 }
 
 /**
@@ -69,19 +69,20 @@ function endFrame(win: PageWin): Frame {
  * plain summary and any new sticker. With reduced motion it shows the end straight away.
  */
 export function PageReceipt({ win, world, worldName, name }: { win: PageWin; world: WorldId; worldName: string; name: string }) {
+  const parts = tasksPerReward(world);
   const [frame, setFrame] = useState<Frame>(() =>
-    prefersLess() ? endFrame(win) : { used: 0, fill: win.fill, total: win.total, gold: false, flying: [], bump: 0, finished: false }
+    prefersLess() ? endFrame(win, parts) : { used: 0, fill: win.fill, total: win.total, gold: false, flying: [], bump: 0, finished: false }
   );
 
   useEffect(() => {
     if (prefersLess()) return;
-    const timers = timeline(win).map(({ at, frame: next }) => window.setTimeout(() => setFrame((f) => ({ ...f, ...next })), at));
+    const timers = timeline(win, parts).map(({ at, frame: next }) => window.setTimeout(() => setFrame((f) => ({ ...f, ...next })), at));
     return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [win]);
+  }, [win, parts]);
 
   const icon = world === 'robot' ? <Bolt size={24} /> : <Seed size={24} />;
   const unit = world === 'robot' ? 'csavar' : 'mag';
-  const left = TASKS_PER_REWARD - endFrame(win).fill;
+  const left = parts - endFrame(win, parts).fill;
 
   return (
     <>
@@ -100,7 +101,7 @@ export function PageReceipt({ win, world, worldName, name }: { win: PageWin; wor
         <div className="ps-receipt__part ps-receipt__part--center">
           <span className={`ps-pod${frame.gold ? ' is-gold' : ''}`}>
             <svg className="ps-pod__ring" viewBox="0 0 44 44">
-              {POD_QUARTERS.map((d, i) => (
+              {podArcs(parts).map((d, i) => (
                 <path key={i} d={d} className={`ps-pod__quarter${i < frame.fill ? ' is-full' : ''}`} />
               ))}
             </svg>
