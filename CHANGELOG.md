@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/tibor-horvath/kalandka/compare/v1.8.0...v1.8.1) (2026-11-08)
+
+
+### Changed
+
+* redesign Kiskertem ([#47](https://github.com/tibor-horvath/kalandka/issues/47)) ([9737e7d](https://github.com/tibor-horvath/kalandka/commit/9737e7d0a24ab407aa248f80659de79820a39623))
+
 ## [1.8.0](https://github.com/tibor-horvath/kalandka/compare/v1.7.0...v1.8.0) (2026-11-07)
 
 
