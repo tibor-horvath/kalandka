@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** The game lives at /jatek (the installed app starts there); every other address is the landing page. */
 const GAME_PATH = '/jatek';
@@ -50,4 +50,79 @@ export function useLandingRoute(named: boolean) {
   };
 
   return { landing, openGame: () => show(false), openLanding: () => show(true) };
+}
+
+/** Something on screen the browser's Back closes: a game, the album, the parents' corner. */
+export type BackLayer = { key: string; close: () => void };
+
+/** How many layers deep a history entry is; the page's own entries are 0. */
+function layerOf(state: unknown): number {
+  const n = (state as { kalandkaLayer?: unknown } | null)?.kalandkaLayer;
+  return typeof n === 'number' ? n : 0;
+}
+
+/**
+ * Gives every open layer (outermost first) its own history entry at the same address, so the browser's Back
+ * closes the innermost one the way its own back button does. Closing a layer in the app takes its entry off again,
+ * so the entries always match the screen and Forward never reopens a closed one.
+ */
+export function useBackLayers(layers: BackLayer[]) {
+  const latest = useRef(layers);
+  latest.current = layers;
+  // A reload on a layer's entry starts with nothing open: the entries left over are stepped back over at once.
+  const depth = useRef(layerOf(window.history.state));
+  const keys = useRef<string[]>(Array.from({ length: depth.current }, () => ''));
+  /** The depth a `history.go` started here will land on; its popstate is ours, not the child's. */
+  const waiting = useRef<number | null>(null);
+
+  const sync = useCallback(() => {
+    if (waiting.current !== null) return;
+    // The address moved on without us (the landing page was opened): our entries are behind it now.
+    if (layerOf(window.history.state) !== depth.current) {
+      depth.current = 0;
+      keys.current = [];
+    }
+    const want = latest.current.map((l) => l.key);
+    let same = 0;
+    while (same < depth.current && same < want.length && keys.current[same] === want[same]) same++;
+    if (same < depth.current) {
+      // Layers closed in the app: drop their entries; any new ones are added once the browser has stepped back.
+      waiting.current = same;
+      window.history.go(same - depth.current);
+      depth.current = same;
+      keys.current = keys.current.slice(0, same);
+      return;
+    }
+    for (let i = same; i < want.length; i++) window.history.pushState({ kalandkaLayer: i + 1 }, '');
+    depth.current = want.length;
+    keys.current = want;
+  }, []);
+
+  useEffect(sync);
+
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      const n = layerOf(e.state);
+      if (waiting.current !== null) {
+        const ours = n === waiting.current;
+        waiting.current = null;
+        if (ours) {
+          sync();
+          return;
+        }
+      }
+      if (n > depth.current) {
+        // Forward into a layer already closed: step back to the page on screen.
+        waiting.current = depth.current;
+        window.history.go(depth.current - n);
+        return;
+      }
+      const closing = latest.current.slice(n, depth.current).reverse();
+      depth.current = n;
+      keys.current = keys.current.slice(0, n);
+      closing.forEach((l) => l.close());
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [sync]);
 }

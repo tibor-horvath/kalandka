@@ -23,7 +23,18 @@
 .ps-defs { position: absolute; }
 .ps-sheet--garden .ps-title { color: #1e5520; }
 .ps-sheet--robot .ps-title { color: #0c5f5c; }
-.ps-name { flex: 0 0 80mm; padding-bottom: 1mm; border-bottom: 0.4mm solid #10233a; font-size: 13pt; font-weight: 700; }
+/* A task sheet's header: the solutions code, a hairline, then world, game and level; the name line sits low on the right. */
+.ps-head--task { align-items: center; gap: 5mm; padding-bottom: 2.5mm; }
+.ps-head__code { flex: none; margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.3mm; }
+.ps-head__code .ps-head__qr { display: block; }
+.ps-head__code figcaption { font-size: 9pt; font-weight: 800; line-height: 1; color: #4a5e70; }
+.ps-head--task .ps-head__text { gap: 0.8mm; padding-left: 5mm; border-left: 0.4mm solid #d6e4ee; }
+.ps-head--task .ps-world { letter-spacing: 0.08em; }
+.ps-head--task .ps-title { font-size: 30pt; line-height: 0.95; }
+.ps-level { font-size: 11pt; font-weight: 700; color: #4a5e70; }
+.ps-level b { font-weight: 800; color: #10233a; }
+.ps-head--task .ps-name { flex-basis: 61mm; align-self: flex-end; }
+.ps-name { flex: 0 0 64mm; padding-bottom: 1mm; border-bottom: 0.4mm solid #10233a; font-size: 13pt; font-weight: 700; }
 .ps-ask { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5mm 4mm; font-family: var(--display); font-size: 15pt; font-weight: 700; line-height: 1.2; }
 .ps-ask p { flex: 1 1 120mm; margin: 0; }
 .ps-legend { display: flex; flex-wrap: wrap; gap: 2mm; }
