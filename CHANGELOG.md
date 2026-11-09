@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.9.0](https://github.com/tibor-horvath/kalandka/compare/v1.8.2...v1.9.0) (2026-11-09)
+
+
+### Added
+
+* enhance robot workshop with gift mechanics and bolt counting ([#57](https://github.com/tibor-horvath/kalandka/issues/57)) ([eb0b329](https://github.com/tibor-horvath/kalandka/commit/eb0b3290a28edb778650b7ca2f851a706697bb80))
+
+
+### Fixed
+
+* adjust album layout for mobile responsiveness ([#59](https://github.com/tibor-horvath/kalandka/issues/59)) ([ef476b4](https://github.com/tibor-horvath/kalandka/commit/ef476b44a7f529320655d42a20690bb951c03942))
+
 ## [1.8.2](https://github.com/tibor-horvath/kalandka/compare/v1.8.1...v1.8.2) (2026-11-09)
 
 
