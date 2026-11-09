@@ -5,7 +5,7 @@ import { AnswerList, OtherAnswers } from '../../print/sheet';
 import { kidName, useProfiles } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
 import { podFill, tasksPerReward } from '../../state/pod';
-import { earnedStickers, markPageDone, pageReward, pagesDoneIn, seedBalance } from '../../state/rewards';
+import { earnedStickers, markPageDone, pageReward, pagesDoneIn, seedBalance, topFirst } from '../../state/rewards';
 import { boltBalance } from '../../state/robotParts';
 import { WORLDS } from '../../state/worlds';
 import { PageReceipt, type PageWin } from './PageReceipt';
@@ -105,7 +105,7 @@ function ScannedPage({ kidId, opened, onAgain }: { kidId: string; opened: Opened
 
   const mark = () => {
     const had = new Set(earnedStickers(progress).map((s) => s.id));
-    const stickers = earnedStickers(markPageDone(progress, key, tasks.length)).filter((s) => !had.has(s.id));
+    const stickers = topFirst(earnedStickers(markPageDone(progress, key, tasks.length)).filter((s) => !had.has(s.id)));
     const total = spec.world === 'robot' ? boltBalance(progress) : seedBalance(progress);
     setWon({ tasks: tasks.length, fill: podFill(progress, spec.world), total, pay, stickers });
     update((p) => markPageDone(p, key, tasks.length));

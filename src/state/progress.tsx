@@ -29,8 +29,10 @@ export interface Progress {
   basket: Partial<Record<GiftFruit, number>>;
   /** When each flower last gave Méhecske pollen, by "b<bed>" or "s<border spot>": the garden task count then. */
   pollen: Record<string, number>;
-  /** The day (local YYYY-MM-DD) each vegetable visitor last had a snack. */
+  /** The day (local YYYY-MM-DD) each visitor last had a snack (after its five gifts). */
   snacked: Partial<Record<VisitorId, string>>;
+  /** Snacks each visitor has had: its snack pile grows by one per snack (see snackPile in rewards.ts). */
+  snacks: Partial<Record<VisitorId, number>>;
   /** Fruit picked in the Kiskert, kept for good (see the care section in rewards.ts). */
   pears: number;
   berries: number;
@@ -48,7 +50,7 @@ export interface Progress {
   /** Stickers celebrated on stickersDay (local YYYY-MM-DD), in order; the rest screen shows the day's haul. */
   stickersDay: string;
   stickersToday: string[];
-  /** Printed pages a grown-up marked done, each once (see pageKey in print/link.ts); they earn the Feladatlapok stickers and each game's level stickers (see sheetTop in rewards.ts). */
+  /** Printed pages a grown-up marked done, each once (see pageKey in print/link.ts); they earn the Feladatlapok stickers and each game's level stickers (see sheetLevels in rewards.ts). */
   pagesDone: string[];
   /** Plant ids grown in the watering game, oldest first. */
   garden: string[];
@@ -182,6 +184,7 @@ export const DEFAULT_PROGRESS: Progress = {
   basket: {},
   pollen: {},
   snacked: {},
+  snacks: {},
   pears: 0,
   berries: 0,
   pearsUsed: 0,

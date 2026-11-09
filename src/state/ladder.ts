@@ -89,6 +89,16 @@ export interface Ladder {
   reached: number;
   /** Highest level a task was solved on; −1 before the first. Only grows. */
   solvedTop: number;
+  /**
+   * Every level a task was solved on in the game, in any order. Levels a parent's starting level skipped are not in it.
+   * Missing in saves from before it: then every level up to `solvedTop` (see `solvedLevels`).
+   */
+  solved?: number[];
+}
+
+/** The levels a task was solved on, each once. */
+export function solvedLevels(l: Ladder): number[] {
+  return l.solved ?? Array.from({ length: l.solvedTop + 1 }, (_, i) => i);
 }
 
 export type LadderChange = 'up' | 'down' | 'mastered' | null;
@@ -177,7 +187,8 @@ export function afterSolve(l: Ladder, rule: LadderRule, helped: boolean): Ladder
     helpRun: helped ? l.helpRun + 1 : 0,
     sinceChange: l.sinceChange + 1,
     reached: Math.max(l.reached, l.level),
-    solvedTop: Math.max(l.solvedTop, l.level)
+    solvedTop: Math.max(l.solvedTop, l.level),
+    solved: solvedLevels(l).includes(l.level) ? solvedLevels(l) : [...solvedLevels(l), l.level]
   };
   const restart = { streak: 0, helpRun: 0, sinceChange: 0 };
 
@@ -196,7 +207,10 @@ export function afterSolve(l: Ladder, rule: LadderRule, helped: boolean): Ladder
   return { ladder: next, change: null, helped };
 }
 
-/** A parent's starting level: the child plays from here and never drops below it. Earlier levels count as done. */
+/**
+ * A parent's starting level: the child plays from here and never drops below it. Earlier levels count as done
+ * for the ladder, but not for stickers: those want each level solved (see `solved`).
+ */
 export function startAt(l: Ladder, level: number): Ladder {
   return {
     ...l,
@@ -207,7 +221,8 @@ export function startAt(l: Ladder, level: number): Ladder {
     sinceChange: 0,
     lastChange: null,
     reached: Math.max(l.reached, level),
-    solvedTop: Math.max(l.solvedTop, level - 1)
+    solvedTop: Math.max(l.solvedTop, level - 1),
+    solved: solvedLevels(l)
   };
 }
 

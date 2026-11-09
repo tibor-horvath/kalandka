@@ -225,12 +225,19 @@ export function Sheet({ spec, level, grid, tasks, answers, footer, link }: { spe
       <section className={`ps-sheet ps-sheet--${spec.world}`}>
         <Textures {...textures.ids} />
         {/* The header names the task; the brand stands once, in the footer. */}
-        <header className="ps-head">
+        <header className="ps-head ps-head--task">
+          {/* A second copy of the footer's code: a smudge or a streak from a home printer rarely spoils both. */}
+          <figure className="ps-head__code">
+            <QrCode data={link} correction="M" moduleMm={0.5} className="ps-head__qr" label="QR-kód a lap megoldásaihoz" />
+            <figcaption>Megoldások</figcaption>
+          </figure>
+          {/* The world above, the game and its level together below. */}
           <div className="ps-head__text">
-            <span className="ps-world">
-              {WORLDS.find((w) => w.id === spec.world)!.name} · {level + 1}. szint: {spec.levels[level]}
-            </span>
+            <span className="ps-world">{WORLDS.find((w) => w.id === spec.world)!.name}</span>
             <h2 className="ps-title">{spec.game}</h2>
+            <span className="ps-level">
+              <b>{level + 1}. szint:</b> {spec.levels[level]}
+            </span>
           </div>
           <span className="ps-name">Név: </span>
         </header>

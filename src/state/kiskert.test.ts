@@ -4,8 +4,11 @@ import {
   BEDS,
   BORDER_SPOTS,
   GIFTS_EACH,
+  PILE_OF,
   PLOT_BEDS,
   POLLEN_REST,
+  SNACK_PILE,
+  SNACK_SIZE,
   VEG_COST,
   VEG_GROWS,
   VEG_SPOTS,
@@ -18,12 +21,14 @@ import {
   canGiveFood,
   canPlantVeg,
   canSnack,
+  canSnackWith,
   carryOverBeds,
   decorOf,
   foodGiftSize,
   fruitName,
   giftsOf,
   giveFood,
+  giveSeeds,
   grownCount,
   openBeds,
   openBorder,
@@ -36,9 +41,14 @@ import {
   pollenFlowers,
   ripeVeg,
   seedBalance,
+  seedGiftSize,
   snack,
+  snackPile,
+  takesSeeds,
+  treatOutOfReach,
   vegAt,
   visitorsOf,
+  wishOf,
   type Bed
 } from './rewards';
 
@@ -203,11 +213,63 @@ describe('the snack after the five gifts', () => {
     p = { ...p, gardenTasks: p.gardenTasks + VEG_GROWS };
     expect(canSnack(p, 'rabbit', '2026-11-08')).toBe(false);
     p = { ...p, gifts: { rabbit: GIFTS_EACH } };
-    expect(canSnack(p, 'rabbit', '2026-11-08')).toBe(true);
-    p = snack(p, 'rabbit', '2026-11-08');
+    expect(canSnackWith(p, 'rabbit', 'food', '2026-11-08')).toBe(true);
+    p = snack(p, 'rabbit', 'food', '2026-11-08');
     expect(ripeVeg(p, 'carrot')).toBe(3);
+    expect(snackPile(p, 'rabbit')).toBe(1);
     expect(canSnack(p, 'rabbit', '2026-11-08')).toBe(false);
     expect(canSnack(p, 'rabbit', '2026-11-09')).toBe(true);
     expect(canSnack(p, 'hedgehog', '2026-11-09')).toBe(false);
+  });
+
+  it('is open to every visitor: one treat, three of its garden food, or three seeds for those who take seeds', () => {
+    const all = Object.fromEntries(VISITORS.map((v) => [v.id, GIFTS_EACH]));
+    const p = garden(22, seen('owl'), { gifts: all, pantry: { compote: 1 }, basket: { apple: 3 } });
+    expect(snack(p, 'frog', 'food', 'd')).toBe(p);
+    const frog = snack(p, 'frog', 'treat', 'd');
+    expect(frog.pantry.compote).toBe(0);
+    expect(snackPile(frog, 'frog')).toBe(1);
+    const hedgehog = snack(p, 'hedgehog', 'food', 'd');
+    expect(basketOf(hedgehog, 'apple')).toBe(0);
+    const bird = snack(p, 'blackbird', 'seeds', 'd');
+    expect(seedBalance(bird)).toBe(seedBalance(p) - SNACK_SIZE);
+    // The frog takes no seeds while the garden can still grow pears.
+    expect(canSnackWith(p, 'frog', 'seeds', 'd')).toBe(false);
+  });
+
+  it('grows the pile one thing per day up to ten, and keeps snacking after it is full', () => {
+    let p = garden(3, seen('hedgehog'), { gifts: { hedgehog: GIFTS_EACH }, pantry: { jam: 20 } });
+    for (let day = 1; day <= 12; day++) p = snack(p, 'hedgehog', 'treat', `day-${day}`);
+    expect(p.snacks.hedgehog).toBe(12);
+    expect(snackPile(p, 'hedgehog')).toBe(SNACK_PILE);
+    expect(PILE_OF.hedgehog).toBe('mushroom');
+    for (const v of VISITORS) expect(wishOf(v.id).decor.map((d) => d.id)).toContain(PILE_OF[v.id]);
+  });
+});
+
+describe('a garden planted full without the fruit a treat needs', () => {
+  const full = (kind: 'flower' | 'bush' | 'tree') => garden(0, VISITORS.length, { beds: Array.from({ length: BEDS }, () => ({ kind, at: 0 })) });
+
+  it('lets every visitor whose treat can no longer be made take seeds instead, so the garden can still be finished', () => {
+    const p = full('flower');
+    expect(treatOutOfReach(p, 'jam')).toBe(true);
+    expect(treatOutOfReach(p, 'compote')).toBe(true);
+    expect(treatOutOfReach(p, 'loaf')).toBe(false);
+    for (const v of VISITORS) expect(takesSeeds(p, v.id), v.id).toBe(true);
+    expect(seedGiftSize(p, 'frog')).toBe(3);
+    const given = giveSeeds(p, 'frog');
+    expect(giftsOf(given, 'frog')).toBe(1);
+  });
+
+  it('keeps asking for the treat while a bed still grows its fruit, or a bed is still empty', () => {
+    expect(takesSeeds(full('bush'), 'butterfly')).toBe(false);
+    expect(takesSeeds(full('bush'), 'frog')).toBe(true);
+    expect(takesSeeds(full('tree'), 'frog')).toBe(false);
+    expect(takesSeeds(full('tree'), 'butterfly')).toBe(true);
+    expect(takesSeeds(garden(29, VISITORS.length), 'frog')).toBe(false);
+  });
+
+  it('reads older saves without a snack pile', () => {
+    expect(snackPile(readProgress({ snacked: { rabbit: '2026-11-01' } }), 'rabbit')).toBe(0);
   });
 });

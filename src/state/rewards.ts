@@ -2,7 +2,7 @@ import { LEARN_MAX } from '../worlds/garden/games/learn/logic';
 import { GAMES, type GameId } from './games';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';
-import { ladderOf, type LadderGame } from './ladder';
+import { LADDER_RULES, ladderOf, solvedLevels, type LadderGame } from './ladder';
 import { FRIENDS, boughtCount, friendsOf, secondRobotOpen } from './robotParts';
 import { creditTasks, rewardFor } from './pod';
 import { today } from './screenTime';
@@ -11,8 +11,9 @@ import { today } from './screenTime';
 // (Kiskert); plants grow as the child keeps playing; a grown garden brings visitors; picked fruit
 // (and, once the garden is full, spare seeds) is made into treats for the pantry shelf; and each new
 // skill earns a sticker for the album. Grown bushes and trees also ask for care (see below), but
-// rewards are only ever added: nothing wilts, nothing is taken away, nothing is random and nothing
-// depends on time played.
+// rewards are only ever added: nothing wilts, nothing is taken away and nothing is random. Growth and
+// care count solved tasks, never minutes; only the visitors' daily snack (and practice pay, pod.ts)
+// look at the calendar.
 
 export type PlantKind = 'flower' | 'bush' | 'tree';
 
@@ -925,6 +926,10 @@ export function giveFood(p: Progress, id: VisitorId): Progress {
 // The birds of the garden also eat seeds: instead of a treat from the shelf, the blackbird, Mókus and Bagoly take a
 // handful of seeds, three for each treat they ask for (3, then 6 … 15), counted out like a planting. So the
 // birds, who like the seed loaf, need not wait for the garden to be planted full.
+//
+// Beds are never emptied, so a garden planted full without a bush (or without a pear tree) can never make the
+// treats that need berries (or pears). Then every visitor who likes such a treat takes seeds too, the same way,
+// so every gift can still be given and the garden can still be finished.
 
 export const SEED_EATERS: VisitorId[] = ['blackbird', 'squirrel', 'owl'];
 /** Seeds standing in for one treat. */
@@ -934,9 +939,22 @@ export function eatsSeeds(id: VisitorId): boolean {
   return SEED_EATERS.includes(id);
 }
 
+/** The garden is planted full and no bed grows a fruit this treat needs, so it can never be made again once the basket runs out. */
+export function treatOutOfReach(p: Progress, treat: TreatId): boolean {
+  if (!gardenFull(p)) return false;
+  const r = recipeOf(treat);
+  const grows = (f: FruitKind) => p.beds.some((b) => !!b && fruitOf(b) === f);
+  return (r.pears > 0 && !grows('pear')) || (r.berries > 0 && !grows('berry'));
+}
+
+/** The visitor takes a handful of seeds instead of a treat: a bird, or anyone whose treat the garden can no longer grow. */
+export function takesSeeds(p: Progress, id: VisitorId): boolean {
+  return eatsSeeds(id) || treatOutOfReach(p, wishOf(id).treat);
+}
+
 /** Seeds the visitor's next gift takes as a handful; 0 when they take no seeds or have had every gift. */
 export function seedGiftSize(p: Progress, id: VisitorId): number {
-  return eatsSeeds(id) ? giftSize(p, id) * SEEDS_PER_TREAT : 0;
+  return takesSeeds(p, id) ? giftSize(p, id) * SEEDS_PER_TREAT : 0;
 }
 
 export function canGiveSeeds(p: Progress, id: VisitorId): boolean {
@@ -955,23 +973,70 @@ export function giftsReady(p: Progress): Visitor[] {
   return welcomedVisitors(p).filter((v) => canGive(p, v.id) || canGiveFood(p, v.id) || canGiveSeeds(p, v.id));
 }
 
-// After its five gifts, a vegetable visitor still eats a snack: tapping it offers one ripe spot of its vegetable,
-// once a day. It is only ever offered on a tap, never as a reminder.
+// After its five gifts, every visitor still has a snack, once a day: the smallest gift there is, in any form it
+// takes (one treat from the shelf, three of its garden food, or three seeds). Each snack adds one small thing to
+// the visitor's pile beside it (Süni's mushrooms, Mókus's pinecones …), up to ten in rows of five, so the corner
+// keeps growing. Snacks go on after the pile is full; it just stays full. A snack is only ever offered on a tap,
+// never as a reminder.
 
-/** Vegetables in one snack: one spot. */
-export const SNACK_SIZE = VEG_HELPINGS;
+/** Garden food or seeds in one snack: one Veteményes spot, three fruit, three flowers' pollen, a small handful. */
+export const SNACK_SIZE = FOOD_PER_TREAT;
+/** Things in a full snack pile: two rows of five. */
+export const SNACK_PILE = 10;
 
-export function canSnack(p: Progress, id: VisitorId, day = today()): boolean {
-  const { food } = wishOf(id);
-  if (food !== 'carrot' && food !== 'lettuce') return false;
-  return giftsOf(p, id) >= GIFTS_EACH && p.snacked[id] !== day && ripeVeg(p, food) >= SNACK_SIZE;
+/** What each visitor's snack pile is made of: the first of its own decorations that is small enough to heap. */
+export const PILE_OF: Record<VisitorId, DecorId> = {
+  hedgehog: 'mushroom',
+  ladybug: 'poppies',
+  butterfly: 'lavender',
+  blackbird: 'cherry-branch',
+  frog: 'waterlily',
+  squirrel: 'pinecone',
+  snail: 'mossy-stone',
+  bee: 'honey-pot',
+  rabbit: 'clover',
+  mole: 'molehill',
+  lizard: 'fern',
+  owl: 'feather'
+};
+
+export type SnackHow = 'treat' | 'food' | 'seeds';
+
+/** Things in the visitor's snack pile, 0 … SNACK_PILE. */
+export function snackPile(p: Progress, id: VisitorId): number {
+  return Math.min(SNACK_PILE, p.snacks[id] ?? 0);
 }
 
-/** The visitor eats one ripe spot of its vegetable; unchanged when it cannot today. */
-export function snack(p: Progress, id: VisitorId, day = today()): Progress {
-  if (!canSnack(p, id, day)) return p;
-  const food = wishOf(id).food as VegId;
-  return { ...eatVeg(p, food, SNACK_SIZE), snacked: { ...p.snacked, [id]: day } };
+/** The visitor has had all five gifts and no snack yet today. */
+export function snackDue(p: Progress, id: VisitorId, day = today()): boolean {
+  return isWelcomed(p, id) && giftsOf(p, id) >= GIFTS_EACH && p.snacked[id] !== day;
+}
+
+/** The snack can be given now in this form. */
+export function canSnackWith(p: Progress, id: VisitorId, how: SnackHow, day = today()): boolean {
+  if (!snackDue(p, id, day)) return false;
+  const { food, treat } = wishOf(id);
+  if (how === 'treat') return treatsOf(p, treat) >= 1;
+  if (how === 'food') return !!food && foodOnHand(p, food) >= SNACK_SIZE;
+  return takesSeeds(p, id) && seedBalance(p) >= SNACK_SIZE;
+}
+
+/** Some snack can be given now. */
+export function canSnack(p: Progress, id: VisitorId, day = today()): boolean {
+  return (['food', 'treat', 'seeds'] as SnackHow[]).some((how) => canSnackWith(p, id, how, day));
+}
+
+/** The visitor has its snack; one more thing goes on its pile. Unchanged when it cannot have it that way today. */
+export function snack(p: Progress, id: VisitorId, how: SnackHow, day = today()): Progress {
+  if (!canSnackWith(p, id, how, day)) return p;
+  const { food, treat } = wishOf(id);
+  const spent =
+    how === 'treat'
+      ? { ...p, pantry: { ...p.pantry, [treat]: treatsOf(p, treat) - 1 } }
+      : how === 'food'
+        ? spendFood(p, food!, SNACK_SIZE)
+        : { ...p, seedsSpent: p.seedsSpent + SNACK_SIZE };
+  return { ...spent, snacked: { ...p.snacked, [id]: day }, snacks: { ...p.snacks, [id]: (p.snacks[id] ?? 0) + 1 } };
 }
 
 export function decorCount(p: Progress): number {
@@ -1008,6 +1073,8 @@ export interface Sticker {
   sheets?: 'one' | 'stack';
   /** The last sticker of a row, with a gold ring. */
   gold?: boolean;
+  /** Level stickers: the first ladder level (0-based) it stands for, whose name tells grown-ups the skill. */
+  level?: number;
 }
 
 export interface StickerGame {
@@ -1076,28 +1143,28 @@ export function markPageDone(p: Progress, key: string, tasks: number): Progress 
 /** Feladatlapok stickers: pages done in a world. */
 const pagesIn = (world: WorldId, count: number) => (p: Progress) => pagesDoneIn(p, world) >= count;
 
-/** The highest level of this game's printed sheet (0-based, as in the page key) with a page marked done; -1 for none. */
-export function sheetTop(p: Progress, game: GameId): number {
-  return p.pagesDone.reduce((top, key) => {
+/** The sheet levels (0-based, as in the page key) of this game with a page marked done. */
+function sheetsDone(p: Progress, game: GameId): number[] {
+  return p.pagesDone.flatMap((key) => {
     const [id, , level] = key.split('.');
-    return id === game ? Math.max(top, Number(level)) : top;
-  }, -1);
+    return id === game ? [Number(level)] : [];
+  });
 }
 
 /**
- * The ladder level each printed sheet level stands for, where the sheet's levels are not the game's own: the
- * sheet joins or splits some levels (Csepp-kert's first sheet is both small-drop levels, Virágsor prints AAB and ABB apart).
+ * The ladder levels each printed sheet level stands for, where the sheet's levels are not the game's own: the
+ * sheet joins or splits some levels (Locsolás's first sheet is both small-drop levels, Virágsor prints AAB and
+ * ABB apart, Mézút's faded sheet has all ten digits).
  */
-const SHEET_LADDER: Partial<Record<LadderGame, number[]>> = {
-  water: [1, 2],
-  patterns: [0, 1, 2, 2, 3],
-  trace: [0, 1, 3]
+const SHEET_LADDER: Partial<Record<LadderGame, number[][]>> = {
+  water: [[0, 1], [2]],
+  patterns: [[0], [1], [2], [2], [3]],
+  trace: [[0], [1], [2, 3]]
 };
 
-/** The highest ladder level a finished sheet of this game stands for; -1 for none. */
-function sheetLadderTop(p: Progress, game: LadderGame): number {
-  const top = sheetTop(p, game);
-  return top < 0 ? -1 : (SHEET_LADDER[game]?.[top] ?? top);
+/** The ladder levels a finished sheet of this game stands for, each done explicitly on paper. */
+function sheetLevels(p: Progress, game: LadderGame): number[] {
+  return sheetsDone(p, game).flatMap((level) => SHEET_LADDER[game]?.[level] ?? [level]);
 }
 
 /**
@@ -1234,20 +1301,30 @@ const LADDER_GAMES = Object.keys(LEVEL_STICKERS) as LadderGame[];
 
 const isLadderGame = (id: StickerGameId): id is LadderGame => (LADDER_GAMES as string[]).includes(id);
 
-/** A game's level stickers: number n (from 1) stands for its level(s) on the ladder, solved in the game or on a finished sheet. */
+/**
+ * A game's level stickers: number n (from 1) stands for its level(s) on the ladder, from its `from` up to the next
+ * sticker's. It wants one of those very levels done, in the game or on a finished sheet, in any order: a higher level
+ * done does not earn the stickers below it.
+ */
 function levelStickers(game: LadderGame): Sticker[] {
-  return LEVEL_STICKERS[game].map((s, i) => ({
+  const rows = LEVEL_STICKERS[game];
+  return rows.map((s, i) => ({
     id: `${game}-level-${i + 1}`,
     game,
     mark: s.mark,
     label: s.label,
     praise: s.praise,
-    earned: (p: Progress) => ladderOf(p, game).solvedTop >= s.from || sheetLadderTop(p, game) >= s.from
+    level: s.from,
+    earned: (p: Progress) => {
+      const to = rows[i + 1]?.from ?? LADDER_RULES[game].levels;
+      const inRow = (level: number) => level >= s.from && level < to;
+      return solvedLevels(ladderOf(p, game)).some(inRow) || sheetLevels(p, game).some(inRow);
+    }
   }));
 }
 
-/** Számmagok's sheet levels start at 1, 6, 11 and 16: a finished page of `level` knows the numbers up to its sticker's. */
-const learnSheet = (level: number) => (p: Progress) => sheetTop(p, 'learn') >= level;
+/** Számmagok's sheet levels start at 1, 6, 11 and 16: a finished page of exactly `level` earns its sticker. */
+const learnSheet = (level: number) => (p: Progress) => sheetsDone(p, 'learn').includes(level);
 
 /**
  * Számmagok has no ladder: its stickers count the numbers the child knows, in the game or on a finished sheet.
@@ -1341,9 +1418,24 @@ export function earnedStickers(p: Progress): Sticker[] {
   return STICKERS.filter((s) => s.earned(p) || p.stickersSeen.includes(s.id));
 }
 
-/** Stickers earned but not celebrated yet, in album order; with a world, only that world's (each pops on its own home screen). */
+/** One album row for grown-ups: how many of its stickers the child has, and the first one still to come (null: all). */
+export function stickerRow(p: Progress, game: StickerGameId): { earned: number; total: number; next: Sticker | null } {
+  const row = STICKERS.filter((s) => s.game === game);
+  const have = new Set(earnedStickers(p).map((s) => s.id));
+  return { earned: row.filter((s) => have.has(s.id)).length, total: row.length, next: row.find((s) => !have.has(s.id)) ?? null };
+}
+
+/**
+ * Album rows in order, each row's stickers top first: a finished last-level sheet earns every level below it
+ * at once, and the level the child actually reached should be the one that pops first.
+ */
+export function topFirst(list: Sticker[]): Sticker[] {
+  return STICKER_GAMES.flatMap(({ id }) => list.filter((s) => s.game === id).reverse());
+}
+
+/** Stickers earned but not celebrated yet, rows in album order with each row's top sticker first; with a world, only that world's (each pops on its own home screen). */
 export function newStickers(p: Progress, world?: WorldId): Sticker[] {
-  return earnedStickers(p).filter((s) => !p.stickersSeen.includes(s.id) && (!world || gameOf(s).world === world));
+  return topFirst(earnedStickers(p).filter((s) => !p.stickersSeen.includes(s.id) && (!world || gameOf(s).world === world)));
 }
 
 export function markStickerSeen(p: Progress, id: string, day = today()): Progress {

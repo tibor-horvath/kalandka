@@ -596,7 +596,8 @@
   .pa-top__back { height: 44px; padding: 0 14px 0 10px; gap: 4px; font-size: 16px; }
   .pa-body { flex-direction: column; }
   .pa-nav { order: 2; width: auto; flex-direction: row; gap: 2px; padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); overflow: visible; border-right: none; border-top: 1px solid var(--pa-line); background: var(--pa-card); }
-  .pa-nav__item { flex: 1 1 0; min-width: 0; height: 58px; font-size: 11px; }
+  /* Seven tabs: long labels break at their soft hyphen into two short lines. */
+  .pa-nav__item { flex: 1 1 0; min-width: 0; height: 58px; font-size: 11px; line-height: 1.1; hyphens: manual; }
   .pa-nav__item.is-active { background: #e3f1fc; box-shadow: inset 0 -3px 0 var(--pa-accent); }
   /* Above the tabs, as one slim row across the width. */
   .pa-nav { flex-wrap: wrap; }

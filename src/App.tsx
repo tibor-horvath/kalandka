@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLandingRoute } from './app/route';
+import { useBackLayers, useLandingRoute, type BackLayer } from './app/route';
 import { useAudioSettings, useUpdateWhenIdle } from './app/useDevice';
 import { useScreenTime } from './app/useScreenTime';
 import type { KidDraft } from './components/KidFields';
@@ -131,6 +131,18 @@ function Game() {
     setSettling(true);
     settleTimer.current = window.setTimeout(finish, SETTLE_MS);
   };
+
+  // The browser's Back does what the screen's own back button does. The map counts once a world is chosen
+  // (Back returns to that world); a first-time child starts there, with nothing to go back to.
+  const place: DoorPlace | null = screen === 'reward' || isGameId(screen) ? screen : null;
+  const backLayers: BackLayer[] = [];
+  if (!route.landing && !showPicker) {
+    if (screen === 'map' && progress.world) backLayers.push({ key: 'map', close: () => go('home') });
+    if (place && !settling) backLayers.push({ key: place, close: () => leavePlace(place) });
+    if (screen === 'album') backLayers.push({ key: 'album', close: () => go('home') });
+  }
+  if (!route.landing && inParents) backLayers.push({ key: parents === 'print' ? 'print' : 'parents', close: () => setParents('closed') });
+  useBackLayers(backLayers);
 
   useAudioSettings(progress, worldOfScreen(screen, world, albumWorld) === 'robot' ? 'robot' : 'csepi');
   useUpdateWhenIdle(isHub(screen) && !inParents);

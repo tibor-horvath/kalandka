@@ -8,7 +8,7 @@ import { linkUrl, pageKey } from '../../print/link';
 import { DENSITIES, OtherAnswers, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
 import { useProfiles, type AgeBand } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
-import { markPageDone, pagesDoneIn } from '../../state/rewards';
+import { PAGE_STEPS, markPageDone, pagesDoneIn } from '../../state/rewards';
 import { WORLDS, currentWorld, type WorldId } from '../../state/worlds';
 import { ScanSheet } from './ScanSheet';
 
@@ -115,7 +115,7 @@ function DonePages({ s, choice }: { s: PrintSpec<unknown>; choice: PrintChoice }
   return (
     <section className="pa-card ps-done">
       <h2 className="pa-h2">Kész lapok</h2>
-      <p className="pa-muted">Ha a gyerkőc befejezett egy lapot, jelöld meg itt. A feladatai úgy töltik a jutalomtartót, mint a játékban: minden négy feladatért egy mag (a Robotműhelyben csavar) jár, és mindkét világban matrica az első, az ötödik és a tizenötödik kész lapért.</p>
+      <p className="pa-muted">Ha a gyerkőc befejezett egy lapot, jelöld meg itt. A feladatai úgy töltik a jutalomtartót, mint a játékban: minden négy feladatért egy mag (a Robotműhelyben csavar) jár, és mindkét világban matrica jár a kész lapokért ({PAGE_STEPS.slice(0, 5).join(', ')}… lapnál), valamint a lap szintjéért a játék saját matricája.</p>
       <div className="pa-row">
         {Array.from({ length: choice.pages }, (_, i) => {
           const key = pageKey(pageRef(s, choice, i));
