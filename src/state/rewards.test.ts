@@ -4,6 +4,7 @@ import { SORT_LEVELS } from '../worlds/robot/games/sort';
 import { LADDER_LEVELS, ladderOf, withLadder, type LadderGame } from './ladder';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
 import { PARTS } from './robotParts';
+import { stickerRow } from './rewards';
 import {
   BEDS,
   PLOT_BEDS,
@@ -351,5 +352,32 @@ describe('stickers', () => {
 
   it('starts older saves with no pages done', () => {
     expect(readProgress({ seeds: 3 }).pagesDone).toEqual([]);
+  });
+});
+
+describe('stickerRow (the Jutalmak page)', () => {
+  it('counts a game row and names the next sticker with the ladder level it stands for', () => {
+    const fresh = stickerRow(DEFAULT_PROGRESS, 'water');
+    expect(fresh).toMatchObject({ earned: 0, total: LEVEL_STICKERS.water.length });
+    expect(fresh.next?.id).toBe('water-level-1');
+    expect(fresh.next?.level).toBe(0);
+
+    const p = withLadder(DEFAULT_PROGRESS, 'water', { ...ladderOf(DEFAULT_PROGRESS, 'water'), level: 2, reached: 2, solvedTop: 2 });
+    const row = stickerRow(p, 'water');
+    expect(row.earned).toBe(3);
+    expect(row.next?.level).toBe(3);
+    expect(LADDER_LEVELS.water[row.next!.level!].name).toBeTruthy();
+  });
+
+  it('every level sticker points at a real ladder level, and other rows have none', () => {
+    for (const s of STICKERS) {
+      if (s.game in LEVEL_STICKERS) expect(LADDER_LEVELS[s.game as LadderGame][s.level!]).toBeDefined();
+      else expect(s.level).toBeUndefined();
+    }
+  });
+
+  it('has no next sticker once the row is full', () => {
+    const p = { ...DEFAULT_PROGRESS, stickersSeen: STICKERS.filter((s) => s.game === 'kiskert').map((s) => s.id) };
+    expect(stickerRow(p, 'kiskert')).toMatchObject({ earned: 3, total: 3, next: null });
   });
 });

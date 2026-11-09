@@ -148,6 +148,16 @@
 .gift__offers .gift__or { align-self: center; }
 .gift__treats--food { flex-wrap: wrap; justify-content: center; max-width: 340px; }
 .gift__decor { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+/* The snack pile: ten places in rows of five; the ones still to come are faded. */
+.gift__pile { display: grid; grid-template-columns: repeat(5, 56px); justify-content: center; gap: 4px 10px; margin-top: 10px; padding: 8px 16px; border-radius: 20px; background: #e9f4df; }
+.gift__pile-thing .decor-art { display: block; }
+.gift__pile-thing.is-later .decor-art { opacity: 0.2; filter: grayscale(1); }
+.is-phone .gift__pile { grid-template-columns: repeat(5, 40px); gap: 2px 8px; }
+.is-phone .gift__pile .decor-art { width: 40px; height: 40px; }
+/* On the Rét the pile sits in front of the visitor's feet, in rows of five. */
+.kk-home__pile { position: absolute; z-index: 3; left: 50%; bottom: 14%; width: 50%; translate: -50% 0; gap: 0 2px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; direction: ltr; }
+.kk-home__pile > span { display: block; }
+.kk-home__pile .decor-art { display: block; width: 100%; height: auto; }
 
 .visitor-pop__art--with { display: flex; align-items: flex-end; gap: 28px; }
 .visitor-pop__packet { display: flex; flex-direction: column; align-items: center; gap: 8px; }

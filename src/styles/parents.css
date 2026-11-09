@@ -349,3 +349,60 @@
   .ps-done__btn, .ps-done__btn svg path, .ps-receipt, .ps-chip.is-used, .ps-pod__reward, .ps-total, .ps-result, .ps-sticker { animation: none !important; }
   .ps-sticker { transform: rotate(-2deg); }
 }
+
+/* Jutalmak: seeds, bolts and stickers explained for grown-ups (RewardsPage.tsx), and the one-time intro card (RewardsIntro.tsx). */
+.pa-rw-section { display: flex; flex-direction: column; gap: 14px; }
+.pa-rw-h2 { margin: 10px 0 0; font-size: 22px; font-weight: 800; }
+.pa-rw-rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 14px; }
+.pa-rw-rule { gap: 6px; }
+.pa-rw-rule svg { color: var(--pa-good); }
+.pa-rw-rule .pa-h3 { margin: 0; }
+.pa-rw-rule .pa-muted { line-height: 1.45; }
+.pa-rw-cur { gap: 16px; }
+.pa-rw-cur__name { margin: 0; font-family: var(--display); font-size: 24px; font-weight: 800; line-height: 1; }
+.pa-rw-cur__rule { margin: 0; font-size: 17px; font-weight: 800; }
+.pa-rw-pill { flex: none; padding: 6px 12px; border-radius: 14px; background: #e4f4da; color: #1e5520; font-size: 15px; font-weight: 800; white-space: nowrap; }
+.pa-rw-cur--robot .pa-rw-pill { background: #e3f1fc; color: #1f5c9e; }
+.pa-rw-pod { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 14px; background: var(--pa-bg); }
+.pa-rw-pod .ps-pod__reward { opacity: 0.55; filter: none; }
+.pa-rw-cur--robot .ps-pod__quarter.is-full { stroke: var(--pa-accent); }
+.pa-rw-costs { margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; font-size: 16px; }
+.pa-rw-costs > div { display: flex; justify-content: space-between; gap: 16px; }
+.pa-rw-costs dd { margin: 0; flex: none; font-weight: 800; }
+.pa-rw-note { display: flex; flex-direction: column; gap: 8px; padding: 16px 20px; border-radius: 16px; background: #e3f1fc; font-size: 15px; line-height: 1.5; }
+.pa-rw-note p { margin: 0; }
+.pa-rw-table { padding: 0; overflow-x: auto; }
+.pa-rw-table table { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 16px; }
+.pa-rw-table th, .pa-rw-table td { padding: 11px 16px; text-align: left; vertical-align: top; }
+.pa-rw-table thead th { font-size: 13px; font-weight: 800; color: var(--pa-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.pa-rw-table tbody tr { border-top: 1px solid var(--pa-soft); }
+.pa-rw-table tbody th { font-weight: 800; white-space: nowrap; }
+.pa-rw-table td:nth-child(2) { white-space: nowrap; color: var(--pa-muted); }
+.pa-rw-table td:nth-child(2) b { color: var(--pa-ink); }
+.pa-rw-table__why { color: var(--pa-muted); }
+.pa-rw-table__done { font-weight: 800; color: var(--pa-good); }
+
+.pa-intro { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 24px; background: rgba(16, 35, 58, 0.55); overflow-y: auto; }
+.pa-intro__card { width: min(100%, 820px); box-sizing: border-box; padding: 32px 36px 28px; border-radius: 24px; background: var(--pa-card); display: flex; flex-direction: column; gap: 24px; box-shadow: 0 20px 50px rgba(16, 35, 58, 0.3); }
+.pa-intro__title { margin-top: 6px; font-size: 34px; }
+.pa-intro__steps { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 16px; }
+.pa-intro__step { display: flex; flex-direction: column; gap: 8px; padding: 18px; border-radius: 16px; font-size: 15px; line-height: 1.5; color: var(--pa-muted); }
+.pa-intro__step b { font-size: 18px; line-height: 1.25; color: var(--pa-ink); }
+.pa-intro__step--seed { background: #f6f1e6; }
+.pa-intro__step--sticker { background: #f2edf8; color: #4a4560; }
+.pa-intro__step--sticker svg { color: #6a3fa0; }
+.pa-intro__step--keep { background: #e4f4da; color: #3e5a47; }
+.pa-intro__step--keep svg { color: var(--pa-good); }
+.pa-intro__icons { display: flex; gap: 6px; }
+.pa-intro__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.pa-intro__actions .pa-link { padding-inline: 0; font-size: 16px; }
+.pa-intro__actions .pa-top__back { padding: 0 28px; }
+@container pa-main (max-width: 600px) {
+  .pa-rw-pod { padding: 10px 12px; }
+  .pa-rw-costs > div { flex-direction: column; gap: 0; }
+}
+@media (max-width: 600px) {
+  .pa-intro { padding: 12px; place-items: start center; }
+  .pa-intro__card { padding: 22px 18px; gap: 18px; }
+  .pa-intro__title { font-size: 28px; }
+}

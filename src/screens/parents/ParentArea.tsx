@@ -9,18 +9,21 @@ import { LegalPage } from './LegalPage';
 import { LevelsPage } from './LevelsPage';
 import { Overview } from './Overview';
 import { PrintPage } from './PrintPage';
+import { RewardsIntro, dismissRewardsIntro, rewardsIntroDue } from './RewardsIntro';
+import { RewardsPage } from './RewardsPage';
 import { SettingsPage } from './SettingsPage';
 import { TimePage } from './TimePage';
 
-/** 'legal' has no menu item: it opens from Settings, so the phone tab bar keeps six items. */
-export type ParentPage = 'overview' | 'kids' | 'time' | 'levels' | 'print' | 'settings' | 'legal';
+/** 'legal' has no menu item: it opens from Settings, so the phone tab bar keeps seven items. */
+export type ParentPage = 'overview' | 'kids' | 'time' | 'levels' | 'rewards' | 'print' | 'settings' | 'legal';
 /** Where the area opens: a page, or straight into adding a child (from "Ki játszik?"). */
 export type ParentStart = ParentPage | 'add';
 
+/** Soft hyphens (\u00ad) let the long labels break in two on the phone's seven-tab bar; elsewhere they never show. */
 const PAGES: { id: Exclude<ParentPage, 'legal'>; label: string; icon: ReactNode }[] = [
   {
     id: 'overview',
-    label: 'Áttekintés',
+    label: 'Áttekin\u00adtés',
     icon: (
       <>
         <rect x="3" y="3" width="7" height="9" rx="2" />
@@ -32,7 +35,7 @@ const PAGES: { id: Exclude<ParentPage, 'legal'>; label: string; icon: ReactNode 
   },
   {
     id: 'kids',
-    label: 'Gyerkőcök',
+    label: 'Gyerkő\u00adcök',
     icon: (
       <>
         <circle cx="9" cy="8" r="3.5" />
@@ -44,7 +47,7 @@ const PAGES: { id: Exclude<ParentPage, 'legal'>; label: string; icon: ReactNode 
   },
   {
     id: 'time',
-    label: 'Képernyőidő',
+    label: 'Képer\u00adnyő\u00adidő',
     icon: (
       <>
         <circle cx="12" cy="13" r="8" />
@@ -65,8 +68,17 @@ const PAGES: { id: Exclude<ParentPage, 'legal'>; label: string; icon: ReactNode 
     )
   },
   {
+    id: 'rewards',
+    label: 'Jutalmak',
+    icon: (
+      <>
+        <path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8-4.3-4.1 5.9-.8z" />
+      </>
+    )
+  },
+  {
     id: 'print',
-    label: 'Nyomtatás',
+    label: 'Nyomta\u00adtás',
     icon: (
       <>
         <path d="M6 9V3h12v6" />
@@ -77,7 +89,7 @@ const PAGES: { id: Exclude<ParentPage, 'legal'>; label: string; icon: ReactNode 
   },
   {
     id: 'settings',
-    label: 'Beállítások',
+    label: 'Beállí\u00adtások',
     icon: (
       <>
         <path d="M4 7h10" />
@@ -183,10 +195,19 @@ export function ParentArea({ start = 'overview', onClose, onAbout }: { start?: P
   const perKid = page !== 'kids' && page !== 'legal';
   const modal = useModal<HTMLDivElement>();
   const main = useRef<HTMLElement>(null);
+  // The one-time card on seeds, bolts and stickers; not while a parent came here to add a child.
+  const [intro, setIntro] = useState(() => start !== 'add' && start !== 'rewards' && rewardsIntroDue());
+  const introOpen = useRef(intro);
+  introOpen.current = intro;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key !== 'Escape') return;
+      // On the intro card, Escape closes only the card.
+      if (introOpen.current) {
+        dismissRewardsIntro();
+        setIntro(false);
+      } else onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -249,6 +270,7 @@ export function ParentArea({ start = 'overview', onClose, onAbout }: { start?: P
               {page === 'overview' && <Overview onGo={setPage} />}
               {page === 'time' && <TimePage />}
               {page === 'levels' && <LevelsPage />}
+              {page === 'rewards' && <RewardsPage />}
               {page === 'print' && <PrintPage kidId={shownId} canMark />}
               {page === 'settings' && <SettingsPage onLegal={() => setPage('legal')} />}
             </KidScope>
@@ -264,6 +286,15 @@ export function ParentArea({ start = 'overview', onClose, onAbout }: { start?: P
           </footer>
         </main>
       </div>
+      {intro && (
+        <RewardsIntro
+          onClose={() => setIntro(false)}
+          onMore={() => {
+            setIntro(false);
+            setPage('rewards');
+          }}
+        />
+      )}
     </div>
   );
 }
