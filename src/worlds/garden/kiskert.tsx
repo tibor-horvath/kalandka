@@ -297,17 +297,82 @@ function FruitTree({ fruit = 5, dry = false, tree = 'pear' }: { fruit?: number; 
 /** A walnut's crown is broader and rounder than the fruit trees'. */
 const WALNUT_LEAVES = [[85, 50, 34], [52, 74, 32], [118, 74, 32], [36, 108, 28], [134, 108, 28], [85, 96, 44], [62, 132, 26], [108, 132, 26]];
 
-function Seedling() {
+/** A young plant that already shows its kind: a flower's closed bud in its own colour, a fruit tree's thin sapling with
+ * one blossom, the bush's low wide tuft. Drawn from the bottom middle of the plant box, a little right of centre to
+ * leave room for the stake. */
+function Sprout({ kind, flower, dry }: { kind: PlantKind; flower: FlowerId; dry: boolean }) {
+  const leaf = dry ? DRY : LEAF;
+  const light = dry ? DRY : LEAF_LIGHT;
+  if (kind === 'tree') {
+    return (
+      <g transform="translate(104 218) scale(1.5)">
+        <path d="M0 2V-92" stroke="#7A5236" strokeWidth="7" strokeLinecap="round" />
+        <path d="M0 -46L-20 -62M0 -64L20 -80" stroke="#7A5236" strokeWidth="4" strokeLinecap="round" />
+        <circle cx="-22" cy="-66" r="12" fill={leaf} />
+        <circle cx="22" cy="-84" r="12" fill={leaf} />
+        <circle cx="0" cy="-98" r="14" fill={light} />
+        <g transform="translate(14 -104)" fill="#FFFFFF">
+          <circle cy="-5" r="5" />
+          <circle cx="5" r="5" />
+          <circle cy="5" r="5" />
+          <circle cx="-5" r="5" />
+          <circle r="3" fill="#F2C230" />
+        </g>
+      </g>
+    );
+  }
+  if (kind === 'bush') {
+    return (
+      <g transform="translate(104 218) scale(1.3)">
+        <path d="M0 0C-8 -14 -20 -24 -32 -30M0 0V-42M0 0C8 -14 20 -24 32 -30" stroke="#8A4B3A" strokeWidth="4.5" fill="none" strokeLinecap="round" />
+        <circle cx="-32" cy="-32" r="12" fill={leaf} />
+        <circle cx="32" cy="-32" r="12" fill={leaf} />
+        <circle cx="0" cy="-44" r="13" fill={light} />
+        <circle cx="-16" cy="-20" r="10" fill={light} />
+        <circle cx="16" cy="-20" r="10" fill={light} />
+      </g>
+    );
+  }
   return (
-    <g transform="translate(35 130)">
-      <path d="M45 88V48" stroke={LEAF} strokeWidth="6" strokeLinecap="round" />
-      <path d="M45 52c-6-18-22-24-34-20 2 14 16 24 34 20z" fill={LEAF_LIGHT} />
-      <path d="M45 44c6-18 22-24 34-20-2 14-16 24-34 20z" fill={LEAF} />
+    <g transform="translate(104 218) scale(1.5)">
+      <path d="M0 2V-52" stroke={leaf} strokeWidth="6" strokeLinecap="round" />
+      <ellipse cx="-13" cy="-22" rx="15" ry="7" fill={light} transform="rotate(-30 -13 -22)" />
+      <ellipse cx="13" cy="-32" rx="15" ry="7" fill={light} transform="rotate(30 13 -32)" />
+      <path d="M0 -84C-13 -74 -13 -56 0 -50C13 -56 13 -74 0 -84Z" fill={FLOWER_COLORS[flower]} />
+      <path d="M-10 -58Q0 -42 10 -58Q0 -51 -10 -58Z" fill={leaf} />
     </g>
   );
 }
 
-/** A planting in the Kiskert: a seedling until it has grown, then the plant with its ripe fruit. */
+/** A gardener's stake beside a young plant: a little card with the picture of what will grow there, the same as on
+ * the seed choice, so a child who can't read yet still knows. It comes out once the plant has grown. */
+function PlantStake({ kind, flower, tree }: { kind: PlantKind; flower: FlowerId; tree: TreeId }) {
+  return (
+    <g>
+      <rect x="31" y="126" width="10" height="94" rx="3" fill="#A9763F" />
+      <rect x="2" y="58" width="68" height="68" rx="14" fill="#FFFBEF" stroke="#A9763F" strokeWidth="4" />
+      {kind === 'flower' ? (
+        <svg x="9" y="65" width="54" height="54" viewBox="12 6 96 96">
+          <FlowerHead id={flower} />
+        </svg>
+      ) : kind === 'bush' ? (
+        <g transform="translate(9 65)">
+          <BerryIcon size={54} />
+        </g>
+      ) : tree === 'pear' ? (
+        <g transform="translate(13 64)">
+          <PearIcon size={48} />
+        </g>
+      ) : (
+        <g transform="translate(9 65)">
+          <FruitIcon id={tree === 'walnut' ? 'nut' : tree} size={54} />
+        </g>
+      )}
+    </g>
+  );
+}
+
+/** A planting in the Kiskert: a young plant with its stake until it has grown, then the plant with its ripe fruit. */
 export function GardenPlant({
   kind,
   grown,
@@ -326,7 +391,10 @@ export function GardenPlant({
   return (
     <svg aria-hidden="true" className={`gplant gplant--${grown ? kind : 'sprout'}${thirsty ? ' gplant--thirsty' : ''}`} viewBox="0 0 160 220">
       {!grown ? (
-        <Seedling />
+        <>
+          <PlantStake kind={kind} flower={flower} tree={tree} />
+          <Sprout kind={kind} flower={flower} dry={thirsty} />
+        </>
       ) : kind === 'flower' ? (
         <Flower id={flower} />
       ) : kind === 'bush' ? (

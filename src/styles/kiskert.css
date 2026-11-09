@@ -134,11 +134,33 @@
 
 /* ---------- cards: basket, sowing, gifts, welcome ---------- */
 .kk-basket { border: none; cursor: pointer; font: inherit; }
-.kbasket__card { width: min(460px, 100%); }
-.kbasket__rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.kbasket__row { display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-radius: 18px; background: #f6ead0; }
-.kbasket__name { flex: 1; font-size: 22px; font-weight: 800; }
-.kbasket__count { min-width: 44px; height: 44px; padding: 0 10px; border-radius: 22px; background: var(--paper); font-size: 24px; font-weight: 800; display: grid; place-items: center; }
+/* The basket: a woven tray of fruit tiles. Each tile shows the fruit big with its count, then one small fruit per
+   piece (up to ten) so it can be counted without reading, then where the fruit goes. */
+.kbasket__card { width: min(540px, 100%); }
+.kbasket__card.is-wide { width: min(780px, 100%); }
+.kbasket__total { height: 52px; background: #fff4cf; flex: none; }
+.kbasket__tray { border-radius: 28px; background: #f6ead0; overflow: hidden; }
+.kbasket__tray::before { content: ''; display: block; height: 12px; background: repeating-linear-gradient(90deg, #c98443 0 18px, #b0702f 18px 22px); }
+.kbasket__tiles { list-style: none; margin: 0; padding: 14px; display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: 12px; }
+.kbasket__tile { padding: 12px 10px 14px; border-radius: 24px; background: var(--paper); box-shadow: 0 4px 0 #e2cf9c; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.kbasket__art { position: relative; width: 96px; height: 76px; display: grid; place-items: center; }
+.kbasket__count { position: absolute; top: -6px; right: -14px; min-width: 50px; height: 50px; padding: 0 8px; border: 4px solid var(--paper); border-radius: 25px; background: var(--leaf); color: var(--paper); font-size: 28px; font-weight: 800; line-height: 1; display: grid; place-items: center; }
+.kbasket__name { font-size: 24px; font-weight: 800; line-height: 1; }
+.kbasket__pips { min-height: 26px; max-width: 160px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px; }
+.kbasket__pip { display: inline-flex; }
+.kbasket__pip svg { width: 20px; height: 22px; }
+.kbasket__more { font-family: var(--body); font-size: 16px; font-weight: 800; color: var(--ink-soft); }
+.kbasket__goes { height: 34px; padding: 0 12px; border-radius: 17px; background: var(--drop-tint); color: var(--drop-deep); font-family: var(--body); font-size: 16px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; }
+.kbasket__goes.is-visitor { background: var(--good-tint); color: var(--leaf-deep); }
+.is-phone .kbasket__total { height: 46px; font-size: 22px; }
+.is-phone .kbasket__tiles { grid-template-columns: repeat(min(var(--cols, 2), 2), minmax(0, 1fr)); padding: 10px; gap: 10px; }
+.is-phone .kbasket__tile { padding: 10px 6px 10px; gap: 6px; border-radius: 20px; }
+.is-phone .kbasket__art { width: 76px; height: 60px; }
+.is-phone .kbasket__art > svg { width: 52px; height: 52px; }
+.is-phone .kbasket__count { min-width: 42px; height: 42px; border-width: 3px; font-size: 23px; }
+.is-phone .kbasket__name { font-size: 20px; }
+.is-phone .kbasket__pip svg { width: 16px; height: 18px; }
+.is-phone .kbasket__goes { height: 30px; font-size: 14px; padding: 0 10px; }
 
 .sow__new { margin-left: 2px; padding: 0 8px; border-radius: 10px; background: #b4560b; color: var(--paper); font-size: 13px; line-height: 20px; }
 .sow__plant--veg { width: 120px; }

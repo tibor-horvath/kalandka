@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrivalRing } from '../../../components/ArrivalRing';
 import { Seed } from '../art';
 import {
@@ -1306,13 +1306,16 @@ function Meadow({
 function BasketCard({ onClose }: { onClose: () => void }) {
   const { progress } = useProgress();
   const modal = useModal<HTMLDivElement>(onClose);
-  const rows: { key: string; name: string; n: number; icon: ReactNode }[] = [
-    { key: 'pear', name: 'Körte', n: basketPears(progress), icon: <PearIcon size={34} /> },
-    { key: 'berry', name: 'Áfonya', n: basketBerries(progress), icon: <BerryIcon size={36} /> },
-    { key: 'apple', name: 'Alma', n: basketOf(progress, 'apple'), icon: <FruitIcon id="apple" size={36} /> },
-    { key: 'cherry', name: 'Cseresznye', n: basketOf(progress, 'cherry'), icon: <FruitIcon id="cherry" size={36} /> },
-    { key: 'nut', name: 'Dió', n: basketOf(progress, 'nut'), icon: <FruitIcon id="nut" size={36} /> }
+  // Each fruit is drawn once big and once per piece, small, so a child who cannot read numbers yet can count it.
+  // `goes` says what it is for: pears and blueberries are cooked in the pantry, the rest are a visitor's favourite.
+  const rows: { key: string; name: string; n: number; goes: string; pantry: boolean; icon: (size: number) => ReactNode }[] = [
+    { key: 'pear', name: 'Körte', n: basketPears(progress), goes: 'Kamrába', pantry: true, icon: (s: number) => <PearIcon size={s * 0.9} /> },
+    { key: 'berry', name: 'Áfonya', n: basketBerries(progress), goes: 'Kamrába', pantry: true, icon: (s: number) => <BerryIcon size={s} /> },
+    { key: 'apple', name: 'Alma', n: basketOf(progress, 'apple'), goes: 'Süninek', pantry: false, icon: (s: number) => <FruitIcon id="apple" size={s} /> },
+    { key: 'cherry', name: 'Cseresznye', n: basketOf(progress, 'cherry'), goes: 'Rigónak', pantry: false, icon: (s: number) => <FruitIcon id="cherry" size={s} /> },
+    { key: 'nut', name: 'Dió', n: basketOf(progress, 'nut'), goes: 'Mókusnak', pantry: false, icon: (s: number) => <FruitIcon id="nut" size={s} /> }
   ].filter((r) => r.n > 0);
+  const total = rows.reduce((sum, r) => sum + r.n, 0);
 
   useEffect(() => {
     speak(`A kosárban: ${rows.map((r) => `${numberAttr(r.n)} ${r.name.toLowerCase()}`).join(', ')}.`);
@@ -1321,7 +1324,7 @@ function BasketCard({ onClose }: { onClose: () => void }) {
 
   return (
     <div ref={modal} className="pantry kbasket" role="dialog" aria-modal="true" aria-labelledby="basket-title">
-      <div className="pantry__card kbasket__card">
+      <div className={`pantry__card kbasket__card${rows.length > 2 ? ' is-wide' : ''}`}>
         <header className="pantry__top">
           <RoundButton label="Vissza a kertbe" onClick={onClose}>
             <BackIcon />
@@ -1329,16 +1332,45 @@ function BasketCard({ onClose }: { onClose: () => void }) {
           <h2 id="basket-title" className="pantry__title">
             Kosár
           </h2>
+          <div className="pill pill--basket kbasket__total" aria-label={`Összesen ${total} gyümölcs`}>
+            <BasketIcon size={32} />
+            <span>{total}</span>
+          </div>
         </header>
-        <ul className="kbasket__rows">
-          {rows.map((r) => (
-            <li key={r.key} className="kbasket__row">
-              {r.icon}
-              <span className="kbasket__name">{r.name}</span>
-              <span className="kbasket__count">{r.n}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="kbasket__tray">
+          <ul className="kbasket__tiles" style={{ '--cols': Math.min(rows.length, 3) } as CSSProperties}>
+            {rows.map((r) => (
+              <li key={r.key} className="kbasket__tile" aria-label={`${r.n} ${r.name.toLowerCase()}, ${r.goes.toLowerCase()}`}>
+                <span className="kbasket__art">
+                  {r.icon(64)}
+                  <span className="kbasket__count">{r.n}</span>
+                </span>
+                <span className="kbasket__name">{r.name}</span>
+                <span className="kbasket__pips" aria-hidden="true">
+                  {Array.from({ length: Math.min(r.n, 10) }, (_, i) => (
+                    <span key={i} className="kbasket__pip">
+                      {r.icon(20)}
+                    </span>
+                  ))}
+                  {r.n > 10 && <span className="kbasket__more">+{r.n - 10}</span>}
+                </span>
+                <span className={`kbasket__goes${r.pantry ? '' : ' is-visitor'}`} aria-hidden="true">
+                  {r.pantry ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 10h16v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z" />
+                      <path d="M2 10h20M9 6c0-1 1-2 3-2s3 1 3 2" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+                    </svg>
+                  )}
+                  {r.goes}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );

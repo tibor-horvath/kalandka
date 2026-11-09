@@ -1416,9 +1416,17 @@ export function stickerRow(p: Progress, game: StickerGameId): { earned: number; 
   return { earned: row.filter((s) => have.has(s.id)).length, total: row.length, next: row.find((s) => !have.has(s.id)) ?? null };
 }
 
-/** Stickers earned but not celebrated yet, in album order; with a world, only that world's (each pops on its own home screen). */
+/**
+ * Album rows in order, each row's stickers top first: a finished last-level sheet earns every level below it
+ * at once, and the level the child actually reached should be the one that pops first.
+ */
+export function topFirst(list: Sticker[]): Sticker[] {
+  return STICKER_GAMES.flatMap(({ id }) => list.filter((s) => s.game === id).reverse());
+}
+
+/** Stickers earned but not celebrated yet, rows in album order with each row's top sticker first; with a world, only that world's (each pops on its own home screen). */
 export function newStickers(p: Progress, world?: WorldId): Sticker[] {
-  return earnedStickers(p).filter((s) => !p.stickersSeen.includes(s.id) && (!world || gameOf(s).world === world));
+  return topFirst(earnedStickers(p).filter((s) => !p.stickersSeen.includes(s.id) && (!world || gameOf(s).world === world)));
 }
 
 export function markStickerSeen(p: Progress, id: string, day = today()): Progress {

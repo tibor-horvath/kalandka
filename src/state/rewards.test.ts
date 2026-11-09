@@ -259,7 +259,7 @@ describe('stickers', () => {
     expect(paperNew(old(16, ['paper-garden-1', 'paper-garden-5', 'paper-garden-15']))).toEqual([]);
     // Steps above the last sticker stuck in still pop, as do steps not earned yet once they are.
     expect(paperNew(old(9, ['paper-garden-1', 'paper-garden-5']))).toEqual(['paper-garden-8']);
-    expect(paperNew(old(3, ['paper-garden-1']))).toEqual(['paper-garden-2', 'paper-garden-3']);
+    expect(paperNew(old(3, ['paper-garden-1']))).toEqual(['paper-garden-3', 'paper-garden-2']);
   });
 
   it('leaves the stickers of a save from before the ladders in place', () => {
@@ -298,7 +298,7 @@ describe('stickers', () => {
     expect(newStickers(old)).toEqual([]);
     expect(seedBalance(old)).toBe(12);
     const current = readProgress({ learnSolved: 10, stickersSeen: [] });
-    expect(newStickers(current).map((s) => s.id)).toEqual(['learn-5', 'learn-10']);
+    expect(newStickers(current).map((s) => s.id)).toEqual(['learn-10', 'learn-5']);
   });
 
   it('gives Feladatlapok stickers for pages marked done, on the page’s own world', () => {
@@ -331,6 +331,8 @@ describe('stickers', () => {
     expect(game('learn.1.3.n.7.0', 'learn')).toEqual(['learn-5', 'learn-10', 'learn-20']);
     // It pops on the game's own world, with the Feladatlapok sticker.
     expect(newStickers(markPageDone(DEFAULT_PROGRESS, 'path.1.0.n.7.0', 1), 'robot').map((s) => s.id)).toEqual(['path-level-1', 'paper-robot-1']);
+    // A last-level sheet earns the levels below it too: the top one pops first.
+    expect(newStickers(markPageDone(DEFAULT_PROGRESS, 'patterns.1.4.n.7.0', 1), 'garden').map((s) => s.id)).toEqual(['patterns-level-4', 'patterns-level-3', 'patterns-level-2', 'patterns-level-1', 'paper-garden-1']);
   });
 
   it('counts a marked page once, and fills only its own world’s reward pod with its tasks', () => {
