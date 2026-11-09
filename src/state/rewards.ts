@@ -3,7 +3,7 @@ import { GAMES, type GameId } from './games';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';
 import { LADDER_RULES, ladderOf, solvedLevels, type LadderGame } from './ladder';
-import { FRIENDS, boughtCount, friendsOf, secondRobotOpen } from './robotParts';
+import { FRIENDS, FRIEND_GIFTS_EACH, boughtCount, friendGiftCount, friendGiftsOf, friendsOf, secondRobotOpen } from './robotParts';
 import { creditTasks, rewardFor } from './pod';
 import { today } from './screenTime';
 
@@ -1168,10 +1168,10 @@ function sheetLevels(p: Progress, game: LadderGame): number[] {
 }
 
 /**
- * A game's level stickers, easiest first: one per level, or one per few neighbouring levels in the games with
- * long ladders (Méhkas, Robotút), so no game has more than seven. `from` is the first level (0-based) the
- * sticker stands for: it is earned with the first task solved there, so a child who keeps needing help on a
- * level still has its sticker. `legacy` names the stickers of the old hand-picked list it replaces.
+ * A game's level stickers, easiest first: one per level, so every level done (in the game or on a sheet) has a
+ * sticker of its own. `from` is the level (0-based) the sticker stands for: it is earned with the first task
+ * solved there, so a child who keeps needing help on a level still has its sticker. `legacy` names the stickers
+ * of the old hand-picked list it replaces.
  */
 interface LevelSticker {
   from: number;
@@ -1181,7 +1181,20 @@ interface LevelSticker {
   legacy?: string[];
 }
 
-export const MAX_LEVEL_STICKERS = 7;
+/**
+ * Méhkas and Robotút once had one sticker per few levels (no more than seven a row). Their per-level stickers
+ * carry new ids, so an old `add-level-n` in a save always means the old group, never a level: the old groups'
+ * first levels, by sticker.
+ */
+const REGROUPED: Partial<Record<LadderGame, number[]>> = {
+  add: [0, 3, 6, 8, 10, 12, 14],
+  path: [0, 2, 4, 5, 6, 8, 9]
+};
+
+/** A level sticker's id: its number (from 1) in the game's row. */
+function levelStickerId(game: LadderGame, i: number): string {
+  return `${game}-${REGROUPED[game] ? 'szint' : 'level'}-${i + 1}`;
+}
 
 export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
   water: [
@@ -1210,13 +1223,22 @@ export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
     { from: 5, mark: '20', label: 'Húsz mag', praise: 'Már húsz magot is egy pillantásra látsz!' }
   ],
   add: [
-    { from: 0, mark: '5', label: 'Ötig', praise: 'Már ötig adsz össze és veszel el!' },
-    { from: 3, mark: '+10', label: 'Tízig', praise: 'Már tízig adsz össze és veszel el!', legacy: ['add-5'] },
-    { from: 6, mark: '20', label: 'Húszig', praise: 'Már húszig adsz össze és veszel el!', legacy: ['add-10'] },
-    { from: 8, mark: '10+', label: 'Tízes átlépés', praise: 'Már a tízesen is átlépsz!' },
-    { from: 10, mark: '40', label: 'Kerek tízesek', praise: 'Már a kerek tízesekkel is számolsz!', legacy: ['add-100'] },
-    { from: 12, mark: '100', label: 'Százig', praise: 'Már százig adsz össze és veszel el!' },
-    { from: 14, mark: '100+', label: 'Nagy átlépés', praise: 'Százig is átlépsz a tízesen!' }
+    { from: 0, mark: '+5', label: 'Gyűjtés ötig', praise: 'Már ötig adsz össze!' },
+    { from: 1, mark: '−5', label: 'Elvétel ötig', praise: 'Már ötig veszel el!' },
+    { from: 2, mark: '5', label: 'Ötig', praise: 'Már ötig adsz össze és veszel el!' },
+    { from: 3, mark: '+10', label: 'Gyűjtés tízig', praise: 'Már tízig adsz össze!', legacy: ['add-5'] },
+    { from: 4, mark: '−10', label: 'Elvétel tízig', praise: 'Már tízig veszel el!' },
+    { from: 5, mark: '10', label: 'Továbbszámolás', praise: 'Már tízig továbbszámolva adsz össze!' },
+    { from: 6, mark: '+20', label: 'Húszig', praise: 'Már húszig adsz össze!', legacy: ['add-10'] },
+    { from: 7, mark: '−20', label: 'Elvétel húszig', praise: 'Már húszig veszel el!' },
+    { from: 8, mark: '20+', label: 'Tízes átlépés', praise: 'Már a tízesen is átlépsz!' },
+    { from: 9, mark: '20−', label: 'Átlépés elvétellel', praise: 'Elvételnél is átlépsz a tízesen!' },
+    { from: 10, mark: '+40', label: 'Kerek tízesek', praise: 'Már a kerek tízesekkel is számolsz!', legacy: ['add-100'] },
+    { from: 11, mark: '−40', label: 'Kerek elvétel', praise: 'Már kerek tízeseket is elveszel!' },
+    { from: 12, mark: '+100', label: 'Százig', praise: 'Már százig adsz össze!' },
+    { from: 13, mark: '−100', label: 'Elvétel százig', praise: 'Már százig veszel el!' },
+    { from: 14, mark: '100+', label: 'Nagy átlépés', praise: 'Százig is átlépsz a tízesen!' },
+    { from: 15, mark: '100−', label: 'Nagy elvétel', praise: 'Százig elvételnél is átlépsz a tízesen!' }
   ],
   trace: [
     { from: 0, mark: '1–5', label: 'Írom 5-ig', praise: 'Már ötig írod a számokat!', legacy: ['trace-5'] },
@@ -1234,10 +1256,13 @@ export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
   ],
   path: [
     { from: 0, mark: '1', label: 'Első út', praise: 'Elvezetted a robotot az elemhez!', legacy: ['path-first'] },
+    { from: 1, mark: '▣', label: 'Dobozok között', praise: 'A dobozok között is elvezetted a robotot!' },
     { from: 2, mark: '▶', label: 'Tervező', praise: 'Előre megtervezted a robot útját!', legacy: ['path-plan'] },
+    { from: 3, mark: '▶▣', label: 'Kerülő terv', praise: 'Előre megtervezted a kerülőutat is!' },
     { from: 4, mark: '→→', label: 'Hosszú út', praise: 'A hosszú úton is elvezetted a robotot!' },
     { from: 5, mark: '×3', label: 'Ismétlő', praise: 'Az ismétléssel rövid lett a programod!' },
     { from: 6, mark: '↻', label: 'Fordulós', praise: 'A robot arra megy, amerre néz, és te tudod, merre fordítsd!', legacy: ['path-turn'] },
+    { from: 7, mark: '↻▣', label: 'Fordulj, kerüld ki', praise: 'Fordulva is kikerülöd a dobozokat!' },
     { from: 8, mark: '×↻', label: 'Ismételd és fordulj', praise: 'Egy programban ismételsz és fordulsz is!', legacy: ['path-repeat'] },
     { from: 9, mark: '2', label: 'Két elem', praise: 'Egy programmal két elemet is összegyűjtöttél!', legacy: ['path-two'] }
   ],
@@ -1302,14 +1327,14 @@ const LADDER_GAMES = Object.keys(LEVEL_STICKERS) as LadderGame[];
 const isLadderGame = (id: StickerGameId): id is LadderGame => (LADDER_GAMES as string[]).includes(id);
 
 /**
- * A game's level stickers: number n (from 1) stands for its level(s) on the ladder, from its `from` up to the next
- * sticker's. It wants one of those very levels done, in the game or on a finished sheet, in any order: a higher level
- * done does not earn the stickers below it.
+ * A game's level stickers: number n (from 1) stands for its level on the ladder (from its `from` up to the next
+ * sticker's). It wants that very level done, in the game or on a finished sheet, in any order: a higher level
+ * done does not earn the stickers below it, but always earns its own.
  */
 function levelStickers(game: LadderGame): Sticker[] {
   const rows = LEVEL_STICKERS[game];
   return rows.map((s, i) => ({
-    id: `${game}-level-${i + 1}`,
+    id: levelStickerId(game, i),
     game,
     mark: s.mark,
     label: s.label,
@@ -1339,7 +1364,9 @@ const OTHER_STICKERS: Sticker[] = [
   { id: 'kiskert-done', game: 'kiskert', mark: '60', label: 'Kész a kert', praise: 'Kész a kert! Minden lakó megkapta az ajándékát.', earned: gardenDone },
   { id: 'robotepito-part', game: 'robotepito', mark: '1', label: 'Első alkatrész', praise: 'Felszerelted az első új alkatrészt a robotodra!', earned: (p) => boughtCount(p) >= 1 },
   { id: 'robotepito-second', game: 'robotepito', mark: '2', label: 'Második robot', praise: 'Megérkezett a második robotod a munkapadra!', earned: secondRobotOpen },
-  { id: 'robotepito-friends', game: 'robotepito', mark: '6', label: 'Minden barát', praise: 'Mind a hat robotbarát beköltözött a műhelybe!', earned: (p) => friendsOf(p).length === FRIENDS.length }
+  { id: 'robotepito-friends', game: 'robotepito', mark: '6', label: 'Minden barát', praise: 'Mind a hat robotbarát beköltözött a műhelybe!', earned: (p) => friendsOf(p).length === FRIENDS.length },
+  { id: 'robotepito-gifts', game: 'robotepito', mark: '♥', label: 'Minden barátnak', praise: 'Mind a hat robotbarát kapott tőled ajándékot!', earned: (p) => FRIENDS.every((f) => friendGiftsOf(p, f.id) >= 1) },
+  { id: 'robotepito-shelf', game: 'robotepito', mark: '30', label: 'Teli polc', praise: 'Teli a polc! Minden robotbarát megkapta mind az öt ajándékát.', earned: (p) => friendGiftCount(p) === FRIENDS.length * FRIEND_GIFTS_EACH }
 ];
 
 /** Pages done for each Feladatlapok sticker: the Fibonacci numbers, so the first ones come quickly and the later ones ask for a little more each time. */
@@ -1387,7 +1414,7 @@ export const STICKERS: Sticker[] = STICKER_GAMES.flatMap(({ id }) =>
 /** The level sticker that took the place of each sticker of the old hand-picked list. */
 const LEGACY_STICKERS: Record<string, string> = {
   ...Object.fromEntries(
-    LADDER_GAMES.flatMap((game) => LEVEL_STICKERS[game].flatMap((s, i) => (s.legacy ?? []).map((old) => [old, `${game}-level-${i + 1}`])))
+    LADDER_GAMES.flatMap((game) => LEVEL_STICKERS[game].flatMap((s, i) => (s.legacy ?? []).map((old) => [old, levelStickerId(game, i)])))
   ),
   // The old fifteen-page Feladatlapok sticker: its place went to thirteen pages.
   'paper-garden-15': 'paper-garden-13',
@@ -1398,7 +1425,8 @@ const LEGACY_STICKERS: Record<string, string> = {
  * Saves from before the level stickers (or the Fibonacci Feladatlapok row): a sticker the child had stuck in stays, as the sticker that took
  * its place, even where that level has no solved task yet (the old list gave some for stepping onto a level).
  */
-export function carryOverStickers(p: Progress): Progress {
+export function carryOverStickers(saved: Progress): Progress {
+  const p = ungroupStickers(saved);
   const carried = [...new Set(p.stickersSeen.map((id) => LEGACY_STICKERS[id]).filter((id) => id && !p.stickersSeen.includes(id)))];
   const seen = [...p.stickersSeen, ...carried];
   // The Fibonacci row put new steps between the old 1, 5 and 15 pages: below a sticker already stuck in, they count as
@@ -1407,6 +1435,29 @@ export function carryOverStickers(p: Progress): Progress {
   const between = PAGE_STICKERS.filter((s) => !seen.includes(s.id) && PAGE_STICKERS.some((t) => t.game === s.game && seen.includes(t.id) && Number(t.mark) > Number(s.mark)));
   const added = [...carried, ...between.map((s) => s.id)];
   return added.length === 0 ? p : { ...p, stickersSeen: [...p.stickersSeen, ...added] };
+}
+
+/**
+ * Saves from when Méhkas and Robotút had one sticker per few levels: each old group sticker becomes the stickers of
+ * the levels in its group the child has done (they were celebrated with it, so none pops again), or its first level's
+ * when none is done any more (a sticker once stuck in stays). The old ids go, so this runs once.
+ */
+function ungroupStickers(p: Progress): Progress {
+  const swap = (id: string): string[] | null => {
+    const m = /^(add|path)-level-(\d+)$/.exec(id);
+    const game = m?.[1] as LadderGame | undefined;
+    const starts = game && REGROUPED[game];
+    if (!game || !starts) return null;
+    const k = Number(m![2]) - 1;
+    if (k < 0 || k >= starts.length) return [];
+    const to = starts[k + 1] ?? LADDER_RULES[game].levels;
+    const done = new Set([...solvedLevels(ladderOf(p, game)), ...sheetLevels(p, game)]);
+    const levels = Array.from({ length: to - starts[k] }, (_, j) => starts[k] + j).filter((l) => done.has(l));
+    return (levels.length > 0 ? levels : [starts[k]]).map((l) => levelStickerId(game, l));
+  };
+  const remap = (ids: string[]) => [...new Set(ids.flatMap((id) => swap(id) ?? [id]))];
+  if (!p.stickersSeen.some((id) => swap(id)) && !p.stickersToday.some((id) => swap(id))) return p;
+  return { ...p, stickersSeen: remap(p.stickersSeen), stickersToday: remap(p.stickersToday) };
 }
 
 export function gameOf(s: Sticker): StickerGame {

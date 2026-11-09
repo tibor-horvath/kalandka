@@ -164,6 +164,10 @@ export interface Progress {
   robotOiledAt: number;
   /** Full charges so far; they teach the robot its tricks. */
   robotCharges: number;
+  /** The part the child is saving up for ("Ezt szeretném"), shown beside the reward pod in the workshop games; null when none. */
+  robotWish: { robot: number; part: string } | null;
+  /** Gifts each robot friend has had (see FRIEND_GIFTS in robotParts.ts). */
+  friendGifts: Partial<Record<string, number>>;
   /** Recent solved tasks per game and whether they needed help, for the parents' notes (see taskLog.ts). */
   taskLog: TaskLog;
   /** Each levelled game's difficulty ladder; a game missing here starts from its older save fields (see ladder.ts). */
@@ -266,6 +270,8 @@ export const DEFAULT_PROGRESS: Progress = {
   robotChargedAt: 0,
   robotOiledAt: 0,
   robotCharges: 0,
+  robotWish: null,
+  friendGifts: {},
   taskLog: {},
   ladders: {},
   practicePay: { day: '', paid: {} }
