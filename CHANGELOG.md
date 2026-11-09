@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/tibor-horvath/kalandka/compare/v1.8.1...v1.8.2) (2026-11-09)
+
+
+### Fixed
+
+* Small fixes ([#55](https://github.com/tibor-horvath/kalandka/issues/55)) ([7984895](https://github.com/tibor-horvath/kalandka/commit/79848954534d8640842d39a1ae43ee612d057c95))
+
 ## [1.8.1](https://github.com/tibor-horvath/kalandka/compare/v1.8.0...v1.8.1) (2026-11-08)
 
 
