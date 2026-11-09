@@ -23,6 +23,18 @@ import {
   robotsOpen,
   secondRobotNew,
   wear,
+  FRIEND_GIFTS,
+  FRIEND_GIFTS_EACH,
+  canGiveFriend,
+  friendGiftCount,
+  friendGiftsOf,
+  friendGiftsOpen,
+  giveFriend,
+  nextFriendGift,
+  setWish,
+  slotsAffordable,
+  startSlot,
+  wishOf,
   type RobotIdx
 } from './robotParts';
 
@@ -141,5 +153,92 @@ describe('robot friends', () => {
     expect(Math.max(...FRIENDS.map((f) => f.after))).toBeLessThanOrEqual(buyable * 2);
     const p = buyAll(buyAll(withBolts(1000), 0), 1);
     expect(friendsOf(p)).toHaveLength(FRIENDS.length);
+  });
+});
+
+describe('where to go (C · Hová menjek?)', () => {
+  it('marks the tabs with a part the bolts buy, and opens on the first of them', () => {
+    expect(slotsAffordable(withBolts(0))).toEqual([]);
+    expect(startSlot(withBolts(0))).toBe('head');
+    // Two bolts buy the spring antenna and the cheap paints, nothing else.
+    expect(slotsAffordable(withBolts(2))).toEqual(['antenna', 'paint']);
+    expect(startSlot(withBolts(2))).toBe('antenna');
+    expect(slotsAffordable(withBolts(3))).toEqual(['head', 'antenna', 'arms', 'paint']);
+  });
+
+  it('counts friend gifts as something to buy once the friends take them', () => {
+    const p = { ...buyAll(withBolts(91), 0), robotFriendsSeen: 3 };
+    expect(boltBalance(p)).toBe(0);
+    expect(canBuyAnything(p)).toBe(false);
+    expect(canBuyAnything({ ...p, bolts: p.bolts + 1 })).toBe(true);
+  });
+});
+
+describe('the wish (B · Ezt szeretném)', () => {
+  it('keeps one part to save up for, with the bolts still missing', () => {
+    let p = withBolts(3);
+    expect(wishOf(p)).toBeNull();
+    p = setWish(p, 'legs-tracks');
+    expect(wishOf(p)).toMatchObject({ robot: 0, need: 6 });
+    expect(wishOf(p)?.part.id).toBe('legs-tracks');
+    expect(startSlot(p)).toBe('legs');
+    p = setWish(p, 'body-gear');
+    expect(wishOf(p)?.part.id).toBe('body-gear');
+    expect(wishOf({ ...p, bolts: 20 })?.need).toBe(0);
+  });
+
+  it('never wishes for a part already owned, and clears the wish when it is bought', () => {
+    expect(setWish(withBolts(0), 'head-round').robotWish).toBeNull();
+    let p = setWish(withBolts(9), 'legs-tracks');
+    p = buy(p, 'legs-tracks');
+    expect(p.robotWish).toBeNull();
+    expect(wishOf(p)).toBeNull();
+  });
+
+  it('belongs to its robot: the other robot opens on its own tabs', () => {
+    let p = { ...buyAll(withBolts(1000), 0), robotActive: 1 };
+    p = setWish({ ...p, robotActive: 0 }, 'legs-tracks', 1);
+    expect(wishOf(p)?.robot).toBe(1);
+    expect(startSlot(p, 1)).toBe('legs');
+    expect(startSlot(p, 0)).toBe('head');
+  });
+});
+
+describe('friend gifts (D · Barátok műhelye)', () => {
+  const ready = (extra: number) => ({ ...buyAll(withBolts(91 + extra), 0), robotFriendsSeen: 3 });
+
+  it('gives each friend five different gifts, thirty in all', () => {
+    for (const f of FRIENDS) {
+      expect(FRIEND_GIFTS[f.id]).toHaveLength(FRIEND_GIFTS_EACH);
+      expect(new Set(FRIEND_GIFTS[f.id]).size).toBe(FRIEND_GIFTS_EACH);
+    }
+  });
+
+  it('opens only once a robot has every part, and only for welcomed friends', () => {
+    const early = { ...withBolts(100), robotFriendsSeen: 1 };
+    expect(friendGiftsOpen(early)).toBe(false);
+    expect(canGiveFriend(early, 'dog')).toBe(false);
+    const p = ready(10);
+    expect(friendGiftsOpen(p)).toBe(true);
+    expect(canGiveFriend(p, 'dog')).toBe(true);
+    expect(canGiveFriend(p, 'turtle')).toBe(false);
+  });
+
+  it('asks one bolt more for each gift, and keeps every gift', () => {
+    let p = ready(15);
+    for (let k = 0; k < FRIEND_GIFTS_EACH; k++) {
+      expect(nextFriendGift(p, 'dog')).toEqual({ thing: FRIEND_GIFTS.dog[k], cost: k + 1 });
+      p = giveFriend(p, 'dog');
+    }
+    expect(friendGiftsOf(p, 'dog')).toBe(FRIEND_GIFTS_EACH);
+    expect(boltBalance(p)).toBe(0);
+    expect(nextFriendGift(p, 'dog')).toBeNull();
+    expect(giveFriend(p, 'dog')).toBe(p);
+    expect(friendGiftCount(p)).toBe(FRIEND_GIFTS_EACH);
+  });
+
+  it('does not give a gift the bolts do not reach', () => {
+    const p = ready(0);
+    expect(giveFriend(p, 'dog')).toBe(p);
   });
 });

@@ -67,6 +67,8 @@
 .is-phone .reward-pod { width: 32px; height: 32px; }
 .is-phone .reward-pod__reward, .is-phone .reward-total__icon, .is-phone .reward-bank__flyer { width: 16px; height: 16px; }
 .is-phone .reward-bank__flyer { margin: -8px 0 0 -8px; }
+.is-phone .reward-wish { height: 28px; padding: 0 8px 0 5px; border-radius: 14px; font-size: 14px; gap: 3px; }
+.is-phone .reward-wish svg { width: 16px; height: 16px; }
 .is-phone .reward-total { height: 28px; padding: 0 9px 0 5px; border-radius: 14px; font-size: 16px; gap: 3px; }
 .is-phone .level-meter__star { width: 10px; height: 10px; margin: -5px 0 0 -5px; }
 .is-phone .level-meter__chip { font-size: 14px; top: calc(100% + 6px); }

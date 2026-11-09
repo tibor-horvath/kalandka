@@ -152,11 +152,12 @@ export function canBuy(p: Progress, id: string, r: RobotIdx = activeRobot(p)): b
   return !!part && !owns(p, id, r) && boltBalance(p) >= part.cost;
 }
 
-/** Buys a part for a robot and puts it on; unchanged when it is already owned or the bolts are not enough. */
+/** Buys a part for a robot and puts it on; unchanged when it is already owned or the bolts are not enough. Buying the wished part clears the wish. */
 export function buy(p: Progress, id: string, r: RobotIdx = activeRobot(p)): Progress {
   if (!canBuy(p, id, r)) return p;
   const part = partById(id)!;
-  return withRobot({ ...p, boltsSpent: p.boltsSpent + part.cost }, r, [...ownedList(p, r), id], { ...lookOf(p, r), [part.slot]: id });
+  const wished = p.robotWish?.part === id && p.robotWish.robot === r;
+  return withRobot({ ...p, boltsSpent: p.boltsSpent + part.cost, ...(wished ? { robotWish: null } : {}) }, r, [...ownedList(p, r), id], { ...lookOf(p, r), [part.slot]: id });
 }
 
 /** Puts on a part the robot already owns; free, and unchanged for one it does not own. */
@@ -171,12 +172,53 @@ export function cheapestLeft(p: Progress, r: RobotIdx = activeRobot(p)): Part | 
   return PARTS.filter((part) => !owns(p, part.id, r)).sort((a, b) => a.cost - b.cost)[0] ?? null;
 }
 
-/** Some part for some robot on the workbench is within the bolts. */
+/** Some part for some robot on the workbench, or a friend's gift, is within the bolts. */
 export function canBuyAnything(p: Progress): boolean {
-  return robotsOpen(p).some((r) => {
+  const part = robotsOpen(p).some((r) => {
     const next = cheapestLeft(p, r);
     return !!next && boltBalance(p) >= next.cost;
   });
+  return part || FRIENDS.some((f) => canGiveFriend(p, f.id));
+}
+
+/** The slots of a robot that have a part it does not own yet and the bolts would buy: their tabs carry a bolt dot. */
+export function slotsAffordable(p: Progress, r: RobotIdx = activeRobot(p)): PartSlot[] {
+  return PART_SLOTS.filter((s) => partsIn(s.id).some((part) => canBuy(p, part.id, r))).map((s) => s.id);
+}
+
+// ---------- the wish ("Ezt szeretném") ----------
+// Tapping a part the bolts do not reach yet makes it the one the child saves up for: the workshop games show it
+// beside the reward pod with the bolts still missing, and the workshop opens on its tab. One wish at a time;
+// another tap replaces it, and buying it clears it.
+
+export interface Wish {
+  robot: RobotIdx;
+  part: Part;
+  /** Bolts still missing; 0 once the balance reaches it. */
+  need: number;
+}
+
+/** The part the child is saving up for, or null when there is none (or it was bought, or its robot has not come). */
+export function wishOf(p: Progress): Wish | null {
+  const w = p.robotWish;
+  if (!w) return null;
+  const robot: RobotIdx = w.robot === 1 ? 1 : 0;
+  const part = partById(w.part);
+  if (!part || !robotsOpen(p).includes(robot) || owns(p, part.id, robot)) return null;
+  return { robot, part, need: Math.max(0, part.cost - boltBalance(p)) };
+}
+
+/** Makes a part a robot's wish; unchanged for a part it already owns. */
+export function setWish(p: Progress, id: string, r: RobotIdx = activeRobot(p)): Progress {
+  if (!partById(id) || owns(p, id, r)) return p;
+  return { ...p, robotWish: { robot: r, part: id } };
+}
+
+/** The tab the workshop opens on: the wish's (when it is for this robot), else the first with something to buy, else the head. */
+export function startSlot(p: Progress, r: RobotIdx = activeRobot(p)): PartSlot {
+  const wish = wishOf(p);
+  if (wish && wish.robot === r) return wish.part.slot;
+  return slotsAffordable(p, r)[0] ?? 'head';
 }
 
 // ---------- robot friends ----------
@@ -218,6 +260,90 @@ export function friendProgress(p: Progress): ArrivalProgress | null {
   const from = FRIENDS[p.robotFriendsSeen - 1]?.after ?? 0;
   const need = next.after - from;
   return { need, done: Math.min(need, Math.max(0, boughtCount(p) - from)), coming: 0 };
+}
+
+// ---------- friend gifts ("Barátok műhelye") ----------
+// Once a robot on the workbench has every part, the bolts go on to the friends: each welcomed friend asks for five
+// gifts in turn, the first for one bolt, then two, up to five, counted out like a part. Every gift stays beside
+// its friend for good, thirty in all; nothing is ever taken back.
+
+export type GiftThing = 'ball' | 'bowl' | 'bone' | 'cushion' | 'bell' | 'flag' | 'lamp' | 'star' | 'pot' | 'cup';
+
+export interface GiftThingInfo {
+  name: string;
+  /** What Csavar says the friend asks for: "egy labdát". */
+  asked: string;
+}
+
+export const GIFT_THINGS: Record<GiftThing, GiftThingInfo> = {
+  ball: { name: 'Labda', asked: 'egy labdát' },
+  bowl: { name: 'Tál', asked: 'egy tálat' },
+  bone: { name: 'Csont', asked: 'egy csontot' },
+  cushion: { name: 'Párna', asked: 'egy párnát' },
+  bell: { name: 'Csengő', asked: 'egy csengőt' },
+  flag: { name: 'Zászló', asked: 'egy zászlót' },
+  lamp: { name: 'Lámpa', asked: 'egy lámpát' },
+  star: { name: 'Csillag', asked: 'egy csillagot' },
+  pot: { name: 'Virágcserép', asked: 'egy virágcserepet' },
+  cup: { name: 'Kupa', asked: 'egy kupát' }
+};
+
+/** Each friend's five gifts, in the order it asks for them. */
+export const FRIEND_GIFTS: Record<FriendId, GiftThing[]> = {
+  dog: ['ball', 'bowl', 'bone', 'cushion', 'bell'],
+  drone: ['flag', 'lamp', 'star', 'bell', 'cup'],
+  mini: ['ball', 'cushion', 'star', 'pot', 'cup'],
+  cat: ['cushion', 'bowl', 'ball', 'bell', 'pot'],
+  bird: ['bell', 'pot', 'bowl', 'flag', 'lamp'],
+  turtle: ['pot', 'lamp', 'cushion', 'flag', 'cup']
+};
+
+export const FRIEND_GIFTS_EACH = 5;
+
+/** The friends take gifts once some robot on the workbench has every part. */
+export function friendGiftsOpen(p: Progress): boolean {
+  return robotsOpen(p).some((r) => !cheapestLeft(p, r));
+}
+
+/** Gifts a friend has had: 0 … FRIEND_GIFTS_EACH. */
+export function friendGiftsOf(p: Progress, id: FriendId): number {
+  return Math.max(0, Math.min(FRIEND_GIFTS_EACH, p.friendGifts[id] ?? 0));
+}
+
+/** Every gift given to the friends, 0 … 30. */
+export function friendGiftCount(p: Progress): number {
+  return FRIENDS.reduce((n, f) => n + friendGiftsOf(p, f.id), 0);
+}
+
+/** What a friend asks for next and its bolts (the n-th gift costs n), or null once it has all five. */
+export function nextFriendGift(p: Progress, id: FriendId): { thing: GiftThing; cost: number } | null {
+  const n = friendGiftsOf(p, id);
+  return n < FRIEND_GIFTS_EACH ? { thing: FRIEND_GIFTS[id][n], cost: n + 1 } : null;
+}
+
+/** A friend that has come and been welcomed. */
+function welcomedFriend(p: Progress, id: FriendId): boolean {
+  return friendsOf(p)
+    .slice(0, p.robotFriendsSeen)
+    .some((f) => f.id === id);
+}
+
+/** A welcomed friend asks for a gift (the friends' turn has come). */
+export function friendAsks(p: Progress, id: FriendId): boolean {
+  return friendGiftsOpen(p) && welcomedFriend(p, id) && !!nextFriendGift(p, id);
+}
+
+/** A welcomed friend asks for a gift the bolts reach. */
+export function canGiveFriend(p: Progress, id: FriendId): boolean {
+  const next = nextFriendGift(p, id);
+  return friendAsks(p, id) && !!next && boltBalance(p) >= next.cost;
+}
+
+/** Gives a friend its next gift; unchanged when it cannot be given. */
+export function giveFriend(p: Progress, id: FriendId): Progress {
+  if (!canGiveFriend(p, id)) return p;
+  const cost = nextFriendGift(p, id)!.cost;
+  return { ...p, boltsSpent: p.boltsSpent + cost, friendGifts: { ...p.friendGifts, [id]: friendGiftsOf(p, id) + 1 } };
 }
 
 // ---------- care: battery, oil and tricks ----------

@@ -3,7 +3,7 @@ import { ADD_LEVELS } from '../worlds/garden/games/add/logic';
 import { SORT_LEVELS } from '../worlds/robot/games/sort';
 import { LADDER_LEVELS, LADDER_RULES, afterSolve, ladderOf, startAt, withLadder, type LadderGame } from './ladder';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
-import { PARTS } from './robotParts';
+import { FRIENDS, PARTS } from './robotParts';
 import { stickerRow } from './rewards';
 import {
   BEDS,
@@ -20,7 +20,6 @@ import {
   treatsOf,
   STICKERS,
   LEVEL_STICKERS,
-  MAX_LEVEL_STICKERS,
   carryOverStickers,
   STICKER_GAMES,
   VISITORS,
@@ -169,17 +168,16 @@ describe('stickers', () => {
     withLadder(p, game, { ...ladderOf(p, game), level: solvedTop, reached: solvedTop, solvedTop });
   const ids = (p: Progress, game?: string) => earnedStickers(p).map((s) => s.id).filter((id) => !game || id.startsWith(`${game}-`));
 
-  it('give every levelled game one sticker per level, or per few levels on a long ladder, with unique ids', () => {
+  it('give every levelled game one sticker per level, with unique ids', () => {
     expect(new Set(STICKERS.map((s) => s.id)).size).toBe(STICKERS.length);
     for (const [game, levels] of Object.entries(LADDER_LEVELS) as [LadderGame, readonly unknown[]][]) {
       const own = LEVEL_STICKERS[game];
-      expect(own).toHaveLength(Math.min(levels.length, MAX_LEVEL_STICKERS));
-      expect(own[0].from).toBe(0);
-      for (let i = 1; i < own.length; i++) expect(own[i].from).toBeGreaterThan(own[i - 1].from);
-      expect(own[own.length - 1].from).toBeLessThan(levels.length);
+      expect(own).toHaveLength(levels.length);
+      own.forEach((s, i) => expect(s.from).toBe(i));
       expect(STICKERS.filter((s) => s.game === game).map((s) => s.mark)).toEqual(own.map((s) => s.mark));
     }
-    for (const game of ['learn', 'kiskert', 'robotepito']) expect(STICKERS.filter((s) => s.game === game)).toHaveLength(3);
+    for (const game of ['learn', 'kiskert']) expect(STICKERS.filter((s) => s.game === game)).toHaveLength(3);
+    expect(STICKERS.filter((s) => s.game === 'robotepito')).toHaveLength(5);
     for (const game of ['paper-garden', 'paper-robot']) expect(STICKERS.filter((s) => s.game === game).map((s) => s.mark)).toEqual(['1', '2', '3', '5', '8', '13', '21', '34', '55']);
   });
 
@@ -187,7 +185,7 @@ describe('stickers', () => {
     expect(STICKER_GAMES.filter((g) => g.world === 'robot').map((g) => g.id)).toEqual(['path', 'sort', 'scale', 'seq', 'mirror', 'code', 'fix', 'robotepito', 'paper-robot']);
     const p = solvedUpTo('path', 0, { ...DEFAULT_PROGRESS, learnSolved: 5 });
     expect(newStickers(p, 'garden').map((s) => s.id)).toEqual(['learn-5']);
-    expect(newStickers(p, 'robot').map((s) => s.id)).toEqual(['path-level-1']);
+    expect(newStickers(p, 'robot').map((s) => s.id)).toEqual(['path-szint-1']);
     expect(newStickers(p)).toHaveLength(2);
   });
 
@@ -200,14 +198,23 @@ describe('stickers', () => {
     expect(ids({ ...DEFAULT_PROGRESS, ladders: { water: { ...ladderOf(DEFAULT_PROGRESS, 'water'), solvedTop: 0, helpRun: 5 } } }, 'water')).toEqual(['water-level-1']);
   });
 
-  it('gives one sticker for each group of levels on the long ladders', () => {
-    // Robotút: levels 1–2, 3–4, 5, 6, 7–8, 9, 10.
-    expect(ids(solvedUpTo('path', 1), 'path')).toEqual(['path-level-1']);
-    expect(ids(solvedUpTo('path', 2), 'path')).toEqual(['path-level-1', 'path-level-2']);
-    expect(ids(solvedUpTo('path', 7), 'path')).toHaveLength(5);
-    // Méhkas: 5-ig, 10-ig, 20-ig, tízes átlépés, kerek tízesek, 100-ig, 100 átlépéssel.
-    expect(ids(solvedUpTo('add', 5), 'add')).toEqual(['add-level-1', 'add-level-2']);
-    expect(ids(solvedUpTo('add', ADD_LEVELS.length - 1), 'add')).toHaveLength(7);
+  it('gives the long ladders a sticker for every level too', () => {
+    expect(ids(solvedUpTo('path', 1), 'path')).toEqual(['path-szint-1', 'path-szint-2']);
+    expect(ids(solvedUpTo('path', 7), 'path')).toHaveLength(8);
+    expect(ids(solvedUpTo('add', 4), 'add')).toEqual(['add-szint-1', 'add-szint-2', 'add-szint-3', 'add-szint-4', 'add-szint-5']);
+    expect(ids(solvedUpTo('add', ADD_LEVELS.length - 1), 'add')).toHaveLength(ADD_LEVELS.length);
+  });
+
+  it('turns the old Méhkas and Robotút group stickers into the stickers of the levels done in them, once', () => {
+    // Old Méhkas sticker 2 stood for levels 4–6; the child had done levels 1, 4 and 5. Old Robotút sticker 2 (levels 3–4) with neither done.
+    const add = { ...ladderOf(DEFAULT_PROGRESS, 'add'), level: 4, reached: 4, solvedTop: 4, solved: [0, 3, 4] };
+    const p = readProgress({ ...DEFAULT_PROGRESS, ladders: { add }, stickersSeen: ['add-level-1', 'add-level-2', 'path-level-2', 'learn-5'], stickersDay: '2026-11-07', stickersToday: ['add-level-2'] });
+    expect(p.stickersSeen).toEqual(['add-szint-1', 'add-szint-4', 'add-szint-5', 'path-szint-3', 'learn-5']);
+    expect(p.stickersToday).toEqual(['add-szint-4', 'add-szint-5']);
+    expect(newStickers(p)).toEqual([]);
+    expect(readProgress(p)).toEqual(p);
+    // Level 6 done later: its own sticker pops.
+    expect(newStickers(withLadder(p, 'add', { ...add, solved: [0, 3, 4, 5], solvedTop: 5 })).map((s) => s.id)).toEqual(['add-szint-6']);
   });
 
   it('gives Robotépítő stickers for the first part, the second robot and every robot friend', () => {
@@ -222,6 +229,15 @@ describe('stickers', () => {
     expect(robot(all, all)).toEqual(['robotepito-part', 'robotepito-second', 'robotepito-friends']);
   });
 
+  it('gives Robotépítő stickers for a gift to every friend and for the full shelf', () => {
+    const all = PARTS.filter((part) => part.cost > 0).map((part) => part.id);
+    const gifts = (n: number) => ids({ ...DEFAULT_PROGRESS, robotOwned: all, robot2Owned: all, friendGifts: Object.fromEntries(FRIENDS.map((f) => [f.id, n])) }, 'robotepito');
+    expect(gifts(0)).not.toContain('robotepito-gifts');
+    expect(gifts(1)).toContain('robotepito-gifts');
+    expect(gifts(1)).not.toContain('robotepito-shelf');
+    expect(gifts(5)).toEqual(['robotepito-part', 'robotepito-second', 'robotepito-friends', 'robotepito-gifts', 'robotepito-shelf']);
+  });
+
   it('keeps a sticker that was stuck in, whatever happens to the level', () => {
     const p = { ...DEFAULT_PROGRESS, stickersSeen: ['scale-level-4'] };
     expect(ids(p)).toEqual(['scale-level-4']);
@@ -230,8 +246,8 @@ describe('stickers', () => {
 
   it('carries the stickers of the old hand-picked list over to their level stickers, once', () => {
     const p = readProgress({ stickersSeen: ['learn-5', 'path-plan', 'trace-9', 'trace-0', 'pots-mix'] });
-    expect(p.stickersSeen).toEqual(['learn-5', 'path-plan', 'trace-9', 'trace-0', 'pots-mix', 'path-level-2', 'trace-level-2', 'pots-level-3']);
-    expect(ids(p)).toEqual(['learn-5', 'trace-level-2', 'pots-level-3', 'path-level-2']);
+    expect(p.stickersSeen).toEqual(['learn-5', 'path-plan', 'trace-9', 'trace-0', 'pots-mix', 'path-szint-3', 'trace-level-2', 'pots-level-3']);
+    expect(ids(p)).toEqual(['learn-5', 'trace-level-2', 'pots-level-3', 'path-szint-3']);
     expect(newStickers(p)).toEqual([]);
     expect(readProgress(p)).toEqual(p);
   });
@@ -281,10 +297,10 @@ describe('stickers', () => {
     expect(todaysStickers(p, '2026-11-07')).toEqual([]);
     p = solvedUpTo('path', 0, { ...p, learnSolved: 10 });
     p = markStickerSeen(p, 'learn-10', '2026-11-07');
-    expect(todaysStickers(p, '2026-11-07').map((s) => s.id)).toEqual(['path-level-1', 'learn-10']);
-    p = markStickerSeen(p, 'path-level-1', '2026-11-07');
-    expect(p.stickersToday).toEqual(['learn-10', 'path-level-1']);
-    expect(todaysStickers(p, '2026-11-07').map((s) => s.id)).toEqual(['path-level-1', 'learn-10']);
+    expect(todaysStickers(p, '2026-11-07').map((s) => s.id)).toEqual(['path-szint-1', 'learn-10']);
+    p = markStickerSeen(p, 'path-szint-1', '2026-11-07');
+    expect(p.stickersToday).toEqual(['learn-10', 'path-szint-1']);
+    expect(todaysStickers(p, '2026-11-07').map((s) => s.id)).toEqual(['path-szint-1', 'learn-10']);
   });
 
   it('files away stickers from a jump in progress without a celebration', () => {
@@ -322,7 +338,8 @@ describe('stickers', () => {
     expect(game('code.1.0.n.7.0', 'code')).toEqual(['code-level-1']);
     // Only its own level: a higher sheet does not earn the stickers below it.
     expect(game('code.1.2.n.7.0', 'code')).toEqual(['code-level-3']);
-    expect(game('add.1.3.n.7.0', 'add')).toEqual(['add-level-2']);
+    expect(game('add.1.3.n.7.0', 'add')).toEqual(['add-szint-4']);
+    expect(game('add.1.4.n.7.0', 'add')).toEqual(['add-szint-5']);
     // Sheets whose levels are not the game's own.
     expect(game('water.1.0.n.7.0', 'water')).toEqual(['water-level-1', 'water-level-2']);
     expect(game('water.1.1.n.7.0', 'water')).toEqual(['water-level-3']);
@@ -334,7 +351,7 @@ describe('stickers', () => {
     expect(game('learn.1.2.n.7.0', 'learn')).toEqual([]);
     expect(game('learn.1.3.n.7.0', 'learn')).toEqual(['learn-20']);
     // It pops on the game's own world, with the Feladatlapok sticker.
-    expect(newStickers(markPageDone(DEFAULT_PROGRESS, 'path.1.0.n.7.0', 1), 'robot').map((s) => s.id)).toEqual(['path-level-1', 'paper-robot-1']);
+    expect(newStickers(markPageDone(DEFAULT_PROGRESS, 'path.1.0.n.7.0', 1), 'robot').map((s) => s.id)).toEqual(['path-szint-1', 'paper-robot-1']);
     // Sheets done in any order: each earns its own, and the row's top new one pops first.
     const both = markPageDone(markPageDone(DEFAULT_PROGRESS, 'patterns.1.4.n.7.0', 1), 'patterns.1.0.n.7.0', 1);
     expect(newStickers(both, 'garden').map((s) => s.id)).toEqual(['patterns-level-4', 'patterns-level-1', 'paper-garden-2', 'paper-garden-1']);

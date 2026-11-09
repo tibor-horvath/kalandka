@@ -3,7 +3,7 @@ import { podArcs } from '../../components/LevelMeter';
 import { LADDER_LEVELS } from '../../state/ladder';
 import { PRACTICE_PAY_PER_DAY, podFill, tasksPerReward } from '../../state/pod';
 import { useProgress } from '../../state/progress';
-import { FRIENDS, PARTS, SECOND_ROBOT_AFTER, boltBalance } from '../../state/robotParts';
+import { FRIENDS, FRIEND_GIFTS_EACH, PARTS, SECOND_ROBOT_AFTER, boltBalance } from '../../state/robotParts';
 import { FLOWERS, PAGE_STEPS, PLANT_OPTIONS, RECIPES, STICKER_GAMES, VEG_COST, seedBalance, stickerRow, type StickerGameId } from '../../state/rewards';
 import { WORLDS, type WorldId } from '../../state/worlds';
 import { Seed } from '../../worlds/garden/art';
@@ -27,7 +27,7 @@ const ORDINAL: Record<number, string> = { 1: '', 2: 'második', 3: 'harmadik', 4
 const ROW_ABOUT: Partial<Record<StickerGameId, string>> = {
   learn: 'a számok felismerése a játékban vagy kész lapon',
   kiskert: 'ajándékok a kert lakóinak',
-  robotepito: 'alkatrészek, második robot, robotbarátok',
+  robotepito: 'alkatrészek, második robot, robotbarátok és ajándékaik',
   'paper-garden': `kész lapok: ${PAGE_STEPS.join(', ')}`,
   'paper-robot': `kész lapok: ${PAGE_STEPS.join(', ')}`
 };
@@ -239,9 +239,10 @@ export function RewardsPage() {
             spendTitle="Mire költheti a Robotépítőben"
             spend={[
               ['Új alkatrész: fej, antenna, test, kar, láb vagy festés', `${partCosts} csavar`],
-              ['Visszacserélés egy már megvett alkatrészre', 'ingyen']
+              ['Visszacserélés egy már megvett alkatrészre', 'ingyen'],
+              [`Ajándék egy robotbarátnak, ha egy robot már kész (barátonként ${FRIEND_GIFTS_EACH})`, `1–${FRIEND_GIFTS_EACH} csavar`]
             ]}
-            note={`Egy műhelykör több lépésből áll, ezért ritkábban jár csavar. ${SECOND_ROBOT_AFTER} alkatrész után jön a második robot, és robotbarátok költöznek be (${FRIENDS.map((f) => f.after).join(', ')} alkatrésznél).`}
+            note={`Egy műhelykör több lépésből áll, ezért ritkábban jár csavar. ${SECOND_ROBOT_AFTER} alkatrész után jön a második robot, és robotbarátok költöznek be (${FRIENDS.map((f) => f.after).join(', ')} alkatrésznél). Egy drágább alkatrészre koppintva a gyerek kijelölheti, mire gyűjt; a játékokban látja, hány csavar hiányzik még.`}
           />
         </div>
         <div className="pa-rw-note">

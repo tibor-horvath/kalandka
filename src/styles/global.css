@@ -231,6 +231,9 @@ h1, h2, p { margin: 0; }
 .reward-total__roll { display: block; height: 22px; overflow: hidden; min-width: 12px; }
 .reward-total__col { display: block; }
 .reward-total__col span { display: block; height: 22px; line-height: 22px; }
+.reward-wish { display: inline-flex; align-items: center; gap: 4px; height: 36px; padding: 0 12px 0 7px; border-radius: 18px; background: #fbe3ee; color: #8a2d55; font: 800 18px/1 var(--display); white-space: nowrap; }
+.reward-wish svg { width: 22px; height: 22px; flex: none; }
+.reward-wish.is-ready { background: #ffe9a8; color: #6b4a00; box-shadow: inset 0 0 0 3px #f2b33d; }
 .reward-bank__flyer { position: absolute; left: 0; top: 0; width: 22px; height: 22px; margin: -11px 0 0 -11px; opacity: 0; pointer-events: none; }
 /* A full pod pays (2 s, after a level-up from the same win): the ring turns gold and the reward colours in
    and pops, hops into the total, the total bumps and counts up, and the ring empties. All once. */
