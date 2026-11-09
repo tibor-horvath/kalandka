@@ -144,10 +144,9 @@
 .album__game--long .sticker__mark { font-size: 17px; }
 .album__game--long .album__link { min-height: 3px; }
 /* A sticker for every level of a long ladder (Méhkas, Robotút): two columns, still easiest at the bottom, without the line. */
-.album__game--wrap { min-height: 0; }
-.album__game--wrap .album__stickers { flex: 1 1 0; min-height: 0; align-self: stretch; flex-wrap: wrap; justify-content: center; align-content: center; gap: 6px 8px; }
-.album__game--wrap .album__link { display: none; }
-.album__guide { display: flex; align-items: center; gap: 12px; padding: 0 32px 24px; }
+.stage--tablet .album__game--wrap { min-height: 0; }
+.stage--tablet .album__game--wrap .album__stickers { flex: 1 1 0; min-height: 0; align-self: stretch; flex-wrap: wrap; justify-content: center; align-content: center; gap: 6px 8px; }
+.album__game--wrap .album__link { display: none; }.album__guide { display: flex; align-items: center; gap: 12px; padding: 0 32px 24px; }
 .album__guide .bubble { font-size: 22px; padding: 12px 20px; box-shadow: 0 4px 0 #ead9a8; }
 
 /* ---------- a new sticker ---------- */
@@ -301,8 +300,8 @@
 .stage--landscape .album__name { font-size: 13px; }
 /*
  * Landscape phones: the cards are short, so each ladder sizes its stickers from its own height (--n stickers,
- * from Album), between 28px and 46px. A ladder too long even then (Méhkas, Feladatlapok) scrolls in its card,
- * opening at the bottom, so level 1 and the stickers earned first are always in view.
+ * from Album), between 28px and 46px. Ladders of five or more go two a row (below), so only Méhkas's sixteen still
+ * scroll in their card, opening at the top, so level 1 and the stickers earned first are always in view.
  */
 .stage--landscape .album__stickers { min-height: 0; align-self: stretch; container: album-ladder / size; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
 .stage--landscape .album .sticker, .stage--landscape .album .sticker-slot { --s: max(28px, min(46px, calc(100cqh / var(--n, 3) - 10px), calc(100cqw - 8px))); width: var(--s); height: var(--s); border-width: clamp(2px, calc(var(--s) / 14), 3px); }
@@ -323,6 +322,18 @@
 .is-phone .album__guide { padding: 0 16px 12px; }
 .stage--landscape .album__guide { padding: 0 0 4px; }
 .is-phone .album__guide .bubble { font-size: 17px; }
+/*
+ * Phone ladders of five or more in landscape, and the long ones (ten or more) in portrait, stand in a grid without the
+ * line, read like a page: landscape two stickers a row, so most rows fit their short card and the longest scroll in it
+ * from level 1 down; portrait two rows of --half (from Album) on a card of two grid rows.
+ */
+.stage--landscape .album__game--ladder .album__stickers { display: grid; grid-template-columns: repeat(2, auto); justify-content: center; align-content: start; align-content: safe center; gap: 2px 4px; padding-block: 2px; }
+.stage--landscape .album__game--ladder .album__link { display: none; }
+.stage--landscape .album__game--ladder .album__sticker { padding: 0; }
+.stage--landscape .album__game--ladder .sticker, .stage--landscape .album__game--ladder .sticker-slot { --s: max(26px, min(44px, calc(100cqh / var(--half, 3) - 6px), calc(50cqw - 8px))); }
+.stage--portrait .album__game--wrap { grid-row: span 2; }
+.stage--portrait .album__game--wrap .album__stickers { --s: min(40px, calc((100cqw - 8px) / var(--half, 5) - 6px), calc((100cqh - 56px) / 2)); display: grid; grid-template-columns: repeat(var(--half, 5), var(--s)); justify-content: center; align-content: center; gap: 4px; flex: 1; }
+.stage--portrait .album__game--wrap .album__label { display: none; }
 
 .is-phone .sticker-pop { gap: 6px; }
 .is-phone .sticker-pop__title { font-size: 40px; }
