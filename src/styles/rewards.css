@@ -143,6 +143,10 @@
 .album__game--long .sticker, .album__game--long .sticker-slot { width: 42px; height: 42px; }
 .album__game--long .sticker__mark { font-size: 17px; }
 .album__game--long .album__link { min-height: 3px; }
+/* A sticker for every level of a long ladder (Méhkas, Robotút): two columns, still easiest at the bottom, without the line. */
+.album__game--wrap { min-height: 0; }
+.album__game--wrap .album__stickers { flex: 1 1 0; min-height: 0; align-self: stretch; flex-wrap: wrap; justify-content: center; align-content: center; gap: 6px 8px; }
+.album__game--wrap .album__link { display: none; }
 .album__guide { display: flex; align-items: center; gap: 12px; padding: 0 32px 24px; }
 .album__guide .bubble { font-size: 22px; padding: 12px 20px; box-shadow: 0 4px 0 #ead9a8; }
 

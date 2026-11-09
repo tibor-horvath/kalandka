@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { lookOf, type FriendId, type PartSlot, type RobotLook } from '../../state/robotParts';
+import { lookOf, type FriendId, type GiftThing, type PartSlot, type RobotLook } from '../../state/robotParts';
 import type { Progress } from '../../state/progress';
 
 // The child's own robot, drawn from the parts it wears, and the robot friends who come to the workshop.
@@ -499,6 +499,91 @@ export function FriendArt({ id, width = 120 }: { id: FriendId; width?: number })
           <rect x="68" y="22" width="46" height="36" rx="14" fill="#F5CF55" />
           <rect x="74" y="30" width="34" height="18" rx="8" fill={INK} />
           <path d="M80 40 q4 -5 8 0 M94 40 q4 -5 8 0" fill="none" stroke={SCREEN} strokeWidth="2.6" strokeLinecap="round" />
+        </g>
+      )}
+    </svg>
+  );
+}
+
+/** The bolt box the bolts are counted out of: a small toolbox with a nut on its side; 96 × 96 drawing units. */
+export function BoltBox({ size = 96 }: { size?: number }) {
+  return (
+    <svg aria-hidden="true" className="bolt-box" width={size} height={size} viewBox="0 0 96 96">
+      <path d="M34 30 V20 H62 V30" fill="none" stroke="#5E7184" strokeWidth="6" strokeLinejoin="round" />
+      <rect x="10" y="30" width="76" height="54" rx="10" fill="#3D7BD9" />
+      <rect x="10" y="30" width="76" height="14" rx="7" fill="#6A9DE8" />
+      <path d="M48 52 L60 59 V73 L48 80 L36 73 V59 Z" fill="#B7C4D2" stroke="#5E7184" strokeWidth="3" strokeLinejoin="round" />
+      <circle cx="48" cy="66" r="5" fill="#FFFFFF" stroke="#5E7184" strokeWidth="3" />
+    </svg>
+  );
+}
+
+/** A friend's gift, flat on a 40 × 40 grid; the friends keep them beside them in the workshop. */
+export function GiftArt({ thing, size = 40 }: { thing: GiftThing; size?: number }) {
+  return (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 40 40">
+      {thing === 'ball' && (
+        <g>
+          <circle cx="20" cy="22" r="14" fill="#E2683C" />
+          <path d="M6 22 H34 M20 8 C14 14 14 30 20 36 M20 8 C26 14 26 30 20 36" fill="none" stroke="#FFFFFF" strokeWidth="2.6" />
+        </g>
+      )}
+      {thing === 'bowl' && (
+        <g>
+          <path d="M5 20 H35 C35 30 28 35 20 35 C12 35 5 30 5 20 Z" fill="#3D7BD9" />
+          <rect x="4" y="17" width="32" height="5" rx="2.5" fill="#6A9DE8" />
+          <circle cx="14" cy="16" r="3" fill="#B77B45" />
+          <circle cx="21" cy="15" r="3" fill="#B77B45" />
+          <circle cx="27" cy="16" r="3" fill="#B77B45" />
+        </g>
+      )}
+      {thing === 'bone' && (
+        <g fill="#F6EEDC" stroke="#B9A57F" strokeWidth="2">
+          <path d="M11 17 C6 12 12 6 15 11 L25 21 C30 16 36 22 31 26 C36 30 30 36 26 31 L15 21 C10 26 4 20 9 17 Z" />
+        </g>
+      )}
+      {thing === 'cushion' && (
+        <g>
+          <rect x="5" y="14" width="30" height="20" rx="8" fill="#A08EEA" />
+          <path d="M5 24 H35" stroke="#7E6BD6" strokeWidth="2.6" />
+          <circle cx="20" cy="24" r="2.6" fill="#4E3FA0" />
+        </g>
+      )}
+      {thing === 'bell' && (
+        <g>
+          <path d="M20 6 C12 6 10 14 10 22 L7 29 H33 L30 22 C30 14 28 6 20 6 Z" fill={SUN} stroke="#9C7410" strokeWidth="2" strokeLinejoin="round" />
+          <circle cx="20" cy="32" r="3.4" fill="#9C7410" />
+        </g>
+      )}
+      {thing === 'flag' && (
+        <g>
+          <path d="M10 6 V36" stroke="#5E7184" strokeWidth="3" strokeLinecap="round" />
+          <path d="M11 7 H33 L28 14 L33 21 H11 Z" fill="#E2689A" />
+        </g>
+      )}
+      {thing === 'lamp' && (
+        <g>
+          <path d="M12 6 H28 L33 20 H7 Z" fill="#F5CF55" stroke="#9C7410" strokeWidth="2" strokeLinejoin="round" />
+          <path d="M20 20 V32" stroke="#5E7184" strokeWidth="3" />
+          <rect x="11" y="31" width="18" height="5" rx="2.5" fill="#5E7184" />
+        </g>
+      )}
+      {thing === 'star' && <path d="M20 4 L24.6 14.6 L36 15.6 L27.4 23.2 L30 34.4 L20 28.4 L10 34.4 L12.6 23.2 L4 15.6 L15.4 14.6 Z" fill={SUN} stroke="#9C7410" strokeWidth="2" strokeLinejoin="round" />}
+      {thing === 'pot' && (
+        <g>
+          <path d="M20 22 V12" stroke="#2E6B2A" strokeWidth="2.6" />
+          <ellipse cx="15" cy="13" rx="5" ry="3" fill="#4C9F45" transform="rotate(-30 15 13)" />
+          <ellipse cx="25" cy="11" rx="5" ry="3" fill="#73BE68" transform="rotate(30 25 11)" />
+          <path d="M10 22 H30 L27 36 H13 Z" fill="#C8693A" />
+          <rect x="8" y="20" width="24" height="5" rx="2" fill="#A85417" />
+        </g>
+      )}
+      {thing === 'cup' && (
+        <g>
+          <path d="M11 6 H29 V14 C29 21 25 25 20 25 C15 25 11 21 11 14 Z" fill={SUN} stroke="#9C7410" strokeWidth="2" strokeLinejoin="round" />
+          <path d="M11 9 H6 C6 15 9 17 12 17 M29 9 H34 C34 15 31 17 28 17" fill="none" stroke="#9C7410" strokeWidth="2.4" />
+          <path d="M20 25 V31" stroke="#9C7410" strokeWidth="3" />
+          <rect x="12" y="31" width="16" height="5" rx="2" fill="#9C7410" />
         </g>
       )}
     </svg>

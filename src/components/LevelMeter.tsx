@@ -4,7 +4,7 @@ import type { LevelMeterState } from '../state/levelMeter';
 import { podFill, tasksIn, tasksPerReward } from '../state/pod';
 import { useProgress } from '../state/progress';
 import { seedBalance } from '../state/rewards';
-import { boltBalance } from '../state/robotParts';
+import { boltBalance, wishOf } from '../state/robotParts';
 
 type World = 'garden' | 'robot';
 
@@ -206,6 +206,43 @@ function RewardBank({ world, wait, rested }: { world: World; wait: number; reste
   );
 }
 
+function MeterHeart() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 21s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 8a4.3 4.3 0 0 1 7.5 2.8C19.5 16.4 12 21 12 21z" fill="#E2689A" stroke="#A23A66" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * The part the child is saving up for in Robotépítő (B · Ezt szeretném): a heart and the bolts still missing,
+ * beside the bolt total. When a paid bolt makes it enough, the chip turns gold and Csavar says so, once.
+ */
+function WishChip({ wait }: { wait: number }) {
+  const { progress } = useProgress();
+  const wish = wishOf(progress);
+  const need = wish?.need ?? null;
+  const was = useRef(need);
+
+  useEffect(() => {
+    const before = was.current;
+    was.current = need;
+    if (need !== 0 || !before || !wish) return;
+    // Said after the bolt has landed in the total.
+    const say = window.setTimeout(() => speak(`Megvan a csavar arra, amit kértél: ${wish.part.name.toLowerCase()}! A Robotépítőben felcsavarozhatod.`, { queue: true }), wait + PAY_MS);
+    return () => window.clearTimeout(say);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Only a change in what is missing matters.
+  }, [need]);
+
+  if (!wish) return null;
+  return (
+    <span className={`reward-wish${wish.need === 0 ? ' is-ready' : ''}`}>
+      <MeterHeart />
+      <span>{wish.need === 0 ? 'megvan' : `még ${wish.need}`}</span>
+    </span>
+  );
+}
+
 /** Where the child is inside a round of several tasks (the workshop's rounds): `at` of `of`, `done` once it is solved. */
 export interface RoundTasks {
   at: number;
@@ -255,6 +292,8 @@ export function LevelMeter({ meter, world, justSolved = false, tasks }: { meter:
       : finished
         ? 'Minden szint kész, vegyes gyakorlás'
         : `${level + 1}. szint, ${rounds} körből ${done} kész`;
+  const wish = world === 'robot' ? wishOf(progress) : null;
+  const wishLine = wish ? (wish.need === 0 ? ` Megvan a csavar erre: ${wish.part.name.toLowerCase()}.` : ` Erre gyűjtesz: ${wish.part.name.toLowerCase()}, még ${wish.need} csavar.`) : '';
   const next = rested ? `mára megvan a gyakorlás öt ${world === 'robot' ? 'csavarja' : 'magja'}` : `még ${left} feladat a következő ${reward}`;
   const pips = tasks && tasks.of > 1 ? tasks : null;
   const inRound = pips ? `${pips.at + 1}. ${pips.unit ?? 'feladat'} a ${pips.of}-ből. ` : '';
@@ -263,7 +302,7 @@ export function LevelMeter({ meter, world, justSolved = false, tasks }: { meter:
     <div
       className={`level-meter${levelUp || mastered ? ' is-climbing' : ''}`}
       role="img"
-      aria-label={`${inRound}${where}. ${balance} van, ${next}.`}
+      aria-label={`${inRound}${where}. ${balance} van, ${next}.${wishLine}`}
     >
       {pips && (
         <>
@@ -274,6 +313,7 @@ export function LevelMeter({ meter, world, justSolved = false, tasks }: { meter:
       <Stairs level={level} levels={levels} fill={done / rounds} fresh={justSolved && !levelUp} climbing={levelUp} mastering={mastered} finished={finished} />
       <span className="level-meter__rule" aria-hidden="true" />
       <RewardBank world={world} wait={levelUp || mastered ? LEVEL_UP_MS : 0} rested={rested} />
+      {world === 'robot' && <WishChip wait={levelUp || mastered ? LEVEL_UP_MS : 0} />}
       {(levelUp || mastered) && (
         <span className="level-meter__chip" aria-hidden="true">
           <StairsIcon />

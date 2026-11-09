@@ -79,7 +79,7 @@ export function Album({ onBack, world: startWorld = 'garden' }: { onBack: () => 
           return (
           <section
             key={g.id}
-            className={`album__game${own.length > 4 ? ' album__game--ladder' : own.length > 3 ? ' album__game--more' : ''}${own.length > 7 ? ' album__game--long' : ''}`}
+            className={`album__game${own.length > 4 ? ' album__game--ladder' : own.length > 3 ? ' album__game--more' : ''}${own.length > 7 ? ' album__game--long' : ''}${own.length > 9 ? ' album__game--wrap' : ''}`}
             style={{ '--game': g.color, '--game-ink': g.ink, '--n': own.length } as CSSProperties}
             aria-label={g.name}
           >

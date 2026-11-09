@@ -717,6 +717,36 @@
 .workshop__tag.is-on { background: var(--leaf); color: var(--paper); }
 .workshop__short { position: absolute; right: 10px; bottom: 8px; font-family: var(--body); font-size: 13px; font-weight: 700; color: #3e5872; }
 .workshop__panel .kiskert__note { font-size: 15px; }
+/* C · a bolt dot on the tabs that have a part the bolts buy. */
+.workshop__slot { position: relative; }
+.workshop__slot-dot { position: absolute; top: 5px; right: 5px; width: 14px; height: 14px; border-radius: 50%; background: #f2b33d; border: 2px solid #8a5a00; box-sizing: border-box; }
+/* B · the wished part wears a heart and a pink ring. */
+.workshop__part.is-wish { border-color: #e2689a; }
+.workshop__wish { position: absolute; top: 6px; right: 6px; display: inline-flex; }
+/* D · each friend's gifts sit beside it, and a "kér" tag shows it is asking for one. */
+.workshop__friend { position: relative; display: flex; flex-direction: column; align-items: center; }
+.workshop__gifts { display: flex; flex-wrap: wrap; justify-content: center; max-width: 100px; gap: 1px; }
+.workshop__asks { position: absolute; top: -6px; right: -4px; padding: 2px 9px; border-radius: 999px; background: #e2689a; color: #ffffff; font-family: var(--body); font-size: 14px; font-weight: 800; }
+/* A · the bolt count: the same tray as the seeds, in workshop steel. */
+.seed-count--bolt { background: #eef3f9; box-shadow: inset 0 -10px 0 #9aafc6; }
+.seed-count--bolt .seed-count__tray { background: #5e7184; box-shadow: inset 0 -6px 0 #3e5872; }
+.seed-count--bolt .seed-count__hole { background: #3e5872; box-shadow: inset 0 6px 0 #26394d; }
+.seed-count--bolt .seed-count__hole.is-full { background: #e3ebf4; box-shadow: inset 0 3px 0 #b7c4d2; }
+.seed-count--bolt .seed-count__sack { background: #ffffff; border-color: #9aafc6; box-shadow: 0 5px 0 #9aafc6; }
+.seed-count--bolt:active .seed-count__sack { box-shadow: 0 2px 0 #9aafc6; }
+.seed-count--bolt.is-done .seed-count__tray { box-shadow: inset 0 -6px 0 #3e5872, 0 0 0 6px var(--sun); }
+.bolt-sow .pantry__title { color: #1f4f9a; }
+.bolt-sow__robot { opacity: 0.45; transition: opacity 0.3s; }
+.bolt-sow__robot.is-on { opacity: 1; }
+.friend-gift__shelf { display: flex; justify-content: center; gap: 10px; padding: 10px 14px; border-radius: 20px; background: #eef3f9; border-bottom: 8px solid #9aafc6; }
+.friend-gift__place { width: 56px; height: 56px; border-radius: 16px; background: #ffffff; border: 3px dashed #9aafc6; box-sizing: border-box; display: grid; place-items: center; }
+.friend-gift__place.is-full { border-style: solid; border-color: #2e9c97; }
+.friend-gift__place.is-next svg { opacity: 0.4; }
+.friend-gift__later { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 24px; font-weight: 800; color: #2f4a63; }
+.is-phone .friend-gift__place { width: 44px; height: 44px; }
+.is-phone .friend-gift__place svg { width: 30px; height: 30px; }
+.is-phone .workshop__gifts svg { width: 14px; height: 14px; }
+.is-phone .workshop__slot-dot { width: 10px; height: 10px; top: 3px; right: 3px; }
 /* A slot with many parts (the colours) stands them in a compact four-wide grid, so they fit the panel. */
 .workshop__parts--many { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .workshop__parts--many .workshop__part { min-height: 0; padding: 6px 4px 8px; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; justify-items: center; row-gap: 2px; text-align: center; }
@@ -827,21 +857,14 @@ button.workshop__robot { border: none; background: none; padding: 0; font: inher
 /* The card and the bolts answer the tap too. */
 .workshop__part.is-got-a { animation: part-got-a 0.32s ease-out; }
 .workshop__part.is-got-b { animation: part-got-b 0.32s ease-out; }
-.workshop__part.is-nope-a { animation: part-nope-a 0.38s ease-in-out; }
-.workshop__part.is-nope-b { animation: part-nope-b 0.38s ease-in-out; }
-.workshop__part.is-nope-a .workshop__short, .workshop__part.is-nope-b .workshop__short { color: var(--oops-ink); }
+.workshop__part.is-wish-a { animation: part-got-a 0.32s ease-out; }
+.workshop__part.is-wish-b { animation: part-got-b 0.32s ease-out; }
 .workshop__tag.is-new { animation: tag-new 0.28s cubic-bezier(.3, 1.5, .5, 1) 0.42s both; }
 .workshop__bolts { position: relative; }
-.workshop__bolts.is-short-a { animation: bolts-short-a 0.64s ease-out; }
-.workshop__bolts.is-short-b { animation: bolts-short-b 0.64s ease-out; }
 .workshop__spent { position: absolute; right: 16px; top: -8px; font-size: 26px; font-weight: 800; color: #9c5a00; pointer-events: none; animation: bolts-spent 0.9s ease-out forwards; }
 @keyframes part-got-a { 35% { transform: scale(1.05); } }
 @keyframes part-got-b { 35% { transform: scale(1.05); } }
-@keyframes part-nope-a { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
-@keyframes part-nope-b { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
 @keyframes tag-new { from { opacity: 0; transform: translateY(8px) scale(0.8); } }
-@keyframes bolts-short-a { from { box-shadow: 0 0 0 0 rgba(217, 116, 26, 0.7); } to { box-shadow: 0 0 0 14px rgba(217, 116, 26, 0); } }
-@keyframes bolts-short-b { from { box-shadow: 0 0 0 0 rgba(217, 116, 26, 0.7); } to { box-shadow: 0 0 0 14px rgba(217, 116, 26, 0); } }
 @keyframes bolts-spent { 0% { opacity: 0; transform: translateY(4px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateY(-34px); } }
 
 /* Reduced motion: the parts and the tag only fade; no sparks, bolt, hop, shake or drip. */
@@ -851,8 +874,7 @@ button.workshop__robot { border: none; background: none; padding: 0; font: inher
   .rp-fx { display: none; }
   .rp-hop-a, .rp-hop-b, .rp-wiggle-a, .rp-wiggle-b { animation: none; }
   .robot--repaint .rp * { transition-delay: 0s !important; }
-  .workshop__part.is-got-a, .workshop__part.is-got-b, .workshop__part.is-nope-a, .workshop__part.is-nope-b { animation: none; }
-  .workshop__bolts.is-short-a, .workshop__bolts.is-short-b { animation: none; }
+  .workshop__part.is-got-a, .workshop__part.is-got-b, .workshop__part.is-wish-a, .workshop__part.is-wish-b { animation: none; }
   .workshop__tag.is-new, .workshop__spent { animation-name: rp-fade-in; }
   @keyframes rp-fade-in { from { opacity: 0; } }
   @keyframes rp-fade-out { to { opacity: 0; } }

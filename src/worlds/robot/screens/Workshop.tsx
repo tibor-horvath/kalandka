@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrivalRing } from '../../../components/ArrivalRing';
+import { CountIn } from '../../../components/CountIn';
 import { GuideSay, type Say } from '../../../components/GuideSay';
-import { Modal } from '../../../components/Modal';
+import { Modal, useModal } from '../../../components/Modal';
 import { PlaceShell } from '../../../components/PlaceShell';
+import { BackIcon, RoundButton } from '../../../components/ui';
 import { Bolt } from '../art';
-import { FriendArt, RobotFigure, SlotIcon, type PartMotion } from '../parts';
+import { BoltBox, FriendArt, GiftArt, RobotFigure, SlotIcon, type PartMotion } from '../parts';
 import { chime, fanfare, popBubble, robotChirp } from '../../../lib/sound';
 import { capitalize, numberCount } from '../../../lib/numbers';
 import { speak } from '../../../lib/speech';
@@ -40,7 +42,22 @@ import {
   type PartSlot,
   type RobotIdx,
   type TrickId,
-  friendProgress
+  friendProgress,
+  FRIEND_GIFTS,
+  FRIEND_GIFTS_EACH,
+  GIFT_THINGS,
+  canGiveFriend,
+  friendAsks,
+  friendGiftsOf,
+  friendGiftsOpen,
+  giveFriend,
+  nextFriendGift,
+  setWish,
+  slotsAffordable,
+  startSlot,
+  wishOf,
+  type Friend,
+  type FriendId
 } from '../../../state/robotParts';
 
 const ROBOT_NAMES: Record<RobotIdx, string> = { 0: 'Első robot', 1: 'Második robot' };
@@ -59,7 +76,14 @@ export function Workshop({ onBack }: { onBack: () => void }) {
   const look = lookOf(progress);
   const battery = batteryOf(progress);
   const squeaky = isSqueaky(progress);
-  const [slot, setSlot] = useState<PartSlot>('head');
+  // The workshop opens on the wished part's tab, or the first with something the bolts buy (C · Hová menjek?).
+  const [slot, setSlot] = useState<PartSlot>(() => startSlot(progress));
+  /** The part being counted out (A · Csavarozd fel!), or the friend whose gift is (D · Barátok műhelye). */
+  const [counting, setCounting] = useState<Part | null>(null);
+  const [giftFor, setGiftFor] = useState<FriendId | null>(null);
+  const wish = wishOf(progress);
+  const affordable = slotsAffordable(progress);
+  const giftsOpen = friendGiftsOpen(progress);
   const [say, setSay] = useState<Say>(() => opening());
   /** The friend the child tapped last; the count restarts its little hop on every tap. */
   const [poke, setPoke] = useState<{ id: string; n: number } | null>(null);
@@ -74,7 +98,7 @@ export function Workshop({ onBack }: { onBack: () => void }) {
   /** The last part tap, played on the robot; it settles after a second and a half. */
   const [motion, setMotion] = useState<PartMotion | null>(null);
   /** The last card answer: a bump for a purchase (with the bolts spent), a shake when bolts are short. */
-  const [answer, setAnswer] = useState<{ id: string; kind: 'got' | 'nope'; n: number; cost: number } | null>(null);
+  const [answer, setAnswer] = useState<{ id: string; kind: 'got' | 'wish'; n: number; cost: number } | null>(null);
   const taps = useRef(0);
 
   function opening(): Say {
@@ -84,7 +108,17 @@ export function Workshop({ onBack }: { onBack: () => void }) {
     if (squeaky) {
       return { text: 'Nyikorog a karom. Kérek egy csepp olajat!', speech: 'Nyikorog a karom. Kérek egy csepp olajat! Koppints az olajozásra.', mood: 'think', tone: 'plain' };
     }
+    const wished = wishOf(progress);
+    if (wished && wished.robot === robot) {
+      if (wished.need === 0) {
+        return { text: `Megvan a csavar erre: ${wished.part.name}!`, speech: `Összegyűlt a csavar arra, amit kértél: ${wished.part.name.toLowerCase()}! Koppints rá, és felcsavarozzuk.`, mood: 'cheer', tone: 'good' };
+      }
+      return { text: `Gyűjtünk erre: ${wished.part.name}. Még ${wished.need} csavar.`, speech: `Erre gyűjtünk: ${wished.part.name.toLowerCase()}. Még ${boltsWord(wished.need)} kell hozzá.`, mood: 'smile', tone: 'plain' };
+    }
     const next = cheapestLeft(progress);
+    if (!next && friendGiftsOpen(progress) && friendsOf(progress).some((f) => canGiveFriend(progress, f.id))) {
+      return { text: 'Kész a robotod! A barátaid ajándékot kérnek.', speech: 'Kész a robotod! A barátaid ajándékot kérnek. Koppints egy barátra!', mood: 'cheer', tone: 'good' };
+    }
     if (!next) {
       const other = robots.find((r) => r !== robot && cheapestLeft(progress, r));
       if (other !== undefined) {
@@ -158,16 +192,59 @@ export function Workshop({ onBack }: { onBack: () => void }) {
       return;
     }
     if (!canBuy(progress, part.id)) {
+      // Not enough bolts yet: this part becomes the one to save up for (B · Ezt szeretném).
       const need = part.cost - balance;
-      setAnswer({ id: part.id, kind: 'nope', n, cost: part.cost });
-      tell({ text: `Ehhez még ${need} csavar kell.`, speech: `Ehhez még ${boltsWord(need)} kell. A Robotúton gyűjthetsz!`, mood: 'think', tone: 'plain' });
+      setAnswer({ id: part.id, kind: 'wish', n, cost: part.cost });
+      popBubble(2);
+      update((p) => setWish(p, part.id));
+      tell({
+        text: `Ezt szeretnéd? Még ${need} csavar, és a tiéd.`,
+        speech: `Ezt szeretnéd: ${part.name.toLowerCase()}? Gyűjtsünk rá! Még ${boltsWord(need)} kell. A játékokban mindig látod, mennyi hiányzik még.`,
+        mood: 'cheer',
+        tone: 'plain'
+      });
       return;
     }
-    setMotion({ n, slot: part.slot, kind: 'buy', from });
+    // Enough bolts: the child counts them into the part's screw holes (A · Csavarozd fel!).
+    popBubble(2);
+    setCounting(part);
+  };
+
+  /** The last bolt of a part is in: it goes on the robot. */
+  const fitted = (part: Part) => {
+    const n = ++taps.current;
+    setCounting(null);
+    setMotion({ n, slot: part.slot, kind: 'buy', from: look[part.slot] });
     setAnswer({ id: part.id, kind: 'got', n, cost: part.cost });
     fanfare();
     update((p) => buy(p, part.id));
     tell({ text: 'Felszereltük! Nézd, milyen menő lett!', speech: `Felszereltük: ${part.name.toLowerCase()}! Nézd, milyen menő lett a robotod!`, mood: 'cheer', tone: 'good' });
+  };
+
+  /** A tap on a welcomed friend: its gift card once the friends take gifts, else a little hop. */
+  const tapFriend = (f: Friend) => {
+    setPoke((p) => ({ id: f.id, n: (p?.id === f.id ? p.n : 0) + 1 }));
+    popBubble(3);
+    if (friendAsks(progress, f.id)) {
+      setGiftFor(f.id);
+      return;
+    }
+    const all = friendGiftsOf(progress, f.id) >= FRIEND_GIFTS_EACH;
+    tell(
+      all
+        ? { text: `${f.name} minden ajándékot megkapott!`, speech: `${f.name} mind az öt ajándékát megkapta tőled. Nagyon boldog!`, mood: 'cheer', tone: 'good' }
+        : { text: `Szia, ${f.name}!`, speech: `Ő ${f.name}. Itt lakik a műhelyben, veled.`, mood: 'cheer', tone: 'good' }
+    );
+  };
+
+  /** The last bolt of a friend's gift is in. */
+  const gave = (f: Friend) => {
+    const thing = nextFriendGift(progress, f.id)!.thing;
+    setGiftFor(null);
+    setPoke((p) => ({ id: f.id, n: (p?.n ?? 0) + 1 }));
+    fanfare();
+    update((p) => giveFriend(p, f.id));
+    tell({ text: `${f.name} örül: ${GIFT_THINGS[thing].name}!`, speech: `Köszönöm! – mondja ${f.name}. ${GIFT_THINGS[thing].name}, ez itt marad mellette.`, mood: 'cheer', tone: 'good' });
   };
 
   const charge = () => {
@@ -243,6 +320,7 @@ export function Workshop({ onBack }: { onBack: () => void }) {
       return;
     }
     setMotion(null);
+    setSlot(startSlot(progress, r));
     update((p) => ({ ...p, robotActive: r }));
     tell({ text: `Jöhet a ${ROBOT_NAMES[r].toLowerCase()}!`, speech: `Jöhet a ${ROBOT_NAMES[r].toLowerCase()}! Minden robotnak saját alkatrészei vannak.`, mood: 'cheer', tone: 'plain' });
   };
@@ -268,7 +346,7 @@ export function Workshop({ onBack }: { onBack: () => void }) {
       title="Robotépítő"
       onBack={onBack}
       counters={
-        <div className={`pill workshop__bolts${answer?.kind === 'nope' ? ` is-short-${answer.n % 2 ? 'a' : 'b'}` : ''}`} aria-label={`${balance} csavar`}>
+        <div className="pill workshop__bolts" aria-label={`${balance} csavar`}>
           <Bolt />
           <span>
             {balance}
@@ -332,23 +410,35 @@ export function Workshop({ onBack }: { onBack: () => void }) {
             <span className="workshop__platform" aria-hidden="true" />
           </button>
           <div className="workshop__friends" aria-label="A műhely lakói">
-            {welcomed.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                className="workshop__friend"
-                aria-label={f.name}
-                onClick={() => {
-                  setPoke((p) => ({ id: f.id, n: (p?.id === f.id ? p.n : 0) + 1 }));
-                  popBubble(3);
-                  tell({ text: `Szia, ${f.name}!`, speech: `Ő ${f.name}. Itt lakik a műhelyben, veled.`, mood: 'cheer', tone: 'good' });
-                }}
-              >
-                <span key={poke?.id === f.id ? poke.n : 0} className={`workshop__hop${poke?.id === f.id ? ' is-poked' : ''}`}>
-                  <FriendArt id={f.id} width={96} />
-                </span>
-              </button>
-            ))}
+            {welcomed.map((f) => {
+              const given = friendGiftsOf(progress, f.id);
+              const asks = giftsOpen && friendAsks(progress, f.id);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  className="workshop__friend"
+                  aria-label={`${f.name}${given ? `, ${given} ajándéka van` : ''}${asks ? ', ajándékot kér' : ''}`}
+                  onClick={() => tapFriend(f)}
+                >
+                  <span key={poke?.id === f.id ? poke.n : 0} className={`workshop__hop${poke?.id === f.id ? ' is-poked' : ''}`}>
+                    <FriendArt id={f.id} width={96} />
+                  </span>
+                  {given > 0 && (
+                    <span className="workshop__gifts" aria-hidden="true">
+                      {FRIEND_GIFTS[f.id].slice(0, given).map((t) => (
+                        <GiftArt key={t} thing={t} size={22} />
+                      ))}
+                    </span>
+                  )}
+                  {asks && (
+                    <span className="workshop__asks" aria-hidden="true">
+                      kér
+                    </span>
+                  )}
+                </button>
+              );
+            })}
             {toFriend && <ArrivalRing progress={toFriend} unit="part" />}
           </div>
         </div>
@@ -371,6 +461,12 @@ export function Workshop({ onBack }: { onBack: () => void }) {
               >
                 <SlotIcon slot={s.id} />
                 <span>{s.name}</span>
+                {affordable.includes(s.id) && (
+                  <>
+                    <span className="workshop__slot-dot" aria-hidden="true" />
+                    <span className="sr-only">, van megvehető</span>
+                  </>
+                )}
               </button>
             ))}
           </div>
@@ -382,16 +478,22 @@ export function Workshop({ onBack }: { onBack: () => void }) {
               const short = part.cost - balance;
               const state = on ? 'Rajta van' : mine ? 'A tiéd' : short > 0 ? `Még ${short}` : '';
               const answered = answer?.id === part.id ? ` is-${answer.kind}-${answer.n % 2 ? 'a' : 'b'}` : '';
+              const wished = !mine && wish?.robot === robot && wish.part.id === part.id;
               // The tag pops onto the card the robot has just put on.
               const fresh = on && motion?.slot === slot && motion.kind !== 'same' ? motion.n : 0;
               return (
                 <button
                   key={part.id}
                   type="button"
-                  className={`workshop__part${on ? ' is-on' : ''}${!mine && short > 0 ? ' is-later' : ''}${answered}`}
+                  className={`workshop__part${on ? ' is-on' : ''}${!mine && short > 0 ? ' is-later' : ''}${wished ? ' is-wish' : ''}${answered}`}
                   onClick={() => pick(part)}
-                  aria-label={`${part.name}. ${on ? 'Rajta van.' : mine ? 'A tiéd, koppints, és felveszi.' : short > 0 ? `${part.cost} csavar, még ${short} kell hozzá.` : `${part.cost} csavar, koppints, és megveszed.`}`}
+                  aria-label={`${part.name}. ${wished ? 'Erre gyűjtesz. ' : ''}${on ? 'Rajta van.' : mine ? 'A tiéd, koppints, és felveszi.' : short > 0 ? `${part.cost} csavar, még ${short} kell hozzá. Koppints, és erre gyűjtünk.` : `${part.cost} csavar, koppints, és felcsavarozzuk.`}`}
                 >
+                  {wished && (
+                    <span className="workshop__wish" aria-hidden="true">
+                      <HeartIcon />
+                    </span>
+                  )}
                   <RobotFigure look={{ ...look, [slot]: part.id }} width={74} />
                   <span className="workshop__part-name">{part.name}</span>
                   {mine ? (
@@ -410,7 +512,7 @@ export function Workshop({ onBack }: { onBack: () => void }) {
             })}
           </div>
           <p className="kiskert__note">
-            Minden négy megoldott feladat a műhelyben egy csavar. Amit megvettél, az a tiéd marad: bármikor visszacserélheted. {boughtCount(progress)} új
+            Minden négy megoldott feladat a műhelyben egy csavar. Ha még kevés a csavar, koppints az alkatrészre, és arra gyűjtünk. Amit megvettél, az a tiéd marad: bármikor visszacserélheted. {boughtCount(progress)} új
             alkatrészed van.{robots.length === 1 ? ` ${SECOND_ROBOT_AFTER} új alkatrésznél jön egy második robot.` : ' Minden robotnak saját alkatrészei vannak.'}
           </p>
         </aside>
@@ -449,7 +551,154 @@ export function Workshop({ onBack }: { onBack: () => void }) {
           </button>
         </Modal>
       )}
+
+      {counting && <BoltCountCard part={counting} look={look} balance={balance} onDone={() => fitted(counting)} onClose={() => setCounting(null)} />}
+
+      {giftFor && (
+        <FriendGiftCard
+          friend={friendsOf(progress).find((f) => f.id === giftFor)!}
+          onDone={(f) => gave(f)}
+          onClose={() => setGiftFor(null)}
+        />
+      )}
     </PlaceShell>
+  );
+}
+
+/** Counting a part's bolts into its screw holes; nothing is spent until the last hole fills. */
+function BoltCountCard({ part, look, balance, onDone, onClose }: { part: Part; look: Record<PartSlot, string>; balance: number; onDone: () => void; onClose: () => void }) {
+  const modal = useModal<HTMLDivElement>(onClose);
+  const [counted, setCounted] = useState(0);
+  const intro = `Csavarozzuk fel! ${capitalize(numberCount(part.cost))} csavar kell. Koppints a dobozra.`;
+  const line = counted === 0 ? intro : counted >= part.cost ? `${capitalize(numberCount(counted))}! Felcsavaroztuk!` : `${capitalize(numberCount(counted))}!`;
+
+  useEffect(() => {
+    speak(intro);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once per visit.
+  }, []);
+
+  return (
+    <div ref={modal} className="pantry sow bolt-sow" role="dialog" aria-modal="true" aria-labelledby="bolt-sow-title">
+      <div className="pantry__card">
+        <header className="pantry__top">
+          <RoundButton label="Vissza a műhelybe, a csavarok a dobozban maradnak" onClick={onClose}>
+            <BackIcon />
+          </RoundButton>
+          <h2 id="bolt-sow-title" className="pantry__title">
+            {part.name}
+          </h2>
+          <div className="pill" aria-label={`${balance - counted} csavar a dobozban`}>
+            <Bolt size={26} />
+            <span>{balance - counted}</span>
+          </div>
+        </header>
+
+        <GuideSay world="robot" mood="cheer" tone={counted >= part.cost ? 'good' : 'plain'} text={line} />
+
+        <div className="sow__stage">
+          <span className={`sow__plant bolt-sow__robot${counted >= part.cost ? ' is-on' : ''}`} aria-hidden="true">
+            <RobotFigure look={{ ...look, [part.slot]: part.id }} width={130} />
+          </span>
+          <CountIn
+            cost={part.cost}
+            balance={balance}
+            label={part.name}
+            unit="csavar"
+            unitObj="csavart"
+            className="seed-count--bolt"
+            token={(size) => <Bolt size={size} />}
+            store={<BoltBox />}
+            onCount={setCounted}
+            onDone={onDone}
+          />
+        </div>
+        <p className="sow__help">Koppints a dobozra vagy a lyukakra. Ha visszalépsz, minden csavar a dobozban marad.</p>
+      </div>
+    </div>
+  );
+}
+
+/** A friend's gift card: its five gift places, what it asks for next, and the bolts counted out for it. */
+function FriendGiftCard({ friend, onDone, onClose }: { friend: Friend; onDone: (f: Friend) => void; onClose: () => void }) {
+  const { progress } = useProgress();
+  const modal = useModal<HTMLDivElement>(onClose);
+  const [counted, setCounted] = useState(0);
+  const balance = boltBalance(progress);
+  const given = friendGiftsOf(progress, friend.id);
+  const next = nextFriendGift(progress, friend.id)!;
+  const thing = GIFT_THINGS[next.thing];
+  const can = canGiveFriend(progress, friend.id);
+  const need = next.cost - balance;
+  const intro = can
+    ? `${friend.name} ${thing.asked} kér. ${capitalize(numberCount(next.cost))} csavar kell hozzá. Koppints a dobozra!`
+    : `${friend.name} ${thing.asked} kér. Ehhez még ${need === 1 ? 'egy csavar' : `${need} csavar`} kell. A játékokban gyűjthetsz.`;
+  const line = counted === 0 ? intro : counted >= next.cost ? `${capitalize(numberCount(counted))}! Kész az ajándék!` : `${capitalize(numberCount(counted))}!`;
+
+  useEffect(() => {
+    speak(intro);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once per visit.
+  }, []);
+
+  return (
+    <div ref={modal} className="pantry sow bolt-sow" role="dialog" aria-modal="true" aria-labelledby="friend-gift-title">
+      <div className="pantry__card">
+        <header className="pantry__top">
+          <RoundButton label="Vissza a műhelybe" onClick={onClose}>
+            <BackIcon />
+          </RoundButton>
+          <h2 id="friend-gift-title" className="pantry__title">
+            {friend.name}
+          </h2>
+          <div className="pill" aria-label={`${balance - counted} csavar`}>
+            <Bolt size={26} />
+            <span>{balance - counted}</span>
+          </div>
+        </header>
+
+        <GuideSay world="robot" mood="cheer" tone={counted >= next.cost ? 'good' : 'plain'} text={counted > 0 ? line : can ? `${friend.name} kér: ${thing.name.toLowerCase()}.` : `Még ${need} csavar kell.`} speech={line} />
+
+        <div className="friend-gift__shelf" role="img" aria-label={`${FRIEND_GIFTS_EACH} ajándékból ${given} megvan`}>
+          {FRIEND_GIFTS[friend.id].map((t, k) => (
+            <span key={t} className={`friend-gift__place${k < given ? ' is-full' : k === given ? ' is-next' : ''}`}>
+              {k <= given && <GiftArt thing={t} size={40} />}
+            </span>
+          ))}
+        </div>
+
+        <div className="sow__stage">
+          <span className="sow__plant bolt-sow__robot is-on" aria-hidden="true">
+            <FriendArt id={friend.id} width={150} />
+          </span>
+          {can ? (
+            <CountIn
+              cost={next.cost}
+              balance={balance}
+              label={thing.name}
+              unit="csavar"
+              unitObj="csavart"
+              className="seed-count--bolt"
+              token={(size) => <Bolt size={size} />}
+              store={<BoltBox />}
+              onCount={setCounted}
+              onDone={() => onDone(friend)}
+            />
+          ) : (
+            <p className="friend-gift__later">
+              <Bolt size={30} /> {next.cost} csavar · még {need} kell
+            </p>
+          )}
+        </div>
+        {can && <p className="sow__help">Koppints a dobozra vagy a lyukakra. Ha visszalépsz, minden csavar a dobozban marad.</p>}
+      </div>
+    </div>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24">
+      <path d="M12 21s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 8a4.3 4.3 0 0 1 7.5 2.8C19.5 16.4 12 21 12 21z" fill="#E2689A" stroke="#A23A66" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
   );
 }
 
