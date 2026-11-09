@@ -1,8 +1,11 @@
 # Squash-merged PR titles become commit messages; keep them Conventional Commits.
+# Plain pull_request, not pull_request_target: GitHub blocks pull_request_target in public
+# repos by default from 2026-12-02 (brownouts before that). The check only reads the title.
 name: PR title
 
 on:
-  pull_request_target:
+  pull_request:
+    branches: [main]
     types: [opened, edited, synchronize, reopened]
 
 permissions: {}
