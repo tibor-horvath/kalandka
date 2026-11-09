@@ -2,7 +2,7 @@ import { LEARN_MAX } from '../worlds/garden/games/learn/logic';
 import { GAMES, type GameId } from './games';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';
-import { ladderOf, type LadderGame } from './ladder';
+import { LADDER_RULES, ladderOf, solvedLevels, type LadderGame } from './ladder';
 import { FRIENDS, boughtCount, friendsOf, secondRobotOpen } from './robotParts';
 import { creditTasks, rewardFor } from './pod';
 import { today } from './screenTime';
@@ -1143,28 +1143,28 @@ export function markPageDone(p: Progress, key: string, tasks: number): Progress 
 /** Feladatlapok stickers: pages done in a world. */
 const pagesIn = (world: WorldId, count: number) => (p: Progress) => pagesDoneIn(p, world) >= count;
 
-/** The highest level of this game's printed sheet (0-based, as in the page key) with a page marked done; -1 for none. */
-export function sheetTop(p: Progress, game: GameId): number {
-  return p.pagesDone.reduce((top, key) => {
+/** The sheet levels (0-based, as in the page key) of this game with a page marked done. */
+function sheetsDone(p: Progress, game: GameId): number[] {
+  return p.pagesDone.flatMap((key) => {
     const [id, , level] = key.split('.');
-    return id === game ? Math.max(top, Number(level)) : top;
-  }, -1);
+    return id === game ? [Number(level)] : [];
+  });
 }
 
 /**
- * The ladder level each printed sheet level stands for, where the sheet's levels are not the game's own: the
- * sheet joins or splits some levels (Csepp-kert's first sheet is both small-drop levels, Virágsor prints AAB and ABB apart).
+ * The ladder levels each printed sheet level stands for, where the sheet's levels are not the game's own: the
+ * sheet joins or splits some levels (Locsolás's first sheet is both small-drop levels, Virágsor prints AAB and
+ * ABB apart, Mézút's faded sheet has all ten digits).
  */
-const SHEET_LADDER: Partial<Record<LadderGame, number[]>> = {
-  water: [1, 2],
-  patterns: [0, 1, 2, 2, 3],
-  trace: [0, 1, 3]
+const SHEET_LADDER: Partial<Record<LadderGame, number[][]>> = {
+  water: [[0, 1], [2]],
+  patterns: [[0], [1], [2], [2], [3]],
+  trace: [[0], [1], [2, 3]]
 };
 
-/** The highest ladder level a finished sheet of this game stands for; -1 for none. */
-function sheetLadderTop(p: Progress, game: LadderGame): number {
-  const top = sheetTop(p, game);
-  return top < 0 ? -1 : (SHEET_LADDER[game]?.[top] ?? top);
+/** The ladder levels a finished sheet of this game stands for, each done explicitly on paper. */
+function sheetLevels(p: Progress, game: LadderGame): number[] {
+  return sheetsDone(p, game).flatMap((level) => SHEET_LADDER[game]?.[level] ?? [level]);
 }
 
 /**
@@ -1301,21 +1301,30 @@ const LADDER_GAMES = Object.keys(LEVEL_STICKERS) as LadderGame[];
 
 const isLadderGame = (id: StickerGameId): id is LadderGame => (LADDER_GAMES as string[]).includes(id);
 
-/** A game's level stickers: number n (from 1) stands for its level(s) on the ladder, solved in the game or on a finished sheet. */
+/**
+ * A game's level stickers: number n (from 1) stands for its level(s) on the ladder, from its `from` up to the next
+ * sticker's. It wants one of those very levels done, in the game or on a finished sheet, in any order: a higher level
+ * done does not earn the stickers below it.
+ */
 function levelStickers(game: LadderGame): Sticker[] {
-  return LEVEL_STICKERS[game].map((s, i) => ({
+  const rows = LEVEL_STICKERS[game];
+  return rows.map((s, i) => ({
     id: `${game}-level-${i + 1}`,
     game,
     mark: s.mark,
     label: s.label,
     praise: s.praise,
     level: s.from,
-    earned: (p: Progress) => ladderOf(p, game).solvedTop >= s.from || sheetLadderTop(p, game) >= s.from
+    earned: (p: Progress) => {
+      const to = rows[i + 1]?.from ?? LADDER_RULES[game].levels;
+      const inRow = (level: number) => level >= s.from && level < to;
+      return solvedLevels(ladderOf(p, game)).some(inRow) || sheetLevels(p, game).some(inRow);
+    }
   }));
 }
 
-/** Számmagok's sheet levels start at 1, 6, 11 and 16: a finished page of `level` knows the numbers up to its sticker's. */
-const learnSheet = (level: number) => (p: Progress) => sheetTop(p, 'learn') >= level;
+/** Számmagok's sheet levels start at 1, 6, 11 and 16: a finished page of exactly `level` earns its sticker. */
+const learnSheet = (level: number) => (p: Progress) => sheetsDone(p, 'learn').includes(level);
 
 /**
  * Számmagok has no ladder: its stickers count the numbers the child knows, in the game or on a finished sheet.

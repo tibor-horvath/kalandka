@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ADD_LEVELS } from '../worlds/garden/games/add/logic';
 import { SORT_LEVELS } from '../worlds/robot/games/sort';
-import { LADDER_LEVELS, ladderOf, withLadder, type LadderGame } from './ladder';
+import { LADDER_LEVELS, LADDER_RULES, afterSolve, ladderOf, startAt, withLadder, type LadderGame } from './ladder';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
 import { PARTS } from './robotParts';
 import { stickerRow } from './rewards';
@@ -320,19 +320,35 @@ describe('stickers', () => {
     const game = (key: string, g: string) => earnedStickers(markPageDone(DEFAULT_PROGRESS, key, 1)).filter((s) => s.game === g).map((s) => s.id);
     // Level as printed: the third part of the page key.
     expect(game('code.1.0.n.7.0', 'code')).toEqual(['code-level-1']);
-    expect(game('code.1.2.n.7.0', 'code')).toEqual(['code-level-1', 'code-level-2', 'code-level-3']);
-    expect(game('add.1.3.n.7.0', 'add')).toEqual(['add-level-1', 'add-level-2']);
+    // Only its own level: a higher sheet does not earn the stickers below it.
+    expect(game('code.1.2.n.7.0', 'code')).toEqual(['code-level-3']);
+    expect(game('add.1.3.n.7.0', 'add')).toEqual(['add-level-2']);
     // Sheets whose levels are not the game's own.
     expect(game('water.1.0.n.7.0', 'water')).toEqual(['water-level-1', 'water-level-2']);
-    expect(game('patterns.1.3.n.7.0', 'patterns')).toEqual(['patterns-level-1', 'patterns-level-2', 'patterns-level-3']);
-    expect(game('trace.1.2.n.7.0', 'trace')).toEqual(['trace-level-1', 'trace-level-2', 'trace-level-3', 'trace-level-4']);
+    expect(game('water.1.1.n.7.0', 'water')).toEqual(['water-level-3']);
+    expect(game('patterns.1.3.n.7.0', 'patterns')).toEqual(['patterns-level-3']);
+    expect(game('patterns.1.4.n.7.0', 'patterns')).toEqual(['patterns-level-4']);
+    expect(game('trace.1.2.n.7.0', 'trace')).toEqual(['trace-level-3', 'trace-level-4']);
     expect(game('learn.1.0.n.7.0', 'learn')).toEqual(['learn-5']);
-    expect(game('learn.1.2.n.7.0', 'learn')).toEqual(['learn-5', 'learn-10']);
-    expect(game('learn.1.3.n.7.0', 'learn')).toEqual(['learn-5', 'learn-10', 'learn-20']);
+    expect(game('learn.1.1.n.7.0', 'learn')).toEqual(['learn-10']);
+    expect(game('learn.1.2.n.7.0', 'learn')).toEqual([]);
+    expect(game('learn.1.3.n.7.0', 'learn')).toEqual(['learn-20']);
     // It pops on the game's own world, with the Feladatlapok sticker.
     expect(newStickers(markPageDone(DEFAULT_PROGRESS, 'path.1.0.n.7.0', 1), 'robot').map((s) => s.id)).toEqual(['path-level-1', 'paper-robot-1']);
-    // A last-level sheet earns the levels below it too: the top one pops first.
-    expect(newStickers(markPageDone(DEFAULT_PROGRESS, 'patterns.1.4.n.7.0', 1), 'garden').map((s) => s.id)).toEqual(['patterns-level-4', 'patterns-level-3', 'patterns-level-2', 'patterns-level-1', 'paper-garden-1']);
+    // Sheets done in any order: each earns its own, and the row's top new one pops first.
+    const both = markPageDone(markPageDone(DEFAULT_PROGRESS, 'patterns.1.4.n.7.0', 1), 'patterns.1.0.n.7.0', 1);
+    expect(newStickers(both, 'garden').map((s) => s.id)).toEqual(['patterns-level-4', 'patterns-level-1', 'paper-garden-2', 'paper-garden-1']);
+  });
+
+  it('wants each level solved in the game for its sticker, in any order', () => {
+    const game = (p: Progress) => earnedStickers(p).filter((s) => s.game === 'patterns').map((s) => s.id);
+    // Solved on level 3 only (a parent started the child there): only that level's sticker.
+    const started = withLadder(DEFAULT_PROGRESS, 'patterns', startAt(ladderOf(DEFAULT_PROGRESS, 'patterns'), 3));
+    expect(game(started)).toEqual([]);
+    const solved = withLadder(started, 'patterns', afterSolve(ladderOf(started, 'patterns'), LADDER_RULES.patterns, false).ladder);
+    expect(game(solved)).toEqual(['patterns-level-4']);
+    // A save from before the solved list: every level up to the highest solved one counts.
+    expect(game(solvedUpTo('patterns', 2))).toEqual(['patterns-level-1', 'patterns-level-2', 'patterns-level-3']);
   });
 
   it('counts a marked page once, and fills only its own world’s reward pod with its tasks', () => {

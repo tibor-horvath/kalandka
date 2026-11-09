@@ -50,7 +50,7 @@ export interface Progress {
   /** Stickers celebrated on stickersDay (local YYYY-MM-DD), in order; the rest screen shows the day's haul. */
   stickersDay: string;
   stickersToday: string[];
-  /** Printed pages a grown-up marked done, each once (see pageKey in print/link.ts); they earn the Feladatlapok stickers and each game's level stickers (see sheetTop in rewards.ts). */
+  /** Printed pages a grown-up marked done, each once (see pageKey in print/link.ts); they earn the Feladatlapok stickers and each game's level stickers (see sheetLevels in rewards.ts). */
   pagesDone: string[];
   /** Plant ids grown in the watering game, oldest first. */
   garden: string[];

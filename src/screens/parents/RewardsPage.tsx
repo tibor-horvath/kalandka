@@ -262,7 +262,7 @@ export function RewardsPage() {
         </h2>
         <div className="pa-rw-rules">
           <Rule title="Szintenként egy" icon={<><path d="M4 20h4v-6H4z" /><path d="M10 20h4V9h-4z" /><path d="M16 20h4V4h-4z" /></>}>
-            Egy játék minden új szintje egy matrica, az ott megoldott első feladattal. Játékonként legfeljebb hét.
+            Egy játék minden új szintje egy matrica, az ott megoldott első feladattal vagy egy kész lappal. Minden szintet külön kell teljesíteni, a sorrend mindegy. Játékonként legfeljebb hét.
           </Rule>
           <Rule title="A helyén marad" icon={<path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8-4.3-4.1 5.9-.8z" />}>
             Ha a játék visszalép egy könnyebb szintre, a matrica akkor is megmarad.
