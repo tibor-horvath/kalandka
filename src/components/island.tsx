@@ -2,13 +2,23 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { FitBox } from './FitBox';
 import { useForm, useWideStage, type Form } from './Stage';
 import { StickerBookArt } from './stickers';
-import { DoneTick, LockIcon, PlayIcon } from './ui';
+import { BoatArt } from './boat';
+import { MapIcon } from './hub';
+import { DoneTick } from './ui';
 
 // A world's home: its island, every game a place along one trail from the boat's dock.
 // The tablet draws the island on the whole stage; phones draw a tall (portrait) or wide (landscape)
 // island in the room left under or beside Csepi, scaled to fit.
 
 export type IslandWorld = 'garden' | 'robot';
+
+/** What a place's badge asks: something new, something waiting for care, or how far the child got. One badge per place. */
+export type BadgeKind = 'new' | 'care' | 'level';
+
+export interface Badge {
+  text: string;
+  kind: BadgeKind;
+}
 
 /** One game on a world's home screen: a place on the island. */
 export interface Place {
@@ -17,10 +27,10 @@ export interface Place {
   /** The button's accessible name. */
   label: string;
   art: ReactNode;
-  badge?: string | null;
+  badge?: Badge | null;
   /** Where a new child begins: the island rings it once after arriving. */
   start?: boolean;
-  /** A place still asleep: the tap explains what opens it. `hint` is the short line phones show under the name. */
+  /** A place still asleep: the tap explains what opens it. `hint` is the short line its moon badge shows (the skill when there is none). */
   locked?: { skill: ReactNode; hint?: string; onTap: () => void };
   onOpen?: () => void;
 }
@@ -50,6 +60,12 @@ interface Pt {
   x: number;
   y: number;
 }
+
+/**
+ * A creature living on the island, drawn by its role: in the garden two rabbits and a carrot,
+ * in the workshop two little robots and a gear. They breathe, sway or turn slowly and never take a tap.
+ */
+type CritterSpot = Pt & { role: 0 | 1 | 2 };
 
 /** Everything drawn on one island, in its own coordinates (w × h). */
 interface Geometry {
@@ -86,10 +102,17 @@ interface Geometry {
   book: Pt;
   /** Where the bottom of the play-time sign sits, and how big the sign is drawn there. */
   timer: Pt & { scale: number };
+  critters: CritterSpot[];
+  /** Tablets: the boat's centre, where it also works as the way back to the map. */
+  boatAt?: Pt;
+  /** Tablets: Kincseim, the small island off the shore holding the reward place and the sticker album, and its sign. */
+  islet?: { shore: string; sign: Pt };
 }
 
 const SHORE_TABLET =
-  'M150 520 C140 360 330 250 520 260 C650 200 860 210 990 290 C1110 360 1100 520 1040 620 C980 740 760 790 560 775 C380 790 210 740 165 640 C150 600 150 560 150 520 Z';
+  'M150 520 C140 360 330 250 520 260 C650 200 860 210 990 290 C1110 360 1100 500 1010 590 C960 640 900 640 860 690 C800 770 700 790 560 775 C380 790 210 740 165 640 C150 600 150 560 150 520 Z';
+/** Kincseim, off the island's bottom-right corner (bottom-left in the turned-around workshop). */
+const ISLET_TABLET = 'M950 725 C945 655 1015 628 1075 630 C1145 632 1180 678 1176 735 C1172 795 1108 822 1052 820 C990 818 953 782 950 725 Z';
 
 const GARDEN_TABLET: Geometry = {
   w: 1180,
@@ -101,7 +124,7 @@ const GARDEN_TABLET: Geometry = {
     { x: 330, y: 450, rx: 90, ry: 40 }
   ],
   props: [
-    { x: 1023, y: 578, r: 28 },
+    { x: 960, y: 560, r: 26 },
     { x: 221, y: 378, r: 30 },
     { x: 1014, y: 325, r: 24 },
     { x: 585, y: 728, r: 22 }
@@ -109,8 +132,8 @@ const GARDEN_TABLET: Geometry = {
   dots: [
     { x: 520, y: 430 },
     { x: 535, y: 418 },
-    { x: 900, y: 650 },
-    { x: 880, y: 665 },
+    { x: 700, y: 690 },
+    { x: 716, y: 702 },
     { x: 330, y: 720 }
   ],
   dotR: 7,
@@ -138,10 +161,17 @@ const GARDEN_TABLET: Geometry = {
     { x: 990, y: 480 },
     { x: 800, y: 540 },
     { x: 590, y: 540 },
-    { x: 432, y: 696 }
+    { x: 995, y: 700 }
   ],
-  book: { x: 745, y: 700 },
-  timer: { x: 1050, y: 366, scale: 1 }
+  book: { x: 1105, y: 712 },
+  timer: { x: 1050, y: 366, scale: 1 },
+  critters: [
+    { x: 700, y: 452, role: 0 },
+    { x: 420, y: 712, role: 1 },
+    { x: 462, y: 724, role: 2 }
+  ],
+  boatAt: { x: 92, y: 748 },
+  islet: { shore: ISLET_TABLET, sign: { x: 1100, y: 632 } }
 };
 
 /** The workshop on the tablet: the shore turned around, its wide machines placed on their own. */
@@ -152,11 +182,11 @@ const ROBOT_TABLET: Geometry = {
   props: [
     { x: 1012, y: 388, r: 22 },
     { x: 1027, y: 355, r: 17 },
-    { x: 500, y: 707, r: 20 }
+    { x: 560, y: 707, r: 20 }
   ],
   dots: [
     { x: 680, y: 460 },
-    { x: 300, y: 660 },
+    { x: 330, y: 680 },
     { x: 880, y: 300 }
   ],
   dotR: 6,
@@ -179,10 +209,17 @@ const ROBOT_TABLET: Geometry = {
     { x: 230, y: 480 },
     { x: 400, y: 560 },
     { x: 600, y: 540 },
-    { x: 770, y: 670 }
+    { x: 185, y: 700 }
   ],
-  book: { x: 250, y: 660 },
-  timer: { x: 1000, y: 386, scale: 1 }
+  book: { x: 75, y: 712 },
+  timer: { x: 1000, y: 386, scale: 1 },
+  critters: [
+    { x: 480, y: 452, role: 0 },
+    { x: 770, y: 712, role: 1 },
+    { x: 822, y: 652, role: 2 }
+  ],
+  boatAt: { x: 1088, y: 748 },
+  islet: { shore: ISLET_TABLET, sign: { x: 80, y: 632 } }
 };
 
 /** Portrait phones: a tall island, the trail winding up from the dock in four rows of two. */
@@ -229,7 +266,12 @@ const GARDEN_PORTRAIT: Geometry = {
     { x: 105, y: 65 }
   ],
   book: { x: 195, y: 465 },
-  timer: { x: 195, y: 664, scale: 0.55 }
+  timer: { x: 195, y: 664, scale: 0.55 },
+  critters: [
+    { x: 195, y: 312, role: 0 },
+    { x: 195, y: 478, role: 1 },
+    { x: 105, y: 82, role: 2 }
+  ]
 };
 
 /** Landscape phones: a wide island beside Csepi, the trail out along the bottom row and back along the top. */
@@ -275,7 +317,12 @@ const GARDEN_LANDSCAPE: Geometry = {
     { x: 76, y: 104 }
   ],
   book: { x: 576, y: 326 },
-  timer: { x: 286, y: 216, scale: 0.55 }
+  timer: { x: 286, y: 216, scale: 0.55 },
+  critters: [
+    { x: 426, y: 196, role: 0 },
+    { x: 540, y: 322, role: 1 },
+    { x: 570, y: 328, role: 2 }
+  ]
 };
 
 /** The workshop's phone islands: the garden's turned around, so its dock and trail start on the other side. */
@@ -325,7 +372,10 @@ function widen(g: Geometry, extra: number): Geometry {
     waves: g.waves.map((p) => ({ ...p, x: Math.round((p.x * w) / g.w) })),
     spots: g.spots.map(at),
     book: at(g.book),
-    timer: at(g.timer)
+    timer: at(g.timer),
+    critters: g.critters.map(at),
+    boatAt: g.boatAt && { x: g.boatAt.x + shift, y: g.boatAt.y },
+    islet: g.islet && { shore: g.shoreMirror ? mapPath(g.islet.shore, (x) => X(g.w - x)) : mapPath(g.islet.shore, X), sign: at(g.islet.sign) }
   };
 }
 
@@ -345,9 +395,96 @@ export interface Return {
 }
 
 const COLORS = {
-  garden: { sand: '#F3DFA8', ground: '#A6D676', meadow: '#B4DE88', path: '#EFD9A0', pathDots: '#E0B95E', wave: '#D8F0FB', plank: '#5A3B26', deck: '#C99A6B', hull: '#E8577D', mast: '#5A3B26', sail: '#FFFFFF' },
-  robot: { sand: '#E6DCC4', ground: 'url(#island-tiles)', meadow: '', path: '#E9EEF4', pathDots: '#F2B33D', wave: '#DCEBF6', plank: '#4F5F72', deck: '#8FA3BA', hull: '#138A86', mast: '#4F5F72', sail: '#F2B33D' }
+  garden: { sand: '#F3DFA8', ground: '#A6D676', meadow: '#B4DE88', path: '#EFD9A0', pathDots: '#E0B95E', islet: '#B4DE88', wave: '#D8F0FB', plank: '#5A3B26', deck: '#C99A6B' },
+  robot: { sand: '#E6DCC4', ground: 'url(#island-tiles)', meadow: '', path: '#E9EEF4', pathDots: '#F2B33D', islet: '#DFE7F0', wave: '#DCEBF6', plank: '#4F5F72', deck: '#8FA3BA' }
 };
+
+/** A loose bolt lying in the workshop, centred on its point. */
+function BoltDot({ at, r }: { at: Pt; r: number }) {
+  const h = r * 0.87;
+  return (
+    <g transform={`translate(${at.x} ${at.y})`}>
+      <path d={`M0 ${-r} L${h} ${-r / 2} V${r / 2} L0 ${r} L${-h} ${r / 2} V${-r / 2} Z`} fill="#B7C4D2" stroke="#5E7184" strokeWidth={r * 0.25} strokeLinejoin="round" />
+      <circle r={r * 0.4} fill="#FFFFFF" stroke="#5E7184" strokeWidth={r * 0.22} />
+    </g>
+  );
+}
+
+function Rabbit() {
+  return (
+    <g stroke="#C9BFAE" strokeWidth="2">
+      <ellipse cx="0" cy="-13" rx="18" ry="13" fill="#F7F2EA" />
+      <circle cx="-18" cy="-16" r="5" fill="#FFFFFF" />
+      <ellipse cx="13" cy="-41" rx="4" ry="11" fill="#F7F2EA" />
+      <ellipse cx="21" cy="-40" rx="4" ry="11" fill="#F7F2EA" />
+      <circle cx="16" cy="-23" r="10" fill="#F7F2EA" />
+      <ellipse cx="21" cy="-40" rx="1.6" ry="7" fill="#F59AB0" stroke="none" />
+      <circle cx="20" cy="-24" r="1.8" fill="#10233A" stroke="none" />
+      <circle cx="25" cy="-19" r="1.6" fill="#F59AB0" stroke="none" />
+    </g>
+  );
+}
+
+function Carrot() {
+  return (
+    <g>
+      <path d="M0 -14 l-6 -16 M0 -14 l5 -15" stroke="#4CAF50" strokeWidth="3" strokeLinecap="round" />
+      <path d="M-5 -14 h10 l-5 14z" fill="#F08A24" />
+    </g>
+  );
+}
+
+/** A little workshop robot like Csavar, standing on its wheels; one of them waves. */
+function LittleRobot({ waving }: { waving: boolean }) {
+  const [body, head, hand] = waving ? ['#2E5FA8', '#4FB7B3', '#F2B33D'] : ['#E5484D', '#F2B33D', '#4FB7B3'];
+  return (
+    <g transform="translate(0 -16)">
+      <path d={waving ? 'M-12 -3 L-20 -12 M12 -3 L21 7' : 'M-12 -3 L-21 7 M12 -3 L21 7'} stroke="#8FA3B8" strokeWidth="3.5" strokeLinecap="round" />
+      <circle cx={waving ? -21 : -22} cy={waving ? -13 : 8} r="3.4" fill={hand} />
+      <circle cx="22" cy="8" r="3.4" fill={hand} />
+      <rect x="-12" y="8" width="8" height="8" rx="3" fill="#10233A" />
+      <rect x="4" y="8" width="8" height="8" rx="3" fill="#10233A" />
+      <rect x="-14" y="-8" width="28" height="18" rx="6" fill={body} />
+      <rect x="-3" y="-12" width="6" height="5" fill="#8FA3B8" />
+      <rect x="-16" y="-34" width="32" height="24" rx="8" fill={head} />
+      <rect x="-12" y="-30" width="24" height="16" rx="5" fill="#10233A" />
+      <circle cx="-5" cy="-22" r="2.6" fill="#7FE9F0" />
+      <circle cx="5" cy="-22" r="2.6" fill="#7FE9F0" />
+      <path d="M0 -34 V-42" stroke="#8FA3B8" strokeWidth="2.5" />
+      <circle cx="0" cy="-44" r="3" fill="#FFC93C" />
+    </g>
+  );
+}
+
+function Gear() {
+  return (
+    <g className="island__gear">
+      <path
+        d="M-4 -18h8l1.5 6 5 2 5.5-3.5 5.5 5.5-3.5 5.5 2 5 6 1.5v8l-6 1.5-2 5 3.5 5.5-5.5 5.5-5.5-3.5-5 2-1.5 6h-8l-1.5-6-5-2-5.5 3.5-5.5-5.5 3.5-5.5-2-5-6-1.5v-8l6-1.5 2-5-3.5-5.5 5.5-5.5 5.5 3.5 5-2z"
+        fill="#8FA3B8"
+        stroke="#3E5872"
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      />
+      <circle r="6" fill="#FFFFFF" stroke="#3E5872" strokeWidth="2.5" />
+    </g>
+  );
+}
+
+/** One of the island's creatures, its feet on its point; phones draw them a little smaller. */
+function Critter({ world, at, k }: { world: IslandWorld; at: CritterSpot; k: number }) {
+  const s = Math.max(k, 0.8);
+  const garden = world === 'garden';
+  const motion = at.role === 2 && !garden ? 'still' : at.role === 2 ? 'sway' : garden ? 'breathe' : 'sway';
+  const flip = at.role === 1 ? -1 : 1;
+  return (
+    <g className={`island__critter island__critter--${motion}${at.role === 1 ? ' island__critter--late' : ''}`}>
+      <g transform={`translate(${at.x} ${at.y}) scale(${flip * s} ${s})`}>
+        {garden ? at.role === 2 ? <Carrot /> : <Rabbit /> : at.role === 2 ? <Gear /> : <LittleRobot waving={at.role === 1} />}
+      </g>
+    </g>
+  );
+}
 
 function Scene({ world, g }: { world: IslandWorld; g: Geometry }) {
   const c = COLORS[world];
@@ -373,6 +510,12 @@ function Scene({ world, g }: { world: IslandWorld; g: Geometry }) {
         <g transform={turn(g.shoreMirror)}>
           <path d={g.shore} fill={c.sand} stroke={c.sand} strokeWidth={g.sand} strokeLinejoin="round" />
           <path d={g.shore} fill={c.ground} />
+          {g.islet && (
+            <>
+              <path d={g.islet.shore} fill={c.sand} stroke={c.sand} strokeWidth={g.sand * 0.6} strokeLinejoin="round" />
+              <path d={g.islet.shore} fill={c.islet} />
+            </>
+          )}
         </g>
         {g.meadows.map((m, i) => (
           <ellipse key={i} cx={m.x} cy={m.y} rx={m.rx} ry={m.ry} fill={c.meadow} />
@@ -387,8 +530,15 @@ function Scene({ world, g }: { world: IslandWorld; g: Geometry }) {
             </g>
           )
         )}
-        {g.dots.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={g.dotR} fill={robot || i % 2 ? '#FFC93C' : '#E8577D'} />
+        {g.dots.map((p, i) =>
+          robot ? (
+            <BoltDot key={i} at={p} r={g.dotR * 1.6} />
+          ) : (
+            <circle key={i} cx={p.x} cy={p.y} r={g.dotR} fill={i % 2 ? '#FFC93C' : '#E8577D'} />
+          )
+        )}
+        {g.critters.map((p, i) => (
+          <Critter key={i} world={world} at={p} k={g.waveK} />
         ))}
         <g stroke={c.plank} strokeWidth={g.pier.plankW} strokeLinecap="round">
           {g.pier.planks.map((d) => (
@@ -401,10 +551,9 @@ function Scene({ world, g }: { world: IslandWorld; g: Geometry }) {
         <path className="island__dots" d={g.trail} fill="none" stroke={c.pathDots} strokeWidth={g.dotW} strokeLinecap="round" strokeDasharray={`0 ${g.dotGap}`} />
         <g className="island__boat">
           <g className="island__bob">
+            {/* The child's own boat from the Kalandka map, the same in every world. */}
             <g transform={g.boat}>
-              <path d="M-46 0 L46 0 L34 22 L-34 22 Z" fill={c.hull} />
-              <rect x="-6" y="-44" width="5" height="46" fill={c.mast} />
-              <path d="M0 -42 L30 -12 L0 -12 Z" fill={c.sail} />
+              <BoatArt />
             </g>
           </g>
         </g>
@@ -415,8 +564,34 @@ function Scene({ world, g }: { world: IslandWorld; g: Geometry }) {
 
 const spotStyle = (at: Pt, i: number) => ({ left: at.x, top: at.y, '--d': `${FIRST_SPOT + i * SPOT_STEP}s` }) as CSSProperties;
 
-function IslandSpot({ place, at, i, phone, chosen, landed }: { place: Place; at: Pt; i: number; phone: boolean; chosen: boolean; landed: Return | null }) {
-  const { locked } = place;
+function MoonIcon() {
+  return (
+    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24">
+      <path d="M20 15A8 8 0 1 1 9 4a7 7 0 0 0 11 11z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24">
+      <path d="M12 2l3 7 7 .6-5.3 4.7 1.6 7.2L12 17.8 5.7 21.5l1.6-7.2L2 9.6 9 9z" fill="#FFC93C" stroke="#C99A12" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DropIcon() {
+  return (
+    <svg aria-hidden="true" width="12" height="15" viewBox="0 0 12 15">
+      <path d="M6 1 C8 5 11 7 11 10 a5 5 0 0 1 -10 0 C1 7 4 5 6 1Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+const BADGE_ICON: Record<BadgeKind, ReactNode> = { new: null, care: <DropIcon />, level: <StarIcon /> };
+
+function IslandSpot({ place, at, i, chosen, landed }: { place: Place; at: Pt; i: number; chosen: boolean; landed: Return | null }) {
+  const { locked, badge } = place;
   return (
     <button
       type="button"
@@ -426,21 +601,29 @@ function IslandSpot({ place, at, i, phone, chosen, landed }: { place: Place; at:
       aria-label={place.label}
       data-place={place.id}
     >
-      {place.badge && <span className="spot__badge">{place.badge}</span>}
+      {locked ? (
+        <span className="spot__badge spot__badge--sleep">
+          <MoonIcon />
+          {locked.hint ?? locked.skill}
+        </span>
+      ) : (
+        badge && (
+          <span className={`spot__badge spot__badge--${badge.kind}`}>
+            {BADGE_ICON[badge.kind]}
+            {badge.text}
+          </span>
+        )
+      )}
       <span className="spot__disc">
         {landed?.solved && <DoneTick />}
-        {locked && (
-          <span className="spot__lock">
-            <LockIcon />
-          </span>
-        )}
         <span className="spot__art">{place.art}</span>
       </span>
       <span className="spot__name">
-        {!locked && <PlayIcon />}
+        <span className="spot__step" aria-hidden="true">
+          {i + 1}
+        </span>
         {place.name}
       </span>
-      {locked && <span className="spot__hint">{phone ? (locked.hint ?? locked.skill) : locked.skill}</span>}
     </button>
   );
 }
@@ -485,6 +668,43 @@ function BookSpot({ book, at, i }: { book: BookPlace; at: Pt; i: number }) {
 }
 
 /**
+ * Kincseim on a phone: the reward place and the sticker album in a bar under the island, so the island holds the games alone.
+ * Each keeps its own `data-place` and picture window, so its door opens out of it as on the island.
+ */
+export function RewardDock({ reward, book }: { reward: RewardPlace; book: BookPlace }) {
+  return (
+    <nav className="reward-dock" aria-label="Kincseim">
+      <button type="button" className="dock-item dock-item--reward" onClick={reward.onClick} aria-label={`${reward.label} · ${reward.count} ${reward.unit}`} data-place={reward.id}>
+        {reward.badge && <span className="spot__badge">{reward.badge}</span>}
+        <span className="spot__disc">
+          <span className="spot__art">{reward.art}</span>
+        </span>
+        <span className="dock-item__text">
+          <span className="dock-item__name">{reward.name}</span>
+          <span className="dock-item__count" aria-hidden="true">
+            {reward.icon}
+            {reward.count}
+          </span>
+        </span>
+      </button>
+      <button type="button" className="dock-item dock-item--book" onClick={book.onOpen} aria-label={`Matricáim · ${book.count} matrica`} data-place="album">
+        <span className="spot__disc">
+          <span className="spot__art">
+            <StickerBookArt />
+          </span>
+        </span>
+        <span className="dock-item__text">
+          <span className="dock-item__name">Matricáim</span>
+          <span className="dock-item__count" aria-hidden="true">
+            {book.count}
+          </span>
+        </span>
+      </button>
+    </nav>
+  );
+}
+
+/**
  * The island with its places: the games in trail order, then the reward, and the sticker album beside the trail. `leaving` plays the way out to the map,
  * `opening` names the place whose game is opening, and `back` draws the island as it was when the child comes back from a game.
  */
@@ -496,7 +716,8 @@ export function Island({
   leaving,
   opening,
   back,
-  timer
+  timer,
+  onMap
 }: {
   world: IslandWorld;
   places: Place[];
@@ -507,6 +728,8 @@ export function Island({
   back: Return | null;
   /** Today's play-time sign, planted where the island keeps room for it. */
   timer?: ReactNode;
+  /** Tablets: the docked boat also takes the child back to the map. */
+  onMap?: () => void;
 }) {
   const form = useForm();
   const extra = useWideStage();
@@ -518,7 +741,8 @@ export function Island({
 
   // The place the child came back to takes the focus once it has landed, so the next tap or Tab starts there.
   useEffect(() => {
-    if (landed) board.current?.querySelector<HTMLElement>(`[data-place="${landed.id}"]`)?.focus({ preventScroll: true });
+    // On a phone the reward place sits in the dock under the island, so look in the whole screen.
+    if (landed) (board.current?.closest('.screen') ?? board.current)?.querySelector<HTMLElement>(`[data-place="${landed.id}"]`)?.focus({ preventScroll: true });
   // eslint-disable-next-line react-hooks/exhaustive-deps -- Focus moves once per place landed on, not on every new back object.
   }, [landed?.id]);
 
@@ -529,10 +753,27 @@ export function Island({
         <div className="island__board" ref={board} style={{ width: g.w, height: g.h }}>
           <Scene world={world} g={g} />
           {places.slice(0, last).map((p, i) => (
-            <IslandSpot key={p.id} place={p} at={g.spots[i]} i={i} phone={phone} chosen={opening === p.id} landed={landed?.id === p.id ? landed : null} />
+            <IslandSpot key={p.id} place={p} at={g.spots[i]} i={i} chosen={opening === p.id} landed={landed?.id === p.id ? landed : null} />
           ))}
-          <RewardSpot reward={reward} at={g.spots[last]} i={last} chosen={opening !== null && opening === reward.id} landed={landed !== null && landed.id === reward.id} />
-          <BookSpot book={book} at={g.book} i={last} />
+          {g.islet && (
+            <div className="island__sign" style={{ left: g.islet.sign.x, top: g.islet.sign.y }} aria-hidden="true">
+              Kincseim
+            </div>
+          )}
+          {!phone && (
+            <>
+              <RewardSpot reward={reward} at={g.spots[last]} i={last} chosen={opening !== null && opening === reward.id} landed={landed !== null && landed.id === reward.id} />
+              <BookSpot book={book} at={g.book} i={last} />
+            </>
+          )}
+          {onMap && g.boatAt && (
+            <button type="button" className="island__boat-btn" style={{ left: g.boatAt.x, top: g.boatAt.y }} onClick={onMap} aria-label="Hajóval vissza a térképre">
+              <span className="island__boat-label">
+                <MapIcon size={18} />
+                Térkép
+              </span>
+            </button>
+          )}
           {timer && (
             <div className="island__timer" style={{ left: g.timer.x, top: g.timer.y, '--s': g.timer.scale, '--d': `${FIRST_SPOT + (last + 1) * SPOT_STEP}s` } as CSSProperties}>
               {timer}

@@ -83,9 +83,9 @@ export function ParentsButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function MapIcon() {
+export function MapIcon({ size = 26 }: { size?: number }) {
   return (
-    <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round">
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round">
       <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z" />
       <path d="M9 4v14M15 6v14" />
     </svg>

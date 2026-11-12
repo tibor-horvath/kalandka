@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import type { Place, RewardPlace } from '../../../components/island';
+import type { Badge, Place, RewardPlace } from '../../../components/island';
 import { Bolt, CodeArt, FixArt, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../art';
 import { MyRobot } from '../parts';
 import { WorldHub, type HubActions } from '../../../components/WorldHub';
@@ -64,7 +64,7 @@ export function RobotHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
     const fresh = solvedOf(progress, id) === 0;
     const unopened = fresh && !progress.robotOpened.includes(id);
     const level = isLadderGame(id) ? ladderOf(progress, id).level : 0;
-    const badge = i === 0 && fresh ? 'Kezdd itt!' : unopened ? 'Új gép!' : `${level + 1}. szint`;
+    const badge: Badge = i === 0 && fresh ? { text: 'Kezdd itt!', kind: 'new' } : unopened ? { text: 'Új gép!', kind: 'new' } : { text: `${level + 1}. szint`, kind: 'level' };
     return { id, name, label: TILES[id]!.label, badge, start: i === 0 && fresh, art: TILES[id]!.art, onOpen: () => open(id) };
   });
   const reward: RewardPlace = {
