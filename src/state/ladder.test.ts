@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildTraceRound } from '../worlds/garden/games/trace/logic';
-import { LADDER_RULES, afterSolve, isFinished, ladderMeter, ladderOf, placeAt, practiceLevel, startAt, type Ladder, type LadderRule } from './ladder';
+import { MIXED_SHAPES, PATTERN_LEVELS, buildLevelRound } from '../worlds/garden/games/patterns/logic';
+import { LADDER_RULES, afterSolve, isFinished, ladderMeter, ladderOf, placeAt, practiceLevel, startAt, upNeed, type Ladder, type LadderRule } from './ladder';
 import { DEFAULT_PROGRESS } from './progress';
 
 const rule: LadderRule = { levels: 4, up: 4, down: 2, cooldown: 3 };
@@ -24,6 +25,27 @@ describe('difficulty ladder', () => {
     const { l, changes } = play(at(1), [false, false, false, false]);
     expect(changes).toEqual(['up']);
     expect(l).toMatchObject({ level: 2, streak: 0, lastChange: 'up', reached: 2, solvedTop: 1 });
+  });
+
+  it('wants a longer row on the levels that set their own', () => {
+    const long: LadderRule = { ...rule, upAt: { 2: 6 } };
+    const run = (l: Ladder, n: number) => Array.from({ length: n }).reduce<Ladder>((x) => afterSolve(x, long, false).ladder, l);
+    expect(run(at(1), 4).level).toBe(2);
+    expect(run(at(2), 5).level).toBe(2);
+    expect(run(at(2), 6).level).toBe(3);
+    expect(ladderMeter(at(2), long, null).rounds).toBe(6);
+  });
+
+  it("steps up from Virágsor's mixed levels only once every shape came up", () => {
+    const p = LADDER_RULES.patterns;
+    const mixed = PATTERN_LEVELS.flatMap((l, i) => (l.shapes === MIXED_SHAPES ? [i] : []));
+    expect(mixed).toEqual([8, 9]);
+    for (const level of mixed) {
+      expect(upNeed(at(level), p)).toBe(MIXED_SHAPES.length);
+      const shapes = Array.from({ length: upNeed(at(level), p) }, (_, k) => buildLevelRound(level, 30 + k).shape);
+      expect(new Set(shapes).size).toBe(MIXED_SHAPES.length);
+    }
+    expect(upNeed(at(7), p)).toBe(4);
   });
 
   it('starts the streak again after a task that needed help', () => {

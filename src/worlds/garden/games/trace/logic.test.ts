@@ -15,6 +15,7 @@ import {
   doneFeedback,
   follow,
   resample,
+  startArrowPoint,
   startFeedback,
   type Pt
 } from './logic';
@@ -70,6 +71,32 @@ describe('digit trails', () => {
       expect(rounds.map((r) => r.digit).sort()).toEqual([...half].sort());
       expect(rounds.map((r) => r.digit)).not.toEqual(half);
     }
+  });
+
+  it('the mixed levels walk all ten digits on a faint trail, a new mix each lap', () => {
+    for (const level of [4, 5]) {
+      for (let lap = 0; lap < 3; lap++) {
+        const rounds = TRACE_ORDER.map((_, n) => buildTraceRound(level, lap * 10 + n));
+        expect(rounds.every((r) => r.faded)).toBe(true);
+        expect(rounds.map((r) => r.digit).sort()).toEqual([...TRACE_ORDER].sort());
+        expect(rounds.map((r) => r.digit)).not.toEqual(TRACE_ORDER);
+      }
+      expect(buildTraceRound(level, 0).digit).not.toBe(buildTraceRound(level, 10).digit);
+    }
+    expect(buildTraceRound(4, 0).bare).toBe(false);
+    expect(buildTraceRound(5, 0).bare).toBe(true);
+    expect(TRACE_LEVELS.slice(0, 4).every((_, l) => !buildTraceRound(l, 0).bare)).toBe(true);
+  });
+
+  it('a bare trail shows its arrow near the start of every stroke', () => {
+    for (const d of TRACE_ORDER) {
+      for (const pts of digitShape(d).strokes) {
+        const k = startArrowPoint(pts);
+        expect(k).toBeGreaterThan(0);
+        expect(k).toBeLessThan(pts.length / 2);
+      }
+    }
+    expect(startFeedback(buildTraceRound(5, 0)).text).toContain('csak a kezdőpont');
   });
 
   it('printed laps mix every digit, without repeating one across laps', () => {

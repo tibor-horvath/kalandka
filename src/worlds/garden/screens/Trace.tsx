@@ -22,6 +22,7 @@ import {
   follow,
   heading,
   pathData,
+  startArrowPoint,
   startFeedback,
   type Pt,
   type TraceFeedback
@@ -87,7 +88,8 @@ function TrailArrow({ at, angle }: { at: Pt; angle: number }) {
 
 /**
  * Mézút: lead the bee along the dotted honey trail to write a digit. No failure: off the trail the bee waits.
- * On the upper levels the trail is faded (Halvány út) and the see-through bee only comes when asked or after a quiet spell.
+ * On the upper levels the trail is faded (Halvány út) and the see-through bee only comes when asked or after a quiet spell;
+ * on the top level (Csak a kezdőpont) only each stroke's start and first arrow show.
  */
 export function Trace({ onBack }: { onBack: () => void }) {
   const { level, index, step, win, meter, goNext } = useLadderRound('trace');
@@ -316,8 +318,12 @@ export function Trace({ onBack }: { onBack: () => void }) {
                 return (
                   <g key={s}>
                     {!isDone && !shape.faded && <path d={d} className="trail__lane" strokeWidth={TOLERANCE * 1.3} />}
-                    <path d={d} className={`trail__dots${isNow ? ' is-now' : ''}${shape.faded && !isDone ? ' is-faint' : ''}`} />
+                    {(!shape.bare || isDone) && <path d={d} className={`trail__dots${isNow ? ' is-now' : ''}${shape.faded && !isDone ? ' is-faint' : ''}`} />}
+                    {shape.bare && isNow && idx < startArrowPoint(trail) && (
+                      <TrailArrow at={trail[startArrowPoint(trail)]} angle={heading(trail, startArrowPoint(trail))} />
+                    )}
                     {shape.faded &&
+                      !shape.bare &&
                       !isDone &&
                       arrowPoints(trail)
                         .filter((k) => !isNow || k > idx)

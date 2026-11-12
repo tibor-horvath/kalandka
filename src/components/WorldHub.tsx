@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Door, type DoorPlace } from './Door';
 import { KidChip, MapButton, ParentsButton, PrintButton, VoiceButton } from './hub';
-import { Island, useEnter, useLeave, type Place, type RewardPlace } from './island';
+import { Island, RewardDock, useEnter, useLeave, type Place, type RewardPlace } from './island';
 import { PlayTimer, pausedLabel, useTimeLeft } from './PlayTimer';
 import { useForm } from './Stage';
 import { StickerPop } from './StickerPop';
@@ -42,7 +42,7 @@ const LOOK: Record<WorldId, { className: string; guide: 'csepi' | 'csavar'; acce
 
 /**
  * A world's home screen: the top bar, the guide's bubble with its replay button, the island of games
- * with the reward place last, the sticker album beside them, and the celebration of a sticker earned since the last visit.
+ * with the reward place and the sticker album on Kincseim (an islet on tablets, a bar under the island on phones), and the celebration of a sticker earned since the last visit.
  */
 export function WorldHub({
   world,
@@ -124,7 +124,9 @@ export function WorldHub({
           opening={opening}
           back={back && { id: back.place, solved: back.solved, landed }}
           timer={time && <PlayTimer world={world} remaining={time.remaining} total={time.allowance} paused label={pausedLabel(time.remaining)} />}
+          onMap={phone ? undefined : leaveForMap}
         />
+        {phone && <RewardDock reward={rewardDoor} book={book} />}
 
         {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}
       </div>

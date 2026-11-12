@@ -140,8 +140,9 @@ export function Gap({ x, y, w, h }: { x: number; y: number; w: number; h: number
   return <rect x={x + 4} y={y + 4} width={w - 8} height={h - 8} rx="14" fill="#FFFFFF" stroke={INK} strokeWidth="3" strokeDasharray="10 8" />;
 }
 
-/** A row of answer cards; the right one is ringed when `answers`. */
-export function Choices({ x, y, w, h, gap = 16, pick, answers, children }: { x: number; y: number; w: number; h: number; gap?: number; pick: number; answers: boolean; children: ReactNode[] }) {
+/** A row of answer cards; the right one (or each right one) is ringed when `answers`. */
+export function Choices({ x, y, w, h, gap = 16, pick, answers, children }: { x: number; y: number; w: number; h: number; gap?: number; pick: number | number[]; answers: boolean; children: ReactNode[] }) {
+  const picks = Array.isArray(pick) ? pick : [pick];
   return (
     <g>
       {children.map((c, i) => {
@@ -152,7 +153,7 @@ export function Choices({ x, y, w, h, gap = 16, pick, answers, children }: { x: 
             <At x={cx} y={y}>
               {c}
             </At>
-            {answers && i === pick && <Ring x={cx} y={y} w={w} h={h} />}
+            {answers && picks.includes(i) && <Ring x={cx} y={y} w={w} h={h} />}
           </g>
         );
       })}
