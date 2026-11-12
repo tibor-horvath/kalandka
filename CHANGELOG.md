@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.10.0](https://github.com/tibor-horvath/kalandka/compare/v1.9.0...v1.10.0) (2026-11-12)
+
+
+### Added
+
+* **patterns:** enhance mixed levels and add new gameplay mechanics ([#61](https://github.com/tibor-horvath/kalandka/issues/61)) ([f894508](https://github.com/tibor-horvath/kalandka/commit/f894508f2e1cd690317ffa092319005dae6f8110))
+
+
+### Changed
+
+* Refactor boat rendering and enhance island styles ([#63](https://github.com/tibor-horvath/kalandka/issues/63)) ([e22b897](https://github.com/tibor-horvath/kalandka/commit/e22b897959044957309502a672b2f384457858be))
+
 ## [1.9.0](https://github.com/tibor-horvath/kalandka/compare/v1.8.2...v1.9.0) (2026-11-09)
 
 
