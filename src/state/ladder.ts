@@ -54,8 +54,8 @@ const rule = (game: LadderGame, up: number, down: number): LadderRule => ({ leve
 
 /**
  * One task is one answer in the garden games and one round in the workshop, where a round holds two
- * to four tasks and the level can only change between rounds. Mézút's row is one level's digits, so a
- * child steps up only after writing every one of them.
+ * to four tasks and the level can only change between rounds. Mézút's row is five digits: a whole level's
+ * digits on its first four levels, half a lap of ten on the mixed ones.
  */
 export const LADDER_RULES: Record<LadderGame, LadderRule> = {
   water: rule('water', 4, 3),

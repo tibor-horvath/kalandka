@@ -60,7 +60,7 @@ describe('per-game level settings', () => {
     const before: Record<LadderGame, string> = {
       water: '4 jó virág egymás után: nehezebb szint, 3 túlöntözött egymás után: könnyebb (kannával lehet túlönteni). Ez alá nem lép vissza.',
       patterns: '4 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
-      trace: 'A szint minden száma segítség nélkül egymás után: nehezebb szint, 3 nehéz szám egymás után: könnyebb. Ez alá nem lép vissza.',
+      trace: '5 szám egymás után: nehezebb szint, 3 nehéz szám egymás után: könnyebb. Ez alá nem lép vissza.',
       flash: '4 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
       add: '5 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
       pots: '5 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',

@@ -1,4 +1,4 @@
-import { LEARN_MAX } from '../worlds/garden/games/learn/logic';
+import { LEARN_CYCLE, LEARN_MAX } from '../worlds/garden/games/learn/logic';
 import { GAMES, LADDER_GAMES, type GameId, type LadderGame } from './games';
 import { LADDER_LEVELS, LADDER_RULES, ladderOf, startAt, withLadder } from './ladder';
 import type { Progress } from './progress';
@@ -27,17 +27,18 @@ const LEARN_STARTS: LevelOption[] = [
   { value: 0, label: '1-től' },
   { value: 5, label: '6-tól' },
   { value: 10, label: '11-től' },
-  { value: 15, label: '16-tól' }
+  { value: 15, label: '16-tól' },
+  { value: LEARN_MAX, label: 'Vegyesen' }
 ];
 
 const learn: LevelSetting = {
   id: 'learn',
   world: GAMES.learn.world,
   game: GAMES.learn.name,
-  hint: 'Innen tanulja sorban a számokat, 20-ig.',
+  hint: 'Innen tanulja sorban a számokat 20-ig, aztán vegyesen ismétli őket.',
   options: LEARN_STARTS,
   current: (p) => {
-    const r = p.learnRound % LEARN_MAX;
+    const r = p.learnRound % LEARN_CYCLE;
     return [...LEARN_STARTS].reverse().find((o) => r >= o.value)!.value;
   },
   apply: (p, v) => ({ ...p, learnRound: v })
@@ -47,8 +48,6 @@ const learn: LevelSetting = {
 interface StepWords {
   good: string;
   hard: string;
-  /** Said in place of "N good tasks": Mézút steps up after a level's whole row of digits. */
-  upAll?: string;
   /** Explains what "needing help" means where it is not obvious. */
   note?: string;
 }
@@ -56,7 +55,7 @@ interface StepWords {
 const STEP_WORDS: Record<LadderGame, StepWords> = {
   water: { good: 'jó virág', hard: 'túlöntözött', note: 'kannával lehet túlönteni' },
   patterns: { good: 'jó válasz', hard: 'nehéz feladat' },
-  trace: { good: 'szám', hard: 'nehéz szám', upAll: 'A szint minden száma segítség nélkül' },
+  trace: { good: 'szám', hard: 'nehéz szám' },
   flash: { good: 'jó válasz', hard: 'nehéz feladat' },
   add: { good: 'jó válasz', hard: 'nehéz feladat' },
   pots: { good: 'jó válasz', hard: 'nehéz feladat' },
@@ -74,9 +73,8 @@ export function ladderHint(game: LadderGame): string {
   const { up, down } = LADDER_RULES[game];
   const words = STEP_WORDS[game];
   const world = GAMES[game].world === 'robot' ? `${WORLDS.find((w) => w.id === 'robot')!.name}. ` : '';
-  const upText = words.upAll ?? `${up} ${words.good}`;
   const note = words.note ? ` (${words.note})` : '';
-  return `${world}${upText} egymás után: nehezebb szint, ${down} ${words.hard} egymás után: könnyebb${note}. Ez alá nem lép vissza.`;
+  return `${world}${up} ${words.good} egymás után: nehezebb szint, ${down} ${words.hard} egymás után: könnyebb${note}. Ez alá nem lép vissza.`;
 }
 
 /** The short line under the game's name: how many tasks without help step it up. */

@@ -2,6 +2,7 @@ import { Basket, Bouquet, DROP_PATH, GrowingPlant, Hive, PatternFlower, RoundFlo
 import { ADD_LEVELS, BOX_W, RIGHT_X, SCENE_H, bedWidth, buildAddRound, hiveX, type AddItem, type AddRound } from './games/add/logic';
 import { FIELD_H, FIELD_W, FLASH_PRINT_LEVELS, LEVELS as FLASH_LEVELS, buildFlashRound, type FlashRound } from './games/flash/logic';
 import { diceFace } from './games/flash/layout';
+import { LEARN_CYCLE, LEARN_MAX } from './games/learn/logic';
 import { rng } from '../../lib/rng';
 import { CHOICES, FLOWER_LABELS, PATTERN_PRINT_TOP, SHAPES, SHAPE_ORDER, buildRound as buildPatternRound, type FlowerKind } from './games/patterns/logic';
 import { POTS_LEVELS, POTS_PRINT_LEVELS, boxSize, buildPotsRound, potCells, type PotsRound } from './games/pots/logic';
@@ -75,7 +76,8 @@ const learn = spec<number>({
   id: 'learn',
   rev: 1,
   levels: ['1-től', '6-tól', '11-től', '16-tól'],
-  current: (p) => LEARN_STARTS.filter((s) => (p.learnRound % 20) + 1 >= s).length - 1,
+  // Vegyesen has no sheet of its own: it prints the last one, 16–20.
+  current: (p) => LEARN_STARTS.filter((s) => Math.min(LEARN_MAX, (p.learnRound % LEARN_CYCLE) + 1) >= s).length - 1,
   grid: (_, d) => pickGrid(d, [1, 4], [1, 5], [1, 7]),
   ask: () => 'Nézd meg a számot, és színezz ki pont ennyi magot!',
   tip: () => 'Mondják ki együtt a számot, és számolják meg hangosan a magokat, mindegyikre rábökve.',

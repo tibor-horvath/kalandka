@@ -1159,7 +1159,7 @@ function sheetsDone(p: Progress, game: GameId): number[] {
 const SHEET_LADDER: Partial<Record<LadderGame, number[][]>> = {
   water: [[0, 1], [2]],
   patterns: [[0], [1], [2], [2], [3]],
-  trace: [[0], [1], [2, 3]]
+  trace: [[0], [1], [2, 3, 4]]
 };
 
 /** The ladder levels a finished sheet of this game stands for, each done explicitly on paper. */
@@ -1244,7 +1244,9 @@ export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
     { from: 0, mark: '1–5', label: 'Írom 5-ig', praise: 'Már ötig írod a számokat!', legacy: ['trace-5'] },
     { from: 1, mark: '0–9', label: 'Minden szám', praise: 'Minden számot meg tudsz írni!', legacy: ['trace-9', 'trace-0'] },
     { from: 2, mark: '5', label: 'Halvány út', praise: 'Már halvány úton is írod a számokat!', legacy: ['trace-fade'] },
-    { from: 3, mark: '10', label: 'Fejből írom', praise: 'Minden számot emlékezetből írsz!', legacy: ['trace-memory'] }
+    { from: 3, mark: '10', label: 'Fejből írom', praise: 'Minden számot emlékezetből írsz!', legacy: ['trace-memory'] },
+    { from: 4, mark: '?', label: 'Vegyes számok', praise: 'Összekeverve is emlékezetből írod a számokat!' },
+    { from: 5, mark: '•', label: 'Út nélkül', praise: 'Már mézes út nélkül is leírod a számokat!' }
   ],
   pots: [
     { from: 0, mark: '5', label: 'Öt barátai', praise: 'Ismered az öt barátait!', legacy: ['pots-5'] },
@@ -1359,6 +1361,7 @@ const OTHER_STICKERS: Sticker[] = [
   { id: 'learn-5', game: 'learn', mark: '1–5', label: 'Ismerem 5-ig', praise: 'Már ötig ismered a számokat!', earned: (p) => p.learnSolved >= 5 || learnSheet(0)(p) },
   { id: 'learn-10', game: 'learn', mark: '1–10', label: 'Ismerem 10-ig', praise: 'Már tízig ismered a számokat!', earned: (p) => p.learnSolved >= 10 || learnSheet(1)(p) },
   { id: 'learn-20', game: 'learn', mark: '1–20', label: 'Ismerem 20-ig', praise: 'Már húszig ismered a számokat!', earned: (p) => p.learnSolved >= LEARN_MAX || learnSheet(3)(p) },
+  { id: 'learn-mix', game: 'learn', mark: '?', label: 'Vegyesen is', praise: 'Összekeverve is felismered a számokat!', earned: (p) => p.learnMixSolved >= 1 },
   { id: 'kiskert-gift', game: 'kiskert', mark: '1', label: 'Első ajándék', praise: 'Megajándékoztad az első lakót a kertedben!', earned: (p) => decorCount(p) >= 1 },
   { id: 'kiskert-all', game: 'kiskert', mark: '12', label: 'Minden lakónak', praise: 'Mind a tizenkét lakó kapott tőled ajándékot!', earned: (p) => VISITORS.every((v) => giftsOf(p, v.id) >= 1) },
   { id: 'kiskert-done', game: 'kiskert', mark: '60', label: 'Kész a kert', praise: 'Kész a kert! Minden lakó megkapta az ajándékát.', earned: gardenDone },

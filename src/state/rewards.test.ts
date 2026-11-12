@@ -176,7 +176,8 @@ describe('stickers', () => {
       own.forEach((s, i) => expect(s.from).toBe(i));
       expect(STICKERS.filter((s) => s.game === game).map((s) => s.mark)).toEqual(own.map((s) => s.mark));
     }
-    for (const game of ['learn', 'kiskert']) expect(STICKERS.filter((s) => s.game === game)).toHaveLength(3);
+    expect(STICKERS.filter((s) => s.game === 'learn').map((s) => s.id)).toEqual(['learn-5', 'learn-10', 'learn-20', 'learn-mix']);
+    expect(STICKERS.filter((s) => s.game === 'kiskert')).toHaveLength(3);
     expect(STICKERS.filter((s) => s.game === 'robotepito')).toHaveLength(5);
     for (const game of ['paper-garden', 'paper-robot']) expect(STICKERS.filter((s) => s.game === game).map((s) => s.mark)).toEqual(['1', '2', '3', '5', '8', '13', '21', '34', '55']);
   });
@@ -345,7 +346,7 @@ describe('stickers', () => {
     expect(game('water.1.1.n.7.0', 'water')).toEqual(['water-level-3']);
     expect(game('patterns.1.3.n.7.0', 'patterns')).toEqual(['patterns-level-3']);
     expect(game('patterns.1.4.n.7.0', 'patterns')).toEqual(['patterns-level-4']);
-    expect(game('trace.1.2.n.7.0', 'trace')).toEqual(['trace-level-3', 'trace-level-4']);
+    expect(game('trace.1.2.n.7.0', 'trace')).toEqual(['trace-level-3', 'trace-level-4', 'trace-level-5']);
     expect(game('learn.1.0.n.7.0', 'learn')).toEqual(['learn-5']);
     expect(game('learn.1.1.n.7.0', 'learn')).toEqual(['learn-10']);
     expect(game('learn.1.2.n.7.0', 'learn')).toEqual([]);

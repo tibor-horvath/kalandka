@@ -1,9 +1,41 @@
 import { describe, expect, it } from 'vitest';
-import { article, buildLearnRound, flashLockedSpeech, learnedFeedback } from './logic';
+import { LEARN_CYCLE, article, buildLearnRound, flashLockedSpeech, learnedFeedback, mixNumbers, mixWrongFeedback } from './logic';
 
 describe('Számmagok', () => {
-  it('teaches 1 to 20 in order, then starts again', () => {
-    expect(Array.from({ length: 21 }, (_, r) => buildLearnRound(r).count)).toEqual([...Array.from({ length: 20 }, (_, i) => i + 1), 1]);
+  it('teaches 1 to 20 in order, then five mixed numbers, then starts again', () => {
+    expect(LEARN_CYCLE).toBe(25);
+    expect(Array.from({ length: 20 }, (_, r) => buildLearnRound(r).count)).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
+    expect(Array.from({ length: 20 }, (_, r) => buildLearnRound(r).choices)).toEqual(Array<undefined>(20).fill(undefined));
+    expect(Array.from({ length: 5 }, (_, i) => buildLearnRound(20 + i).count)).toEqual(mixNumbers(0));
+    expect(buildLearnRound(25).count).toBe(1);
+    expect(buildLearnRound(25).choices).toBeUndefined();
+  });
+
+  it('mixes five different numbers from 1–20, a new mix each lap', () => {
+    for (let lap = 0; lap < 10; lap++) {
+      const mix = mixNumbers(lap);
+      expect(new Set(mix).size).toBe(5);
+      expect(mix.every((n) => n >= 1 && n <= 20)).toBe(true);
+      expect(mix).not.toEqual([...mix].sort((a, b) => a - b));
+    }
+    expect(mixNumbers(1)).not.toEqual(mixNumbers(0));
+  });
+
+  it('asks for the numeral among three close ones, in order', () => {
+    for (let r = 20; r < 25 * 8; r += r % 25 === 24 ? 21 : 1) {
+      const { count, choices, seeds } = buildLearnRound(r);
+      expect(seeds).toHaveLength(count);
+      expect(choices).toHaveLength(3);
+      expect(choices).toContain(count);
+      expect(new Set(choices).size).toBe(3);
+      expect(choices).toEqual([...choices!].sort((a, b) => a - b));
+      expect(choices!.every((n) => n >= 1 && n <= 20 && Math.abs(n - count) <= 2)).toBe(true);
+    }
+  });
+
+  it('names a wrong numeral and the seeds counted', () => {
+    expect(mixWrongFeedback(5, 7).text).toBe('Ez az 5. Mi 7 magot számoltunk. Keresd meg!');
+    expect(mixWrongFeedback(12, 11).speech).toBe('Ez a tizenkettő. Mi tizenegy magot számoltunk. Keresd meg!');
   });
 
   it('lays out one seed per number, as a five and the rest above 5', () => {
