@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../art';
-import type { Place, RewardPlace } from '../../../components/island';
+import type { Badge, Place, RewardPlace } from '../../../components/island';
 import { DotFace } from '../seeds';
 import { PlantIcon } from '../kiskert';
 import { WorldHub, type HubActions, type HubBubble } from '../../../components/WorldHub';
@@ -83,10 +83,10 @@ function KiskertArt() {
 interface Tile {
   label: string;
   art: ReactNode;
-  badge: (p: Progress) => string | null;
+  badge: (p: Progress) => Badge | null;
 }
 
-const isNew = (game: GameId) => (p: Progress) => (solvedOf(p, game) === 0 ? 'Új!' : null);
+const isNew = (game: GameId) => (p: Progress): Badge | null => (solvedOf(p, game) === 0 ? { text: 'Új!', kind: 'new' } : null);
 
 const TILES: Partial<Record<GameId, Tile>> = {
   learn: {
@@ -97,9 +97,9 @@ const TILES: Partial<Record<GameId, Tile>> = {
         <DotFace n={3} size={44} />
       </span>
     ),
-    badge: (p) => (solvedOf(p, 'learn') === 0 ? 'Kezdd itt!' : null)
+    badge: (p) => (solvedOf(p, 'learn') === 0 ? { text: 'Kezdd itt!', kind: 'new' } : null)
   },
-  water: { label: 'Locsolás – számolós játék', art: <Sprout />, badge: () => 'Szomjas!' },
+  water: { label: 'Locsolás – számolós játék', art: <Sprout />, badge: () => ({ text: 'Szomjas!', kind: 'care' }) },
   patterns: {
     label: 'Virágsor – mintázatos játék',
     art: (
@@ -112,7 +112,7 @@ const TILES: Partial<Record<GameId, Tile>> = {
     badge: isNew('patterns')
   },
   flash: { label: 'Villámszem – hány darab játék', art: <SeedTrio />, badge: isNew('flash') },
-  add: { label: 'Méhkas – összeadós játék', art: <BeeArt />, badge: (p) => (solvedOf(p, 'add') === 0 ? 'Új!' : `${ladderOf(p, 'add').level + 1}. szint`) },
+  add: { label: 'Méhkas – összeadós játék', art: <BeeArt />, badge: (p) => (solvedOf(p, 'add') === 0 ? { text: 'Új!', kind: 'new' } : { text: `${ladderOf(p, 'add').level + 1}. szint`, kind: 'level' }) },
   trace: { label: 'Mézút – számírás a méhecskével', art: <TrailArt />, badge: isNew('trace') },
   pots: { label: 'Cserépbarátok – számbarátok játék', art: <PotsArt />, badge: isNew('pots') }
 };

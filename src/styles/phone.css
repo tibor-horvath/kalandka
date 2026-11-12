@@ -151,7 +151,7 @@
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr);
-  grid-template-areas: 'top island' 'guide island' '. island';
+  grid-template-areas: 'top island' 'guide island' 'dock island';
   column-gap: 12px;
   row-gap: 12px;
   padding-top: 14px;
@@ -167,6 +167,9 @@
 .stage--landscape .bubble__title { font-size: 18px; }
 .stage--landscape .home-guide .bubble__row { gap: 6px; }
 .stage--landscape .screen--home .island { grid-area: island; min-height: 0; margin: -14px 0 -8px; }
+/* Kincseim under Csepi: the reward place over the sticker album, at the bottom of the side column. */
+.stage--landscape .reward-dock { grid-area: dock; align-self: end; flex-direction: column; gap: 8px; padding: 0 0 12px; background: none; box-shadow: none; }
+.stage--landscape .dock-item { flex: none; height: 54px; }
 
 /* ---------- Locsolás ---------- */
 .is-phone .screen--water { display: flex; flex-direction: column; }
