@@ -1154,11 +1154,11 @@ function sheetsDone(p: Progress, game: GameId): number[] {
 /**
  * The ladder levels each printed sheet level stands for, where the sheet's levels are not the game's own: the
  * sheet joins or splits some levels (Locsolás's first sheet is both small-drop levels, Virágsor prints AAB and
- * ABB apart, Mézút's faded sheet has all ten digits).
+ * ABB apart and has no sheet for AABB or the bunches, Mézút's faded sheet has all ten digits).
  */
 const SHEET_LADDER: Partial<Record<LadderGame, number[][]>> = {
   water: [[0, 1], [2]],
-  patterns: [[0], [1], [2], [2], [3]],
+  patterns: [[0], [1], [2], [2], [3], [7], [8], [9]],
   trace: [[0], [1], [2, 3, 4]]
 };
 
@@ -1212,7 +1212,10 @@ export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
     { from: 3, mark: '?', label: 'Hiányzó virág', praise: 'Megtalálod a hiányzó virágot is!', legacy: ['patterns-all'] },
     { from: 4, mark: 'AABB', label: 'Kettő-kettő', praise: 'Már a kettő-kettő sort is folytatod!' },
     { from: 5, mark: '+1', label: 'Növő csokor', praise: 'Látod, hogyan nő a csokor!' },
-    { from: 6, mark: '+2', label: 'Kettővel több', praise: 'Már a kettesével növő csokrot is kitalálod!' }
+    { from: 6, mark: '+2', label: 'Kettővel több', praise: 'Már a kettesével növő csokrot is kitalálod!' },
+    { from: 7, mark: 'ABAC', label: 'Négyes minta', praise: 'Már a négyes mintát is folytatod!' },
+    { from: 8, mark: 'A?B', label: 'Vegyes sor', praise: 'Bármelyik sorból megtalálod a hiányzó virágot!' },
+    { from: 9, mark: '??', label: 'Két hiányzó', praise: 'Már két hiányzó virágot is megtalálsz!' }
   ],
   flash: [
     { from: 0, mark: '3', label: 'Egy pillantás', praise: 'Egy pillantásra látod, hány mag van!', legacy: ['flash-3'] },

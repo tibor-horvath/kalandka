@@ -4,7 +4,7 @@ import { FIELD_H, FIELD_W, FLASH_PRINT_LEVELS, LEVELS as FLASH_LEVELS, buildFlas
 import { diceFace } from './games/flash/layout';
 import { LEARN_CYCLE, LEARN_MAX } from './games/learn/logic';
 import { rng } from '../../lib/rng';
-import { CHOICES, FLOWER_LABELS, PATTERN_PRINT_TOP, SHAPES, SHAPE_ORDER, buildRound as buildPatternRound, type FlowerKind } from './games/patterns/logic';
+import { CHOICES, FLOWER_LABELS, SHAPES, SHAPE_ORDER, buildLevelRound as buildPatternLevelRound, buildRound as buildPatternRound, type FlowerKind } from './games/patterns/logic';
 import { POTS_LEVELS, POTS_PRINT_LEVELS, boxSize, buildPotsRound, potCells, type PotsRound } from './games/pots/logic';
 import { TRACE_ORDER, arrowPoints, digitShape, heading, lapOrder, pathData, type DigitShape } from './games/trace/logic';
 import { PLANTS, plantForRound, type Plant } from './games/water/logic';
@@ -165,27 +165,58 @@ const water = spec<Plant>({
 
 interface PatternTask {
   shown: (FlowerKind | null)[];
-  answer: FlowerKind;
+  /** The hidden flowers, left to right: one, or two on "Két virág hiányzik". */
+  answers: FlowerKind[];
+  /** Places the row is laid out for: 6, or 8 on the sheets with whole repeats, so a row of six there sits as large as one of eight. */
+  slots: number;
+}
+
+/** The sheet levels after the first five: the ladder level each one prints, with what the child does there. */
+const PATTERN_TOP_SHEETS = [
+  { name: 'ABAC, ABCB – négyes minta', ladder: 7, ask: 'next' },
+  { name: 'Hiányzik a sorból (minden minta)', ladder: 8, ask: 'missing' },
+  { name: 'Két virág hiányzik', ladder: 9, ask: 'two' }
+] as const;
+
+/** The sheet for each ladder level: AABB and the growing bunches have none, so they keep the mixed one. */
+const PATTERN_SHEET_OF_LEVEL = [0, 1, 2, 4, 4, 4, 4, 5, 6, 7];
+
+type PatternAsk = (typeof PATTERN_TOP_SHEETS)[number]['ask'];
+
+function patternAsk(level: number): PatternAsk {
+  if (level < SHAPE_ORDER.length) return 'next';
+  return level === SHAPE_ORDER.length ? 'missing' : PATTERN_TOP_SHEETS[level - SHAPE_ORDER.length - 1].ask;
 }
 
 const patterns = spec<PatternTask>({
   id: 'patterns',
-  rev: 1,
-  levels: ['AB – két virág váltakozik', 'ABC – három virág', 'AAB – kettő-egy', 'ABB – egy-kettő', 'Hiányzik a sorból (vegyes)'],
+  rev: 2,
+  levels: ['AB – két virág váltakozik', 'ABC – három virág', 'AAB – kettő-egy', 'ABB – egy-kettő', 'Hiányzik a sorból (vegyes)', ...PATTERN_TOP_SHEETS.map((s) => s.name)],
   // The third level of the ladder holds AAB and ABB, which have a sheet each.
-  current: (p) => [0, 1, 2, SHAPE_ORDER.length][Math.min(PATTERN_PRINT_TOP, ladderOf(p, 'patterns').level)],
+  current: (p) => PATTERN_SHEET_OF_LEVEL[Math.min(PATTERN_SHEET_OF_LEVEL.length - 1, ladderOf(p, 'patterns').level)],
   grid: (_, d) => pickGrid(d, [1, 6], [1, 8], [2, 10]),
-  ask: (level) => (level < SHAPE_ORDER.length ? 'Melyik virág jön ezután? Karikázd be!' : 'Melyik virág hiányzik a sorból? Karikázd be!'),
+  ask: (level) =>
+    ({
+      next: 'Melyik virág jön ezután? Karikázd be!',
+      missing: 'Melyik virág hiányzik a sorból? Karikázd be!',
+      two: 'Melyik két virág hiányzik a sorból? Karikázd be mindkettőt!'
+    })[patternAsk(level)],
   tip: (level) =>
-    level < SHAPE_ORDER.length
-      ? 'Mondják ki együtt hangosan a sort, virágról virágra, és álljanak meg a végén: a gyerkőc hallani fogja, mi jön.'
-      : 'Mondják ki együtt hangosan a sort, virágról virágra: a kérdőjelnél hallani, melyik virág maradt ki.',
+    ({
+      next: 'Mondják ki együtt hangosan a sort, virágról virágra, és álljanak meg a végén: a gyerkőc hallani fogja, mi jön.',
+      missing: 'Mondják ki együtt hangosan a sort, virágról virágra: a kérdőjelnél hallani, melyik virág maradt ki.',
+      two: 'Mondják ki együtt hangosan a sort, virágról virágra: a két kérdőjelnél hallani, melyik két virág maradt ki.'
+    })[patternAsk(level)],
   tasks: (req) =>
     Array.from({ length: req.count }, (_, i) => {
       const r = roundOf(req, i);
-      if (req.level >= SHAPE_ORDER.length) {
+      if (req.level > SHAPE_ORDER.length) {
+        const round = buildPatternLevelRound(PATTERN_TOP_SHEETS[req.level - SHAPE_ORDER.length - 1].ladder, r);
+        return { shown: round.shown, answers: round.gaps.map((g) => round.sequence[g]), slots: 8 };
+      }
+      if (req.level === SHAPE_ORDER.length) {
         const round = buildPatternRound(SHAPE_ORDER.length + r);
-        return { shown: round.shown, answer: round.answer };
+        return { shown: round.shown, answers: [round.answer], slots: 6 };
       }
       // The same repeat each time, with the flowers swapped round so no two rows look alike.
       const rand = rng(r + 71);
@@ -195,38 +226,43 @@ const patterns = spec<PatternTask>({
         [kinds[k], kinds[j]] = [kinds[j], kinds[k]];
       }
       const sequence = SHAPES[SHAPE_ORDER[req.level]].map((slot) => kinds[slot]);
-      return { shown: [...sequence.slice(0, 5), null], answer: sequence[5] };
+      return { shown: [...sequence.slice(0, 5), null], answers: [sequence[5]], slots: 6 };
     }),
-  Task: ({ task, answers }) => (
-    <Pic w={890} h={136}>
-      {task.shown.map((k, i) =>
-        k ? (
-          <At key={i} x={i * 90 + 10} y={4}>
-            <PatternFlower kind={k} width={70} />
-          </At>
-        ) : (
-          <g key={i}>
-            <Gap x={i * 90} y={2} w={90} h={132} />
-            {answers && (
-              <g opacity="0.45">
-                <At x={i * 90 + 10} y={4}>
-                  <PatternFlower kind={task.answer} width={70} />
-                </At>
-              </g>
-            )}
-          </g>
-        )
-      )}
-      <Choices x={590} y={2} w={90} h={132} gap={10} pick={CHOICES.indexOf(task.answer)} answers={answers}>
-        {CHOICES.map((k) => (
-          <At key={k} x={10} y={2}>
-            <PatternFlower kind={k} width={70} />
-            <title>{FLOWER_LABELS[k]}</title>
-          </At>
-        ))}
-      </Choices>
-    </Pic>
-  )
+  Task: ({ task, answers }) => {
+    // Rows of eight keep the same flower size and push the choices right.
+    const choicesX = task.slots * 90 + 50;
+    const gaps = task.shown.flatMap((k, i) => (k ? [] : [i]));
+    return (
+      <Pic w={choicesX + 300} h={136}>
+        {task.shown.map((k, i) =>
+          k ? (
+            <At key={i} x={i * 90 + 10} y={4}>
+              <PatternFlower kind={k} width={70} />
+            </At>
+          ) : (
+            <g key={i}>
+              <Gap x={i * 90} y={2} w={90} h={132} />
+              {answers && (
+                <g opacity="0.45">
+                  <At x={i * 90 + 10} y={4}>
+                    <PatternFlower kind={task.answers[gaps.indexOf(i)]} width={70} />
+                  </At>
+                </g>
+              )}
+            </g>
+          )
+        )}
+        <Choices x={choicesX} y={2} w={90} h={132} gap={10} pick={task.answers.map((a) => CHOICES.indexOf(a))} answers={answers}>
+          {CHOICES.map((k) => (
+            <At key={k} x={10} y={2}>
+              <PatternFlower kind={k} width={70} />
+              <title>{FLOWER_LABELS[k]}</title>
+            </At>
+          ))}
+        </Choices>
+      </Pic>
+    );
+  }
 });
 
 // ---------- Villámszem ----------

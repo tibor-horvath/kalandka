@@ -346,6 +346,9 @@ describe('stickers', () => {
     expect(game('water.1.1.n.7.0', 'water')).toEqual(['water-level-3']);
     expect(game('patterns.1.3.n.7.0', 'patterns')).toEqual(['patterns-level-3']);
     expect(game('patterns.1.4.n.7.0', 'patterns')).toEqual(['patterns-level-4']);
+    expect(game('patterns.2.5.n.7.0', 'patterns')).toEqual(['patterns-level-8']);
+    expect(game('patterns.2.6.n.7.0', 'patterns')).toEqual(['patterns-level-9']);
+    expect(game('patterns.2.7.n.7.0', 'patterns')).toEqual(['patterns-level-10']);
     expect(game('trace.1.2.n.7.0', 'trace')).toEqual(['trace-level-3', 'trace-level-4', 'trace-level-5']);
     expect(game('learn.1.0.n.7.0', 'learn')).toEqual(['learn-5']);
     expect(game('learn.1.1.n.7.0', 'learn')).toEqual(['learn-10']);

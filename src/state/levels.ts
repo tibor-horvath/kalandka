@@ -50,11 +50,13 @@ interface StepWords {
   hard: string;
   /** Explains what "needing help" means where it is not obvious. */
   note?: string;
+  /** Names the levels that want a longer row (the rule's `upAt`), as in "a vegyes szinteken". */
+  longer?: string;
 }
 
 const STEP_WORDS: Record<LadderGame, StepWords> = {
   water: { good: 'jó virág', hard: 'túlöntözött', note: 'kannával lehet túlönteni' },
-  patterns: { good: 'jó válasz', hard: 'nehéz feladat' },
+  patterns: { good: 'jó válasz', hard: 'nehéz feladat', longer: 'a vegyes szinteken' },
   trace: { good: 'szám', hard: 'nehéz szám' },
   flash: { good: 'jó válasz', hard: 'nehéz feladat' },
   add: { good: 'jó válasz', hard: 'nehéz feladat' },
@@ -74,12 +76,19 @@ export function ladderHint(game: LadderGame): string {
   const words = STEP_WORDS[game];
   const world = GAMES[game].world === 'robot' ? `${WORLDS.find((w) => w.id === 'robot')!.name}. ` : '';
   const note = words.note ? ` (${words.note})` : '';
-  return `${world}${up} ${words.good} egymás után: nehezebb szint, ${down} ${words.hard} egymás után: könnyebb${note}. Ez alá nem lép vissza.`;
+  return `${world}${up} ${words.good} egymás után${longerRow(game)}: nehezebb szint, ${down} ${words.hard} egymás után: könnyebb${note}. Ez alá nem lép vissza.`;
+}
+
+/** The longer row some levels want, as " (a vegyes szinteken 7)"; empty where every level wants the same. */
+function longerRow(game: LadderGame): string {
+  const longest = Math.max(0, ...Object.values(LADDER_RULES[game].upAt ?? {}).map((n) => n ?? 0));
+  const where = STEP_WORDS[game].longer;
+  return longest > LADDER_RULES[game].up && where ? ` (${where} ${longest})` : '';
 }
 
 /** The short line under the game's name: how many tasks without help step it up. */
 export function ladderStepLine(game: LadderGame): string {
-  return `${LADDER_RULES[game].up} ${STEP_WORDS[game].good} után magától lép`;
+  return `${LADDER_RULES[game].up} ${STEP_WORDS[game].good}${longerRow(game)} után magától lép`;
 }
 
 function ladderSetting(game: LadderGame): LevelSetting {
