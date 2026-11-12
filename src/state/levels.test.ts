@@ -59,8 +59,8 @@ describe('per-game level settings', () => {
     // The parents' corner read these before the hints came from LADDER_RULES; a changed rule changes its hint.
     const before: Record<LadderGame, string> = {
       water: '4 jó virág egymás után: nehezebb szint, 3 túlöntözött egymás után: könnyebb (kannával lehet túlönteni). Ez alá nem lép vissza.',
-      patterns: '4 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
-      trace: 'A szint minden száma segítség nélkül egymás után: nehezebb szint, 3 nehéz szám egymás után: könnyebb. Ez alá nem lép vissza.',
+      patterns: '4 jó válasz egymás után (a vegyes szinteken 7): nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
+      trace: '5 szám egymás után: nehezebb szint, 3 nehéz szám egymás után: könnyebb. Ez alá nem lép vissza.',
       flash: '4 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
       add: '5 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
       pots: '5 jó válasz egymás után: nehezebb szint, 3 nehéz feladat egymás után: könnyebb. Ez alá nem lép vissza.',
@@ -79,6 +79,7 @@ describe('per-game level settings', () => {
     expect(ladderStepLine('water')).toBe('4 jó virág után magától lép');
     expect(ladderStepLine('trace')).toBe('5 szám után magától lép');
     expect(ladderStepLine('path')).toBe('4 jó pálya után magától lép');
+    expect(ladderStepLine('patterns')).toBe('4 jó válasz (a vegyes szinteken 7) után magától lép');
     for (const game of LADDER_GAMES) expect(ladderStepLine(game)).toMatch(new RegExp(`^${LADDER_RULES[game].up} `));
   });
 });

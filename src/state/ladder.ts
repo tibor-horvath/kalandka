@@ -1,6 +1,6 @@
 import { ADD_LEVELS, clampLevel } from '../worlds/garden/games/add/logic';
 import { FLASH_ROUNDS_PER_LEVEL, LEVELS as FLASH_LEVELS } from '../worlds/garden/games/flash/logic';
-import { PATTERN_LEVELS, SHAPE_ORDER } from '../worlds/garden/games/patterns/logic';
+import { MIXED_SHAPES, PATTERN_LEVELS, SHAPE_ORDER } from '../worlds/garden/games/patterns/logic';
 import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL } from '../worlds/garden/games/pots/logic';
 import { CODE_LEVELS, CODE_ROUNDS_PER_LEVEL } from '../worlds/robot/games/code';
 import { FIX_LEVELS, FIX_ROUNDS_PER_LEVEL } from '../worlds/robot/games/fix';
@@ -27,6 +27,8 @@ export interface LadderRule {
   levels: number;
   /** Tasks in a row without help that step up. */
   up: number;
+  /** Levels that need a longer row than `up`, by level: a mixed level wants every kind of task once. */
+  upAt?: Partial<Record<number, number>>;
   /** Tasks in a row that needed help that step down. */
   down: number;
   /** Tasks after any step before the next step down, so a child at the edge does not bounce. */
@@ -54,12 +56,17 @@ const rule = (game: LadderGame, up: number, down: number): LadderRule => ({ leve
 
 /**
  * One task is one answer in the garden games and one round in the workshop, where a round holds two
- * to four tasks and the level can only change between rounds. Mézút's row is one level's digits, so a
- * child steps up only after writing every one of them.
+ * to four tasks and the level can only change between rounds. Mézút's row is five digits: a whole level's
+ * digits on its first four levels, half a lap of ten on the mixed ones.
  */
+/** Virágsor's mixed levels draw from every shape: the row that steps up shows each shape once. */
+const PATTERN_MIXED_UP = Object.fromEntries(
+  PATTERN_LEVELS.flatMap((l, i) => (l.shapes === MIXED_SHAPES ? [[i, MIXED_SHAPES.length]] : []))
+);
+
 export const LADDER_RULES: Record<LadderGame, LadderRule> = {
   water: rule('water', 4, 3),
-  patterns: rule('patterns', 4, 3),
+  patterns: { ...rule('patterns', 4, 3), upAt: PATTERN_MIXED_UP },
   trace: rule('trace', TRACE_LEVELS[0].digits.length, 3),
   flash: rule('flash', 4, 3),
   add: rule('add', 5, 3),
@@ -173,9 +180,9 @@ export function withLadder(p: Progress, game: LadderGame, ladder: Ladder): Progr
   return { ...p, ladders: { ...p.ladders, [game]: ladder } };
 }
 
-/** Tasks in a row it takes to step up; one more right after stepping down, to go back to the harder level. */
+/** Tasks in a row it takes to step up on this level; one more right after stepping down, to go back to the harder level. */
 export function upNeed(l: Ladder, rule: LadderRule): number {
-  return rule.up + (l.lastChange === 'down' ? 1 : 0);
+  return (rule.upAt?.[l.level] ?? rule.up) + (l.lastChange === 'down' ? 1 : 0);
 }
 
 /** A solved task: count it, and step up or down when it is time. */

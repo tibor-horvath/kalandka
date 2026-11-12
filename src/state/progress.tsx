@@ -60,6 +60,8 @@ export interface Progress {
   learnRound: number;
   /** Numbers met in Számmagok; 5 opens Villámszem. */
   learnSolved: number;
+  /** Számmagok's Vegyesen rounds solved: mixed numbers whose numeral the child found. */
+  learnMixSolved: number;
   flashRound: number;
   addRound: number;
   addSolved: number;
@@ -206,6 +208,7 @@ export const DEFAULT_PROGRESS: Progress = {
   patternsSolved: 0,
   learnRound: 0,
   learnSolved: 0,
+  learnMixSolved: 0,
   flashRound: 0,
   addRound: 0,
   addSolved: 0,

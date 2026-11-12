@@ -113,6 +113,61 @@ describe('flower pattern game', () => {
     expect(hintFeedback(r, 2).speech).toContain('nefelejcs, kérdőjel, nefelejcs');
   });
 
+  const levelOf = (name: string) => PATTERN_LEVELS.findIndex((l) => l.name === name);
+  const twinShown = (r: ReturnType<typeof buildLevelRound>, g: number) =>
+    r.shown.some((k, j) => k !== null && j % periodOf(r.shape) === g % periodOf(r.shape));
+
+  it('continues the repeats of four on rows of eight', () => {
+    const level = levelOf('Négyes minta');
+    for (let round = 0; round < 12; round++) {
+      const r = buildLevelRound(level, round);
+      expect(r.sequence).toHaveLength(8);
+      expect(r.gaps).toEqual([7]);
+      expect(isEndGap(r)).toBe(true);
+      expect(r.sequence.slice(0, 4)).toEqual(r.sequence.slice(4));
+      expect(new Set(r.sequence).size).toBe(3);
+    }
+    const abac = buildLevelRound(level, 0);
+    expect(abac.shown).toEqual(['tulip', 'sun', 'tulip', 'star', 'tulip', 'sun', 'tulip', null]);
+    expect(abac.answer).toBe('star');
+    const abcb = buildLevelRound(level, 1);
+    expect(abcb.shape).toBe('ABCB');
+    expect(abcb.sequence[1]).toBe(abcb.sequence[3]);
+    expect(hintFeedback(abac, 1).text).toBe('Nézd csak: tulipán, napraforgó, tulipán, nefelejcs… mi jön ezután?');
+  });
+
+  it('mixes every shape on the missing-flower level, AABB too, each gap with its twin in the row', () => {
+    const level = levelOf('Vegyes hiányzó virág');
+    const rounds = Array.from({ length: 70 }, (_, i) => buildLevelRound(level, i));
+    expect(new Set(rounds.map((r) => r.shape)).size).toBe(7);
+    for (const r of rounds) {
+      expect(r.gaps).toHaveLength(1);
+      expect(r.gap).toBeGreaterThan(0);
+      expect(r.gap).toBeLessThan(r.sequence.length - 1);
+      expect(twinShown(r, r.gap)).toBe(true);
+      expect(hintFeedback(r, 1).text).toMatch(/mi hiányzik\?$/);
+    }
+    const aabbGaps = new Set(rounds.filter((r) => r.shape === 'AABB').map((r) => r.gap));
+    expect(aabbGaps.size).toBeGreaterThan(2);
+  });
+
+  it('hides two different flowers on "Két hiányzó virág" and hints with an untouched repeat', () => {
+    const level = levelOf('Két hiányzó virág');
+    for (let round = 0; round < 70; round++) {
+      const r = buildLevelRound(level, round);
+      expect(r.gaps).toHaveLength(2);
+      expect(r.shown.filter((k) => k === null)).toHaveLength(2);
+      const [a, b] = r.gaps;
+      expect(r.sequence[a]).not.toBe(r.sequence[b]);
+      for (const g of r.gaps) expect(twinShown(r, g)).toBe(true);
+      // The first hint reads a whole repeat with no question mark in it.
+      const read = hintFeedback(r, 1).text.replace(/^Nézd csak: |… mi hiányzik\?$/g, '').split(', ');
+      expect(read).toHaveLength(periodOf(r.shape));
+      expect(screenTitle(r)).toBe('Melyik két virág hiányzik?');
+      expect(hintFeedback(r, 2).text).toContain('Mi illik az első kérdőjel helyére?');
+    }
+  });
+
   it('hints instead of saying wrong', () => {
     const hint = hintFeedback(buildRound(0), 1);
     expect(hint.text).toBe('Nézd csak: tulipán, napraforgó, tulipán… mi jön ezután?');

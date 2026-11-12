@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { GAME_IDS } from '../state/games';
+import { ladderOf, startAt, withLadder } from '../state/ladder';
 import { DEFAULT_PROGRESS } from '../state/progress';
+import { PATTERN_LEVELS } from '../worlds/garden/games/patterns/logic';
 import { markPageDone, pagesDoneIn } from '../state/rewards';
 import { PRINT_SHEETS, buildPages, nextPrintout, openLink, pageRef, sheetFor, tasksPerPage, type PrintChoice } from './catalog';
 import { linkHash, pageKey, readLink, readScanned } from './link';
@@ -71,6 +73,25 @@ describe('printable sheets', () => {
 
   it('starts a new child on the first level', () => {
     for (const s of PRINT_SHEETS) expect(s.current(DEFAULT_PROGRESS), s.id).toBe(0);
+  });
+
+  it('prints Virágsor\'s top levels with their own sheets, two answers where two flowers are missing', () => {
+    const s = sheetFor('patterns');
+    const at = (level: number) => s.current(withLadder(DEFAULT_PROGRESS, 'patterns', startAt(ladderOf(DEFAULT_PROGRESS, 'patterns'), level)));
+    // AABB and the growing bunches have no sheet: they keep the mixed one.
+    expect(PATTERN_LEVELS.map((_, level) => at(level))).toEqual([0, 1, 2, 4, 4, 4, 4, 5, 6, 7]);
+    type Task = { shown: (string | null)[]; answers: string[]; slots: number };
+    const tasks = (level: number) => buildPages(s, { level, density: 'many', pages: 1, batch: 2 })[0].tasks as Task[];
+    for (const level of [5, 6, 7]) {
+      for (const t of tasks(level)) {
+        expect(t.slots).toBe(8);
+        expect(t.shown.length).toBeLessThanOrEqual(8);
+        expect(t.answers).toHaveLength(level === 7 ? 2 : 1);
+        expect(t.shown.filter((k) => k === null)).toHaveLength(t.answers.length);
+      }
+    }
+    expect(tasks(5).every((t) => t.shown[t.shown.length - 1] === null)).toBe(true);
+    expect(tasks(7).every((t) => t.answers[0] !== t.answers[1])).toBe(true);
   });
 });
 

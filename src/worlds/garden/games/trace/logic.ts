@@ -139,23 +139,38 @@ export interface TraceRound extends DigitShape {
    * so the child writes the digit from memory. Following the finger stays just as forgiving.
    */
   faded: boolean;
+  /**
+   * Csak a kezdőpont: no trail shows at all, only where each stroke starts and which way it sets off.
+   * The bee still follows the hidden trail, just as forgivingly. Always faded too.
+   */
+  bare: boolean;
 }
 
 export interface TraceLevel {
   /** Shown to parents. */
   name: string;
+  /** The level's digits in order; a mixed level shuffles all ten afresh on every lap instead. */
   digits: number[];
   faded: boolean;
+  /** All ten digits, a new mix each lap of ten (see lapOrder). */
+  mixed?: boolean;
+  bare?: boolean;
 }
 
 const FIRST_HALF = TRACE_ORDER.slice(0, 5);
 const SECOND_HALF = TRACE_ORDER.slice(5);
 
+/**
+ * Every level steps up after five digits in a row without help: the whole row on the first four levels,
+ * half a lap of ten on the mixed ones.
+ */
 export const TRACE_LEVELS: TraceLevel[] = [
   { name: '1–5, mézes út', digits: FIRST_HALF, faded: false },
   { name: '6–0, mézes út', digits: SECOND_HALF, faded: false },
   { name: '1–5, halvány út', digits: [3, 1, 5, 2, 4], faded: true },
-  { name: '6–0, halvány út', digits: [8, 0, 6, 9, 7], faded: true }
+  { name: '6–0, halvány út', digits: [8, 0, 6, 9, 7], faded: true },
+  { name: 'Mind a tíz, halvány út', digits: TRACE_ORDER, faded: true, mixed: true },
+  { name: 'Csak a kezdőpont', digits: TRACE_ORDER, faded: true, mixed: true, bare: true }
 ];
 
 /** A fixed shuffle of TRACE_ORDER for each lap after the first, never repeating the last digit of the lap before. */
@@ -173,10 +188,24 @@ export function lapOrder(lap: number): number[] {
   return order;
 }
 
-/** The digit after `done` digits on a level: a level always starts from its first digit, and goes round them all. */
+/**
+ * The digit after `done` digits on a level: a level always starts from its first digit, and goes round them all.
+ * A mixed level walks a fresh shuffle of all ten each lap, never the plain 1, 2, 3 … order.
+ */
 export function buildTraceRound(level: number, done: number): TraceRound {
-  const { digits, faded } = TRACE_LEVELS[level];
-  return { ...digitShape(digits[Math.max(0, Math.floor(done)) % digits.length]), faded };
+  const { digits, faded, mixed = false, bare = false } = TRACE_LEVELS[level];
+  const d = Math.max(0, Math.floor(done));
+  // lapOrder recurses once per lap, so the laps cycle through a few dozen mixes.
+  const lap = 1 + (Math.floor(d / TRACE_ORDER.length) % MIXED_LAPS);
+  const digit = mixed ? lapOrder(lap)[d % TRACE_ORDER.length] : digits[d % digits.length];
+  return { ...digitShape(digit), faded, bare };
+}
+
+const MIXED_LAPS = 40;
+
+/** Where a bare trail shows its one arrow: a little way in from the stroke's start. */
+export function startArrowPoint(pts: Pt[]): number {
+  return Math.min(12, pts.length - 2);
 }
 
 /** Where a faded trail shows a direction arrow: a couple per stroke, away from the start and end. */
@@ -272,9 +301,17 @@ export interface TraceFeedback {
   tone: Tone;
 }
 
-export function startFeedback(shape: DigitShape & { faded?: boolean }): TraceFeedback {
+export function startFeedback(shape: DigitShape & { faded?: boolean; bare?: boolean }): TraceFeedback {
   const name = digitName(shape.digit);
   const strokes = shape.strokes.length > 1 ? ' Két vonalból áll.' : '';
+  if (shape.bare) {
+    return {
+      text: `Írjunk egy ${name}t! Most nincs út, csak a kezdőpont: írd fejből!${strokes}`,
+      speech: `Írjunk egy ${name}t! Most nincs mézes út, csak a kezdőpont. Írd fejből! Ha kell, megmutatom.${strokes}`,
+      mood: 'smile',
+      tone: 'plain'
+    };
+  }
   if (shape.faded) {
     return {
       text: `Írjunk egy ${name}t! Az út most halvány: emlékszel, merre megy?${strokes}`,

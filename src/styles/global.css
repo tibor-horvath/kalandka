@@ -264,6 +264,12 @@ h1, h2, p { margin: 0; }
 .bed__row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; padding: 0 20px; align-items: end; }
 .bed__slot { height: 180px; display: flex; align-items: flex-end; justify-content: center; }
 .bed__question { width: 120px; height: 150px; border-radius: 28px; border: 5px dashed var(--paper); background: #c9e6ae; display: grid; place-items: center; font-size: 80px; font-weight: 800; color: #2f6b3a; line-height: 1; }
+/* Két hiányzó virág: the gap after the one being filled waits faded. */
+.bed__question.is-later { opacity: 0.5; }
+/* Rows of eight (two whole repeats of four): narrower slots. */
+.bed--long .bed__row { gap: 8px; padding: 0 12px; }
+.bed--long .bed__slot svg { width: 100%; max-width: 96px; height: auto; }
+.bed--long .bed__question { width: 100%; max-width: 96px; height: 124px; font-size: 64px; }
 .bed__soil { height: 44px; border-radius: 22px; background: var(--soil); margin-top: -8px; }
 /* Virágsor's growing bunches: sized by height, with the count under each bunch. */
 .bed--bunches .bed__slot svg { width: auto; max-width: none; height: 136px; }

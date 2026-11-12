@@ -12,6 +12,7 @@ import {
   growHintFeedback,
   growSolvedFeedback,
   growStartFeedback,
+  halfwayFeedback,
   hintFeedback,
   isEndGap,
   screenTitle,
@@ -35,12 +36,19 @@ function FlowerRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) 
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = ladder;
   const [round] = useState(() => buildLevelRound(level, progress.patternRound));
-  const [picked, setPicked] = useState<FlowerKind | null>(null);
+  // How many of the hidden flowers are planted, left to right; the next open gap takes the next pick.
+  const [filled, setFilled] = useState(0);
   const [wrong, setWrong] = useState<FlowerKind | null>(null);
   const [misses, setMisses] = useState(0);
 
-  const solved = picked === round.answer;
-  const fb = solved ? solvedFeedback() : wrong ? hintFeedback(round, misses) : startFeedback(round);
+  const solved = filled === round.gaps.length;
+  const active = round.gaps[filled];
+  const want = solved ? null : round.sequence[active];
+  const planted = new Set(round.gaps.slice(0, filled));
+  const slots: (FlowerKind | null)[] = round.shown.map((k, i) => (planted.has(i) ? round.sequence[i] : k));
+  // Hints read the row as it stands, with the flowers already planted.
+  const now = { ...round, shown: slots };
+  const fb = solved ? solvedFeedback() : wrong ? hintFeedback(now, misses) : filled > 0 ? halfwayFeedback() : startFeedback(round);
 
   useEffect(() => {
     speak(startFeedback(round).speech);
@@ -49,20 +57,24 @@ function FlowerRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) 
 
   const pick = (kind: FlowerKind) => {
     if (solved) return;
-    if (kind === round.answer) {
-      setPicked(kind);
+    if (kind === want) {
+      const next = filled + 1;
+      setFilled(next);
       setWrong(null);
-      speak(solvedFeedback().speech);
-      win(misses > 0);
+      if (next === round.gaps.length) {
+        speak(solvedFeedback().speech);
+        win(misses > 0);
+      } else {
+        speak(halfwayFeedback().speech);
+      }
     } else {
       const m = misses + 1;
       setWrong(kind);
       setMisses(m);
-      speak(hintFeedback(round, m).speech);
+      speak(hintFeedback(now, m).speech);
     }
   };
 
-  const slots: (FlowerKind | null)[] = round.shown.map((k, i) => (i === round.gap && solved ? round.answer : k));
   const gapLabel = isEndGap(round) ? 'Kérdőjel: ide jön a következő virág' : 'Kérdőjel: ide hiányzik egy virág';
 
   return (
@@ -76,16 +88,21 @@ function FlowerRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) 
       onReplay={() => speak(fb.speech)}
     >
 
-      <div className="bed">
-        <div className="bed__row">
+      <div className={`bed${slots.length > 6 ? ' bed--long' : ''}`}>
+        <div className="bed__row" style={{ gridTemplateColumns: `repeat(${slots.length}, minmax(0, 1fr))` }}>
           {slots.map((kind, i) => (
             <div key={i} className="bed__slot">
               {kind ? (
-                <span role="img" aria-label={FLOWER_LABELS[kind]} className={i === round.gap ? 'pop-in' : undefined}>
+                <span role="img" aria-label={FLOWER_LABELS[kind]} className={round.gaps.includes(i) ? 'pop-in' : undefined}>
                   <PatternFlower kind={kind} />
                 </span>
               ) : (
-                <div className="bed__question" aria-label={gapLabel}>?</div>
+                <div
+                  className={`bed__question${round.gaps.length > 1 && i !== active ? ' is-later' : ''}`}
+                  aria-label={round.gaps.length > 1 && i !== active ? 'Kérdőjel: ez a virág jön utána' : gapLabel}
+                >
+                  ?
+                </div>
               )}
             </div>
           ))}
@@ -101,7 +118,7 @@ function FlowerRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) 
 
       <div className="choices">
         {CHOICES.map((kind) => {
-          const state = solved && kind === round.answer ? ' is-right' : wrong === kind && !solved ? ' is-wrong' : '';
+          const state = solved && kind === round.sequence[round.gaps[round.gaps.length - 1]] ? ' is-right' : wrong === kind && !solved ? ' is-wrong' : '';
           return (
             <button key={kind} type="button" className={`choice${state}`} onClick={() => pick(kind)} aria-label={`${FLOWER_LABELS[kind]} – ültesd el a kérdőjel helyére`}>
               <PatternFlower kind={kind} width={90} />
