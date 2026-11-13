@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { GAME_IDS } from '../state/games';
-import { ladderOf, startAt, withLadder } from '../state/ladder';
+import { GAME_IDS, type LadderGame } from '../state/games';
+import { LADDER_LEVELS, ladderOf, startAt, withLadder } from '../state/ladder';
 import { DEFAULT_PROGRESS } from '../state/progress';
 import { PATTERN_LEVELS } from '../worlds/garden/games/patterns/logic';
-import { markPageDone, pagesDoneIn } from '../state/rewards';
+import { SHEET_LADDER, markPageDone, pagesDoneIn } from '../state/stickers';
+import { POTS_LEVELS } from '../worlds/garden/games/pots/logic';
 import { PRINT_SHEETS, buildPages, nextPrintout, openLink, pageRef, sheetFor, tasksPerPage, type PrintChoice } from './catalog';
 import { linkHash, pageKey, readLink, readScanned } from './link';
 import REVISIONS from './revisions.json';
@@ -78,20 +79,54 @@ describe('printable sheets', () => {
   it('prints Virágsor\'s top levels with their own sheets, two answers where two flowers are missing', () => {
     const s = sheetFor('patterns');
     const at = (level: number) => s.current(withLadder(DEFAULT_PROGRESS, 'patterns', startAt(ladderOf(DEFAULT_PROGRESS, 'patterns'), level)));
-    // AABB and the growing bunches have no sheet: they keep the mixed one.
-    expect(PATTERN_LEVELS.map((_, level) => at(level))).toEqual([0, 1, 2, 4, 4, 4, 4, 5, 6, 7]);
+    // One sheet a level, with AAB and ABB apart: the third level opens on AAB.
+    expect(PATTERN_LEVELS.map((_, level) => at(level))).toEqual([0, 1, 2, 4, 5, 6, 7, 8, 9, 10]);
     type Task = { shown: (string | null)[]; answers: string[]; slots: number };
     const tasks = (level: number) => buildPages(s, { level, density: 'many', pages: 1, batch: 2 })[0].tasks as Task[];
-    for (const level of [5, 6, 7]) {
+    for (const level of [8, 9, 10]) {
       for (const t of tasks(level)) {
         expect(t.slots).toBe(8);
         expect(t.shown.length).toBeLessThanOrEqual(8);
-        expect(t.answers).toHaveLength(level === 7 ? 2 : 1);
+        expect(t.answers).toHaveLength(level === 10 ? 2 : 1);
         expect(t.shown.filter((k) => k === null)).toHaveLength(t.answers.length);
       }
     }
-    expect(tasks(5).every((t) => t.shown[t.shown.length - 1] === null)).toBe(true);
-    expect(tasks(7).every((t) => t.answers[0] !== t.answers[1])).toBe(true);
+    expect(tasks(8).every((t) => t.shown[t.shown.length - 1] === null)).toBe(true);
+    expect(tasks(10).every((t) => t.answers[0] !== t.answers[1])).toBe(true);
+    // AABB asks what comes next in a row of six.
+    for (const t of tasks(5)) expect([t.slots, t.shown.length, t.shown.at(-1)]).toEqual([6, 6, null]);
+  });
+
+  it('prints Virágsor\'s growing bunches with the game\'s own steps and answer among the choices', () => {
+    const s = sheetFor('patterns');
+    type Grow = { grow: { counts: number[]; answer: number; choices: number[] } };
+    for (const [level, step] of [[6, 1], [7, 2]]) {
+      for (const { grow } of buildPages(s, { level, density: 'many', pages: 1, batch: 2 })[0].tasks as Grow[]) {
+        expect(grow.counts.slice(1).map((n, i) => n - grow.counts[i])).toEqual(grow.counts.slice(1).map(() => step));
+        expect(grow.answer).toBe(grow.counts.at(-1)! + step);
+        expect(grow.choices).toContain(grow.answer);
+      }
+    }
+  });
+
+  it('has a sheet for every level of every game, and opens the one of the child\'s level', () => {
+    // Paper cannot hide a box: Cserépbarátok's Letakarva prints the ten friends in sight.
+    const unprintable: Partial<Record<string, number[]>> = { pots: [POTS_LEVELS.length - 1] };
+    for (const game of Object.keys(LADDER_LEVELS) as LadderGame[]) {
+      const s = sheetFor(game);
+      const levelsOf = (sheet: number) => SHEET_LADDER[game]?.[sheet] ?? [sheet];
+      LADDER_LEVELS[game].forEach((_, level) => {
+        const sheet = s.current(withLadder(DEFAULT_PROGRESS, game, startAt(ladderOf(DEFAULT_PROGRESS, game), level)));
+        expect(sheet, `${game} ${level}`).toBeLessThan(s.levels.length);
+        if (unprintable[game]?.includes(level)) expect(levelsOf(sheet), `${game} ${level}`).not.toContain(level);
+        else expect(levelsOf(sheet), `${game} ${level}`).toContain(level);
+      });
+      // And no sheet stands for a level the game does not have.
+      s.levels.forEach((_, sheet) => expect(levelsOf(sheet).every((l) => l < LADDER_LEVELS[game].length), `${game} sheet ${sheet}`).toBe(true));
+    }
+    // Számmagok has no ladder: its sheets follow the round, Vegyesen after twenty.
+    const learn = sheetFor('learn');
+    expect([0, 5, 10, 15, 19, 20, 24].map((learnRound) => learn.current({ ...DEFAULT_PROGRESS, learnRound }))).toEqual([0, 1, 2, 3, 3, 4, 4]);
   });
 });
 

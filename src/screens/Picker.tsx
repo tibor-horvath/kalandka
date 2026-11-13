@@ -8,7 +8,7 @@ import { useForm, useWideStage } from '../components/Stage';
 import { speak, stopSpeaking } from '../lib/speech';
 import { MAX_KIDS, kidName, progressOf, useProfiles } from '../state/profiles';
 import { remainingSeconds, today } from '../state/screenTime';
-import { seedBalance } from '../state/rewards';
+import { seedBalance } from '../state/garden';
 import { boltBalance } from '../state/robotParts';
 
 const SPEECH = 'Szia! Ki indul ma kalandra? Koppints a képedre!';

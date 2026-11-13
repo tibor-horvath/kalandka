@@ -1,6 +1,6 @@
 import { isLadderGame, type GameId } from '../../state/games';
 import { LEVEL_SETTINGS, ladderStepLine } from '../../state/levels';
-import { markEarnedSeen } from '../../state/rewards';
+import { markEarnedSeen } from '../../state/stickers';
 import { useProgress } from '../../state/progress';
 import { WORLDS } from '../../state/worlds';
 import { Check, WorldGroup } from './controls';

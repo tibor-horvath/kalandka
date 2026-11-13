@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
-import { FRUIT_MAX, THIRSTY_AFTER, growAfter, isThirsty, pickFruit, plant, ripeFruit, ripeTotal, thirstyBeds, water, waterAll } from './rewards';
+import { FRUIT_MAX, THIRSTY_AFTER, growAfter, isThirsty, pickFruit, plant, ripeFruit, ripeTotal, thirstyBeds, water, waterAll } from './garden';
 import { BATTERY_BARS, SQUEAKY_AFTER, TRICKS, batteryOf, chargeOne, isSqueaky, oil, tricksOf } from './robotParts';
 
 const withSeeds = (seeds: number, extra: Partial<Progress> = {}): Progress => ({ ...DEFAULT_PROGRESS, seeds, ...extra });

@@ -36,8 +36,9 @@ export const POTS_LEVELS: PotsLevel[] = [
   { name: 'Tízes barátok, letakarva', total: 10, scattered: false, dotChoices: false, hidden: true }
 ];
 
-/** The printed sheets keep the first three levels: twenty pots do not fit a page, and paper cannot hide a box. */
-export const POTS_PRINT_LEVELS = 3;
+/** Levels with a printed sheet: all but the last, as paper cannot hide a box. */
+export const POTS_SHEET_LEVELS = 5;
+
 
 /** Five solved rounds per level, then the next level. */
 export function potsLevelFor(solved: number): PotsLevel {

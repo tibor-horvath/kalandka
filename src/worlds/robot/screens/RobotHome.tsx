@@ -8,7 +8,7 @@ import { gamesIn, isLadderGame, solvedOf, type GameId } from '../../../state/gam
 import { ladderOf } from '../../../state/ladder';
 import { kidName, useActiveKid, useProfiles } from '../../../state/profiles';
 import { useProgress } from '../../../state/progress';
-import { newStickers } from '../../../state/rewards';
+import { newStickers } from '../../../state/stickers';
 import { boltBalance, canBuyAnything, newFriend, secondRobotNew } from '../../../state/robotParts';
 
 /** The greeting without a name: one child on the device, or an online voice. */

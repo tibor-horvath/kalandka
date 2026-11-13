@@ -65,6 +65,6 @@ Each task becomes a crate with empty boxes under the code and the key beside it.
 - `src/worlds/robot/games/code.ts`: levels, task generator, key, Csavar's lines. Plus `code.test.ts`.
 - `src/worlds/robot/screens/Code.tsx`: the screen.
 - `src/worlds/robot/robot.css`: `.code-*` styles, phone layout (the key folds above the crate in portrait).
-- `src/state/ladder.ts`: `code` entry. Also update `levels.ts`, `rewards.ts` (stickers) and `insights.ts` (parents' note).
-- `src/worlds/robot/print.tsx`: the sheet.
+- `src/state/ladder.ts`: `code` entry. Also update `levels.ts`, `stickers.ts` and `insights.ts` (parents' note).
+- `src/worlds/robot/games/code.print.tsx`: the sheet, listed in `src/worlds/robot/print.tsx`.
 - README: a Robotműhely table row, the stickers and the Structure line.

@@ -10,7 +10,7 @@ import { useForm, useWideStage } from '../components/Stage';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from '../components/ui';
 import { speak, stopSpeaking } from '../lib/speech';
 import { useProgress } from '../state/progress';
-import { seedBalance } from '../state/rewards';
+import { seedBalance } from '../state/garden';
 import { boltBalance } from '../state/robotParts';
 import { WORLDS, currentWorld, type WorldId } from '../state/worlds';
 

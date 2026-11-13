@@ -1,21 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
-import {
-  GIFTS_EACH,
-  VISITORS,
-  WISHES,
-  canGive,
-  decorCount,
-  decorOf,
-  earnedStickers,
-  gardenDone,
-  giftSize,
-  giftsOf,
-  giftsReady,
-  give,
-  treatsOf,
-  wishOf
-} from './rewards';
+import { GIFTS_EACH, VISITORS, WISHES, canGive, decorCount, decorOf, gardenDone, giftSize, giftsOf, giftsReady, give, treatsOf, wishOf } from './garden';
+import { earnedStickers } from './stickers';
 
 /** A garden where every visitor has been welcomed, with these treats on the shelf. */
 const shelf = (pantry: Progress['pantry'], extra: Partial<Progress> = {}): Progress => {

@@ -29,9 +29,6 @@ export const LEVELS: Level[] = [
   { name: '11–20, tízes keretben', min: 11, max: 20, layout: 'frame', flashMs: 3000, dotChoices: false }
 ];
 
-/** The printed sheets keep the first four levels, so the codes on pages printed before the ten-frame levels still match. */
-export const FLASH_PRINT_LEVELS = 4;
-
 export const FLASH_ROUNDS_PER_LEVEL = 4;
 
 /** Four solved rounds per level, then the next level. */

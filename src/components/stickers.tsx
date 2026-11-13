@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react';
-import type { Sticker } from '../state/rewards';
-import { gameOf } from '../state/rewards';
+import { gameOf, type Sticker } from '../state/stickers';
 
 // Artwork for the stickers and the sticker album, shared by every world.
 

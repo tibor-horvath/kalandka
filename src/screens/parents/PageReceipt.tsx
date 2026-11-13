@@ -3,7 +3,7 @@ import { Seed } from '../../worlds/garden/art';
 import { podArcs } from '../../components/LevelMeter';
 import { Bolt } from '../../worlds/robot/art';
 import { tasksPerReward } from '../../state/pod';
-import { gameOf, type Sticker } from '../../state/rewards';
+import { gameOf, type Sticker } from '../../state/stickers';
 import type { WorldId } from '../../state/worlds';
 
 /** What marking a page done did, kept from the moment it was marked. */
