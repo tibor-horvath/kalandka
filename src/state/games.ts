@@ -5,7 +5,7 @@ import type { WorldId } from './worlds';
 // Every Kalandka game in one list, in hub order: its id, world, name and the save fields that count its rounds.
 // Screens, ladders, stickers, notes and printable sheets read a game from here instead of listing the games again.
 
-export const GAME_IDS = ['learn', 'water', 'patterns', 'flash', 'add', 'trace', 'pots', 'path', 'sort', 'scale', 'seq', 'mirror', 'code', 'fix'] as const;
+export const GAME_IDS = ['learn', 'water', 'patterns', 'flash', 'add', 'trace', 'pots', 'path', 'sort', 'scale', 'seq', 'mirror', 'code', 'fix', 'day', 'season', 'set', 'read', 'digi', 'sleep', 'sand'] as const;
 
 export type GameId = (typeof GAME_IDS)[number];
 
@@ -40,7 +40,14 @@ export const GAMES: Record<GameId, GameInfo> = {
   seq: { id: 'seq', world: 'robot', name: 'Mintagép', roundKey: 'seqRound', solvedKey: 'seqSolved' },
   mirror: { id: 'mirror', world: 'robot', name: 'Tükörgép', roundKey: 'mirrorRound', solvedKey: 'mirrorSolved' },
   code: { id: 'code', world: 'robot', name: 'Kódzár', roundKey: 'codeRound', solvedKey: 'codeSolved' },
-  fix: { id: 'fix', world: 'robot', name: 'Hibavadász', roundKey: 'fixRound', solvedKey: 'fixSolved' }
+  fix: { id: 'fix', world: 'robot', name: 'Hibavadász', roundKey: 'fixRound', solvedKey: 'fixSolved' },
+  day: { id: 'day', world: 'tower', name: 'Napirend', roundKey: 'dayRound', solvedKey: 'daySolved' },
+  season: { id: 'season', world: 'tower', name: 'Évszakok', roundKey: 'seasonRound', solvedKey: 'seasonSolved' },
+  set: { id: 'set', world: 'tower', name: 'Óraállító', roundKey: 'setRound', solvedKey: 'setSolved' },
+  read: { id: 'read', world: 'tower', name: 'Hány óra?', roundKey: 'readRound', solvedKey: 'readSolved' },
+  digi: { id: 'digi', world: 'tower', name: 'Digitóra', roundKey: 'digiRound', solvedKey: 'digiSolved' },
+  sleep: { id: 'sleep', world: 'tower', name: 'Kakuk alszik', roundKey: 'sleepRound', solvedKey: 'sleepSolved' },
+  sand: { id: 'sand', world: 'tower', name: 'Homokóra', roundKey: 'sandRound', solvedKey: 'sandSolved' }
 };
 
 export function isLadderGame(id: GameId): id is LadderGame {

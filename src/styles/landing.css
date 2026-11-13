@@ -92,6 +92,10 @@
 .landing__world { border-radius: 28px; padding: 28px; display: flex; flex-direction: column; gap: 18px; }
 .landing__world--garden { background: var(--good-tint); color: #2d4a36; }
 .landing__world--robot { background: #e3ebf1; color: #4a5e70; }
+.landing__world--tower { background: #ece7fb; color: #4b3f72; }
+.landing__world--tower h3 { color: #3a2e6b; }
+.landing__world--tower .landing__game-art { background: #ece7fb; }
+.landing__world--tower .landing__game-art > svg { width: 80px; height: auto; }
 .landing__world-head { display: flex; align-items: center; gap: 16px; }
 .landing__world h3 { font-size: 32px; }
 .landing__world--garden h3 { color: var(--leaf-deep); }

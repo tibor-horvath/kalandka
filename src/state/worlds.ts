@@ -2,7 +2,7 @@ import type { Progress } from './progress';
 
 // Kalandka's worlds. Every child may pick any world on the Kalandka map; the app opens in the one they chose last.
 
-export type WorldId = 'garden' | 'robot';
+export type WorldId = 'garden' | 'robot' | 'tower';
 
 export interface WorldInfo {
   id: WorldId;
@@ -14,9 +14,10 @@ export interface WorldInfo {
 
 export const WORLDS: WorldInfo[] = [
   { id: 'garden', name: 'Számkertész', guide: 'Csepi', about: 'Számok, számolás, minták' },
-  { id: 'robot', name: 'Robotműhely', guide: 'Csavar', about: 'Programozás, logika · nagyobbaknak' }
+  { id: 'robot', name: 'Robotműhely', guide: 'Csavar', about: 'Programozás, logika · nagyobbaknak' },
+  { id: 'tower', name: 'Óratorony', guide: 'Kakuk', about: 'Napszakok, napok, óra' }
 ];
 
 export function currentWorld(p: Progress): WorldId {
-  return p.world === 'robot' ? 'robot' : 'garden';
+  return p.world === 'robot' || p.world === 'tower' ? p.world : 'garden';
 }

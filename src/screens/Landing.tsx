@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useRef, useState, type CSSProperties, type R
 import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../worlds/garden/art';
 import { Csepi } from '../components/Csepi';
 import { CodeArt, Csavar, FixArt, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../worlds/robot/art';
+import { DayArt, DigiArt, Kakuk, ReadArt, SandArt, SeasonArt, SetArt, SleepArt } from '../worlds/tower/art';
 import { DotFace } from '../worlds/garden/seeds';
 import { Avatar } from '../components/avatars';
 import { KidFields, type KidDraft } from '../components/KidFields';
@@ -89,6 +90,16 @@ const ROBOT_GAMES: [string, string, ReactNode][] = [
   ['Hibavadász', 'A hibás kártya megtalálása és kijavítása a programban.', <FixArt />]
 ];
 
+const TOWER_GAMES: [string, string, ReactNode][] = [
+  ['Napirend', 'A nap sorrendje: reggel, délben, délután, este.', <DayArt />],
+  ['Évszakok', 'Évszakok, a hét napjai, tegnap és holnap, hónapok.', <SeasonArt />],
+  ['Óraállító', 'A mutatók beállítása az egész órától az öt percig.', <SetArt />],
+  ['Hány óra?', 'Az óra leolvasása: fél, negyed, háromnegyed.', <ReadArt />],
+  ['Digitóra', 'A mutatós és a digitális óra párosítása.', <DigiArt />],
+  ['Kakuk alszik', 'Mennyi idő telt el két időpont között?', <SleepArt />],
+  ['Homokóra', 'Mi tart tovább: egy pillanat, néhány perc vagy órák?', <SandArt />]
+];
+
 const HIGHLIGHTS = ['Internet nélkül is működik', 'Nincs szükség fiókra', 'Minden adat a készüléken marad'];
 
 // The page's own sections, for the header's links and the phone menu; each id is a heading or section below.
@@ -96,7 +107,7 @@ const NAV: { id: string; label: string; sub: string; tone: string; icon: ReactNo
   {
     id: 'l-worlds',
     label: 'Játékok',
-    sub: 'Két sziget, tizennégy játék',
+    sub: 'Három sziget, huszonegy játék',
     tone: 'drop',
     icon: (
       <>
@@ -143,7 +154,7 @@ const PRINCIPLES: { title: string; text: string; tone: string; icon: ReactNode }
   },
   {
     title: 'Nem baj, ha még nem tud olvasni',
-    text: 'Csepi és Csavar magyarul mondja el a feladatokat. A gyerkőcök a saját figurájukat keresik a képernyőn, nem a nevüket kell kiolvasniuk.',
+    text: 'Csepi, Csavar és Kakuk magyarul mondja el a feladatokat. A gyerkőcök a saját figurájukat keresik a képernyőn, nem a nevüket kell kiolvasniuk.',
     tone: 'drop',
     icon: <path d="M5 10v4M9 7v10M13 9v6M17 6v12M21 10v4" />
   }
@@ -198,12 +209,13 @@ const STORY: { title: string; text: string; tone: string; art: ReactNode }[] = [
   { title: 'Ezért kicsiben kezdjük.', text: 'Egy kis feladat, egy kis bátorság, egy kis siker. Lépésről lépésre.', tone: 'good', art: <Sprout /> },
   {
     title: 'Minden sziget egy kis kaland.',
-    text: 'Csepi a Számkertben, Csavar a Műhelyben vár. Bármelyik szigetre evezhetsz, amelyikhez épp kedved van.',
+    text: 'Csepi a Számkertben, Csavar a Műhelyben, Kakuk az Óratoronyban vár. Bármelyik szigetre evezhetsz, amelyikhez épp kedved van.',
     tone: 'sky',
     art: (
       <>
         <Csepi mood="smile" width={56} />
         <Csavar mood="smile" width={56} />
+        <Kakuk mood="smile" width={48} />
       </>
     )
   },
@@ -842,6 +854,11 @@ function Footer({ page, installed, onLegal }: { page: RefObject<HTMLDivElement |
                 </button>
               </li>
               <li>
+                <button type="button" className="landing__foot-link" onClick={() => scrollTo('l-worlds')}>
+                  Óratorony
+                </button>
+              </li>
+              <li>
                 <button type="button" className="landing__foot-link" onClick={() => scrollTo('l-how')}>
                   Így működik
                 </button>
@@ -935,7 +952,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
                   Számolás, logika és programozás – játszva, kudarc nélkül.
                 </h1>
                 <p className="landing__lead landing__in" style={delay(280)}>
-                  Fejlesztő játékok tabletre és telefonra. Csepi, a vízcsepp a Számkertben, Csavar, a robot pedig a Műhelyben várja a gyerkőcöket. Ők választanak szigetet, a feladatok
+                  Fejlesztő játékok tabletre és telefonra. Csepi, a vízcsepp a Számkertben, Csavar, a robot a Műhelyben, Kakuk, a kakukk pedig az Óratoronyban várja a gyerkőcöket. Ők választanak szigetet, a feladatok
                   nehézsége pedig észrevétlenül alkalmazkodik hozzájuk.
                 </p>
                 <StartButton onStart={ask} className="landing__in" style={delay(360)}>
@@ -995,6 +1012,19 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
                   <GameList games={ROBOT_GAMES} />
                   <p>
                     <b>A jutalom:</b> minden négy sikeres kör egy csavart ér, amiből a gyerkőc saját robotot építhet a polcára.
+                  </p>
+                </article>
+                <article className="landing__world landing__world--tower landing__reveal">
+                  <div className="landing__world-head">
+                    <Kakuk mood="smile" width={56} />
+                    <div>
+                      <h3>Óratorony</h3>
+                      <p>Kakukkal · napszakok, napok és az óra</p>
+                    </div>
+                  </div>
+                  <GameList games={TOWER_GAMES} />
+                  <p>
+                    <b>A jutalom:</b> minden második jó válasz egy harangot ér, amiből a gyerkőc felépíti a Kisváros házait a toronyóra körül.
                   </p>
                 </article>
               </div>

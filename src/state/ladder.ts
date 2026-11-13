@@ -11,6 +11,11 @@ import { SEQ_LEVELS, SEQ_ROUNDS_PER_LEVEL } from '../worlds/robot/games/seq';
 import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL } from '../worlds/robot/games/sort';
 import { TRACE_LEVELS, TRACE_ORDER } from '../worlds/garden/games/trace/logic';
 import { PLANTS, WATER_LEVELS } from '../worlds/garden/games/water/logic';
+import { DIGI_LEVELS, READ_LEVELS, SET_LEVELS } from '../worlds/tower/games/clock';
+import { DAY_LEVELS } from '../worlds/tower/games/day';
+import { SAND_LEVELS } from '../worlds/tower/games/sand';
+import { SEASON_LEVELS } from '../worlds/tower/games/season';
+import { SLEEP_LEVELS } from '../worlds/tower/games/sleep';
 import { rng } from '../lib/rng';
 import { roundOf, solvedOf, type LadderGame } from './games';
 import type { LevelMeterState } from './levelMeter';
@@ -49,7 +54,14 @@ export const LADDER_LEVELS: Record<LadderGame, readonly { name: string }[]> = {
   seq: SEQ_LEVELS,
   mirror: MIRROR_LEVELS,
   code: CODE_LEVELS,
-  fix: FIX_LEVELS
+  fix: FIX_LEVELS,
+  day: DAY_LEVELS,
+  season: SEASON_LEVELS,
+  set: SET_LEVELS,
+  read: READ_LEVELS,
+  digi: DIGI_LEVELS,
+  sleep: SLEEP_LEVELS,
+  sand: SAND_LEVELS
 };
 
 const rule = (game: LadderGame, up: number, down: number): LadderRule => ({ levels: LADDER_LEVELS[game].length, up, down, cooldown: 3 });
@@ -77,7 +89,15 @@ export const LADDER_RULES: Record<LadderGame, LadderRule> = {
   seq: rule('seq', 4, 2),
   mirror: rule('mirror', 4, 2),
   code: rule('code', 4, 2),
-  fix: rule('fix', 4, 2)
+  fix: rule('fix', 4, 2),
+  // The Óratorony asks one question a task, like the garden.
+  day: rule('day', 4, 3),
+  season: rule('season', 4, 3),
+  set: rule('set', 4, 3),
+  read: rule('read', 4, 3),
+  digi: rule('digi', 4, 3),
+  sleep: rule('sleep', 4, 3),
+  sand: rule('sand', 4, 3)
 };
 
 export interface Ladder {
@@ -101,12 +121,31 @@ export interface Ladder {
    * Missing in saves from before it: then every level up to `solvedTop` (see `solvedLevels`).
    */
   solved?: number[];
+  /** Tasks solved on each level in the game, helped or not. Missing in saves from before it: counting starts then. */
+  tally?: Record<number, number>;
+  /**
+   * Levels finished in the game: stepped up from, or the top one mastered. Missing in saves from before it: then
+   * every solved level, as a level's sticker once came with its first task (see `clearedLevels`).
+   */
+  cleared?: number[];
 }
 
 /** The levels a task was solved on, each once. */
 export function solvedLevels(l: Ladder): number[] {
   return l.solved ?? Array.from({ length: l.solvedTop + 1 }, (_, i) => i);
 }
+
+/** Tasks solved on this level so far, helped or not. */
+export function tallyOf(l: Ladder, level: number): number {
+  return l.tally?.[level] ?? 0;
+}
+
+/** The levels finished in the game, each once. */
+export function clearedLevels(l: Ladder): number[] {
+  return l.cleared ?? solvedLevels(l);
+}
+
+const withLevel = (levels: number[], level: number) => (levels.includes(level) ? levels : [...levels, level]);
 
 export type LadderChange = 'up' | 'down' | 'mastered' | null;
 
@@ -126,7 +165,15 @@ const ROUNDS_PER_LEVEL: Partial<Record<LadderGame, number>> = {
   seq: SEQ_ROUNDS_PER_LEVEL,
   mirror: MIRROR_ROUNDS_PER_LEVEL,
   code: CODE_ROUNDS_PER_LEVEL,
-  fix: FIX_ROUNDS_PER_LEVEL
+  fix: FIX_ROUNDS_PER_LEVEL,
+  // The Óratorony had its ladders from the start: a save without one simply starts at the first level.
+  day: 5,
+  season: 5,
+  set: 5,
+  read: 5,
+  digi: 5,
+  sleep: 5,
+  sand: 5
 };
 
 /** Games that walked a fixed order before their ladder: which level each round of that order belongs to. */
@@ -195,18 +242,21 @@ export function afterSolve(l: Ladder, rule: LadderRule, helped: boolean): Ladder
     sinceChange: l.sinceChange + 1,
     reached: Math.max(l.reached, l.level),
     solvedTop: Math.max(l.solvedTop, l.level),
-    solved: solvedLevels(l).includes(l.level) ? solvedLevels(l) : [...solvedLevels(l), l.level]
+    solved: withLevel(solvedLevels(l), l.level),
+    tally: { ...l.tally, [l.level]: tallyOf(l, l.level) + 1 },
+    cleared: clearedLevels(l)
   };
+  const cleared = withLevel(next.cleared!, l.level);
   const restart = { streak: 0, helpRun: 0, sinceChange: 0 };
 
   if (!helped && next.streak >= upNeed(l, rule)) {
     if (l.level < top) {
       const level = l.level + 1;
-      return { ladder: { ...next, ...restart, level, lastChange: 'up', reached: Math.max(next.reached, level) }, change: 'up', helped };
+      return { ladder: { ...next, ...restart, level, lastChange: 'up', reached: Math.max(next.reached, level), cleared }, change: 'up', helped };
     }
     // The top level has no next one: the row starts again, and the first full row counts as mastering it.
     const mastered = next.reached < rule.levels;
-    return { ladder: { ...next, streak: 0, reached: rule.levels }, change: mastered ? 'mastered' : null, helped };
+    return { ladder: { ...next, streak: 0, reached: rule.levels, cleared }, change: mastered ? 'mastered' : null, helped };
   }
   if (helped && next.helpRun >= rule.down && l.level > l.floor && next.sinceChange >= rule.cooldown) {
     return { ladder: { ...next, ...restart, level: l.level - 1, lastChange: 'down' }, change: 'down', helped };
@@ -216,7 +266,7 @@ export function afterSolve(l: Ladder, rule: LadderRule, helped: boolean): Ladder
 
 /**
  * A parent's starting level: the child plays from here and never drops below it. Earlier levels count as done
- * for the ladder, but not for stickers: those want each level solved (see `solved`).
+ * for the ladder, but not for stickers: those want each level played (see `cleared` and `tally`).
  */
 export function startAt(l: Ladder, level: number): Ladder {
   return {
@@ -229,7 +279,8 @@ export function startAt(l: Ladder, level: number): Ladder {
     lastChange: null,
     reached: Math.max(l.reached, level),
     solvedTop: Math.max(l.solvedTop, level - 1),
-    solved: solvedLevels(l)
+    solved: solvedLevels(l),
+    cleared: clearedLevels(l)
   };
 }
 

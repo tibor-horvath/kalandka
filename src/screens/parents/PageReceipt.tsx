@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Seed } from '../../worlds/garden/art';
 import { podArcs } from '../../components/LevelMeter';
 import { Bolt } from '../../worlds/robot/art';
+import { Bell } from '../../worlds/tower/art';
+import { REWARD_UNIT } from '../../state/balance';
 import { tasksPerReward } from '../../state/pod';
 import { gameOf, type Sticker } from '../../state/stickers';
 import type { WorldId } from '../../state/worlds';
@@ -80,8 +82,8 @@ export function PageReceipt({ win, world, worldName, name }: { win: PageWin; wor
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [win, parts]);
 
-  const icon = world === 'robot' ? <Bolt size={24} /> : <Seed size={24} />;
-  const unit = world === 'robot' ? 'csavar' : 'mag';
+  const icon = world === 'robot' ? <Bolt size={24} /> : world === 'tower' ? <Bell size={24} /> : <Seed size={24} />;
+  const unit = REWARD_UNIT[world];
   const left = parts - endFrame(win, parts).fill;
 
   return (

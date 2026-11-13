@@ -30,7 +30,14 @@ const TILES: Record<PrintId, { glyph: string; tile: string }> = {
   seq: { glyph: 'AB?', tile: 'pa-tile--blue' },
   mirror: { glyph: '•|•', tile: 'pa-tile--sky' },
   code: { glyph: '●→?', tile: 'pa-tile--sand' },
-  fix: { glyph: '↑✗', tile: 'pa-tile--pink' }
+  fix: { glyph: '↑✗', tile: 'pa-tile--pink' },
+  day: { glyph: '☀→☾', tile: 'pa-tile--sun' },
+  season: { glyph: '❀', tile: 'pa-tile--pink' },
+  set: { glyph: '3:00', tile: 'pa-tile--blue' },
+  read: { glyph: '?:30', tile: 'pa-tile--sky' },
+  digi: { glyph: '7:15', tile: 'pa-tile--sand' },
+  sleep: { glyph: '+2', tile: 'pa-tile--pink' },
+  sand: { glyph: '⧗', tile: 'pa-tile--sun' }
 };
 
 const EXTRA_TILES: Record<ExtraId, { glyph: ReactNode; tile: string }> = {
@@ -363,6 +370,14 @@ function ShelfIcon({ id }: { id: Shelf }) {
           <circle cx="14.5" cy="13" r="1" />
           <path d="M2 12v3" />
           <path d="M22 12v3" />
+        </>
+      )}
+      {id === 'tower' && (
+        <>
+          <path d="M12 3v2" />
+          <path d="M7 21V9l5-4 5 4v12" />
+          <circle cx="12" cy="12" r="2.6" />
+          <path d="M5 21h14" />
         </>
       )}
       {id === 'extras' && (

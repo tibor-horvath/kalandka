@@ -22,7 +22,15 @@ export function WorldGroup({ world, heading: Heading, aside, children }: { world
       <div className="pa-world__head">
         <div className="pa-world__badge" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            {world.id === 'robot' ? (
+            {world.id === 'tower' ? (
+              <>
+                <path d="M12 3v2" />
+                <path d="M7 21V9l5-4 5 4v12" />
+                <circle cx="12" cy="12" r="2.6" />
+                <path d="M12 12v-1.4" />
+                <path d="M5 21h14" />
+              </>
+            ) : world.id === 'robot' ? (
               <>
                 <rect x="5" y="8" width="14" height="11" rx="3" />
                 <path d="M12 8V4" />

@@ -23,7 +23,8 @@ interface WinOptions {
 
 /** Said when practice pays the day's last seed or bolt; the tasks go on, the pod rests till tomorrow. */
 export function restedSpeech(game: LadderGame): string {
-  return `Mára megvan az öt ${GAMES[game].world === 'robot' ? 'csavarod' : 'magod'}! Gyakorolhatsz tovább, holnap újra gyűjthetsz.`;
+  const world = GAMES[game].world;
+  return `Mára megvan az öt ${world === 'robot' ? 'csavarod' : world === 'tower' ? 'harangod' : 'magod'}! Gyakorolhatsz tovább, holnap újra gyűjthetsz.`;
 }
 
 /**

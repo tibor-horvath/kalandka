@@ -171,6 +171,32 @@ export interface Progress {
   robotWish: { robot: number; part: string } | null;
   /** Gifts each robot friend has had (see FRIEND_GIFTS in robotParts.ts). */
   friendGifts: Partial<Record<string, number>>;
+  /** Óratorony's reward: one bell per full reward pod (every second task, like the garden's seeds). */
+  bells: number;
+  /** Bells spent in the Kisváros; the balance is bells − bellsSpent. */
+  bellsSpent: number;
+  /** Every task solved in the Óratorony: the clock the Kisváros's day runs on. */
+  towerTasks: number;
+  /** Kakuk has introduced himself. */
+  towerWelcomed: boolean;
+  /** Óratorony games opened at least once; the rest wear the "Új!" badge. */
+  towerOpened: GameId[];
+  /** Kisváros buildings put up, in the order they were bought (see state/town.ts). */
+  town: string[];
+  dayRound: number;
+  daySolved: number;
+  seasonRound: number;
+  seasonSolved: number;
+  setRound: number;
+  setSolved: number;
+  readRound: number;
+  readSolved: number;
+  digiRound: number;
+  digiSolved: number;
+  sleepRound: number;
+  sleepSolved: number;
+  sandRound: number;
+  sandSolved: number;
   /** Recent solved tasks per game and whether they needed help, for the parents' notes (see taskLog.ts). */
   taskLog: TaskLog;
   /** Each levelled game's difficulty ladder; a game missing here starts from its older save fields (see ladder.ts). */
@@ -276,6 +302,26 @@ export const DEFAULT_PROGRESS: Progress = {
   robotCharges: 0,
   robotWish: null,
   friendGifts: {},
+  bells: 0,
+  bellsSpent: 0,
+  towerTasks: 0,
+  towerWelcomed: false,
+  towerOpened: [],
+  town: [],
+  dayRound: 0,
+  daySolved: 0,
+  seasonRound: 0,
+  seasonSolved: 0,
+  setRound: 0,
+  setSolved: 0,
+  readRound: 0,
+  readSolved: 0,
+  digiRound: 0,
+  digiSolved: 0,
+  sleepRound: 0,
+  sleepSolved: 0,
+  sandRound: 0,
+  sandSolved: 0,
   taskLog: {},
   ladders: {},
   practicePay: { day: '', paid: {} }

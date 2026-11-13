@@ -7,9 +7,10 @@ import { useForm } from './Stage';
  * from the screen's layout, centred, and exposes the scale as --fit-k for anything that must
  * keep its real size (a button drawn on top of it).
  */
-export function FitBox({ width, height, className = '', children }: { width: number; height: number; className?: string; children: ReactNode }) {
+export function FitBox({ width, height, className = '', always = false, children }: { width: number; height: number; className?: string; always?: boolean; children: ReactNode }) {
   const form = useForm();
-  const phone = form !== 'tablet';
+  // `always`: the drawing scales on the tablet stage too (the Kalandka map, too tall for it with three islands).
+  const phone = form !== 'tablet' || always;
   const box = useRef<HTMLDivElement>(null);
   const [room, setRoom] = useState<{ w: number; h: number } | null>(null);
 

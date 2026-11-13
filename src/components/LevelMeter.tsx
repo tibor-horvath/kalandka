@@ -1,12 +1,15 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { speak } from '../lib/speech';
 import type { LevelMeterState } from '../state/levelMeter';
 import { podFill, tasksIn, tasksPerReward } from '../state/pod';
-import { useProgress } from '../state/progress';
+import { useProgress, type Progress } from '../state/progress';
 import { seedBalance } from '../state/garden';
 import { boltBalance, wishOf } from '../state/robotParts';
+import { bellBalance } from '../state/town';
+import type { WorldId } from '../state/worlds';
+import { Bell } from '../worlds/tower/art';
 
-type World = 'garden' | 'robot';
+type World = WorldId;
 
 /** Said when the top level's row fills for the first time; from then on the game is mixed practice. */
 const MASTERED_SPEECH = 'Mester vagy! Minden szintet megcsináltál! Mostantól vegyes feladatokkal gyakorolhatsz.';
@@ -33,6 +36,17 @@ function MeterBolt() {
     </svg>
   );
 }
+
+function MeterBell() {
+  return <Bell size={30} />;
+}
+
+/** Each world's reward in the meter: its icon, its balance, and the words for it. */
+const REWARD: Record<World, { icon: () => ReactNode; balance: (p: Progress) => number; have: string; next: string; its: string }> = {
+  garden: { icon: MeterSeed, balance: (p) => seedBalance(p), have: 'magod', next: 'magig', its: 'magja' },
+  robot: { icon: MeterBolt, balance: (p) => boltBalance(p), have: 'csavarod', next: 'csavarig', its: 'csavarja' },
+  tower: { icon: MeterBell, balance: (p) => bellBalance(p), have: 'harangod', next: 'harangig', its: 'harangja' }
+};
 
 /** A resting pod: today's practice seeds or bolts are all paid. */
 function MeterMoon() {
@@ -144,7 +158,7 @@ function RewardBank({ world, wait, rested }: { world: World; wait: number; reste
   const { progress } = useProgress();
   const tasks = tasksIn(progress, world);
   const parts = tasksPerReward(world);
-  const balance = world === 'robot' ? boltBalance(progress) : seedBalance(progress);
+  const balance = REWARD[world].balance(progress);
   const seen = useRef(tasks);
   const bank = useRef<HTMLSpanElement>(null);
   const [fresh, setFresh] = useState<{ quarter: number; paid: boolean } | null>(null);
@@ -174,7 +188,7 @@ function RewardBank({ world, wait, rested }: { world: World; wait: number; reste
   }, [paid]);
 
   const filled = rested ? 0 : paid ? parts : tasks % parts;
-  const Icon = world === 'robot' ? MeterBolt : MeterSeed;
+  const Icon = REWARD[world].icon;
   return (
     <span ref={bank} className={`reward-bank${paid ? ' is-paid' : ''}${rested ? ' is-rested' : ''}`} style={{ '--pay-wait': `${wait}ms`, ...flight } as CSSProperties} aria-hidden="true">
       <span className="reward-pod">
@@ -274,8 +288,8 @@ export function LevelMeter({ meter, world, justSolved = false, tasks }: { meter:
   const { level, levels, done, rounds, levelUp, mastered = false, finished = false, rested = false } = meter;
   const { progress } = useProgress();
   const left = tasksPerReward(world) - podFill(progress, world);
-  const balance = world === 'robot' ? `${boltBalance(progress)} csavarod` : `${seedBalance(progress)} magod`;
-  const reward = world === 'robot' ? 'csavarig' : 'magig';
+  const balance = `${REWARD[world].balance(progress)} ${REWARD[world].have}`;
+  const reward = REWARD[world].next;
 
   useEffect(() => {
     if (!levelUp && !mastered) return;
@@ -294,7 +308,7 @@ export function LevelMeter({ meter, world, justSolved = false, tasks }: { meter:
         : `${level + 1}. szint, ${rounds} körből ${done} kész`;
   const wish = world === 'robot' ? wishOf(progress) : null;
   const wishLine = wish ? (wish.need === 0 ? ` Megvan a csavar erre: ${wish.part.name.toLowerCase()}.` : ` Erre gyűjtesz: ${wish.part.name.toLowerCase()}, még ${wish.need} csavar.`) : '';
-  const next = rested ? `mára megvan a gyakorlás öt ${world === 'robot' ? 'csavarja' : 'magja'}` : `még ${left} feladat a következő ${reward}`;
+  const next = rested ? `mára megvan a gyakorlás öt ${REWARD[world].its}` : `még ${left} feladat a következő ${reward}`;
   const pips = tasks && tasks.of > 1 ? tasks : null;
   const inRound = pips ? `${pips.at + 1}. ${pips.unit ?? 'feladat'} a ${pips.of}-ből. ` : '';
 

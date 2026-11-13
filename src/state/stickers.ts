@@ -2,18 +2,19 @@ import { LEARN_MAX } from '../worlds/garden/games/learn/logic';
 import { GAMES, type GameId } from './games';
 import type { Progress } from './progress';
 import type { WorldId } from './worlds';
-import { LADDER_RULES, ladderOf, solvedLevels, type LadderGame } from './ladder';
+import { LADDER_RULES, clearedLevels, ladderOf, solvedLevels, tallyOf, type LadderGame } from './ladder';
 import { FRIENDS, FRIEND_GIFTS_EACH, boughtCount, friendGiftCount, friendGiftsOf, friendsOf, secondRobotOpen } from './robotParts';
 import { creditTasks, rewardFor } from './pod';
 import { today } from './screenTime';
 import { VISITORS, decorCount, gardenDone, giftsOf } from './garden';
+import { BUILDINGS, builtCount } from './town';
 
 // The sticker album: a row per game and per reward place, level stickers, finished paper sheets, and which are new.
 
 // ---------- stickers ----------
 
 /** Each world's reward place (Kiskert, Robotépítő) and finished paper sheets have album rows of their own, next to the games. */
-export type StickerGameId = GameId | 'kiskert' | 'robotepito' | 'paper-garden' | 'paper-robot';
+export type StickerGameId = GameId | 'kiskert' | 'robotepito' | 'kisvaros' | 'paper-garden' | 'paper-robot' | 'paper-tower';
 
 export interface Sticker {
   id: string;
@@ -65,7 +66,16 @@ export const STICKER_GAMES: StickerGame[] = [
   gameRow('code', '#C98F4E', '#10233A'),
   gameRow('fix', '#D9741A', '#FFFFFF', 'Hiba­vadász'),
   { id: 'robotepito', name: 'Robot­építő', color: '#7A4FB5', ink: '#FFFFFF', world: 'robot' },
-  { id: 'paper-robot', name: 'Feladat­lapok', color: '#D5DEE6', ink: '#10233A', world: 'robot' }
+  { id: 'paper-robot', name: 'Feladat­lapok', color: '#D5DEE6', ink: '#10233A', world: 'robot' },
+  gameRow('day', '#F2B33D', '#10233A'),
+  gameRow('season', '#3D8F3F', '#FFFFFF'),
+  gameRow('set', '#5B4B9A', '#FFFFFF', 'Óra­állító'),
+  gameRow('read', '#2E86DE', '#FFFFFF'),
+  gameRow('digi', '#1E2B3C', '#FFC93C'),
+  gameRow('sleep', '#9C8ADB', '#10233A'),
+  gameRow('sand', '#E9C46A', '#10233A', 'Homok­óra'),
+  { id: 'kisvaros', name: 'Kisváros', color: '#C8553D', ink: '#FFFFFF', world: 'tower' },
+  { id: 'paper-tower', name: 'Feladat­lapok', color: '#E3DEF5', ink: '#10233A', world: 'tower' }
 ];
 
 /** Pages done from this world's games: a sticker waits on the page's own world, like the game's. */
@@ -78,10 +88,10 @@ function pageWorld(key: string): WorldId | undefined {
 }
 
 /** What a finished page of `tasks` tasks pays now: its tasks fill the reward pod like solved tasks in its world's games. */
-export function pageReward(p: Progress, key: string, tasks: number): { seeds: number; bolts: number } {
+export function pageReward(p: Progress, key: string, tasks: number): { seeds: number; bolts: number; bells: number } {
   const world = pageWorld(key);
   const pay = world ? rewardFor(p, world, tasks) : 0;
-  return { seeds: world === 'garden' ? pay : 0, bolts: world === 'robot' ? pay : 0 };
+  return { seeds: world === 'garden' ? pay : 0, bolts: world === 'robot' ? pay : 0, bells: world === 'tower' ? pay : 0 };
 }
 
 /**
@@ -130,10 +140,16 @@ function sheetLevels(p: Progress, game: LadderGame): number[] {
 }
 
 /**
+ * Tasks solved on a level, helped or not, that earn its sticker even before the level is finished: so a child
+ * who keeps needing help there still gets it in the end, but not for a single task.
+ */
+export const STICKER_TASKS = 4;
+
+/**
  * A game's level stickers, easiest first: one per level, so every level done (in the game or on a sheet) has a
- * sticker of its own. `from` is the level (0-based) the sticker stands for: it is earned with the first task
- * solved there, so a child who keeps needing help on a level still has its sticker. `legacy` names the stickers
- * of the old hand-picked list it replaces.
+ * sticker of its own. `from` is the level (0-based) the sticker stands for: it is earned when that level is
+ * finished (stepped up from, or the top one mastered), or once STICKER_TASKS tasks were solved on it. `legacy`
+ * names the stickers of the old hand-picked list it replaces.
  */
 interface LevelSticker {
   from: number;
@@ -286,6 +302,53 @@ export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
     { from: 4, mark: '×3', label: 'Számjavító', praise: 'Már a rossz számot is kijavítod!', legacy: ['fix-times'] },
     { from: 5, mark: '↰', label: 'Fordulójavító', praise: 'A fordulós programban is megtalálod a hibát!', legacy: ['fix-turn'] },
     { from: 6, mark: '!!', label: 'Dupla javítás', praise: 'Két hibát is megtaláltál egy programban!', legacy: ['fix-two'] }
+  ],
+  day: [
+    { from: 0, mark: '→', label: 'Mi jön utána?', praise: 'Tudod, mi jön utána a napodban!' },
+    { from: 1, mark: '123', label: 'Három kártya', praise: 'Három kártyát is sorba raksz!' },
+    { from: 2, mark: '1234', label: 'Négy kártya', praise: 'Egy egész napot sorba raktál!' },
+    { from: 3, mark: '☀', label: 'Napszakok', praise: 'Tudod, mi van reggel, délben, délután és este!' },
+    { from: 4, mark: '?←', label: 'Mi volt előbb?', praise: 'Mindig tudod, mi volt előbb!' }
+  ],
+  season: [
+    { from: 0, mark: '❀', label: 'Évszak', praise: 'Egy fáról is megmondod, melyik évszak van!' },
+    { from: 1, mark: '↻', label: 'Évszakkör', praise: 'Tudod, hogyan jönnek egymás után az évszakok!' },
+    { from: 2, mark: '7', label: 'A hét napjai', praise: 'Sorban tudod a hét napjait!' },
+    { from: 3, mark: '±1', label: 'Tegnap, holnap', praise: 'Tudod, mi volt tegnap és mi lesz holnap!' },
+    { from: 4, mark: '±2', label: 'Holnapután', praise: 'Már a holnaputánt is kiszámolod!' },
+    { from: 5, mark: '12', label: 'Hónapok', praise: 'Tudod, melyik hónap melyik évszakban van!' }
+  ],
+  set: [
+    { from: 0, mark: '3', label: 'Kis mutató', praise: 'Beállítod a kis mutatót!' },
+    { from: 1, mark: '3:00', label: 'Egész óra', praise: 'Két mutatóval is beállítod az egész órát!' },
+    { from: 2, mark: '½', label: 'Fél óra', praise: 'Beállítod a fél órát is!' },
+    { from: 3, mark: '¼', label: 'Negyedek', praise: 'A negyedeket is beállítod!' },
+    { from: 4, mark: '5p', label: 'Öt percek', praise: 'Percre pontosan beállítod az órát!' }
+  ],
+  read: [
+    { from: 0, mark: '3', label: 'Kis mutató', praise: 'Leolvasod, hova mutat a kis mutató!' },
+    { from: 1, mark: '3:00', label: 'Egész óra', praise: 'Leolvasod az egész órát!' },
+    { from: 2, mark: '½', label: 'Fél óra', praise: 'Leolvasod a fél órát is!' },
+    { from: 3, mark: '¼', label: 'Negyedek', praise: 'Leolvasod a negyedeket is!' },
+    { from: 4, mark: '5p', label: 'Öt percek', praise: 'Percre pontosan leolvasod az órát!' }
+  ],
+  digi: [
+    { from: 0, mark: '7:00', label: 'Egész óra', praise: 'A digitális órát is érted!' },
+    { from: 1, mark: '7:30', label: 'Fél óra', praise: 'A fél órát is megtalálod a kijelzőn!' },
+    { from: 2, mark: '7:15', label: 'Negyedek', praise: 'A negyedeket is megtalálod a kijelzőn!' },
+    { from: 3, mark: '7:05', label: 'Öt percek', praise: 'A perceket is leolvasod a kijelzőről!' },
+    { from: 4, mark: '15:00', label: 'Délután', praise: 'Már a délutáni órákat is érted!' }
+  ],
+  sleep: [
+    { from: 0, mark: '1–3', label: 'Rövid alvás', praise: 'Kiszámoltad, mennyit aludt Kakuk!' },
+    { from: 1, mark: '5', label: 'Hosszú alvás', praise: 'A hosszú alvást is kiszámolod!' },
+    { from: 2, mark: '12→', label: 'Át a tizenkettőn', praise: 'A tizenkettőn át is jól számolsz!' },
+    { from: 3, mark: '1½', label: 'Fél órák', praise: 'A fél órákat is hozzászámolod!' }
+  ],
+  sand: [
+    { from: 0, mark: '⧗', label: 'Hosszabb', praise: 'Tudod, mi tart tovább!' },
+    { from: 1, mark: '⧖', label: 'Rövidebb', praise: 'Tudod, mi ér hamarabb véget!' },
+    { from: 2, mark: '?', label: 'Pillanat, perc, óra', praise: 'Tudod, mi tart egy pillanatig, és mi órákig!' }
   ]
 };
 
@@ -310,7 +373,9 @@ function levelStickers(game: LadderGame): Sticker[] {
     earned: (p: Progress) => {
       const to = rows[i + 1]?.from ?? LADDER_RULES[game].levels;
       const inRow = (level: number) => level >= s.from && level < to;
-      return solvedLevels(ladderOf(p, game)).some(inRow) || sheetLevels(p, game).some(inRow);
+      const l = ladderOf(p, game);
+      const played = (level: number) => inRow(level) && tallyOf(l, level) >= STICKER_TASKS;
+      return clearedLevels(l).some(inRow) || Array.from({ length: to - s.from }, (_, k) => s.from + k).some(played) || sheetLevels(p, game).some(inRow);
     }
   }));
 }
@@ -337,6 +402,9 @@ const OTHER_STICKERS: Sticker[] = [
   { id: 'robotepito-second', game: 'robotepito', mark: '2', label: 'Második robot', praise: 'Megérkezett a második robotod a munkapadra!', earned: secondRobotOpen },
   { id: 'robotepito-friends', game: 'robotepito', mark: '6', label: 'Minden barát', praise: 'Mind a hat robotbarát beköltözött a műhelybe!', earned: (p) => friendsOf(p).length === FRIENDS.length },
   { id: 'robotepito-gifts', game: 'robotepito', mark: '♥', label: 'Minden barátnak', praise: 'Mind a hat robotbarát kapott tőled ajándékot!', earned: (p) => FRIENDS.every((f) => friendGiftsOf(p, f.id) >= 1) },
+  { id: 'kisvaros-first', game: 'kisvaros', mark: '1', label: 'Első ház', praise: 'Felépült az első ház a Kisvárosban!', earned: (p) => builtCount(p) >= 1 },
+  { id: 'kisvaros-half', game: 'kisvaros', mark: '5', label: 'Fél város', praise: 'Már öt épület áll a Kisvárosban!', earned: (p) => builtCount(p) >= 5 },
+  { id: 'kisvaros-all', game: 'kisvaros', mark: String(BUILDINGS.length), label: 'Kész a város', praise: 'Kész a Kisváros! Minden épület áll, és jár a toronyóra.', earned: (p) => builtCount(p) >= BUILDINGS.length },
   { id: 'robotepito-shelf', game: 'robotepito', mark: '30', label: 'Teli polc', praise: 'Teli a polc! Minden robotbarát megkapta mind az öt ajándékát.', earned: (p) => friendGiftCount(p) === FRIENDS.length * FRIEND_GIFTS_EACH }
 ];
 
@@ -358,7 +426,7 @@ const capital = (word: string) => word[0].toUpperCase() + word.slice(1);
 
 /** A world's Feladatlapok stickers, one per step in PAGE_STEPS. */
 function pageStickers(world: WorldId): Sticker[] {
-  const game: StickerGameId = world === 'garden' ? 'paper-garden' : 'paper-robot';
+  const game: StickerGameId = `paper-${world}`;
   return PAGE_STEPS.map((n, i) => {
     const last = i === PAGE_STEPS.length - 1;
     const word = PAGE_WORDS[n];
@@ -375,7 +443,7 @@ function pageStickers(world: WorldId): Sticker[] {
   });
 }
 
-const PAGE_STICKERS = [...pageStickers('garden'), ...pageStickers('robot')];
+const PAGE_STICKERS = [...pageStickers('garden'), ...pageStickers('robot'), ...pageStickers('tower')];
 
 /** Every sticker, in album order. */
 export const STICKERS: Sticker[] = STICKER_GAMES.flatMap(({ id }) =>

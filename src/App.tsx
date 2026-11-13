@@ -22,6 +22,7 @@ import { Picker } from './screens/Picker';
 import { Rest, TimeBanner } from './screens/Rest';
 import { WorldMap } from './screens/WorldMap';
 import { loadRobotWorld, robotScreen } from './worlds/robot/screens/lazy';
+import { loadTowerWorld, towerScreen } from './worlds/tower/screens/lazy';
 import { GAMES, isGameId, roundOf, solvedOf, type GameId } from './state/games';
 import { ProfilesProvider, editKid, firstKid, hasSave, progressOf, setActive, useProfiles } from './state/profiles';
 import { useProgress } from './state/progress';
@@ -43,8 +44,8 @@ const PrintArea = lazy(async () => ({ default: (await import('./screens/PrintAre
 const Answers = lazy(async () => ({ default: (await import('./screens/Answers')).Answers }));
 
 /** Each world's home screen, and its reward place. */
-const HUBS = { garden: Home, robot: robotScreen('RobotHome') } as const;
-const REWARDS = { garden: Garden, robot: robotScreen('Workshop') } as const;
+const HUBS = { garden: Home, robot: robotScreen('RobotHome'), tower: towerScreen('TowerHome') } as const;
+const REWARDS = { garden: Garden, robot: robotScreen('Workshop'), tower: towerScreen('Town') } as const;
 
 /** Screens a child rests on when time is up, and where an update may reload the app. */
 function isHub(s: Screen): boolean {
@@ -86,9 +87,10 @@ function Game() {
   const inParents = parents !== 'closed';
   const world = currentWorld(progress);
 
-  // The workshop's chunk, right after the first screen is up: the map rarely waits for it.
+  // The other worlds' chunks, right after the first screen is up: the map rarely waits for them.
   useEffect(() => {
     loadRobotWorld().catch(() => {});
+    loadTowerWorld().catch(() => {});
   }, []);
 
   /** The place just opened from the island, and a game's solved count then, so coming back knows if a task was solved. */
@@ -144,6 +146,7 @@ function Game() {
   if (!route.landing && inParents) backLayers.push({ key: parents === 'print' ? 'print' : 'parents', close: () => setParents('closed') });
   useBackLayers(backLayers);
 
+  // Kakuk speaks in Csepi's voice: the voice settings have one voice for the robot and one for the other guides.
   useAudioSettings(progress, worldOfScreen(screen, world, albumWorld) === 'robot' ? 'robot' : 'csepi');
   useUpdateWhenIdle(isHub(screen) && !inParents);
   const { remaining, evening, timeUp, resting } = useScreenTime(

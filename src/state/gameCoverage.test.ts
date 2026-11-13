@@ -26,6 +26,6 @@ describe('every game in the game list', () => {
   });
 
   it('fits on its world\'s island, which has room for seven games', () => {
-    for (const world of ['garden', 'robot'] as const) expect(gamesIn(world).length).toBeLessThanOrEqual(7);
+    for (const world of ['garden', 'robot', 'tower'] as const) expect(gamesIn(world).length).toBeLessThanOrEqual(7);
   });
 });

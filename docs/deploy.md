@@ -2,7 +2,7 @@
 
 Kalandka is a static PWA: `npm run build` produces `dist/`, and that folder is all there is to host.
 It runs on **Azure Static Web Apps** (Free tier), created from [`infra/main.bicep`](../infra/main.bicep) and filled with the Static Web Apps CLI.
-Every push to `main` is built and tested by GitHub Actions (`.github/workflows/ci.yml`), and only a release is deployed; see [CI](../README.md#ci).
+Every push to `main` is built and tested by GitHub Actions (`.github/workflows/ci.yml`), and only a release is deployed; see [CI](ci.md).
 Manual deploys with the SWA CLI still work for previews and emergencies.
 
 ## What gets created

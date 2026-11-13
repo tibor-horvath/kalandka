@@ -5,7 +5,7 @@ import { Island, RewardDock, useEnter, useLeave, type Place, type RewardPlace } 
 import { PlayTimer, pausedLabel, useTimeLeft } from './PlayTimer';
 import { useForm } from './Stage';
 import { StickerPop } from './StickerPop';
-import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from './ui';
+import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon, type GuideId } from './ui';
 import type { Mood, Tone } from '../lib/types';
 import { useProfiles } from '../state/profiles';
 import { useProgress } from '../state/progress';
@@ -35,9 +35,10 @@ export interface HubBubble {
   tone?: Tone;
 }
 
-const LOOK: Record<WorldId, { className: string; guide: 'csepi' | 'csavar'; accent?: string }> = {
+const LOOK: Record<WorldId, { className: string; guide: GuideId; accent?: string }> = {
   garden: { className: 'screen screen--home screen--island', guide: 'csepi' },
-  robot: { className: 'screen screen--home screen--robot-home world--robot screen--island', guide: 'csavar', accent: '#0C6E6A' }
+  robot: { className: 'screen screen--home screen--robot-home world--robot screen--island', guide: 'csavar', accent: '#0C6E6A' },
+  tower: { className: 'screen screen--home screen--tower-home world--tower screen--island', guide: 'kakuk', accent: '#5B4B9A' }
 };
 
 /**

@@ -4,7 +4,7 @@ import { today } from './screenTime';
 import type { WorldId } from './worlds';
 
 // The reward pod: every solved task fills a part of the pod in the game's top bar, and a full pod
-// pays one seed (in the garden, every second task) or one bolt (in the workshop, every fourth task),
+// pays one seed (in the garden, every second task), one bell (in the Óratorony, every second task) or one bolt (in the workshop, every fourth task),
 // then starts again. The task count is also the clock the Kiskert's plants and the robot's battery run
 // on, so they still move with every task while the seeds and bolts to spend come slower.
 
@@ -20,7 +20,7 @@ export function tasksPerReward(world: WorldId): number {
 
 /** Every task ever solved in this world (games and finished paper pages). */
 export function tasksIn(p: Progress, world: WorldId): number {
-  return world === 'robot' ? p.robotTasks : p.gardenTasks;
+  return world === 'robot' ? p.robotTasks : world === 'tower' ? p.towerTasks : p.gardenTasks;
 }
 
 /** Parts of the pod filled now: 0 … tasksPerReward(world) − 1. */
@@ -36,9 +36,9 @@ export function rewardFor(p: Progress, world: WorldId, n: number): number {
 /** `n` solved tasks in a world: the clock moves on, and every full pod pays a seed or a bolt (unless `pays` is false). */
 export function creditTasks(p: Progress, world: WorldId, n = 1, pays = true): Progress {
   const pay = pays ? rewardFor(p, world, n) : 0;
-  return world === 'robot'
-    ? { ...p, robotTasks: p.robotTasks + n, bolts: p.bolts + pay }
-    : { ...p, gardenTasks: p.gardenTasks + n, seeds: p.seeds + pay };
+  if (world === 'robot') return { ...p, robotTasks: p.robotTasks + n, bolts: p.bolts + pay };
+  if (world === 'tower') return { ...p, towerTasks: p.towerTasks + n, bells: p.bells + pay };
+  return { ...p, gardenTasks: p.gardenTasks + n, seeds: p.seeds + pay };
 }
 
 // A finished game turns into practice (see isFinished in ladder.ts): its tasks still fill the pod and move

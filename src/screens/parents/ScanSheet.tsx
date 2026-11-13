@@ -5,9 +5,8 @@ import { AnswerList, OtherAnswers } from '../../print/sheet';
 import { kidName, useProfiles } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
 import { podFill, tasksPerReward } from '../../state/pod';
-import { seedBalance } from '../../state/garden';
 import { earnedStickers, markPageDone, pageReward, pagesDoneIn, topFirst } from '../../state/stickers';
-import { boltBalance } from '../../state/robotParts';
+import { REWARD_UNIT, balanceIn } from '../../state/balance';
 import { WORLDS } from '../../state/worlds';
 import { PageReceipt, type PageWin } from './PageReceipt';
 import { Scanner } from './Scanner';
@@ -100,14 +99,14 @@ function ScannedPage({ kidId, opened, onAgain }: { kidId: string; opened: Opened
   const [won, setWon] = useState<PageWin | null>(null);
   const done = progress.pagesDone.includes(key);
   const count = ticked.filter(Boolean).length;
-  const unit = spec.world === 'robot' ? 'csavar' : 'mag';
+  const unit = REWARD_UNIT[spec.world];
   const reward = pageReward(progress, key, tasks.length);
-  const pay = reward.seeds + reward.bolts;
+  const pay = reward.seeds + reward.bolts + reward.bells;
 
   const mark = () => {
     const had = new Set(earnedStickers(progress).map((s) => s.id));
     const stickers = topFirst(earnedStickers(markPageDone(progress, key, tasks.length)).filter((s) => !had.has(s.id)));
-    const total = spec.world === 'robot' ? boltBalance(progress) : seedBalance(progress);
+    const total = balanceIn(progress, spec.world);
     setWon({ tasks: tasks.length, fill: podFill(progress, spec.world), total, pay, stickers });
     update((p) => markPageDone(p, key, tasks.length));
   };

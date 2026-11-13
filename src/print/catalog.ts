@@ -2,10 +2,11 @@ import { GARDEN_SHEETS } from '../worlds/garden/print';
 import { pageKey, type PageRef, type ReadLink } from './link';
 import { readJson, removeKeys, writeKey } from '../lib/storage';
 import { ROBOT_SHEETS } from '../worlds/robot/print';
+import { TOWER_SHEETS } from '../worlds/tower/print';
 import { MAX_PAGES, type Density, type Grid, type PrintId, type PrintSpec } from './sheet';
 
 /** Every game's sheet, in the order the games stand in the parents' corner. */
-export const PRINT_SHEETS: PrintSpec<unknown>[] = [...GARDEN_SHEETS, ...ROBOT_SHEETS];
+export const PRINT_SHEETS: PrintSpec<unknown>[] = [...GARDEN_SHEETS, ...ROBOT_SHEETS, ...TOWER_SHEETS];
 
 export { MAX_PAGES } from './sheet';
 
