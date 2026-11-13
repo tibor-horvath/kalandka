@@ -28,8 +28,22 @@ describe('Hungarian number words', () => {
     expect(article(numberCount(20))).toBe('a');
   });
 
-  it('rejects numbers outside 1–100', () => {
+  it('goes past 100, so a big basket can still be read out', () => {
+    expect(numberAttr(101)).toBe('százegy');
+    expect(numberCount(102)).toBe('százkettő');
+    expect(numberAttr(102)).toBe('százkét');
+    expect(numberAttr(200)).toBe('kétszáz');
+    expect(numberCount(345)).toBe('háromszáznegyvenöt');
+    expect(numberAttr(1000)).toBe('ezer');
+    expect(numberCount(1999)).toBe('ezerkilencszázkilencvenkilenc');
+    expect(numberAttr(2000)).toBe('kétezer');
+    expect(numberCount(2002)).toBe('kétezer-kettő');
+    expect(numberAttr(12_500)).toBe('tizenkétezer-ötszáz');
+  });
+
+  it('rejects numbers outside 1–999 999', () => {
     expect(() => numberAttr(0)).toThrow(RangeError);
-    expect(() => numberCount(101)).toThrow(RangeError);
+    expect(() => numberCount(1_000_000)).toThrow(RangeError);
+    expect(() => numberCount(1.5)).toThrow(RangeError);
   });
 });
