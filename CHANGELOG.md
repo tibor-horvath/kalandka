@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.11.0](https://github.com/tibor-horvath/kalandka/compare/v1.10.0...v1.11.0) (2026-11-13)
+
+
+### Added
+
+* Redesing islands ([#65](https://github.com/tibor-horvath/kalandka/issues/65)) ([1893bb1](https://github.com/tibor-horvath/kalandka/commit/1893bb14056a25961d6a4004b5254fee78b9d27e))
+
+
+### Fixed
+
+* add sheets for each level ([#67](https://github.com/tibor-horvath/kalandka/issues/67)) ([46bd3e9](https://github.com/tibor-horvath/kalandka/commit/46bd3e9727152672a4fa6318cfef65b6ef3c1ad8))
+
 ## [1.10.0](https://github.com/tibor-horvath/kalandka/compare/v1.9.0...v1.10.0) (2026-11-12)
 
 
