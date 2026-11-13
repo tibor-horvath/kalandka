@@ -1,5 +1,5 @@
 import type { Progress } from './progress';
-import type { ArrivalProgress } from './rewards';
+import type { ArrivalProgress } from './garden';
 
 // Robotépítő, Robotműhely's reward: every four solved tasks in the workshop fill a pod that pays a bolt (see pod.ts); bolts buy parts
 // for the child's own robot; once the first robot has a few new parts a second robot comes to the

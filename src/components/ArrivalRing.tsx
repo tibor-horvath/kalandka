@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ArrivalProgress } from '../state/rewards';
+import type { ArrivalProgress } from '../state/garden';
 
 /** Ring arcs around the "?", one per plant (or part) the next arrival needs, with a small gap between them. */
 function arcs(n: number): string[] {

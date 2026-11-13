@@ -47,7 +47,7 @@ src/
     screens/                  Home, Garden (Kiskert), Learn, Water, Patterns, Flash, Add, Trace, Pots
     art.tsx, seeds.tsx        drops, flowers, pots, bees and the seed fields
     kiskert.tsx               the Kiskert's plants, fruit, visitors, treats and decorations
-    print.tsx                 the garden's printable sheets
+    print.tsx                 the garden's sheet list; each game's sheets are in games/<game>/print.tsx, shared drawing in printKit.tsx
   worlds/robot/             Robotműhely, Csavar's world
     games/path.ts             Robotút levels, course generator (shortest-way search), running a program, energy, Csavar's lines
     games/seq.ts              Mintagép levels, pattern rows and choices, reading the row aloud, Csavar's lines
@@ -59,7 +59,8 @@ src/
     screens/                  RobotHome, Workshop (Robotépítő), Path, Sort, Scale, Seq, Mirror, Code, Fix; a chunk of their own (lazy.ts)
     art.tsx, parts.tsx        Csavar, the robot parts and the workshop art
     floor.tsx                 the workshop floor (Robotút, Hibavadász)
-    print.tsx, robot.css      the workshop's printable sheets and styles
+    print.tsx                 the workshop's sheet list; each game's sheets are in games/<game>.print.tsx, shared helpers in printKit.ts
+    robot.css                 the workshop's styles
   lib/numbers.ts            Hungarian number words 1–100 ("két csepp" vs. counting "kettő", articles)
   lib/rng.ts                the seeded random every game draws its rounds from
   lib/speech.ts             Csepi's voice via browser hu-HU text-to-speech (placeholder for recorded audio)
@@ -73,7 +74,11 @@ src/
   state/levelMeter.ts       what the in-game level meter shows
   state/unlocks.ts          which garden games open after Számmagok progress
   state/pod.ts              the reward pod: four solved tasks pay a seed or a bolt; the task clock per world
-  state/rewards.ts          Kiskert planting and growth, care, Kamra recipes, visitors and the way to the next one, gifts and decorations, worksheet pages, stickers and which ones are new
+  state/garden/beds.ts      Kiskert seeds, beds and plots, tree and flower kinds (Magtár), the border
+  state/garden/harvest.ts   care (thirst and fruit), the basket and Kamra recipes
+  state/garden/veg.ts       the Veteményes and the bee's pollen
+  state/garden/visitors.ts  visitors and the way to the next one, gifts, decorations and snacks
+  state/stickers.ts         the album: sticker rows, level stickers, worksheet pages, which stickers are new
   state/worlds.ts           the Kalandka worlds and which one the child is in
   state/robotParts.ts       Robotépítő parts, buying and wearing them, robot friends and the way to the next one, battery and oil
   state/screenTime.ts       daily limit, play clock and 14-day history, bonus, rest now, evening rest

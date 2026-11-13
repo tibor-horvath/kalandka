@@ -8,7 +8,7 @@ import { linkUrl, pageKey } from '../../print/link';
 import { DENSITIES, OtherAnswers, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
 import { useProfiles, type AgeBand } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
-import { PAGE_STEPS, markPageDone, pagesDoneIn } from '../../state/rewards';
+import { PAGE_STEPS, markPageDone, pagesDoneIn } from '../../state/stickers';
 import { WORLDS, currentWorld, type WorldId } from '../../state/worlds';
 import { ScanSheet } from './ScanSheet';
 

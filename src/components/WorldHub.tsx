@@ -9,7 +9,7 @@ import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon }
 import type { Mood, Tone } from '../lib/types';
 import { useProfiles } from '../state/profiles';
 import { useProgress } from '../state/progress';
-import { earnedStickers, gameOf, markStickerSeen, type Sticker } from '../state/rewards';
+import { earnedStickers, gameOf, markStickerSeen, type Sticker } from '../state/stickers';
 import { WORLDS, type WorldId } from '../state/worlds';
 
 /** The place the child just left (a game, or the reward place), and whether they solved a task there this time. */

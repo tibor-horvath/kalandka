@@ -5,7 +5,7 @@ import { PlaceShell } from '../components/PlaceShell';
 import { popBubble } from '../lib/sound';
 import { speak } from '../lib/speech';
 import { useProgress } from '../state/progress';
-import { STICKERS, STICKER_GAMES, earnedStickers, type Sticker } from '../state/rewards';
+import { STICKERS, STICKER_GAMES, earnedStickers, type Sticker } from '../state/stickers';
 import { WORLDS, type WorldId } from '../state/worlds';
 
 /** A little tilt per sticker, so the album looks stuck in by hand (always the same for a sticker). */

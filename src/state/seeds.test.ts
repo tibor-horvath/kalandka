@@ -1,33 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
-import {
-  BORDER_SPOTS,
-  FLOWERS,
-  PLOT_BEDS,
-  VISITORS,
-  bedAt,
-  bedFlower,
-  borderAt,
-  borderPattern,
-  buyFlower,
-  canBuyFlower,
-  canGive,
-  canGiveSeeds,
-  canPlantBorder,
-  decorOf,
-  emptyBorder,
-  giftsOf,
-  giftsReady,
-  giveSeeds,
-  openBorder,
-  ownedFlowers,
-  ownsFlower,
-  plant,
-  plantBorder,
-  seedBalance,
-  seedGiftSize,
-  type FlowerId
-} from './rewards';
+import { BORDER_SPOTS, FLOWERS, PLOT_BEDS, VISITORS, bedAt, bedFlower, borderAt, borderPattern, buyFlower, canBuyFlower, canGive, canGiveSeeds, canPlantBorder, decorOf, emptyBorder, giftsOf, giftsReady, giveSeeds, openBorder, ownedFlowers, ownsFlower, plant, plantBorder, seedBalance, seedGiftSize, type FlowerId } from './garden';
 
 const withSeeds = (n: number, extra: Partial<Progress> = {}): Progress => ({ ...DEFAULT_PROGRESS, seeds: n, ...extra });
 

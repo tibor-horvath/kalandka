@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import type { DecorId, FlowerId, FoodId, PlantKind, TreatId, TreeId, VegId, VisitorId } from '../../state/rewards';
+import type { DecorId, FlowerId, FoodId, PlantKind, TreatId, TreeId, VegId, VisitorId } from '../../state/garden';
 
 // Artwork for the Kiskert. Plants share one 160 × 220 box standing on its
 // bottom edge, so beds line up whatever grows in them.

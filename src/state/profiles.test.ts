@@ -3,7 +3,7 @@ import { ADD_LEVELS } from '../worlds/garden/games/add/logic';
 import { PRINT_SHEETS } from '../print/catalog';
 import { LADDER_RULES, ladderOf, type LadderGame } from './ladder';
 import { DEFAULT_PROGRESS } from './progress';
-import { newStickers } from './rewards';
+import { newStickers } from './stickers';
 import { AGE_BANDS, MAX_KIDS, addKid, applyUpdate, editKid, firstKid, freeAvatars, fromProgress, parseProfiles, progressOf, removeKid, setActive, startingProgress } from './profiles';
 
 const two = () => addKid(fromProgress(DEFAULT_PROGRESS, 'a'), { name: 'Lili', avatar: 'ladybug', age: '5' }, 'b');

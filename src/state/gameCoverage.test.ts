@@ -3,7 +3,7 @@ import { PRINT_SHEETS } from '../print/catalog';
 import { GAME_IDS, GAMES, gamesIn } from './games';
 import { gameNotes } from './insights';
 import { DEFAULT_PROGRESS } from './progress';
-import { STICKER_GAMES, STICKERS } from './rewards';
+import { STICKER_GAMES, STICKERS } from './stickers';
 
 // The lists the type checker cannot hold to the game list: a new game must appear in each of them.
 

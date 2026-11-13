@@ -8,7 +8,7 @@ import { speak, type Speaker } from '../lib/speech';
 import type { Mood } from '../lib/types';
 import { kidName, progressOf, useProfiles, type Kid } from '../state/profiles';
 import { useProgress } from '../state/progress';
-import { todaysStickers } from '../state/rewards';
+import { todaysStickers } from '../state/stickers';
 import { formatMinutes, remainingSeconds, today } from '../state/screenTime';
 import { tasksOn } from '../state/taskLog';
 import { currentWorld, type WorldId } from '../state/worlds';

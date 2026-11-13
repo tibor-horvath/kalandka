@@ -1,7 +1,8 @@
 import { createContext, useContext } from 'react';
 import { ADD_LEVELS_VERSION, migrateAddLevel } from '../worlds/garden/games/add/logic';
 import type { GameId } from './games';
-import { carryOverBeds, carryOverStickers, markEarnedSeen, type Bed, type FlowerId, type GiftFruit, type TreatId, type VegSpot, type VisitorId } from './rewards';
+import { carryOverBeds, type Bed, type FlowerId, type GiftFruit, type TreatId, type VegSpot, type VisitorId } from './garden';
+import { carryOverStickers, markEarnedSeen } from './stickers';
 import type { PartSlot } from './robotParts';
 import type { Ladder, LadderGame } from './ladder';
 import type { PracticePay } from './pod';
@@ -15,13 +16,13 @@ export interface Progress {
   gardenTasks: number;
   /** Seeds planted in the Kiskert. */
   seedsSpent: number;
-  /** The Kiskert's beds (see BEDS in rewards.ts); null is an empty bed. */
+  /** The Kiskert's beds (see BEDS in garden/beds.ts); null is an empty bed. */
   beds: (Bed | null)[];
-  /** Flower kinds bought in the Magtár, for good; Mályva is every child's and is not listed (see FLOWERS in rewards.ts). */
+  /** Flower kinds bought in the Magtár, for good; Mályva is every child's and is not listed (see FLOWERS in garden/beds.ts). */
   flowersOwned: FlowerId[];
-  /** The Kiskert's border flowers, ten in front of each open plot (see the border section in rewards.ts); null is an empty spot. */
+  /** The Kiskert's border flowers, ten in front of each open plot (see the border section in garden/beds.ts); null is an empty spot. */
   border: (FlowerId | null)[];
-  /** The Veteményes, five spots per open plot (see rewards.ts); null is an empty spot. */
+  /** The Veteményes, five spots per open plot (see garden/veg.ts); null is an empty spot. */
   veg: (VegSpot | null)[];
   /** Beds per plot the save was made with; missing: the old ten (see carryOverBeds). */
   plotBeds: number;
@@ -31,9 +32,9 @@ export interface Progress {
   pollen: Record<string, number>;
   /** The day (local YYYY-MM-DD) each visitor last had a snack (after its five gifts). */
   snacked: Partial<Record<VisitorId, string>>;
-  /** Snacks each visitor has had: its snack pile grows by one per snack (see snackPile in rewards.ts). */
+  /** Snacks each visitor has had: its snack pile grows by one per snack (see snackPile in garden/visitors.ts). */
   snacks: Partial<Record<VisitorId, number>>;
-  /** Fruit picked in the Kiskert, kept for good (see the care section in rewards.ts). */
+  /** Fruit picked in the Kiskert, kept for good (see garden/harvest.ts). */
   pears: number;
   berries: number;
   /** Fruit made into treats; the basket holds pears − pearsUsed and berries − berriesUsed. */
@@ -43,14 +44,14 @@ export interface Progress {
   pantry: Partial<Record<TreatId, number>>;
   /** Kiskert visitors already welcomed (see VISITORS). */
   visitorsSeen: number;
-  /** Gifts each visitor has had from the pantry shelf, 0 … 3 (see the gifts section in rewards.ts). */
+  /** Gifts each visitor has had from the pantry shelf, 0 … 3 (see the gifts section in garden/visitors.ts). */
   gifts: Partial<Record<VisitorId, number>>;
   /** Stickers already celebrated; the rest of the earned ones get the sticker animation. */
   stickersSeen: string[];
   /** Stickers celebrated on stickersDay (local YYYY-MM-DD), in order; the rest screen shows the day's haul. */
   stickersDay: string;
   stickersToday: string[];
-  /** Printed pages a grown-up marked done, each once (see pageKey in print/link.ts); they earn the Feladatlapok stickers and each game's level stickers (see sheetLevels in rewards.ts). */
+  /** Printed pages a grown-up marked done, each once (see pageKey in print/link.ts); they earn the Feladatlapok stickers and each game's level stickers (see sheetLevels in stickers.ts). */
   pagesDone: string[];
   /** Plant ids grown in the watering game, oldest first. */
   garden: string[];

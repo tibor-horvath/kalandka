@@ -12,7 +12,8 @@ import { gamesIn, solvedOf, type GameId } from '../../../state/games';
 import { ladderOf } from '../../../state/ladder';
 import { kidName, useActiveKid, useProfiles } from '../../../state/profiles';
 import { useProgress, type Progress } from '../../../state/progress';
-import { PLANT_OPTIONS, canMakeAnything, emptyBeds, newStickers, newVisitor, seedBalance } from '../../../state/rewards';
+import { PLANT_OPTIONS, canMakeAnything, emptyBeds, newVisitor, seedBalance } from '../../../state/garden';
+import { newStickers } from '../../../state/stickers';
 import { isOpen, markAnnounced, nextToAnnounce, numbersLeft, unlockOf, type Unlock } from '../../../state/unlocks';
 
 function TrailArt() {

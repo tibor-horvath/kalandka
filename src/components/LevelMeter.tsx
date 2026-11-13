@@ -3,7 +3,7 @@ import { speak } from '../lib/speech';
 import type { LevelMeterState } from '../state/levelMeter';
 import { podFill, tasksIn, tasksPerReward } from '../state/pod';
 import { useProgress } from '../state/progress';
-import { seedBalance } from '../state/rewards';
+import { seedBalance } from '../state/garden';
 import { boltBalance, wishOf } from '../state/robotParts';
 
 type World = 'garden' | 'robot';

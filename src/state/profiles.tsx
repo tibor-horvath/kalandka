@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { ladderOf, placeAt, withLadder, type LadderGame } from './ladder';
 import { announceAll } from './unlocks';
 import { DEFAULT_PROGRESS, ProgressContext, readProgress, type Progress, type Update } from './progress';
-import { markEarnedSeen } from './rewards';
+import { markEarnedSeen } from './stickers';
 import { readKey, removeKeys, writeKey } from '../lib/storage';
 
 // Several children can play on one device. Each child has a profile (name, figure, age) and their own
