@@ -1,8 +1,8 @@
 import type { Mood, Tone } from '../../../lib/types';
 
-// Helpers every Óratorony game shares: Kakuk's lines, the seeded shuffles and the "after two misses" rule.
+// Helpers every Óratorony game shares: Kakukk's lines, the seeded shuffles and the "after two misses" rule.
 
-/** Kakuk's line: what the bubble shows and the sentence read aloud. */
+/** Kakukk's line: what the bubble shows and the sentence read aloud. */
 export interface Say {
   text: string;
   speech: string;

@@ -5,7 +5,8 @@ import { useProgress } from '../../../state/progress';
 import { SeasonSign, SeasonTree } from '../art';
 import { capital } from '../games/activities';
 import { MONTHS, SEASON_NAMES, WEEK, answerOf, buildSeasonRound, seasonSolved, seasonStart, seasonWrong, type Season, type SeasonRound } from '../games/season';
-import { Cards, KakukSays, NextButton, useQuestion, type Card } from './kit';
+import { useLevelIntro } from './Intro';
+import { Cards, KakukkSays, NextButton, useQuestion, type Card } from './kit';
 
 const seasonCard = (s: Season, tree = false): Card => ({
   key: s,
@@ -77,8 +78,9 @@ function Scene({ r, solved }: { r: SeasonRound; solved: boolean }) {
 export function SeasonGame({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('season');
+  const intro = useLevelIntro('season', level);
   const [round] = useState(() => buildSeasonRound(level, progress.seasonRound));
-  const q = useQuestion(seasonStart(round));
+  const q = useQuestion(seasonStart(round), intro.open);
   const right = answerOf(round);
   const solved = q.solved !== null;
 
@@ -97,11 +99,12 @@ export function SeasonGame({ onBack }: { onBack: () => void }) {
         : round.choices.map(dayCard);
 
   return (
-    <GameShell game="season" className="screen--tower screen--season" title="Évszakok" meter={meter} justSolved={solved && !step?.helped} onBack={onBack} onReplay={() => q.tell(q.line)}>
-      <KakukSays line={q.line} />
+    <GameShell game="season" className="screen--tower screen--season" title="Évszakok" meter={meter} justSolved={solved && !step?.helped} onBack={onBack} onReplay={() => q.tell(q.line)} help={intro.help}>
+      <KakukkSays line={q.line} />
       <Scene r={round} solved={solved} />
       <Cards q={q} right={right} onPick={pick} cards={cards} className={round.mode === 'which' || round.mode === 'month' ? 'tower-choices--parts' : ''} />
       <NextButton show={solved} onNext={goNext} />
+      {intro.render(() => q.tell(q.line))}
     </GameShell>
   );
 }

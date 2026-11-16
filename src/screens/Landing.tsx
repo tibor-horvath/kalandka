@@ -1,8 +1,8 @@
 import { Suspense, lazy, useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { Bee, PatternFlower, RoundFlower, Seed, SmallPot, Sprout } from '../worlds/garden/art';
 import { Csepi } from '../components/Csepi';
-import { CodeArt, Csavar, FixArt, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../worlds/robot/art';
-import { DayArt, DigiArt, Kakuk, ReadArt, SandArt, SeasonArt, SetArt, SleepArt } from '../worlds/tower/art';
+import { Bolt, CodeArt, Csavar, FixArt, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../worlds/robot/art';
+import { Bell, DayArt, DigiArt, Kakukk, ReadArt, SandArt, SeasonArt, SetArt, SleepArt } from '../worlds/tower/art';
 import { DotFace } from '../worlds/garden/seeds';
 import { Avatar } from '../components/avatars';
 import { KidFields, type KidDraft } from '../components/KidFields';
@@ -96,7 +96,7 @@ const TOWER_GAMES: [string, string, ReactNode][] = [
   ['Óraállító', 'A mutatók beállítása az egész órától az öt percig.', <SetArt />],
   ['Hány óra?', 'Az óra leolvasása: fél, negyed, háromnegyed.', <ReadArt />],
   ['Digitóra', 'A mutatós és a digitális óra párosítása.', <DigiArt />],
-  ['Kakuk alszik', 'Mennyi idő telt el két időpont között?', <SleepArt />],
+  ['Kakukk alszik', 'Mennyi idő telt el két időpont között?', <SleepArt />],
   ['Homokóra', 'Mi tart tovább: egy pillanat, néhány perc vagy órák?', <SandArt />]
 ];
 
@@ -148,13 +148,13 @@ const PRINCIPLES: { title: string; text: string; tone: string; icon: ReactNode }
   },
   {
     title: 'Jutalom, ami sosem fogy el',
-    text: 'Magok, csavarok, matricák – itt minden csak gyűlik. Semmi sem hervad el, semmi sem múlik a szerencsén vagy az eltöltött játékidőn.',
+    text: 'Magok, csavarok, harangok, matricák – itt minden csak gyűlik. Semmi sem hervad el, semmi sem múlik a szerencsén vagy az eltöltött játékidőn.',
     tone: 'sun',
     icon: <path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6-4.5-4.1 6-.7Z" />
   },
   {
     title: 'Nem baj, ha még nem tud olvasni',
-    text: 'Csepi, Csavar és Kakuk magyarul mondja el a feladatokat. A gyerkőcök a saját figurájukat keresik a képernyőn, nem a nevüket kell kiolvasniuk.',
+    text: 'Csepi, Csavar és Kakukk magyarul mondja el a feladatokat. A gyerkőcök a saját figurájukat keresik a képernyőn, nem a nevüket kell kiolvasniuk.',
     tone: 'drop',
     icon: <path d="M5 10v4M9 7v10M13 9v6M17 6v12M21 10v4" />
   }
@@ -209,25 +209,25 @@ const STORY: { title: string; text: string; tone: string; art: ReactNode }[] = [
   { title: 'Ezért kicsiben kezdjük.', text: 'Egy kis feladat, egy kis bátorság, egy kis siker. Lépésről lépésre.', tone: 'good', art: <Sprout /> },
   {
     title: 'Minden sziget egy kis kaland.',
-    text: 'Csepi a Számkertben, Csavar a Műhelyben, Kakuk az Óratoronyban vár. Bármelyik szigetre evezhetsz, amelyikhez épp kedved van.',
+    text: 'Csepi a Számkertben, Csavar a Műhelyben, Kakukk az Óratoronyban vár. Bármelyik szigetre evezhetsz, amelyikhez épp kedved van.',
     tone: 'sky',
     art: (
       <>
         <Csepi mood="smile" width={56} />
         <Csavar mood="smile" width={56} />
-        <Kakuk mood="smile" width={48} />
+        <Kakukk mood="smile" width={48} />
       </>
     )
   },
   {
     title: 'Sok kis kalandból lesz a nagy felfedező.',
-    text: 'Minden négy jó megoldás egy mag vagy egy csavar, és mind megmarad. Holnap jöhet a következő kaland.',
+    text: 'Mag, csavar vagy harang – minden jó megoldás gyűlik, és mind megmarad. Holnap jöhet a következő kaland.',
     tone: 'sun',
     art: (
       <>
         <Seed size={26} />
-        <Seed size={26} />
-        <Seed size={26} />
+        <Bolt size={28} />
+        <Bell size={28} />
       </>
     )
   }
@@ -370,34 +370,25 @@ function SheetPreviews() {
         </svg>
       </div>
       <div className="landing__paper landing__paper--mid">
-        <b>Virágsor</b>
-        <small>Mi jön ezután? Rajzold le!</small>
+        <b>Óraállító</b>
+        <small>Rajzold be a mutatókat!</small>
         <svg viewBox="0 0 134 160" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="12" cy="16" r="9" />
-          <path d="M30 25 L39 7 L48 25 Z" />
-          <circle cx="66" cy="16" r="9" />
-          <path d="M84 25 L93 7 L102 25 Z" />
-          <g transform="translate(0 44)">
-            <circle cx="12" cy="16" r="9" fill="currentColor" />
-            <circle cx="34" cy="16" r="9" />
-            <circle cx="56" cy="16" r="9" />
-            <circle cx="78" cy="16" r="9" fill="currentColor" />
-            <circle cx="100" cy="16" r="9" />
-          </g>
-          <g transform="translate(0 88)">
-            <rect x="3" y="7" width="18" height="18" rx="2" />
-            <rect x="27" y="7" width="18" height="18" rx="2" fill="currentColor" />
-            <path d="M54 25 L63 7 L72 25 Z" />
-            <rect x="78" y="7" width="18" height="18" rx="2" />
-          </g>
-          <g transform="translate(0 132)">
-            <path d="M3 25 L12 7 L21 25 Z" fill="currentColor" />
-            <path d="M27 25 L36 7 L45 25 Z" />
-            <path d="M51 25 L60 7 L69 25 Z" fill="currentColor" />
-            <path d="M75 25 L84 7 L93 25 Z" />
-          </g>
-          {[4, 48, 92, 136].map((y) => (
-            <rect key={y} x="112" y={y} width="20" height="24" rx="4" strokeDasharray="3 3" />
+          {[
+            [32, 30, 'fél négy', true],
+            [100, 30, 'hét óra', false],
+            [32, 106, 'negyed kettő', false],
+            [100, 106, 'dél', false]
+          ].map(([cx, cy, label, drawn]) => (
+            <g key={label as string}>
+              <circle cx={cx as number} cy={cy as number} r="26" />
+              {[0, 90, 180, 270].map((deg) => (
+                <path key={deg} d={`M${cx} ${(cy as number) - 26} v4`} transform={`rotate(${deg} ${cx} ${cy})`} />
+              ))}
+              {drawn && <path d={`M${cx} ${cy} V${(cy as number) + 20} M${cx} ${cy} L${(cx as number) + 12} ${(cy as number) - 6}`} strokeWidth="2.6" strokeLinecap="round" />}
+              <text x={cx as number} y={(cy as number) + 42} fontSize="11" textAnchor="middle" fill="currentColor" stroke="none">
+                {label}
+              </text>
+            </g>
           ))}
         </svg>
       </div>
@@ -453,7 +444,7 @@ function Sheets({ onOpen }: { onOpen: (age: AgeBand) => void }) {
           </p>
           <h2 id="l-sheets-title">Nyomtatható feladatlapok percek alatt</h2>
           <p className="landing__sheets-lead">
-            Mind a tizennégy játékunk kinyomtatható A4-es feladatlapként – regisztráció és profil nélkül, akár most rögtön. Csak válaszd ki, hány éves a gyerkőc, és máris a neki megfelelő
+            Mind a huszonegy játékunk kinyomtatható A4-es feladatlapként – regisztráció és profil nélkül, akár most rögtön. Csak válaszd ki, hány éves a gyerkőc, és máris a neki megfelelő
             szintű feladatok nyílnak meg. A lapokat úgy terveztük, hogy fekete-fehér nyomtatón is tökéletesen olvashatók legyenek.
           </p>
           <div className="landing__ages" role="radiogroup" aria-labelledby="l-sheets-age">
@@ -949,10 +940,10 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
                   5–7 éveseknek · magyarul
                 </p>
                 <h1 className="landing__in" style={delay(200)}>
-                  Számolás, logika és programozás – játszva, kudarc nélkül.
+                  Számolás, logika, programozás és az óra – játszva, kudarc nélkül.
                 </h1>
                 <p className="landing__lead landing__in" style={delay(280)}>
-                  Fejlesztő játékok tabletre és telefonra. Csepi, a vízcsepp a Számkertben, Csavar, a robot a Műhelyben, Kakuk, a kakukk pedig az Óratoronyban várja a gyerkőcöket. Ők választanak szigetet, a feladatok
+                  Fejlesztő játékok tabletre és telefonra. Csepi, a vízcsepp a Számkertben, Csavar, a robot a Műhelyben, Kakukk, a kakukk pedig az Óratoronyban várja a gyerkőcöket. Ők választanak szigetet, a feladatok
                   nehézsége pedig észrevétlenül alkalmazkodik hozzájuk.
                 </p>
                 <StartButton onStart={ask} className="landing__in" style={delay(360)}>
@@ -969,10 +960,13 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
                 </ul>
               </div>
               <div className="landing__hero-art" aria-hidden="true">
-                <div className="landing__island landing__island--garden landing__pop" style={delay(300)}>
+                <div className="landing__island landing__island--tower landing__pop" style={delay(300)}>
+                  <Kakukk mood="cheer" width={124} className="landing__hop" />
+                </div>
+                <div className="landing__island landing__island--garden landing__pop" style={delay(420)}>
                   <Csepi mood="cheer" width={150} className="landing__hop" />
                 </div>
-                <div className="landing__island landing__island--robot landing__pop" style={delay(420)}>
+                <div className="landing__island landing__island--robot landing__pop" style={delay(540)}>
                   <Csavar mood="cheer" width={150} className="landing__hop landing__hop--late" />
                 </div>
               </div>
@@ -984,7 +978,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
           <section className="landing__section" aria-labelledby="l-worlds">
             <div className="landing__wrap">
               <h2 id="l-worlds" className="landing__reveal">
-                Két sziget, tizennégy játék
+                Három sziget, huszonegy játék
               </h2>
               <p className="landing__intro landing__reveal">Nincsenek lezárt világok, a gyerkőcök szabadon evezhetnek bármelyik szigetre. Az app mindig ott nyílik meg, ahol legutóbb jártak.</p>
               <div className="landing__worlds">
@@ -1016,7 +1010,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
                 </article>
                 <article className="landing__world landing__world--tower landing__reveal">
                   <div className="landing__world-head">
-                    <Kakuk mood="smile" width={56} />
+                    <Kakukk mood="smile" width={56} />
                     <div>
                       <h3>Óratorony</h3>
                       <p>Kakukkal · napszakok, napok és az óra</p>

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { Mood, Tone } from '../lib/types';
 import { Csepi } from './Csepi';
 import { Csavar } from '../worlds/robot/art';
-import { Kakuk } from '../worlds/tower/art';
+import { Kakukk } from '../worlds/tower/art';
 
 const strokeProps = {
   fill: 'none',
@@ -83,8 +83,8 @@ export function RoundButton({ label, onClick, children, tint = 'white' }: { labe
   );
 }
 
-/** Each world's guide: Csepi in Számkertész, Csavar in Robotműhely, Kakuk in the Óratorony. */
-export type GuideId = 'csepi' | 'csavar' | 'kakuk';
+/** Each world's guide: Csepi in Számkertész, Csavar in Robotműhely, Kakukk in the Óratorony. */
+export type GuideId = 'csepi' | 'csavar' | 'kakukk';
 
 /** The world's guide next to a speech bubble whose colour follows the tone. */
 export function GuideBubble({
@@ -102,7 +102,7 @@ export function GuideBubble({
   children: ReactNode;
   live?: boolean;
 }) {
-  const Guide = guide === 'csavar' ? Csavar : guide === 'kakuk' ? Kakuk : Csepi;
+  const Guide = guide === 'csavar' ? Csavar : guide === 'kakukk' ? Kakukk : Csepi;
   return (
     <div className="guide">
       <Guide mood={mood} width={csepiWidth} className="guide__csepi" />

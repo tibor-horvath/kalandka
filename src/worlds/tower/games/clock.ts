@@ -1,6 +1,6 @@
 import { rng } from '../../../lib/rng';
 import { digital, dialHour, nextHour, timeWords, type ClockTime } from '../../../lib/time';
-import { numberCount } from '../../../lib/numbers';
+import { numberAttr, numberCount } from '../../../lib/numbers';
 import { SHOW_AFTER, say, seedOf, shuffle, type Say } from './common';
 import { capital } from './activities';
 
@@ -72,16 +72,24 @@ function nearMisses(t: ClockTime, step: ClockStep): ClockTime[] {
     case 'quarter':
       return [{ h: prev, m: t.m }, { h: t.h, m: 60 - t.m }, { h: dialHour(t.m / 5), m: 0 }];
     case 'five':
-      return [{ h: prev, m: t.m }, { h: t.h, m: 60 - t.m }, { h: next, m: t.m }];
+      // First and always offered: the number the long hand points at, read as minutes (3:20 as "három óra négy perc").
+      return [numberAsMinutes(t), { h: prev, m: t.m }, { h: t.h, m: 60 - t.m }, { h: next, m: t.m }];
   }
+}
+
+/** The five-minute mix-up: the long hand's number taken for the minutes. */
+export function numberAsMinutes(t: ClockTime): ClockTime {
+  return { h: t.h, m: t.m / 5 };
 }
 
 const same = (a: ClockTime, b: ClockTime) => dialHour(a.h) === dialHour(b.h) && a.m === b.m;
 
-/** Two different near misses of `t`. */
+/** Two different near misses of `t`. On the five-minute step the number-as-minutes card is always one of them. */
 function distractors(t: ClockTime, step: ClockStep, rand: () => number): ClockTime[] {
   const out: ClockTime[] = [];
-  for (const c of shuffle(nearMisses(t, step), rand)) {
+  const misses = nearMisses(t, step);
+  const order = step === 'five' ? [misses[0], ...shuffle(misses.slice(1), rand)] : shuffle(misses, rand);
+  for (const c of order) {
     if (!same(c, t) && !out.some((o) => same(o, c))) out.push(c);
     if (out.length === 2) break;
   }
@@ -167,6 +175,7 @@ export function readWrong(r: ReadRound, wrong: number, misses: number): Say {
   if (show) return say(`Hoppá! ${capital(timeWords(t))} van. Nézd, világít.`, 'think', 'oops');
   if (t.m === 0) return say(`Hoppá! Nézd a kis mutatót: melyik számra mutat?`, 'think', 'oops');
   const said = r.choices[wrong];
+  if (said === timeWords(numberAsMinutes(t))) return say(fiveHint(t), 'think', 'oops');
   if (said.endsWith(' óra') && t.m === 30) return say('Hoppá! A hosszú mutató a percet mutatja. Nézd a rövidet!', 'think', 'oops');
   if (t.m === 30 || t.m === 15 || t.m === 45) {
     return say(`Hoppá! Nézd a kis mutatót: már elhagyta a ${numberSuffix(t.h, 'elhagyta')}, és a ${numberSuffix(nextHour(t.h), 'fele')} tart.`, 'think', 'oops');
@@ -194,9 +203,10 @@ export function buildDigiRound(level: number, round: number): DigiRound {
   const time = timeFor(l.step, rand);
   const pm = l.step === 'afternoon';
   if (pm) {
-    // Délután: the 24-hour reading, against an hour off on each side.
+    // Délután: the 24-hour reading, against the morning reading (the twelve not added) and an hour off.
     const right = digital(time, true);
-    const cards = shuffle([right, `${time.h + 11}:00`, `${time.h + 13}:00`], rand);
+    const off = rand() < 0.5 ? `${time.h + 11}:00` : `${time.h + 13}:00`;
+    const cards = shuffle([right, digital(time), off], rand);
     return { level: l, time, choices: cards, answer: cards.indexOf(right) };
   }
   const cards = shuffle([time, ...distractors(time, l.step, rand)], rand);
@@ -211,8 +221,12 @@ export function digiStart(r: DigiRound): Say {
 export function digiWrong(r: DigiRound, wrong: number, misses: number): Say {
   const t = r.time;
   if (misses >= SHOW_AFTER) return say(`Hoppá! ${capital(timeWords(t))}: ${r.choices[r.answer]}. Nézd, világít.`, 'think', 'oops');
+  if (r.level.step === 'afternoon' && r.choices[wrong] === digital(t)) {
+    return say(`Hoppá! ${digital(t)} ${dialHour(t.h) <= 5 ? 'éjjel van, akkor alszunk' : 'reggel van'}. Délben tizenkét óra van, délután innen számolunk tovább: egy óra az tizenhárom.`, 'think', 'oops');
+  }
   if (r.level.step === 'afternoon') return say('Hoppá! Délben tizenkét óra van, délután innen számolunk tovább: egy óra az tizenhárom.', 'think', 'oops');
   const [hh, mm] = r.choices[wrong].split(':').map(Number);
+  if (r.level.step === 'five' && hh === dialHour(t.h) && mm === t.m / 5) return say(fiveHint(t), 'think', 'oops');
   if (mm !== t.m) return say(`Hoppá! A kettőspont után a percek állnak. Most ${t.m === 0 ? 'nulla' : numberCount(t.m)} perc van.`, 'think', 'oops');
   if (hh === nextHour(t.h)) return say(`Hoppá! ${capital(timeWords(t))}: a ${numberCount(nextHour(t.h))} felé tartunk, de még ${numberCount(dialHour(t.h))} óra múlt.`, 'think', 'oops');
   return say('Hoppá! Nézd meg a kis mutatót: hány óra múlt?', 'think', 'oops');
@@ -220,6 +234,12 @@ export function digiWrong(r: DigiRound, wrong: number, misses: number): Say {
 
 export function digiSolved(r: DigiRound): Say {
   return say(`Kakukk! ${capital(timeWords(r.time))}: ${r.choices[r.answer]}.`, 'cheer', 'good');
+}
+
+/** "A nagy mutató a négyesre mutat, de az nem négy perc …": the hint for the number-as-minutes card. */
+function fiveHint(t: ClockTime): string {
+  const n = t.m / 5;
+  return `Hoppá! A nagy mutató a ${numberSuffix(n)} mutat, de az nem ${numberAttr(n)} perc: minden szám öt percet ér. Számolj ötösével!`;
 }
 
 // ---------- the numbers in sentences ----------

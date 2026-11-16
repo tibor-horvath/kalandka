@@ -146,7 +146,7 @@ function Game() {
   if (!route.landing && inParents) backLayers.push({ key: parents === 'print' ? 'print' : 'parents', close: () => setParents('closed') });
   useBackLayers(backLayers);
 
-  // Kakuk speaks in Csepi's voice: the voice settings have one voice for the robot and one for the other guides.
+  // Kakukk speaks in Csepi's voice: the voice settings have one voice for the robot and one for the other guides.
   useAudioSettings(progress, worldOfScreen(screen, world, albumWorld) === 'robot' ? 'robot' : 'csepi');
   useUpdateWhenIdle(isHub(screen) && !inParents);
   const { remaining, evening, timeUp, resting } = useScreenTime(

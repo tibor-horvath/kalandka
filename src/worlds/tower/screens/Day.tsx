@@ -5,7 +5,8 @@ import { useProgress } from '../../../state/progress';
 import { ActivityPic, DayPartSign } from '../art';
 import { ACTIVITIES, DAY_PARTS, capital, type ActivityId } from '../games/activities';
 import { buildDayRound, dayPlaced, daySolved, dayStart, dayWrongBefore, dayWrongPart, dayWrongSeq, type SeqRound } from '../games/day';
-import { Cards, KakukSays, NextButton, useQuestion } from './kit';
+import { useLevelIntro } from './Intro';
+import { Cards, KakukkSays, NextButton, useQuestion } from './kit';
 
 const PART_LABEL: Record<string, string> = { reggel: 'Reggel', délben: 'Délben', délután: 'Délután', este: 'Este' };
 
@@ -13,8 +14,9 @@ const PART_LABEL: Record<string, string> = { reggel: 'Reggel', délben: 'Délben
 export function Day({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('day');
+  const intro = useLevelIntro('day', level);
   const [round] = useState(() => buildDayRound(level, progress.dayRound));
-  const q = useQuestion(dayStart(round));
+  const q = useQuestion(dayStart(round), intro.open);
   /** Cards placed in the row so far (beyond the ones given). */
   const [placed, setPlaced] = useState(0);
   const solved = q.solved !== null;
@@ -115,11 +117,12 @@ export function Day({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <GameShell game="day" className="screen--tower screen--day" title="Napirend" meter={meter} justSolved={solved && !step?.helped} onBack={onBack} onReplay={() => q.tell(q.line)}>
-      <KakukSays line={q.line} />
+    <GameShell game="day" className="screen--tower screen--day" title="Napirend" meter={meter} justSolved={solved && !step?.helped} onBack={onBack} onReplay={() => q.tell(q.line)} help={intro.help}>
+      <KakukkSays line={q.line} />
       {scene}
       {cards}
       <NextButton show={solved} onNext={goNext} />
+      {intro.render(() => q.tell(q.line))}
     </GameShell>
   );
 }

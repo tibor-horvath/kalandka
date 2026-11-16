@@ -4,15 +4,16 @@ import { speak } from '../../../lib/speech';
 import { buzz, chime, fanfare } from '../../../lib/sound';
 import { SHOW_AFTER, type Say } from '../games/common';
 
-// What the Óratorony's games share: Kakuk's bubble, a row of answer cards, and the way on to the next task.
+// What the Óratorony's games share: Kakukk's bubble, a row of answer cards, and the way on to the next task.
 // One question per task: a wrong card shakes once and stays dimmed, two misses light the right one up, and a
-// right card gets the tick, Kakuk's "Kakukk!" and the meter's step.
+// right card gets the tick, Kakukk's "Kakukk!" and the meter's step.
 
 /**
- * One question's state: Kakuk's line, the misses, which cards were tried, and whether it is solved. `answer`
- * returns true when the pick was right; the screen hands it the lines to say. The first line is said on mount.
+ * One question's state: Kakukk's line, the misses, which cards were tried, and whether it is solved. `answer`
+ * returns true when the pick was right; the screen hands it the lines to say. The first line is said on mount,
+ * unless `quiet` (a level intro is open).
  */
-export function useQuestion(start: Say) {
+export function useQuestion(start: Say, quiet = false) {
   const [line, setLine] = useState<Say>(start);
   const [misses, setMisses] = useState(0);
   const [tried, setTried] = useState<number[]>([]);
@@ -26,8 +27,9 @@ export function useQuestion(start: Say) {
   useEffect(() => {
     if (said.current) return;
     said.current = true;
-    speak(start.speech);
-  }, [start.speech]);
+    // A level's intro is showing: it speaks first, and the game says its line when the intro closes.
+    if (!quiet) speak(start.speech);
+  }, [start.speech, quiet]);
 
   const tell = (s: Say) => {
     setLine(s);
@@ -45,7 +47,7 @@ export function useQuestion(start: Say) {
     tell(say(m));
   };
 
-  /** The right card: the tick, the cuckoo's fanfare and Kakuk's line. */
+  /** The right card: the tick, the cuckoo's fanfare and Kakukk's line. */
   const hit = (i: number, say: Say, last = true) => {
     if (last) {
       setSolved(i);
@@ -68,10 +70,10 @@ export function useQuestion(start: Say) {
 
 export type Question = ReturnType<typeof useQuestion>;
 
-export function KakukSays({ line }: { line: Say }) {
+export function KakukkSays({ line }: { line: Say }) {
   return (
     <div className="tower-guide">
-      <GuideBubble guide="kakuk" mood={line.mood} tone={line.tone} csepiWidth={62}>
+      <GuideBubble guide="kakukk" mood={line.mood} tone={line.tone} csepiWidth={62}>
         {line.text}
       </GuideBubble>
     </div>

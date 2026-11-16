@@ -177,12 +177,20 @@ export interface Progress {
   bellsSpent: number;
   /** Every task solved in the Óratorony: the clock the Kisváros's day runs on. */
   towerTasks: number;
-  /** Kakuk has introduced himself. */
+  /** Kakukk has introduced himself. */
   towerWelcomed: boolean;
   /** Óratorony games opened at least once; the rest wear the "Új!" badge. */
   towerOpened: GameId[];
   /** Kisváros buildings put up, in the order they were bought (see state/town.ts). */
   town: string[];
+  /** Upgrades each Kisváros building has had (0 … 2; built is stage 1). */
+  townStages: Partial<Record<string, number>>;
+  /** Gifts each building's resident has had (0 … 5). */
+  townGifts: Partial<Record<string, number>>;
+  /** Buildings whose resident has been welcomed with their card. */
+  townWelcomed: string[];
+  /** Szint-bemutatók seen (by idea, see worlds/tower/games/intros.ts): they no longer open by themselves. */
+  introsSeen: string[];
   dayRound: number;
   daySolved: number;
   seasonRound: number;
@@ -308,6 +316,10 @@ export const DEFAULT_PROGRESS: Progress = {
   towerWelcomed: false,
   towerOpened: [],
   town: [],
+  townStages: {},
+  townGifts: {},
+  townWelcomed: [],
+  introsSeen: [],
   dayRound: 0,
   daySolved: 0,
   seasonRound: 0,

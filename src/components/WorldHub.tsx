@@ -38,7 +38,7 @@ export interface HubBubble {
 const LOOK: Record<WorldId, { className: string; guide: GuideId; accent?: string }> = {
   garden: { className: 'screen screen--home screen--island', guide: 'csepi' },
   robot: { className: 'screen screen--home screen--robot-home world--robot screen--island', guide: 'csavar', accent: '#0C6E6A' },
-  tower: { className: 'screen screen--home screen--tower-home world--tower screen--island', guide: 'kakuk', accent: '#5B4B9A' }
+  tower: { className: 'screen screen--home screen--tower-home world--tower screen--island', guide: 'kakukk', accent: '#5B4B9A' }
 };
 
 /**

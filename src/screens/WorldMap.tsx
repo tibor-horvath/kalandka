@@ -5,7 +5,7 @@ import { BoatArt } from '../components/boat';
 import { FitBox } from '../components/FitBox';
 import { ParentsButton } from '../components/hub';
 import { Bolt, Csavar } from '../worlds/robot/art';
-import { Bell, Kakuk, TowerMapArt } from '../worlds/tower/art';
+import { Bell, Kakukk, TowerMapArt } from '../worlds/tower/art';
 import { bellBalance } from '../state/town';
 import { PlayTimer, pausedLabel, useTimeLeft } from '../components/PlayTimer';
 import { useForm, useWideStage } from '../components/Stage';
@@ -20,7 +20,7 @@ import { WORLDS, currentWorld, type WorldId } from '../state/worlds';
 const DOCKED: Record<WorldId, string> = { garden: 'a kertnél', robot: 'a műhelynél', tower: 'a toronynál' };
 
 const speech = (last: WorldId | null) =>
-  `Hova evezünk ma?${last ? ` A hajód ${DOCKED[last]} vár.` : ''} A kert szigetén Csepi, a műhely szigetén Csavar, a robot, a torony szigetén Kakuk, a kakukk. Koppints az egyik szigetre!`;
+  `Hova evezünk ma?${last ? ` A hajód ${DOCKED[last]} vár.` : ''} A kert szigetén Csepi, a műhely szigetén Csavar, a robot, a torony szigetén Kakukk, a kakukk. Koppints az egyik szigetre!`;
 
 /*
  * The trip after a tap (ms): the boat sets off, sails to the island while its guide hops to greet it,
@@ -314,7 +314,7 @@ function WorkshopIsland({ at }: { at: Pt }) {
   );
 }
 
-/** Kakuk's island: a cobbled square, the clock tower and two houses, and Kakuk. Only Kakuk hops hello. */
+/** Kakukk's island: a cobbled square, the clock tower and two houses, and Kakukk. Only Kakukk hops hello. */
 function TowerIsland({ at }: { at: Pt }) {
   return (
     <g transform={`translate(${at.x} ${at.y})`}>
@@ -323,7 +323,7 @@ function TowerIsland({ at }: { at: Pt }) {
       <TowerMapArt />
       <g transform="translate(-196 -70)">
         <g className="map-hop">
-          <Kakuk mood="cheer" width={64} />
+          <Kakukk mood="cheer" width={64} />
         </g>
       </g>
     </g>
@@ -504,7 +504,7 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
   const faces: Record<WorldId, ReactNode> = {
     garden: <Csepi mood="cheer" width={40} />,
     robot: <Csavar mood="cheer" width={40} />,
-    tower: <Kakuk mood="cheer" width={40} />
+    tower: <Kakukk mood="cheer" width={40} />
   };
 
   return (

@@ -7,7 +7,7 @@ import { FRIENDS, FRIEND_GIFTS_EACH, boughtCount, friendGiftCount, friendGiftsOf
 import { creditTasks, rewardFor } from './pod';
 import { today } from './screenTime';
 import { VISITORS, decorCount, gardenDone, giftsOf } from './garden';
-import { BUILDINGS, builtCount } from './town';
+import { BUILDINGS, STAGES, builtCount, giftCount, giftsOf as townGiftsOf, stageOf, upgradeCount } from './town';
 
 // The sticker album: a row per game and per reward place, level stickers, finished paper sheets, and which are new.
 
@@ -340,15 +340,18 @@ export const LEVEL_STICKERS: Record<LadderGame, LevelSticker[]> = {
     { from: 4, mark: '15:00', label: 'Délután', praise: 'Már a délutáni órákat is érted!' }
   ],
   sleep: [
-    { from: 0, mark: '1–3', label: 'Rövid alvás', praise: 'Kiszámoltad, mennyit aludt Kakuk!' },
+    { from: 0, mark: '1–3', label: 'Rövid alvás', praise: 'Kiszámoltad, mennyit aludt Kakukk!' },
     { from: 1, mark: '5', label: 'Hosszú alvás', praise: 'A hosszú alvást is kiszámolod!' },
     { from: 2, mark: '12→', label: 'Át a tizenkettőn', praise: 'A tizenkettőn át is jól számolsz!' },
-    { from: 3, mark: '1½', label: 'Fél órák', praise: 'A fél órákat is hozzászámolod!' }
+    { from: 3, mark: '1½', label: 'Fél órák', praise: 'A fél órákat is hozzászámolod!' },
+    { from: 4, mark: '?:00', label: 'Mikor ébredt?', praise: 'Kiszámoltad, mikor ébredt fel Kakukk!' }
   ],
   sand: [
     { from: 0, mark: '⧗', label: 'Hosszabb', praise: 'Tudod, mi tart tovább!' },
     { from: 1, mark: '⧖', label: 'Rövidebb', praise: 'Tudod, mi ér hamarabb véget!' },
-    { from: 2, mark: '?', label: 'Pillanat, perc, óra', praise: 'Tudod, mi tart egy pillanatig, és mi órákig!' }
+    { from: 2, mark: '⧗⧗', label: 'Leghosszabb', praise: 'Háromból is megtalálod, mi tart a legtovább!' },
+    { from: 3, mark: '⧖⧖', label: 'Legrövidebb', praise: 'Háromból is megtalálod, mi ér leghamarabb véget!' },
+    { from: 4, mark: '?', label: 'Pillanat, perc, óra', praise: 'Tudod, mi tart egy pillanatig, és mi órákig!' }
   ]
 };
 
@@ -405,6 +408,10 @@ const OTHER_STICKERS: Sticker[] = [
   { id: 'kisvaros-first', game: 'kisvaros', mark: '1', label: 'Első ház', praise: 'Felépült az első ház a Kisvárosban!', earned: (p) => builtCount(p) >= 1 },
   { id: 'kisvaros-half', game: 'kisvaros', mark: '5', label: 'Fél város', praise: 'Már öt épület áll a Kisvárosban!', earned: (p) => builtCount(p) >= 5 },
   { id: 'kisvaros-all', game: 'kisvaros', mark: String(BUILDINGS.length), label: 'Kész a város', praise: 'Kész a Kisváros! Minden épület áll, és jár a toronyóra.', earned: (p) => builtCount(p) >= BUILDINGS.length },
+  { id: 'kisvaros-gift', game: 'kisvaros', mark: '♥', label: 'Első ajándék', praise: 'Megajándékoztad az első lakót a Kisvárosban!', earned: (p) => giftCount(p) >= 1 },
+  { id: 'kisvaros-every', game: 'kisvaros', mark: '10♥', label: 'Minden lakónak', praise: 'Mind a tíz lakó kapott tőled ajándékot!', earned: (p) => BUILDINGS.every((b) => townGiftsOf(p, b.id) >= 1) },
+  { id: 'kisvaros-upgrade', game: 'kisvaros', mark: '↑', label: 'Első bővítés', praise: 'Kibővítetted az első házat!', earned: (p) => upgradeCount(p) >= 1 },
+  { id: 'kisvaros-festive', game: 'kisvaros', mark: '★', label: 'Díszváros', praise: 'Minden ház a legszebb lett! Zászlók lengenek az egész Kisvárosban.', earned: (p) => BUILDINGS.every((b) => stageOf(p, b.id) === STAGES) },
   { id: 'robotepito-shelf', game: 'robotepito', mark: '30', label: 'Teli polc', praise: 'Teli a polc! Minden robotbarát megkapta mind az öt ajándékát.', earned: (p) => friendGiftCount(p) === FRIENDS.length * FRIEND_GIFTS_EACH }
 ];
 

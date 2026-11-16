@@ -15,7 +15,7 @@ export interface WorldInfo {
 export const WORLDS: WorldInfo[] = [
   { id: 'garden', name: 'Számkertész', guide: 'Csepi', about: 'Számok, számolás, minták' },
   { id: 'robot', name: 'Robotműhely', guide: 'Csavar', about: 'Programozás, logika · nagyobbaknak' },
-  { id: 'tower', name: 'Óratorony', guide: 'Kakuk', about: 'Napszakok, napok, óra' }
+  { id: 'tower', name: 'Óratorony', guide: 'Kakukk', about: 'Napszakok, napok, óra' }
 ];
 
 export function currentWorld(p: Progress): WorldId {

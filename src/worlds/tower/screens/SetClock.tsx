@@ -7,7 +7,8 @@ import { useProgress } from '../../../state/progress';
 import { ClockFace } from '../art';
 import { buildSetRound, setRight, setSolved, setStart, setWrong } from '../games/clock';
 import { say } from '../games/common';
-import { KakukSays, NextButton, useQuestion } from './kit';
+import { KakukkSays, NextButton, useQuestion } from './kit';
+import { useLevelIntro } from './Intro';
 
 /** Where the dial's centre sits in the cuckoo-clock drawing, as a share of its width and height (see ClockFace's house viewBox). */
 const CENTRE = { x: 130 / 260, y: 178 / 330 };
@@ -18,15 +19,16 @@ function calls(h: number): string {
   return `${Array.from({ length: n }, () => 'kakukk').join(', ').replace(/^k/, 'K')}!`;
 }
 
-/** Óraállító: drag the hands of the cuckoo clock to the time Kakuk asks for, then press Kész. */
+/** Óraállító: drag the hands of the cuckoo clock to the time Kakukk asks for, then press Kész. */
 export function SetClock({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('set');
+  const intro = useLevelIntro('set', level);
   const [round] = useState(() => buildSetRound(level, progress.setRound));
   const hourOnly = round.level.step === 'hourOnly';
   /** The minutes a drag of the long hand snaps to: quarters until the five-minute level. */
   const snap = round.level.step === 'five' ? 5 : 15;
-  const q = useQuestion(setStart(round));
+  const q = useQuestion(setStart(round), intro.open);
   /** The hour the short hand points at (1 … 12); it leans on towards the next one with the minutes. */
   const [hour, setHour] = useState(round.start.h);
   const [minute, setMinute] = useState(hourOnly ? 0 : (round.target.m + 20) % 60);
@@ -88,8 +90,8 @@ export function SetClock({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <GameShell game="set" className="screen--tower screen--set" title="Óraállító" meter={meter} justSolved={solved && !step?.helped} onBack={onBack} onReplay={() => q.tell(q.line)}>
-      <KakukSays line={q.line} />
+    <GameShell game="set" className="screen--tower screen--set" title="Óraállító" meter={meter} justSolved={solved && !step?.helped} onBack={onBack} onReplay={() => q.tell(q.line)} help={intro.help}>
+      <KakukkSays line={q.line} />
       <div className="set-play">
         <ClockFace
           ref={svg}
@@ -139,6 +141,7 @@ export function SetClock({ onBack }: { onBack: () => void }) {
         </div>
       </div>
       <NextButton show={solved} onNext={goNext} />
+      {intro.render(() => q.tell(q.line))}
     </GameShell>
   );
 }

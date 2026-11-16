@@ -6,7 +6,8 @@ import { useProgress } from '../../../state/progress';
 import { ClockFace, DigitalDisplay } from '../art';
 import { buildDigiRound, buildReadRound, digiSolved, digiStart, digiWrong, readSolved, readStart, readWrong } from '../games/clock';
 import { capital } from '../games/activities';
-import { Cards, KakukSays, NextButton, useQuestion } from './kit';
+import { useLevelIntro } from './Intro';
+import { Cards, KakukkSays, NextButton, useQuestion } from './kit';
 
 /** After a miss on a half or quarter hour, the dial tints the hour hand's way between its two numbers. */
 function wayOf(h: number, m: number): [number, number] | null {
@@ -17,8 +18,9 @@ function wayOf(h: number, m: number): [number, number] | null {
 export function ReadClock({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('read');
+  const intro = useLevelIntro('read', level);
   const [round] = useState(() => buildReadRound(level, progress.readRound));
-  const q = useQuestion(readStart(round));
+  const q = useQuestion(readStart(round), intro.open);
   const solved = q.solved !== null;
   const angles = handAngles(round.time);
   const hourOnly = round.level.step === 'hourOnly';
@@ -31,8 +33,8 @@ export function ReadClock({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <GameShell game="read" className="screen--tower screen--read" title="Hány óra?" meter={meter} justSolved={solved && !step?.helped} onBack={onBack} onReplay={() => q.tell(q.line)}>
-      <KakukSays line={q.line} />
+    <GameShell game="read" className="screen--tower screen--read" title="Hány óra?" meter={meter} justSolved={solved && !step?.helped} onBack={onBack} onReplay={() => q.tell(q.line)} help={intro.help}>
+      <KakukkSays line={q.line} />
       <div className="clock-play">
         <ClockFace
           size={300}
@@ -51,6 +53,7 @@ export function ReadClock({ onBack }: { onBack: () => void }) {
         />
       </div>
       <NextButton show={solved} onNext={goNext} />
+      {intro.render(() => q.tell(q.line))}
     </GameShell>
   );
 }
@@ -59,8 +62,9 @@ export function ReadClock({ onBack }: { onBack: () => void }) {
 export function Digital({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('digi');
+  const intro = useLevelIntro('digi', level);
   const [round] = useState(() => buildDigiRound(level, progress.digiRound));
-  const q = useQuestion(digiStart(round));
+  const q = useQuestion(digiStart(round), intro.open);
   const solved = q.solved !== null;
   const angles = handAngles(round.time);
   const pm = round.level.step === 'afternoon';
@@ -73,8 +77,8 @@ export function Digital({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <GameShell game="digi" className="screen--tower screen--digi" title="Digitóra" meter={meter} justSolved={solved && !step?.helped} onBack={onBack} onReplay={() => q.tell(q.line)}>
-      <KakukSays line={q.line} />
+    <GameShell game="digi" className="screen--tower screen--digi" title="Digitóra" meter={meter} justSolved={solved && !step?.helped} onBack={onBack} onReplay={() => q.tell(q.line)} help={intro.help}>
+      <KakukkSays line={q.line} />
       <div className="clock-play">
         <div className="digi-dial">
           <ClockFace size={280} hour={angles.hour} minute={angles.minute} label={`Óra: ${pm ? 'délután ' : ''}${timeWords(round.time)}`} className="tower-clock" />
@@ -92,6 +96,7 @@ export function Digital({ onBack }: { onBack: () => void }) {
         />
       </div>
       <NextButton show={solved} onNext={goNext} />
+      {intro.render(() => q.tell(q.line))}
     </GameShell>
   );
 }

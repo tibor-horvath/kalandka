@@ -19,11 +19,11 @@ const TILES: Partial<Record<GameId, { label: string; art: ReactNode }>> = {
   set: { label: 'Óraállító – állítsd be az órát', art: <SetArt /> },
   read: { label: 'Hány óra? – olvasd le az órát', art: <ReadArt /> },
   digi: { label: 'Digitóra – melyik kijelző mutatja ugyanezt?', art: <DigiArt /> },
-  sleep: { label: 'Kakuk alszik – mennyit aludt Kakuk?', art: <SleepArt /> },
+  sleep: { label: 'Kakukk alszik – mennyit aludt Kakukk?', art: <SleepArt /> },
   sand: { label: 'Homokóra – mi tart tovább?', art: <SandArt /> }
 };
 
-/** Óratorony: Kakuk's clock tower, the third Kalandka world. Every game is open from the start. */
+/** Óratorony: Kakukk's clock tower, the third Kalandka world. Every game is open from the start. */
 export function TowerHome({ onOpen, onReward, ...actions }: HubActions & { onOpen: (game: GameId) => void; onReward: () => void }) {
   const { progress, update } = useProgress();
   const { profiles } = useProfiles();
@@ -32,11 +32,11 @@ export function TowerHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
   const sticker = newStickers(progress, 'tower')[0] ?? null;
 
   const hello = shared ? `Kakukk, ${kidName(kid)}! Jó, hogy itt vagy a toronynál!` : HELLO;
-  const greeting = progress.towerWelcomed ? hello : 'Kakukk! Én Kakuk vagyok!';
+  const greeting = progress.towerWelcomed ? hello : 'Kakukk! Én Kakukk vagyok!';
   const question = progress.towerWelcomed ? 'Mit játsszunk ma?' : 'A toronyórában lakom.';
   const intro = progress.towerWelcomed
     ? `${greeting} ${question}`
-    : 'Kakukk! Én Kakuk vagyok, a toronyóra madara. Itt a napokkal, az évszakokkal és az órával játszunk. Kezdjük a Napirenddel!';
+    : 'Kakukk! Én Kakukk vagyok, a toronyóra madara. Itt a napokkal, az évszakokkal és az órával játszunk. Kezdjük a Napirenddel!';
   const sayIntro = () => speak(intro, { online: progress.towerWelcomed ? `${HELLO} ${question}` : intro });
 
   useEffect(() => {

@@ -77,10 +77,12 @@
 .landing__highlights { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 15px; font-weight: 700; color: var(--ink-soft); }
 .landing__highlights li { display: inline-flex; align-items: center; gap: 6px; }
 .landing__highlights svg { color: var(--leaf); flex: none; }
-.landing__hero-art { flex: 1 1 360px; min-width: 0; display: flex; justify-content: center; align-items: flex-end; gap: 24px; }
+/* Three islands: the tower above, the garden and the workshop below it, like on the map. */
+.landing__hero-art { flex: 1 1 360px; min-width: 0; display: grid; grid-template-columns: repeat(2, auto); justify-content: center; align-items: end; gap: 0 24px; }
 .landing__island { width: 200px; height: 200px; border-radius: 50%; display: grid; place-items: center; }
 .landing__island--garden { background: var(--grass); box-shadow: inset 0 -16px 0 var(--grass-deep); }
-.landing__island--robot { background: #c6d1db; box-shadow: inset 0 -16px 0 #9aa8b6; margin-bottom: 48px; }
+.landing__island--robot { background: #c6d1db; box-shadow: inset 0 -16px 0 #9aa8b6; }
+.landing__island--tower { grid-column: 1 / -1; justify-self: center; margin-bottom: -28px; width: 180px; height: 180px; background: #c9bdf0; box-shadow: inset 0 -16px 0 #a796e0; }
 
 .landing__section { padding: 80px 16px; }
 .landing__section--soft { background: #f3f7f4; }
@@ -88,7 +90,7 @@
 .landing__section--soft + .landing__section, .landing__end { padding-top: 80px; }
 .landing__intro { margin-top: 12px !important; font-size: 19px; max-width: 40em; color: var(--ink-soft); }
 
-.landing__worlds { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 24px; margin-top: 40px; }
+.landing__worlds { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 24px; margin-top: 40px; }
 .landing__world { border-radius: 28px; padding: 28px; display: flex; flex-direction: column; gap: 18px; }
 .landing__world--garden { background: var(--good-tint); color: #2d4a36; }
 .landing__world--robot { background: #e3ebf1; color: #4a5e70; }
@@ -287,6 +289,8 @@
   .landing__dialog-head > svg { display: none; }
   .landing__lead { font-size: 18px; }
   .landing__island { width: 150px; height: 150px; }
+  .landing__island--tower { width: 136px; height: 136px; margin-bottom: -20px; }
+  .landing__island--tower svg { width: 90px; }
   .landing__island svg { width: 110px; height: auto; }
   .landing__paper { width: 104px; padding: 8px; }
   .landing__paper--mid { width: 112px; }

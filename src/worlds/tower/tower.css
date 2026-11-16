@@ -1,4 +1,4 @@
-/* ---------- Óratorony: Kakuk's clock tower ----------
+/* ---------- Óratorony: Kakukk's clock tower ----------
    The world re-colours the shared tokens, so every shared part (places, buttons, bubbles) turns tower-purple and warm. */
 .world--tower {
   --sky: #f3eefc;
@@ -28,10 +28,10 @@
 /* The ground under the tower's games and its town: a cobbled square. */
 .square {
   position: absolute; left: -1000px; right: -1000px; bottom: -1000px; height: 1330px;
-  background: radial-gradient(circle at 12px 12px, #dcc9a8 5px, transparent 6px) 0 0 / 48px 40px, radial-gradient(circle at 36px 32px, #dcc9a8 4px, transparent 5px) 0 0 / 48px 40px, var(--grass);
+  background: radial-gradient(circle at 12px 12px, var(--cobble, #dcc9a8) 5px, transparent 6px) 0 0 / 48px 40px, radial-gradient(circle at 36px 32px, var(--cobble, #dcc9a8) 4px, transparent 5px) 0 0 / 48px 40px, var(--grass);
 }
 
-/* The map: Kakuk's island sign and the colour the map washes into before the island opens. */
+/* The map: Kakukk's island sign and the colour the map washes into before the island opens. */
 .map-spot--tower { --edge: #5b4b9a; --edge-deep: #3a2e6b; --face: #ece7fb; }
 .map-spot--tower .map-spot__sign { animation-delay: 0.62s; }
 .map__wash--tower { background: #ece7fb; }
@@ -43,7 +43,7 @@
 /* ---------- the games ---------- */
 .screen--tower { display: flex; flex-direction: column; }
 /* Everything a game draws stands on the ground, not under it. */
-.screen--tower > :not(.square):not(.tower-next):not(.topbar) { position: relative; }
+.screen--tower > :not(.square):not(.tower-next):not(.topbar):not(.intro) { position: relative; }
 .tower-guide { position: relative; flex: none; display: flex; justify-content: center; padding: 6px 40px 0; }
 .tower-guide .bubble { font-size: 26px; max-width: 820px; }
 .tower-choices { margin-top: 18px; flex-wrap: wrap; gap: 22px; }
@@ -55,6 +55,7 @@
 .tower-card.is-glow { border-color: var(--bell); box-shadow: 0 8px 0 var(--bell), 0 0 0 6px #fff1c4; }
 .tower-choices--parts .tower-card { width: 168px; height: 150px; }
 .tower-choices--pair .tower-card { width: 260px; height: 250px; }
+.tower-choices--trio .tower-card { width: 240px; height: 240px; }
 .tower-choices--short .tower-card { width: 230px; height: 104px; }
 .tower-choices--column { flex-direction: column; gap: 16px; margin-top: 0; flex-wrap: nowrap; }
 .tower-choices--column .tower-card { width: 300px; height: 96px; }
@@ -104,7 +105,7 @@
 .set-nudge .round-btn { font-size: 22px; }
 .set-side .big-btn { justify-content: center; }
 
-/* Kakuk alszik */
+/* Kakukk alszik */
 .sleep-play { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 12px; }
 .sleep-clock { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 18px; border-radius: 28px; }
 .sleep-clock--night { background: #e3def5; }
@@ -116,23 +117,106 @@
 .sand-pair .tower-choices--pair { gap: 180px; }
 .sand-glass { position: absolute; left: 50%; top: 60px; translate: -50% 0; pointer-events: none; }
 
-/* ---------- Kisváros ---------- */
+/* ---------- Kisváros ----------
+   The tower clock sets the sky (town-sky--morning, --day, --evening, --night on the screen); the cobbled square stays. */
+.screen--town { transition: background 0.5s ease; }
+.screen--town.town-sky--morning { --sky: #fff1d6; }
+.screen--town.town-sky--day { --sky: #cfe8fb; }
+.screen--town.town-sky--evening { --sky: #c9b6e8; }
+.screen--town.town-sky--night { --sky: #2e2756; --grass: #4a4275; --cobble: #564d84; }
+.town-sky--night .screen-title { color: #ffffff; }
 .screen--town .guide-say { position: relative; z-index: 2; display: flex; justify-content: center; align-items: center; gap: 14px; padding: 6px 40px 0; }
-.town { position: relative; margin: 14px 40px 0; padding: 18px; border-radius: 36px; background: #ddeefa; transition: background 0.6s ease; }
-.town--noon { background: #cfe8fb; }
-.town--afternoon { background: #ffe9c7; }
-.town--evening { background: #c9c0ea; }
-.town__square { position: absolute; left: 18px; right: 18px; bottom: 18px; height: 60%; border-radius: 26px; background: radial-gradient(circle at 12px 12px, #dcc9a8 5px, transparent 6px) 0 0 / 48px 40px, #e7d7bc; }
-.town__grid { position: relative; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
-.town__spot { position: relative; width: 100%; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; padding: 8px 4px 10px; border: none; border-radius: 24px; background: rgba(255, 255, 255, 0.55); cursor: pointer; font-family: inherit; color: var(--ink); }
-.town__spot.is-built { background: rgba(255, 255, 255, 0.85); }
-.town__spot.is-ready { box-shadow: 0 0 0 5px var(--bell); }
-.town__spot:active { transform: translateY(3px); }
-.town__name { font-size: 18px; font-weight: 800; }
-.town__cost { position: absolute; top: 8px; right: 8px; display: flex; align-items: center; gap: 2px; padding: 2px 10px 2px 6px; border-radius: 16px; background: var(--paper); font-size: 18px; font-weight: 800; }
-.town-count { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; background: rgba(16, 35, 58, 0.35); }
-.town-count__card { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 26px 34px; border-radius: 36px; background: var(--paper); }
-.town-count__building svg { width: 180px; height: auto; }
+/* Kakukk and the clock bar on one row (they wrap to two where the row is too narrow): the map gets the height. */
+.town-bar { position: relative; z-index: 2; flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 16px; padding: 6px 28px 0; }
+.town-bar .guide-say { flex: 1 1 360px; min-width: 0; justify-content: flex-start; padding: 0; }
+.town-bar .town-clock { margin-top: 0; }
+/* The town as a map: streets round the square, the tower clock in its middle, a plot for every building.
+   The drawing is 1180 × 560 and scales to the room under Kakukk and the clock bar. */
+.screen--town { display: flex; flex-direction: column;
+  --map-grass: #cde8b4; --map-road: #9a97ae; --map-pavement: #f1e8d6; --map-lane: #ffffff; --map-square: #eadcc2; --map-curb: #c8b08c; --map-tree: #7cb86a; }
+.screen--town.town-sky--evening { --map-grass: #b9c99a; --map-road: #7d7894; --map-pavement: #e3d5be; --map-lane: #fff4d6; --map-square: #dcc8a8; --map-curb: #b49a78; --map-tree: #5e9a55; }
+.screen--town.town-sky--night { --map-grass: #4a4275; --map-road: #2b2650; --map-pavement: #6a619a; --map-lane: #b9aee6; --map-square: #564d84; --map-curb: #7a70a8; --map-tree: #3e6a55; }
+.town-clock { position: relative; z-index: 2; flex: none; align-self: center; display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 6px; border-radius: 32px; background: var(--paper); box-shadow: 0 4px 0 #c9c0ea; }
+.town-clock__part { padding: 0 14px; font-size: 20px; font-weight: 800; color: #3a2e6b; white-space: nowrap; }
+.town-clock button { height: 48px; padding: 0 16px; border: none; border-radius: 24px; background: #ece7fb; color: #3a2e6b; font-family: inherit; font-size: 18px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.town-clock button.is-forward { background: #5b4b9a; color: #ffffff; }
+.town-clock button.town-clock__now { border: 3px solid #5b4b9a; background: #ffffff; }
+.town-clock button:active { transform: translateY(2px); }
+.town-map-box { position: relative; flex: 1 1 0; min-width: 0; min-height: 0; margin: 8px 12px 10px; display: flex; align-items: center; justify-content: center; }
+.town-map-box .fit-box__frame { position: relative; flex: none; }
+.town-map-box .fit-box__drawing { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.town-map { position: relative; }
+.town-map__ground { position: absolute; inset: 0; }
+.town-map__grass { fill: var(--map-grass); }
+.town-map__pavement { stroke: var(--map-pavement); }
+.town-map__road { stroke: var(--map-road); }
+.town-map__lane { stroke: var(--map-lane); }
+.town-map__zebra { fill: var(--map-lane); }
+.town-map__square { fill: var(--map-square); }
+.town-map__curb { stroke: var(--map-curb); }
+.town-map__trees { fill: var(--map-tree); stroke: var(--ink); }
+.town-map__plots { list-style: none; margin: 0; padding: 0; }
+.town-map__plots li { position: absolute; width: 150px; height: 124px; }
+.town-map.is-tall .town-map__plots li { width: 124px; height: 150px; }
+.town__spot { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 0 0 10px; border: none; border-radius: 28px; background: rgba(255, 255, 255, 0.3); cursor: pointer; font-family: inherit; color: var(--ink); }
+.town__spot.is-built { background: transparent; }
+.town__spot.is-ready { background: rgba(255, 255, 255, 0.7); box-shadow: 0 0 0 4px var(--bell); }
+.town-sky--night .town__spot:not(.is-built) { background: rgba(255, 255, 255, 0.14); }
+.town__spot:active, .town-tower:active { transform: translateY(3px); }
+.town__building { position: relative; display: flex; justify-content: center; }
+.town__resident { position: absolute; right: -10px; bottom: 0; }
+.town__closed { position: absolute; left: 50%; top: 44%; translate: -50% 0; rotate: -6deg; padding: 2px 10px; border-radius: 8px; background: #3a2e6b; color: #ffffff; font-size: 14px; font-weight: 800; }
+.town__name { position: absolute; left: 50%; bottom: -10px; translate: -50% 0; padding: 1px 12px; border-radius: 12px; background: var(--paper); color: var(--ink); font-size: 17px; font-weight: 800; line-height: 1.3; white-space: nowrap; }
+.town__cost { position: absolute; top: 4px; right: 4px; display: flex; align-items: center; gap: 2px; padding: 2px 10px 2px 6px; border-radius: 16px; background: var(--paper); color: var(--ink); font-size: 18px; font-weight: 800; }
+.town__stage { position: absolute; top: 6px; left: 8px; display: flex; gap: 3px; }
+.town__stage span { width: 12px; height: 12px; border-radius: 6px; border: 2px solid #5b4b9a; background: #ffffff; }
+.town__stage span.is-on { background: var(--bell); }
+.town-tower { position: absolute; padding: 0; border: none; background: none; cursor: pointer; font-family: inherit; line-height: 0; }
+.town-tower svg { display: block; }
+.town-tower:not(.is-built) svg { border-radius: 50%; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.6); }
+.town-tower.is-ready svg { box-shadow: 0 0 0 5px var(--bell); }
+.town-tower .town__name { bottom: -16px; }
+.town-tower .town__cost { top: -6px; right: -26px; }
+.town-tower .town__stage { top: 20px; left: -8px; }
+
+.town-count { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; background: rgba(16, 35, 58, 0.38); }
+.town-count__card { display: flex; flex-direction: column; align-items: center; gap: 16px; max-width: 760px; padding: 26px 34px; border-radius: 38px; background: var(--paper); text-align: center; }
+.town-count__title { margin: 0; font-size: 38px; font-weight: 800; line-height: 1.05; }
+.town-count__building svg { display: block; }
+.town-count__help { margin: 0; font-size: 17px; font-weight: 700; color: #4b3f72; }
+.town-welcome__kicker { padding: 4px 16px; border-radius: 16px; background: #ece7fb; font-size: 18px; font-weight: 800; color: #3a2e6b; }
+.town-welcome__scene { display: flex; align-items: flex-end; justify-content: center; gap: 24px; padding: 16px 40px 0; border-radius: 30px; background: #fff4c2; }
+.town-welcome__facts { display: flex; gap: 12px; }
+.town-welcome__facts span { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 18px; background: #f6f2fd; font-size: 18px; font-weight: 800; }
+.town-price { display: inline-flex; align-items: center; gap: 3px; padding: 1px 10px 1px 6px; border-radius: 14px; background: #ffffff; color: var(--ink); font-size: 20px; font-weight: 800; }
+
+.town-card { width: 940px; box-sizing: border-box; padding: 24px 30px 28px; border-radius: 36px; background: var(--paper); display: flex; flex-direction: column; gap: 16px; }
+.town-card__head { display: flex; align-items: center; justify-content: space-between; }
+.town-card__close { color: #3a2e6b; background: #ece7fb; }
+.town-card__body { display: flex; gap: 24px; }
+.town-card__who { flex: 0 0 290px; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; border-radius: 28px; background: #fff4d6; }
+.town-card__resident { display: flex; align-items: center; gap: 10px; }
+.town-card__resident b { display: block; font-size: 22px; line-height: 1.1; }
+.town-card__resident span { font-size: 16px; font-weight: 700; color: #4b3f72; }
+.town-card__side { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.town-card__part { display: flex; flex-direction: column; gap: 10px; padding: 14px 18px; border-radius: 24px; }
+.town-card__part h3 { margin: 0; font-size: 24px; font-weight: 800; }
+.town-card__part--upgrade { background: #f6f2fd; }
+.town-card__part--gifts { background: #fff4d6; }
+.town-card__row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.town-card__stages { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; }
+.town-card__stages li { padding: 10px 12px; border-radius: 14px; border: 3px dashed #9c8adb; font-size: 15px; font-weight: 800; color: #4b3f72; }
+.town-card__stages li.is-done { border: 3px solid #c9c0ea; background: #ffffff; }
+.town-card__stages li.is-now { border: 4px solid #5b4b9a; background: #ffffff; color: #3a2e6b; }
+.town-card__buy { margin-left: auto; height: 60px; padding: 0 20px; font-size: 22px; }
+.town-card__full { margin-left: auto; font-size: 20px; font-weight: 800; color: #2f7d32; }
+.town-card__gifts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.town-gift { height: 100px; width: 100%; box-sizing: border-box; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 15px; font-weight: 800; }
+.town-gift.is-given { background: #ffffff; box-shadow: inset 0 0 0 3px #3d8f3f; }
+.town-gift.is-next { border: none; background: #ffffff; box-shadow: 0 0 0 4px var(--bell), 0 6px 0 #e0b95e; cursor: pointer; font-family: inherit; color: var(--ink); }
+.town-gift.is-next:active { transform: translateY(3px); }
+.town-gift.is-next .town-price { font-size: 15px; padding: 0 4px; }
+.town-gift.is-later { border: 3px dashed #d6c39a; color: #b49a62; font-size: 34px; }
 .big-btn--quiet { background: #ece7fb; color: var(--leaf-deep); box-shadow: 0 6px 0 #c9c0ea; }
 .seed-count--bell { background: #f6f2fd; box-shadow: inset 0 -10px 0 #c9c0ea; }
 .seed-count--bell .seed-count__tray { background: #5b4b9a; box-shadow: inset 0 -6px 0 #3a2e6b; }
@@ -150,6 +234,7 @@
 .is-phone .tower-card__word { font-size: 17px; }
 .is-phone .tower-card__word--big { font-size: 20px; }
 .is-phone .tower-choices--pair .tower-card { width: 150px; height: 150px; }
+.is-phone .tower-choices--trio .tower-card { width: 110px; height: 130px; }
 .is-phone .tower-choices--short .tower-card { width: 130px; height: 70px; }
 .is-phone .tower-choices--column .tower-card { width: 170px; height: 64px; }
 .is-phone .tower-choices--column { gap: 8px; }
@@ -171,12 +256,65 @@
 .is-phone .sleep-clock svg { width: 120px; height: auto; }
 .is-phone .sand-pair .tower-choices--pair { gap: 60px; }
 .is-phone .sand-glass svg { width: 60px; }
-.is-phone .town { margin: 8px 10px 0; padding: 10px; }
-.is-phone .town__grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
-.is-phone .town__spot { height: 110px; }
-.is-phone .town__spot svg { width: 64px; height: auto; }
-.is-phone .town__name { font-size: 12px; }
+.is-phone .town-bar { flex-direction: column; flex-wrap: nowrap; gap: 0; padding: 0; }
+.is-phone .town-bar .guide-say { flex: none; width: 100%; justify-content: center; padding: 6px 12px 0; }
+.is-phone .town-clock { flex-wrap: wrap; justify-content: center; gap: 6px; margin: 6px 8px 0; padding: 4px; border-radius: 22px; }
+.is-phone .town-clock__part { width: 100%; padding: 0; text-align: center; font-size: 16px; }
+.is-phone .town-clock button { height: 40px; padding: 0 10px; font-size: 14px; }
+.is-phone .town-map-box { margin: 6px 4px 8px; }
+/* the drawing shrinks a lot on a phone: names and prices stay readable */
+.is-phone .town__name { font-size: 26px; bottom: -18px; }
+.is-phone .town__cost { font-size: 26px; }
+.is-phone .town-card { width: 94vw; max-height: 92%; overflow: auto; padding: 14px; }
+.is-phone .town-card__body { flex-direction: column; }
+.is-phone .town-card__who { flex: none; }
+.is-phone .town-card__who svg { max-width: 140px; height: auto; }
+.is-phone .town-card__gifts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.is-phone .town-count__card { max-width: 94vw; padding: 16px; }
+.is-phone .town-count__title { font-size: 24px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .town { transition: none; }
+  .screen--town { transition: none; }
 }
+
+/* ---------- Szint-bemutató: the "?" pill in the top bar and Kakukk's slides ---------- */
+.topbar__actions { display: flex; align-items: center; gap: 12px; }
+.help-pill { display: inline-flex; align-items: center; gap: 8px; height: 64px; padding: 0 20px 0 8px; border: none; border-radius: 32px; background: #fff4c2; box-shadow: 0 4px 0 #e0b95e; color: var(--ink); font-family: var(--display); font-size: 20px; font-weight: 800; cursor: pointer; }
+.help-pill:active { transform: translateY(3px); box-shadow: 0 1px 0 #e0b95e; }
+.help-pill__mark { width: 48px; height: 48px; border-radius: 24px; background: #f2b33d; display: grid; place-items: center; font-size: 30px; line-height: 1; }
+.is-phone .help-pill { height: 52px; padding: 0 6px; }
+.is-phone .help-pill__mark { width: 40px; height: 40px; font-size: 26px; }
+.is-phone .help-pill__label { display: none; }
+
+.intro { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(58, 46, 107, 0.42); }
+.intro__card { width: min(100%, 900px); max-height: 100%; box-sizing: border-box; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 22px 28px 24px; border-radius: 32px; background: #fbf8ff; box-shadow: 0 10px 0 rgba(58, 46, 107, 0.25); }
+.intro__head { display: flex; align-items: center; gap: 14px; }
+.intro__head h2 { flex: 1; margin: 0; font-family: var(--display); font-size: 34px; font-weight: 800; line-height: 1.1; color: #3a2e6b; }
+.intro__skip { min-height: 48px; padding: 0 18px; border: 2px solid #c9c0ea; border-radius: 24px; background: #ffffff; color: #3a2e6b; font-family: var(--display); font-size: 18px; font-weight: 800; cursor: pointer; }
+.intro__art { display: flex; justify-content: center; padding: 10px; border-radius: 24px; background: #ffffff; }
+.intro__art-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 18px 32px; }
+.intro__art-row .digital { padding: 8px 18px; }
+.intro__fig { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.intro__fig figcaption { font-family: var(--display); font-size: 20px; font-weight: 800; color: #3a2e6b; }
+.intro__chips { margin: 0; padding: 8px 0; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.intro__chips li { position: relative; min-width: 72px; padding: 22px 14px 10px; border-radius: 18px; background: #ece7fb; text-align: center; font-family: var(--display); font-size: 20px; font-weight: 800; color: #3a2e6b; }
+.intro__chips li.is-marked { background: #fff4c2; box-shadow: inset 0 0 0 3px #f2b33d; }
+.intro__chips small { position: absolute; left: 0; right: 0; top: 2px; font-family: var(--body); font-size: 13px; font-weight: 800; color: #6b5310; }
+.intro__text { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.35; text-align: center; }
+.intro__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.intro__btn { min-height: 60px; padding: 0 28px; border: none; border-radius: 30px; font-family: var(--display); font-size: 22px; font-weight: 800; cursor: pointer; }
+.intro__btn--back { background: #ece7fb; color: #3a2e6b; }
+.intro__btn--back:disabled { visibility: hidden; }
+.intro__btn--go { background: #5b4a9e; color: #ffffff; box-shadow: 0 5px 0 #3a2e6b; }
+.intro__btn--go:active { transform: translateY(4px); box-shadow: 0 1px 0 #3a2e6b; }
+.intro__dots { margin: 0; padding: 0; list-style: none; display: flex; gap: 8px; }
+.intro__dots li { width: 14px; height: 14px; border-radius: 7px; background: #ded6f5; }
+.intro__dots li.is-done { background: #a796e0; }
+.intro__dots li.is-on { width: 34px; background: #5b4a9e; }
+.is-phone .intro { padding: 8px; }
+.is-phone .intro__card { padding: 14px; gap: 10px; }
+.is-phone .intro__head h2 { font-size: 24px; }
+.is-phone .intro__head svg { width: 44px; height: auto; }
+.is-phone .intro__text { font-size: 18px; }
+.is-phone .intro__art svg[role='img'] { max-width: 170px; height: auto; }
+.is-phone .intro__btn { padding: 0 18px; font-size: 19px; }

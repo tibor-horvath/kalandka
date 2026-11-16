@@ -5,14 +5,16 @@ import { useProgress } from '../../../state/progress';
 import { ActivityPic, SandArt } from '../art';
 import { ACTIVITIES, SPANS, capital } from '../games/activities';
 import { SPAN_WORDS, buildSandRound, sandSolved, sandStart, sandWrong } from '../games/sand';
-import { Cards, KakukSays, NextButton, useQuestion } from './kit';
+import { useLevelIntro } from './Intro';
+import { Cards, KakukkSays, NextButton, useQuestion } from './kit';
 
 /** Homokóra: which takes longer, which is shorter, a moment, minutes or hours. */
 export function Sand({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('sand');
+  const intro = useLevelIntro('sand', level);
   const [round] = useState(() => buildSandRound(level, progress.sandRound));
-  const q = useQuestion(sandStart(round));
+  const q = useQuestion(sandStart(round), intro.open);
   const solved = q.solved !== null;
   const right = round.mode === 'span' ? SPANS.indexOf(round.answer) : round.answer;
 
@@ -24,8 +26,8 @@ export function Sand({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <GameShell game="sand" className="screen--tower screen--sand" title="Homokóra" meter={meter} justSolved={solved && !step?.helped} onBack={onBack} onReplay={() => q.tell(q.line)}>
-      <KakukSays line={q.line} />
+    <GameShell game="sand" className="screen--tower screen--sand" title="Homokóra" meter={meter} justSolved={solved && !step?.helped} onBack={onBack} onReplay={() => q.tell(q.line)} help={intro.help}>
+      <KakukkSays line={q.line} />
       {round.mode === 'span' ? (
         <>
           <div className="day-single">
@@ -48,8 +50,8 @@ export function Sand({ onBack }: { onBack: () => void }) {
             q={q}
             right={right}
             onPick={pick}
-            className="tower-choices--pair"
-            cards={round.pair.map((id) => ({
+            className={'trio' in round ? 'tower-choices--trio' : 'tower-choices--pair'}
+            cards={('trio' in round ? round.trio : round.pair).map((id) => ({
               key: id,
               label: ACTIVITIES[id].name,
               body: (
@@ -60,12 +62,15 @@ export function Sand({ onBack }: { onBack: () => void }) {
               )
             }))}
           />
-          <span className="sand-glass" aria-hidden="true">
-            <SandArt />
-          </span>
+          {!('trio' in round) && (
+            <span className="sand-glass" aria-hidden="true">
+              <SandArt />
+            </span>
+          )}
         </div>
       )}
       <NextButton show={solved} onNext={goNext} />
+      {intro.render(() => q.tell(q.line))}
     </GameShell>
   );
 }

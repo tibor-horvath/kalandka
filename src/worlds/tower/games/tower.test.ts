@@ -1,13 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { minutesBetween, timeWords } from '../../../lib/time';
+import { digital, minutesBetween, timeWords } from '../../../lib/time';
 import { ACTIVITIES, DAY } from './activities';
 import { DIGI_LEVELS, READ_LEVELS, SET_LEVELS, buildDigiRound, buildReadRound, buildSetRound, numberSuffix, setRight, setWrong } from './clock';
 import { DAY_LEVELS, buildDayRound, dayStart, dayWrongSeq } from './day';
 import { SAND_LEVELS, buildSandRound } from './sand';
 import { SEASON_LEVELS, answerOf, buildSeasonRound, seasonOfMonth } from './season';
-import { SLEEP_LEVELS, buildSleepRound, cardText } from './sleep';
+import { SLEEP_LEVELS, buildSleepRound, cardText, sleptWords } from './sleep';
 
 const ROUNDS = 60;
+
+describe('every Óratorony game', () => {
+  it('has at least five levels', () => {
+    for (const levels of [DAY_LEVELS, SEASON_LEVELS, SET_LEVELS, READ_LEVELS, DIGI_LEVELS, SLEEP_LEVELS, SAND_LEVELS]) expect(levels.length).toBeGreaterThanOrEqual(5);
+  });
+});
 
 describe('Napirend', () => {
   it('builds the same round every time', () => {
@@ -108,6 +114,19 @@ describe('the clock games', () => {
     for (let r = 0; r < ROUNDS; r++) {
       const round = buildDigiRound(last, r);
       expect(round.choices[round.answer]).toBe(`${round.time.h + 12}:00`);
+      // The usual slip: the twelve not added.
+      expect(round.choices).toContain(`${round.time.h}:00`);
+    }
+  });
+
+  it('offers the long hand number read as minutes on the five-minute levels', () => {
+    const five = READ_LEVELS.findIndex((l) => l.step === 'five');
+    const digiFive = DIGI_LEVELS.findIndex((l) => l.step === 'five');
+    for (let r = 0; r < ROUNDS; r++) {
+      const read = buildReadRound(five, r);
+      expect(read.choices).toContain(timeWords({ h: read.time.h, m: read.time.m / 5 }));
+      const digi = buildDigiRound(digiFive, r);
+      expect(digi.choices).toContain(digital({ h: digi.time.h, m: digi.time.m / 5 }));
     }
   });
 
@@ -135,7 +154,7 @@ describe('the clock games', () => {
   });
 });
 
-describe('Kakuk alszik', () => {
+describe('Kakukk alszik', () => {
   it('sleeps as long as the clocks say, within the level', () => {
     for (let l = 0; l < SLEEP_LEVELS.length; l++) {
       const level = SLEEP_LEVELS[l];
@@ -145,9 +164,14 @@ describe('Kakuk alszik', () => {
         expect(round.minutes).toBeGreaterThanOrEqual(level.min * 60);
         expect(round.minutes).toBeLessThanOrEqual(level.max * 60);
         const startMin = (round.from.h % 12) * 60 + round.from.m;
-        expect(startMin + round.minutes > 720, `${l} ${r}`).toBe(level.overTwelve);
-        expect(round.choices[round.answer]).toBe(round.minutes);
-        expect(new Set(round.choices).size).toBe(3);
+        if (level.overTwelve !== undefined) expect(startMin + round.minutes > 720, `${l} ${r}`).toBe(level.overTwelve);
+        if (level.ask === 'woke') {
+          expect(round.times[round.answer]).toBe(timeWords(round.to));
+          expect(new Set(round.times).size).toBe(3);
+        } else {
+          expect(round.choices[round.answer]).toBe(round.minutes);
+          expect(new Set(round.choices).size).toBe(3);
+        }
       }
     }
   });
@@ -155,6 +179,8 @@ describe('Kakuk alszik', () => {
   it('names a nap in words a child uses', () => {
     expect(cardText(120)).toBe('2 óra');
     expect(cardText(90)).toBe('másfél óra');
+    expect(sleptWords(120)).toBe('két órát');
+    expect(sleptWords(150)).toBe('két és fél órát');
   });
 });
 
@@ -163,7 +189,7 @@ describe('Homokóra', () => {
     for (let l = 0; l < 2; l++) {
       for (let r = 0; r < ROUNDS; r++) {
         const round = buildSandRound(l, r);
-        if (round.mode === 'span') throw new Error('pair');
+        if (!('pair' in round)) throw new Error('pair');
         const [a, b] = round.pair.map((id) => ACTIVITIES[id].seconds);
         const right = round.answer === 0 ? a : b;
         const other = round.answer === 0 ? b : a;
@@ -173,9 +199,22 @@ describe('Homokóra', () => {
     }
   });
 
+  it('picks the longest and the shortest of a moment, a few minutes and hours', () => {
+    for (const mode of ['longest', 'shortest'] as const) {
+      const l = SAND_LEVELS.findIndex((x) => x.mode === mode);
+      for (let r = 0; r < ROUNDS; r++) {
+        const round = buildSandRound(l, r);
+        if (!('trio' in round)) throw new Error('trio');
+        const secs = round.trio.map((id) => ACTIVITIES[id].seconds);
+        expect(new Set(round.trio.map((id) => ACTIVITIES[id].span)).size).toBe(3);
+        expect(secs[round.answer]).toBe(mode === 'longest' ? Math.max(...secs) : Math.min(...secs));
+      }
+    }
+  });
+
   it('sorts by the span each thing takes', () => {
     for (let r = 0; r < ROUNDS; r++) {
-      const round = buildSandRound(2, r);
+      const round = buildSandRound(SAND_LEVELS.length - 1, r);
       if (round.mode !== 'span') throw new Error('span');
       expect(ACTIVITIES[round.activity].span).toBe(round.answer);
     }

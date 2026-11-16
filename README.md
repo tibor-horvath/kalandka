@@ -5,7 +5,7 @@ Kalandka is the umbrella brand with three worlds, each an island on the Kalandka
 
 - **Számkertész**: the counting garden, guided by Csepi the water drop.
 - **Robotműhely**: the robot workshop for the bigger ones, guided by Csavar the robot.
-- **Óratorony**: times of day, the week, the seasons and the clock, guided by Kakuk the cuckoo.
+- **Óratorony**: times of day, the week, the seasons and the clock, guided by Kakukk the cuckoo.
 
 Every world is open to every child; the boat waits at the island chosen last, and the app opens there. Foggy islands stand for worlds still to come.
 

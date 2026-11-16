@@ -34,6 +34,7 @@ export function GameShell({
   tasks,
   onBack,
   onReplay,
+  help,
   children
 }: {
   game: GameId;
@@ -48,15 +49,30 @@ export function GameShell({
   tasks?: RoundTasks;
   onBack: () => void;
   onReplay: () => void;
+  /** A "?" pill beside the speaker that replays the level's introduction (the Óratorony's szint-bemutató). */
+  help?: { label: string; onClick: () => void };
   children: ReactNode;
 }) {
   const { world } = GAMES[game];
   const look = WORLD_LOOK[world];
   const levelMeter = <LevelMeter meter={meter} world={world} justSolved={justSolved} tasks={tasks} />;
-  const replay = (
+  const speaker = (
     <RoundButton label="Meghallgatom újra" onClick={onReplay}>
       <SpeakerIcon />
     </RoundButton>
+  );
+  const replay = help ? (
+    <div className="topbar__actions">
+      <button type="button" className="help-pill" onClick={help.onClick} aria-label={`${help.label} Kakukk újra megmutatja.`}>
+        <span className="help-pill__mark" aria-hidden="true">
+          ?
+        </span>
+        <span className="help-pill__label">{help.label}</span>
+      </button>
+      {speaker}
+    </div>
+  ) : (
+    speaker
   );
 
   return (

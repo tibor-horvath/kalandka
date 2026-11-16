@@ -16,5 +16,5 @@ export interface WorldLook {
 export const WORLD_LOOK: Record<WorldId, WorldLook> = {
   garden: { back: 'Vissza a kertbe', className: '', gameGround: 'meadow', placeGround: 'meadow', guide: 'csepi' },
   robot: { back: 'Vissza a műhelybe', className: ' world--robot', gameGround: 'floor', placeGround: 'hill floor', guide: 'csavar' },
-  tower: { back: 'Vissza a toronyhoz', className: ' world--tower', gameGround: 'square', placeGround: 'square', guide: 'kakuk' }
+  tower: { back: 'Vissza a toronyhoz', className: ' world--tower', gameGround: 'square', placeGround: 'square', guide: 'kakukk' }
 };

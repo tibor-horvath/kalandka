@@ -46,7 +46,7 @@ export const GAMES: Record<GameId, GameInfo> = {
   set: { id: 'set', world: 'tower', name: 'Óraállító', roundKey: 'setRound', solvedKey: 'setSolved' },
   read: { id: 'read', world: 'tower', name: 'Hány óra?', roundKey: 'readRound', solvedKey: 'readSolved' },
   digi: { id: 'digi', world: 'tower', name: 'Digitóra', roundKey: 'digiRound', solvedKey: 'digiSolved' },
-  sleep: { id: 'sleep', world: 'tower', name: 'Kakuk alszik', roundKey: 'sleepRound', solvedKey: 'sleepSolved' },
+  sleep: { id: 'sleep', world: 'tower', name: 'Kakukk alszik', roundKey: 'sleepRound', solvedKey: 'sleepSolved' },
   sand: { id: 'sand', world: 'tower', name: 'Homokóra', roundKey: 'sandRound', solvedKey: 'sandSolved' }
 };
 

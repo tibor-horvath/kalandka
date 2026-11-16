@@ -35,16 +35,16 @@ worlds/robot/             Robotműhely, Csavar's world
   print.tsx                 the workshop's sheet list; each game's sheets are in games/<game>.print.tsx, shared helpers in printKit.ts
   robot.css                 the workshop's styles (and the Kalandka map's)
 
-worlds/tower/             Óratorony, Kakuk's world
+worlds/tower/             Óratorony, Kakukk's world
   games/activities.ts       a day's things: when in the day each comes and how long it takes (Napirend, Homokóra)
-  games/day.ts              Napirend levels, rounds and Kakuk's lines
+  games/day.ts              Napirend levels, rounds and Kakukk's lines
   games/season.ts           Évszakok: seasons, days of the week, yesterday and tomorrow, months
-  games/clock.ts            Óraállító, Hány óra? and Digitóra: clock levels, the usual mix-ups as wrong cards, Kakuk's lines
-  games/sleep.ts            Kakuk alszik: time gone by between two clocks
+  games/clock.ts            Óraállító, Hány óra? and Digitóra: clock levels, the usual mix-ups as wrong cards, Kakukk's lines
+  games/sleep.ts            Kakukk alszik: time gone by between two clocks
   games/sand.ts             Homokóra: which takes longer, a moment, minutes or hours
-  games/common.ts           Kakuk's line type, seeded shuffles, the two-misses rule
+  games/common.ts           Kakukk's line type, seeded shuffles, the two-misses rule
   screens/                  TowerHome, Town (Kisváros), Day, SeasonGame, SetClock, ReadClock and Digital, Sleep, Sand, and the shared kit; a chunk of their own (lazy.ts)
-  art.tsx                   Kakuk, the clock face, bells, the day's pictures, seasons, the places and the Kisváros buildings
+  art.tsx                   Kakukk, the clock face, bells, the day's pictures, seasons, the places and the Kisváros buildings
   print.tsx                 the Óratorony's sheets
   tower.css                 the Óratorony's styles
 ```

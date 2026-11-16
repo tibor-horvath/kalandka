@@ -39,7 +39,7 @@ describe('notes per game', () => {
     expect(gameNotes(DEFAULT_PROGRESS, DAY).map((n) => n.game)).toEqual([
       'Számmagok', 'Locsolás', 'Virágsor', 'Villámszem', 'Mézút', 'Méhkas', 'Cserépbarátok',
       'Robotút', 'Válogatógép', 'Mérleg', 'Mintagép', 'Tükörgép', 'Kódzár', 'Hibavadász',
-      'Napirend', 'Évszakok', 'Óraállító', 'Hány óra?', 'Digitóra', 'Kakuk alszik', 'Homokóra'
+      'Napirend', 'Évszakok', 'Óraállító', 'Hány óra?', 'Digitóra', 'Kakukk alszik', 'Homokóra'
     ]);
   });
 

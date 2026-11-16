@@ -2,23 +2,24 @@ import type { ReactNode, SVGProps } from 'react';
 import type { Mood } from '../../lib/types';
 import type { ActivityId } from './games/activities';
 import type { Season } from './games/season';
+import { useNowText } from './useNow';
 
-// Óratorony's drawings: Kakuk the cuckoo, the clock face every clock game shares, the bells, the pictures of a
+// Óratorony's drawings: Kakukk the cuckoo, the clock face every clock game shares, the bells, the pictures of a
 // day's things and of the seasons, and each game's place on the island. Flat shapes with a dark ink outline,
 // like Csepi and Csavar.
 
 export const INK = '#10233A';
-export const KAKUK = '#7B68C8';
-export const KAKUK_DEEP = '#5B4B9A';
+export const KAKUKK = '#7B68C8';
+export const KAKUKK_DEEP = '#5B4B9A';
 export const CREAM = '#F6EBD3';
 export const ROOF = '#C8553D';
 export const BELL = '#F2B33D';
 /** The minute hand: lighter and thinner than the hour hand, so the two differ without colour too. */
 export const MINUTE = '#2E86DE';
 
-// ---------- Kakuk ----------
+// ---------- Kakukk ----------
 
-function KakukEyes({ mood }: { mood: Mood }) {
+function KakukkEyes({ mood }: { mood: Mood }) {
   if (mood === 'sleep') {
     return (
       <g fill="none" stroke={INK} strokeWidth="4" strokeLinecap="round">
@@ -47,33 +48,33 @@ function KakukEyes({ mood }: { mood: Mood }) {
   );
 }
 
-/** Kakuk's body in a 120 × 140 box: a round purple cuckoo whose crest is two clock hands. */
-function KakukBody({ mood }: { mood: Mood }) {
+/** Kakukk's body in a 120 × 140 box: a round purple cuckoo whose crest is two clock hands. */
+function KakukkBody({ mood }: { mood: Mood }) {
   const cheer = mood === 'cheer';
   return (
     <>
-      <path d="M22 104 L4 124 L30 116 Z" fill={KAKUK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
+      <path d="M22 104 L4 124 L30 116 Z" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
       <path d={mood === 'sleep' ? 'M60 40 L52 20' : 'M60 40 V18'} stroke={INK} strokeWidth="5" strokeLinecap="round" />
       <path d={mood === 'sleep' ? 'M60 40 L72 32' : 'M60 40 L74 28'} stroke={INK} strokeWidth="6" strokeLinecap="round" />
       <circle cx="60" cy="40" r="5" fill={BELL} stroke={INK} strokeWidth="2.5" />
       {cheer && (
         <>
-          <path d="M24 74 C6 64 4 42 16 34 C22 50 28 60 36 64 Z" fill={KAKUK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
-          <path d="M96 74 C114 64 116 42 104 34 C98 50 92 60 84 64 Z" fill={KAKUK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
+          <path d="M24 74 C6 64 4 42 16 34 C22 50 28 60 36 64 Z" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
+          <path d="M96 74 C114 64 116 42 104 34 C98 50 92 60 84 64 Z" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
         </>
       )}
-      <ellipse cx="60" cy="84" rx="40" ry="44" fill={KAKUK} stroke={INK} strokeWidth="4" />
+      <ellipse cx="60" cy="84" rx="40" ry="44" fill={KAKUKK} stroke={INK} strokeWidth="4" />
       <ellipse cx="60" cy="98" rx="24" ry="25" fill={CREAM} />
       {!cheer && (
         <path
           d={mood === 'think' ? 'M94 80 C106 88 92 102 72 94' : 'M96 76 C112 84 110 108 92 112'}
-          fill={KAKUK_DEEP}
+          fill={KAKUKK_DEEP}
           stroke={INK}
           strokeWidth="4"
           strokeLinejoin="round"
         />
       )}
-      <KakukEyes mood={mood} />
+      <KakukkEyes mood={mood} />
       {mood !== 'sleep' && (
         <>
           <ellipse cx="38" cy="82" rx="6" ry="3.5" fill="#F79AB8" />
@@ -93,31 +94,31 @@ function KakukBody({ mood }: { mood: Mood }) {
   );
 }
 
-/** Kakuk standing: a round bird, so a little wider than Csepi for the same height in a guide bubble. */
-export function Kakuk({ mood = 'smile', width = 84, className }: { mood?: Mood; width?: number; className?: string }) {
+/** Kakukk standing: a round bird, so a little wider than Csepi for the same height in a guide bubble. */
+export function Kakukk({ mood = 'smile', width = 84, className }: { mood?: Mood; width?: number; className?: string }) {
   return (
-    <svg className={className} role="img" aria-label="Kakuk" width={Math.round(width * 1.2)} height={Math.round(width * 1.55)} viewBox="-4 22 128 166">
+    <svg className={className} role="img" aria-label="Kakukk" width={Math.round(width * 1.2)} height={Math.round(width * 1.55)} viewBox="-4 22 128 166">
       <g transform="translate(0 50)">
-        <KakukBody mood={mood} />
+        <KakukkBody mood={mood} />
       </g>
     </svg>
   );
 }
 
-/** Kakuk asleep in his nest under a moon: the rest screen after the Óratorony. Laid out by .rest-scene. */
-export function KakukResting({ night = false }: { night?: boolean }) {
+/** Kakukk asleep in his nest under a moon: the rest screen after the Óratorony. Laid out by .rest-scene. */
+export function KakukkResting({ night = false }: { night?: boolean }) {
   return (
-    <svg className="rest-scene__art" viewBox="0 0 320 240" role="img" aria-label="Kakuk alszik a fészkében">
+    <svg className="rest-scene__art" viewBox="0 0 320 240" role="img" aria-label="Kakukk alszik a fészkében">
       {night && <path d="M262 30 a24 24 0 1 0 20 38 a18 18 0 1 1 -20 -38 Z" fill="#FFE08A" />}
       <ellipse cx="160" cy="210" rx="110" ry="22" fill={night ? '#3A2E6B' : '#E3DEF5'} />
       <path d="M70 190 Q160 240 250 190 Q240 220 160 222 Q80 220 70 190 Z" fill="#B88A5A" stroke={INK} strokeWidth="4" strokeLinejoin="round" />
       <g transform="translate(100 64)">
-        <KakukBody mood="sleep" />
+        <KakukkBody mood="sleep" />
       </g>
-      <text x="230" y="110" fontFamily="'Baloo 2', sans-serif" fontSize="26" fontWeight="800" fill={night ? '#FFFFFF' : KAKUK_DEEP}>
+      <text x="230" y="110" fontFamily="'Baloo 2', sans-serif" fontSize="26" fontWeight="800" fill={night ? '#FFFFFF' : KAKUKK_DEEP}>
         z
       </text>
-      <text x="246" y="88" fontFamily="'Baloo 2', sans-serif" fontSize="20" fontWeight="800" fill={night ? '#FFFFFF' : KAKUK_DEEP}>
+      <text x="246" y="88" fontFamily="'Baloo 2', sans-serif" fontSize="20" fontWeight="800" fill={night ? '#FFFFFF' : KAKUKK_DEEP}>
         z
       </text>
     </svg>
@@ -313,7 +314,7 @@ const ACTIVITY_ART: Record<ActivityId, ReactNode> = {
       <rect x="22" y="62" width="30" height="18" rx="8" fill="#FFFFFF" stroke={INK} strokeWidth="4" />
       <circle cx="42" cy="62" r="12" fill="#F6D2B5" stroke={INK} strokeWidth="4" />
       <path d="M36 62 q3 3 6 0" fill="none" stroke={INK} strokeWidth="3" strokeLinecap="round" />
-      <path d="M52 64 H120 V82 H52 Z" fill={KAKUK} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
+      <path d="M52 64 H120 V82 H52 Z" fill={KAKUKK} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
     </>
   ),
   clap: (
@@ -516,7 +517,7 @@ export function DayArt() {
     <>
       <rect x="-40" y="-26" width="80" height="62" rx="4" fill={CREAM} stroke={INK} strokeWidth="4" />
       <path d="M-50 -24 L0 -64 L50 -24 Z" fill={ROOF} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
-      <rect x="-28" y="-14" width="56" height="34" rx="4" fill={KAKUK_DEEP} stroke={INK} strokeWidth="3" />
+      <rect x="-28" y="-14" width="56" height="34" rx="4" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="3" />
       <path d="M-28 -14 H0 V20 H-28 Z" fill="#FFF4C2" />
       <circle cx="-14" cy="3" r="8" fill="#FFC93C" />
       <path d="M14 -6 a8 8 0 1 0 6 13 a6 6 0 1 1 -6 -13 Z" fill="#FFE08A" />
@@ -566,25 +567,26 @@ export function ReadArt() {
   );
 }
 
-/** Digitóra: a station board with its digital time. */
+/** Digitóra: a station board showing the time now on the device. */
 export function DigiArt() {
+  const now = useNowText();
   return placeSvg(
     <>
       <rect x="-6" y="0" width="12" height="44" fill="#4F5F72" stroke={INK} strokeWidth="3" />
       <rect x="-54" y="-46" width="108" height="54" rx="10" fill="#1E2B3C" stroke={INK} strokeWidth="4" />
       <text x="0" y="-8" textAnchor="middle" fontFamily="'Baloo 2', sans-serif" fontSize="34" fontWeight="800" fill="#FFC93C">
-        7:15
+        {now}
       </text>
     </>
   );
 }
 
-/** Kakuk alszik: a birdhouse under the moon. */
+/** Kakukk alszik: a birdhouse under the moon. */
 export function SleepArt() {
   return placeSvg(
     <>
       <rect x="-30" y="-24" width="60" height="54" rx="4" fill="#E9C99B" stroke={INK} strokeWidth="3.5" />
-      <path d="M-40 -22 L0 -56 L40 -22 Z" fill={KAKUK_DEEP} stroke={INK} strokeWidth="3.5" strokeLinejoin="round" />
+      <path d="M-40 -22 L0 -56 L40 -22 Z" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="3.5" strokeLinejoin="round" />
       <circle cx="0" cy="2" r="12" fill={INK} />
       <path d="M0 30 V44" stroke="#8A5A3B" strokeWidth="6" />
       <path d="M44 -44 a10 10 0 1 0 8 16 a8 8 0 1 1 -8 -16 Z" fill="#FFE08A" stroke={INK} strokeWidth="2.5" />
@@ -611,7 +613,7 @@ export function TownArt() {
       <rect x="-60" y="-8" width="34" height="40" fill={CREAM} stroke={INK} strokeWidth="3" />
       <path d="M-66 -6 L-43 -30 L-20 -6 Z" fill={ROOF} stroke={INK} strokeWidth="3" strokeLinejoin="round" />
       <rect x="26" y="-8" width="34" height="40" fill="#FFE8B0" stroke={INK} strokeWidth="3" />
-      <path d="M20 -6 L43 -30 L66 -6 Z" fill={KAKUK_DEEP} stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <path d="M20 -6 L43 -30 L66 -6 Z" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="3" strokeLinejoin="round" />
       <rect x="-18" y="-46" width="36" height="78" rx="3" fill={CREAM} stroke={INK} strokeWidth="3" />
       <path d="M-24 -44 L0 -68 L24 -44 Z" fill={ROOF} stroke={INK} strokeWidth="3" strokeLinejoin="round" />
       <circle cx="0" cy="-22" r="12" fill="#FFFFFF" stroke={INK} strokeWidth="3" />
@@ -623,7 +625,22 @@ export function TownArt() {
 // ---------- Kisváros buildings ----------
 
 /** One building of the square in a 120 × 110 box; `ghost` draws its dashed outline before it is built. */
-export function BuildingArt({ id, ghost = false }: { id: string; ghost?: boolean }) {
+export function BuildingArt({
+  id,
+  ghost = false,
+  stage = 1,
+  windows = 'day',
+  size = 120,
+  gifts = []
+}: {
+  id: string;
+  ghost?: boolean;
+  stage?: number;
+  windows?: 'day' | 'lit' | 'dark';
+  size?: number;
+  /** The resident's gifts so far, each drawn in its own place on and around the building. */
+  gifts?: string[];
+}) {
   const stroke = ghost ? '#B9AFD6' : INK;
   const f = (c: string) => (ghost ? 'none' : c);
   const dash = ghost ? '6 6' : undefined;
@@ -631,7 +648,8 @@ export function BuildingArt({ id, ghost = false }: { id: string; ghost?: boolean
   const wall = (fill: string, x = 20, w = 80, y = 44) => <rect x={x} y={y} width={w} height={104 - y} fill={f(fill)} {...common} />;
   const roof = (fill: string, x = 12, w = 96, y = 44, top = 14) => <path d={`M${x} ${y} L${x + w / 2} ${top} L${x + w} ${y} Z`} fill={f(fill)} {...common} />;
   const door = <rect x="50" y="76" width="20" height="28" rx="3" fill={f('#8A5A3B')} {...common} />;
-  const win = (x: number, y = 56) => <rect x={x} y={y} width="16" height="14" rx="2" fill={f('#FFE08A')} {...common} />;
+  const pane = windows === 'lit' ? '#FFE08A' : windows === 'dark' ? '#3A4A63' : '#CFE3F5';
+  const win = (x: number, y = 56) => <rect x={x} y={y} width="16" height="14" rx="2" fill={f(pane)} {...common} />;
   const sign = (text: string, fill: string) =>
     !ghost && (
       <text x="60" y="40" textAnchor="middle" fontFamily="'Baloo 2', sans-serif" fontSize="13" fontWeight="800" fill={fill}>
@@ -732,7 +750,7 @@ export function BuildingArt({ id, ghost = false }: { id: string; ghost?: boolean
     cinema: (
       <>
         {wall('#3A2E6B')}
-        {roof(KAKUK_DEEP)}
+        {roof(KAKUKK_DEEP)}
         <rect x="30" y="52" width="60" height="16" rx="3" fill={f('#FFE08A')} {...common} />
         {sign('MOZI', INK)}
         {door}
@@ -749,22 +767,174 @@ export function BuildingArt({ id, ghost = false }: { id: string; ghost?: boolean
     )
   };
   return (
-    <svg width="120" height="110" viewBox="0 0 120 110" aria-hidden="true">
+    <svg width={size} height={Math.round((size * 122) / 120)} viewBox="0 -12 120 122" aria-hidden="true">
       {art[id]}
+      {!ghost && stage >= 2 && (
+        // The second stage: a lantern and a flower pot on each side of the door.
+        <g>
+          {[42, 78].map((x, i) => (
+            <g key={x}>
+              <path d={`M${x} 98 V86`} stroke={INK} strokeWidth="2" />
+              <rect x={x - 3.5} y={80} width="7" height="7" rx="1.5" fill="#FFE08A" stroke={INK} strokeWidth="2" />
+              <path d={`M${x - 6} 100 H${x + 6} L${x + 4} 108 H${x - 4} Z`} fill="#C98B50" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+              <circle cx={x} cy={97} r="4" fill={i ? '#F2B33D' : '#E8577D'} stroke={INK} strokeWidth="1.8" />
+            </g>
+          ))}
+        </g>
+      )}
+      {!ghost && stage >= 3 && (
+        // The third: a flag on a pole above the roof, and a gold star.
+        <g>
+          <path d="M104 46 V-8" stroke={INK} strokeWidth="3" strokeLinecap="round" />
+          <path d="M104 -8 L118 -3 L104 2 Z" fill="#E8577D" stroke={INK} strokeWidth="2.5" strokeLinejoin="round" />
+          <path d="M14 -2 l2.4 5 5.4.6 -4 3.7 1.1 5.4 -4.9 -2.8 -4.9 2.8 1.1 -5.4 -4 -3.7 5.4 -.6z" fill={BELL} stroke={INK} strokeWidth="1.6" strokeLinejoin="round" />
+        </g>
+      )}
+      {!ghost && gifts.map((kind) => <g key={kind}>{GIFT_ON_HOUSE[kind]}</g>)}
+    </svg>
+  );
+}
+
+/**
+ * Each gift's place on a building (in BuildingArt's 120 × 110 frame): the sign over the door, the flower box under the
+ * left window, a garland of flags along the roof, a balloon at the top corner, the tree and the bike on the left, the
+ * bench and the lamp on the right. A resident never gets the same kind twice, so the places never clash.
+ */
+const GIFT_ON_HOUSE: Record<string, ReactNode> = {
+  sign: (
+    <g>
+      <path d="M48 60 V66 M72 60 V66" stroke={INK} strokeWidth="1.8" />
+      <rect x="44" y="65" width="32" height="10" rx="2.5" fill="#E8B04A" stroke={INK} strokeWidth="2.2" />
+      <path d="M50 70 H70" stroke="#8A5A3B" strokeWidth="2" strokeLinecap="round" />
+    </g>
+  ),
+  flowerbox: (
+    <g>
+      <rect x="25" y="72" width="24" height="7" rx="2" fill="#C98B50" stroke={INK} strokeWidth="2" />
+      <circle cx="30" cy="70" r="3.2" fill="#E8577D" stroke={INK} strokeWidth="1.5" />
+      <circle cx="37" cy="69" r="3.2" fill="#F2B33D" stroke={INK} strokeWidth="1.5" />
+      <circle cx="44" cy="70" r="3.2" fill="#E8577D" stroke={INK} strokeWidth="1.5" />
+    </g>
+  ),
+  flag: (
+    <g>
+      <path d="M16 44 Q60 56 104 44" fill="none" stroke={INK} strokeWidth="1.6" />
+      {[24, 38, 52, 66, 80, 94].map((x, i) => (
+        <path key={x} d={`M${x - 5} ${46 + (x < 60 ? (x - 16) / 8 : (104 - x) / 8)} h10 l-5 9 Z`} fill={['#E8577D', '#F2B33D', '#2E86DE'][i % 3]} stroke={INK} strokeWidth="1.2" strokeLinejoin="round" />
+      ))}
+    </g>
+  ),
+  balloon: (
+    <g>
+      <path d="M14 30 Q18 38 20 46" fill="none" stroke={INK} strokeWidth="1.4" />
+      <ellipse cx="14" cy="22" rx="7" ry="9" fill="#E8577D" stroke={INK} strokeWidth="2" />
+      <ellipse cx="11" cy="19" rx="2" ry="3" fill="#FFFFFF" opacity="0.7" />
+    </g>
+  ),
+  tree: (
+    <g>
+      <rect x="7" y="78" width="4" height="20" fill="#8A5A3B" stroke={INK} strokeWidth="1.5" />
+      <circle cx="9" cy="72" r="10" fill="#3D8F3F" stroke={INK} strokeWidth="2" />
+    </g>
+  ),
+  bike: (
+    <g>
+      <circle cx="6" cy="102" r="5" fill="none" stroke={INK} strokeWidth="2" />
+      <circle cx="24" cy="102" r="5" fill="none" stroke={INK} strokeWidth="2" />
+      <path d="M6 102 L12 93 H21 L24 102 M12 93 L15 102 H21 M20 90 H24" fill="none" stroke="#2E86DE" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
+    </g>
+  ),
+  bench: (
+    <g>
+      <path d="M86 98 H106 M89 98 V106 M103 98 V106" stroke={INK} strokeWidth="2.2" strokeLinecap="round" />
+      <rect x="85" y="94" width="22" height="4" rx="1.5" fill="#C98B50" stroke={INK} strokeWidth="1.8" />
+      <rect x="86" y="88" width="20" height="4" rx="1.5" fill="#C98B50" stroke={INK} strokeWidth="1.8" />
+    </g>
+  ),
+  lamp: (
+    <g>
+      <path d="M113 106 V58" stroke={INK} strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M108 50 H118 L116 58 H110 Z" fill="#FFE08A" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+      <path d="M107 50 L113 45 L119 50 Z" fill={INK} />
+    </g>
+  )
+};
+
+// ---------- Kisváros residents and decorations ----------
+
+/** A resident of the Kisváros, standing, in a 30 × 50 box with feet at the bottom. */
+export function ResidentArt({ hat, coat, size = 46, label }: { hat: 'chef' | 'cap' | 'none' | 'bow' | 'top'; coat: string; size?: number; label?: string }) {
+  const hats: Record<string, ReactNode> = {
+    chef: <path d="M-7 -38 C-12 -46 -4 -50 0 -46 C4 -50 12 -46 7 -38 Z" fill="#FFFFFF" stroke={INK} strokeWidth="2.2" strokeLinejoin="round" />,
+    cap: <path d="M-9 -36 C-9 -44 9 -44 9 -36 Z M9 -37 H14" fill={coat} stroke={INK} strokeWidth="2.2" strokeLinejoin="round" />,
+    top: <path d="M-6 -38 V-48 H6 V-38 Z M-10 -38 H10" fill={INK} stroke={INK} strokeWidth="2.2" />,
+    bow: <path d="M-4 -40 L-10 -44 V-36 Z M4 -40 L10 -44 V-36 Z" fill="#E8577D" stroke={INK} strokeWidth="1.8" strokeLinejoin="round" />,
+    none: <path d="M-8 -36 C-8 -42 8 -42 8 -36" fill="none" stroke="#8A5A3B" strokeWidth="3" strokeLinecap="round" />
+  };
+  return (
+    <svg width={Math.round(size * 0.6)} height={size} viewBox="-15 -50 30 50" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
+      <path d="M-10 0 V-20 C-10 -29 10 -29 10 -20 V0 Z" fill={coat} stroke={INK} strokeWidth="2.2" />
+      <circle cy="-32" r="8.5" fill="#F6D2B5" stroke={INK} strokeWidth="2.2" />
+      <circle cx="-3" cy="-32" r="1.2" fill={INK} />
+      <circle cx="3" cy="-32" r="1.2" fill={INK} />
+      <path d="M-3 -28.5 q3 2.2 6 0" fill="none" stroke={INK} strokeWidth="1.2" strokeLinecap="round" />
+      {hats[hat]}
+    </svg>
+  );
+}
+
+const DECOR_ART: Record<string, ReactNode> = {
+  bench: <path d="M3 12 H21 V15 H3 Z M5 15 V20 M19 15 V20 M4 7 H20 V10 H4 Z" fill="#C98B50" stroke={INK} strokeWidth="1.6" strokeLinejoin="round" />,
+  lamp: <path d="M11 21 V10 H13 V21 Z M8 4 H16 L14 9 H10 Z" fill="#FFE08A" stroke={INK} strokeWidth="1.6" strokeLinejoin="round" />,
+  flowerbox: (
+    <>
+      <path d="M4 14 H20 L18 20 H6 Z" fill="#C98B50" stroke={INK} strokeWidth="1.6" strokeLinejoin="round" />
+      <circle cx="8" cy="11" r="3" fill="#E8577D" stroke={INK} strokeWidth="1.4" />
+      <circle cx="16" cy="11" r="3" fill="#F2B33D" stroke={INK} strokeWidth="1.4" />
+    </>
+  ),
+  flag: <path d="M6 21 V3 M6 4 H18 L15 8 L18 12 H6" fill="#E8577D" stroke={INK} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />,
+  tree: (
+    <>
+      <rect x="11" y="14" width="2.5" height="7" fill="#8A5A3B" />
+      <circle cx="12" cy="10" r="7" fill="#3D8F3F" stroke={INK} strokeWidth="1.6" />
+    </>
+  ),
+  bike: (
+    <>
+      <circle cx="6" cy="16" r="4" fill="none" stroke={INK} strokeWidth="1.8" />
+      <circle cx="18" cy="16" r="4" fill="none" stroke={INK} strokeWidth="1.8" />
+      <path d="M6 16 L10 9 H16 L18 16 M10 9 L12 16 H16" fill="none" stroke="#2E86DE" strokeWidth="1.8" strokeLinejoin="round" />
+    </>
+  ),
+  sign: <path d="M5 21 V9 M19 21 V9 M3 4 H21 V10 H3 Z" fill="#E8B04A" stroke={INK} strokeWidth="1.6" strokeLinejoin="round" />,
+  balloon: (
+    <>
+      <path d="M12 16 V22" stroke={INK} strokeWidth="1.4" />
+      <ellipse cx="12" cy="9" rx="6" ry="7" fill="#E8577D" stroke={INK} strokeWidth="1.6" />
+    </>
+  )
+};
+
+/** A gift's decoration, in a 24 × 24 box. */
+export function DecorArt({ kind, size = 24 }: { kind: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      {DECOR_ART[kind]}
     </svg>
   );
 }
 
 // ---------- the map ----------
 
-/** Kakuk's island on the Kalandka map: the clock tower on a cobbled square, two houses. Centred on its point, about 420 wide. */
+/** Kakukk's island on the Kalandka map: the clock tower on a cobbled square, two houses. Centred on its point, about 420 wide. */
 export function TowerMapArt() {
   return (
     <g>
       <ellipse cx="0" cy="34" rx="96" ry="30" fill="#E7D7BC" />
       <g transform="translate(-120 26)">
         <rect x="-26" y="-34" width="52" height="40" fill="#FFE8B0" stroke={INK} strokeWidth="4" />
-        <path d="M-34 -32 L0 -62 L34 -32 Z" fill={KAKUK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
+        <path d="M-34 -32 L0 -62 L34 -32 Z" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
         <rect x="-8" y="-16" width="16" height="22" fill="#8A5A3B" />
       </g>
       <g transform="translate(118 30)">
@@ -779,7 +949,7 @@ export function TowerMapArt() {
         <circle cx="0" cy="-104" r="22" fill="#FFFFFF" stroke={INK} strokeWidth="4" />
         <path d="M0 -104 V-120" stroke={MINUTE} strokeWidth="3.5" strokeLinecap="round" />
         <path d="M0 -104 L11 -104" stroke={INK} strokeWidth="5" strokeLinecap="round" />
-        <rect x="-11" y="-144" width="22" height="16" rx="8" fill={KAKUK_DEEP} stroke={INK} strokeWidth="3" />
+        <rect x="-11" y="-144" width="22" height="16" rx="8" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="3" />
         <path d="M-12 0 V-22 a12 12 0 0 1 24 0 V0 Z" fill="#8A5A3B" stroke={INK} strokeWidth="4" />
       </g>
     </g>

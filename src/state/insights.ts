@@ -139,7 +139,7 @@ const GAME_TEXTS: GameText[] = [
     home: 'Ha digitális órát láttok, olvassátok le, és mondjátok el úgy is: negyed nyolc.'
   },
   {
-    id: 'sleep', where: 'A Kakuk alszik játékban', unit: 'feladat',
+    id: 'sleep', where: 'A Kakukk alszik játékban', unit: 'feladat',
     hard: 'A legutóbbi feladatokban többször is rosszul számolta az eltelt időt.',
     home: 'Számoljátok ki együtt: ha háromkor indulunk és ötkor érünk haza, mennyi ideig voltunk oda?'
   },

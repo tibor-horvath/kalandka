@@ -322,7 +322,7 @@ export const digiSheet = spec<DigiRound>({
   )
 });
 
-// ---------- Kakuk alszik ----------
+// ---------- Kakukk alszik ----------
 
 export const sleepSheet = spec<SleepRound>({
   id: 'sleep',
@@ -330,7 +330,10 @@ export const sleepSheet = spec<SleepRound>({
   levels: SLEEP_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'sleep').level,
   grid: (_, d) => pickGrid(d, [1, 3], [2, 3], [2, 4]),
-  ask: () => 'Kakuk lefeküdt (hold), aztán felébredt (nap). Mennyit aludt? Karikázd be!',
+  ask: (level) =>
+    SLEEP_LEVELS[level].ask === 'woke'
+      ? 'Kakukk lefeküdt (hold), és ennyit aludt. Hánykor ébredt fel? Karikázd be!'
+      : 'Kakukk lefeküdt (hold), aztán felébredt (nap). Mennyit aludt? Karikázd be!',
   tip: () => 'A gyerkőc ujjával lépjen végig a számlapon a kis mutató első helyétől a másodikig, és számolja a lépéseket: minden szám egy óra.',
   tasks: (req) => Array.from({ length: req.count }, (_, i) => buildSleepRound(req.level, roundOf(req, i))),
   Task: ({ task, answers }) => (
@@ -338,9 +341,17 @@ export const sleepSheet = spec<SleepRound>({
       <At x={30} y={0}>
         <PaperClock size={200} time={task.from} />
       </At>
-      <At x={300} y={0}>
-        <PaperClock size={200} time={task.to} />
-      </At>
+      {task.level.ask === 'woke' ? (
+        <g>
+          <rect x={300} y={40} width="220" height="120" rx="18" fill="#FFFFFF" stroke="#B9CBD8" strokeWidth="3" />
+          <Word x={300} y={40} w={220} h={70} text="aludt:" size={26} />
+          <Word x={300} y={90} w={220} h={70} text={cardText(task.minutes)} size={cardText(task.minutes).length > 7 ? 28 : 40} />
+        </g>
+      ) : (
+        <At x={300} y={0}>
+          <PaperClock size={200} time={task.to} />
+        </At>
+      )}
       <At x={110} y={206}>
         <DayPartSign part="este" size={40} />
       </At>
@@ -348,9 +359,9 @@ export const sleepSheet = spec<SleepRound>({
         <DayPartSign part="délben" size={40} />
       </At>
       <Choices x={10} y={260} w={170} h={100} gap={15} pick={task.answer} answers={answers}>
-        {task.choices.map((m) => (
-          <Word key={m} x={0} y={0} w={170} h={100} text={cardText(m)} size={cardText(m).length > 7 ? 24 : 34} />
-        ))}
+        {task.level.ask === 'woke'
+          ? task.times.map((t) => <Word key={t} x={0} y={0} w={170} h={100} text={capital(t)} size={t.length > 10 ? 20 : 28} />)
+          : task.choices.map((m) => <Word key={m} x={0} y={0} w={170} h={100} text={cardText(m)} size={cardText(m).length > 7 ? 24 : 34} />)}
       </Choices>
     </Pic>
   )
@@ -367,6 +378,8 @@ export const sandSheet = spec<SandRound>({
   ask: (level) => {
     const mode = SAND_LEVELS[level].mode;
     if (mode === 'span') return 'Meddig tart? Karikázd be: egy pillanat, néhány perc vagy órák!';
+    if (mode === 'longest') return 'Melyik tart a leghosszabb ideig? Karikázd be!';
+    if (mode === 'shortest') return 'Melyik a legrövidebb? Karikázd be!';
     return mode === 'longer' ? 'Melyik tart tovább? Karikázd be!' : 'Melyik a rövidebb? Karikázd be!';
   },
   tip: () => 'Olvassák fel a képek nevét, és játsszák el: a taps egy pillanat, a fogmosás pár perc, az alvás egy egész éjszaka.',
@@ -385,9 +398,9 @@ export const sandSheet = spec<SandRound>({
         </Choices>
       </Pic>
     ) : (
-      <Pic w={460} h={220}>
+      <Pic w={'trio' in task ? 700 : 460} h={220}>
         <Choices x={10} y={10} w={200} h={200} gap={40} pick={task.answer} answers={answers}>
-          {task.pair.map((id) => (
+          {('trio' in task ? task.trio : task.pair).map((id) => (
             <DayCard key={id} id={id} />
           ))}
         </Choices>
