@@ -1,5 +1,6 @@
 import { useRef, useState, type PointerEvent } from 'react';
 import { GameShell } from '../../../components/GameShell';
+import { CheckIcon } from '../../../components/ui';
 import { useLadderRound } from '../../../components/ladderRound';
 import { dialHour, timeWords } from '../../../lib/time';
 import { popBubble } from '../../../lib/sound';
@@ -135,7 +136,7 @@ export function SetClock({ onBack }: { onBack: () => void }) {
           )}
           {!solved && (
             <button type="button" className="big-btn big-btn--tower" onClick={check}>
-              Kész
+              <CheckIcon /> Kész
             </button>
           )}
         </div>

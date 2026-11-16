@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { speak } from '../lib/speech';
 import type { Mood, Tone } from '../lib/types';
+import { StuckHint } from './StuckHint';
 import { GuideBubble, NextIcon, type GuideId } from './ui';
 
 // What every game screen needs around its play, whichever world it is in: timers that stop when the child leaves,
@@ -51,6 +52,7 @@ export function NextButton({ show = true, onNext, label = 'Következő', look }:
   return (
     <button type="button" className={look ? `big-btn big-btn--${look}` : 'big-btn'} onClick={onNext}>
       {label} <NextIcon />
+      <StuckHint />
     </button>
   );
 }

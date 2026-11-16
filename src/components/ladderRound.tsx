@@ -6,6 +6,7 @@ import { EASIER_SPEECH, LADDER_RULES, afterSolve, isFinished, ladderMeter, ladde
 import { PRACTICE_PAY_PER_DAY, practicePaid, practiceRested, rewardFor } from '../state/pod';
 import { useProgress, type Progress } from '../state/progress';
 import { logTask } from '../state/taskLog';
+import { StuckHint } from './StuckHint';
 import { NextIcon } from './ui';
 
 interface RoundOptions {
@@ -86,6 +87,7 @@ export function WinCard({ title = 'Kész!', next = 'Következő kör', className
       <span className="path-win__title">{title}</span>
       <button type="button" className="big-btn big-btn--robot" onClick={onNext}>
         {next} <NextIcon />
+        <StuckHint />
       </button>
     </div>
   );
