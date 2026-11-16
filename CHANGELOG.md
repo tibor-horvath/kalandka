@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.13.0](https://github.com/tibor-horvath/kalandka/compare/v1.12.0...v1.13.0) (2026-11-16)
+
+
+### Added
+
+* print page redesign ([#81](https://github.com/tibor-horvath/kalandka/issues/81)) ([2a65e5b](https://github.com/tibor-horvath/kalandka/commit/2a65e5b8f6ccbde5974b7fe0049e7de913bf0bad))
+
+
+### Fixed
+
+* tower explainer sheet ([#80](https://github.com/tibor-horvath/kalandka/issues/80)) ([0510d45](https://github.com/tibor-horvath/kalandka/commit/0510d45a895a8b971cb0cce6ce46704c836e2539))
+
+
+### Changed
+
+* world manifests and kits ([#78](https://github.com/tibor-horvath/kalandka/issues/78)) ([ddb302e](https://github.com/tibor-horvath/kalandka/commit/ddb302e00fccdfaf325ae4eb39607f275a4e03fc))
+
 ## [1.12.0](https://github.com/tibor-horvath/kalandka/compare/v1.11.0...v1.12.0) (2026-11-16)
 
 
