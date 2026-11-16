@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/tibor-horvath/kalandka/compare/v1.11.0...v1.12.0) (2026-11-16)
+
+
+### Added
+
+* Óratorony world ([#68](https://github.com/tibor-horvath/kalandka/issues/68)) ([15398fc](https://github.com/tibor-horvath/kalandka/commit/15398fc81af8eee5bdd6c01ba9d285746adddbf5))
+
 ## [1.11.0](https://github.com/tibor-horvath/kalandka/compare/v1.10.0...v1.11.0) (2026-11-13)
 
 
