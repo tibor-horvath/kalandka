@@ -5,12 +5,13 @@ import { Csavar, Rover } from '../../worlds/robot/art';
 import { MAX_PAGES, PRINT_SHEETS, buildPages, nextPrintout, pageRef, saveChoice, savedChoice, sheetFor, tasksPerPage, type PrintChoice } from '../../print/catalog';
 import { EXTRAS, extraFor, type ExtraId } from '../../print/extras';
 import { linkUrl, pageKey } from '../../print/link';
-import { DENSITIES, OtherAnswers, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
+import { DENSITIES, ExplainSheet, OtherAnswers, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
 import { useProfiles, type AgeBand } from '../../state/profiles';
 import { useProgress } from '../../state/progress';
 import { PAGE_STEPS, markPageDone, pagesDoneIn } from '../../state/stickers';
 import { WORLDS, currentWorld, type WorldId } from '../../state/worlds';
 import { ScanSheet } from './ScanSheet';
+import { Check } from './controls';
 
 /** Width of an A4 sheet in CSS pixels (210 mm); the preview scales it to its column. */
 const SHEET_PX = 793.7;
@@ -59,9 +60,12 @@ function theAge(age: AgeBand): string {
 }
 
 function pagesOf(s: PrintSpec<unknown>, c: PrintChoice, answers: boolean): ReactNode[] {
-  return buildPages(s, c).map((p, i) => (
+  const sheets = buildPages(s, c).map((p, i) => (
     <Sheet key={i} spec={s} level={c.level} grid={p.grid} tasks={p.tasks} answers={answers} footer={c.pages > 1 ? `${i + 1}/${c.pages}. lap` : ''} link={linkUrl(pageRef(s, c, i))} />
   ));
+  // The magyarázó lap goes in front, outside the sheets' numbering: it has no tasks, answers or QR code.
+  const explainer = c.explain ? s.explain?.(c.level) : null;
+  return explainer ? [<ExplainSheet key="explain" spec={s} level={c.level} explainer={explainer} />, ...sheets] : sheets;
 }
 
 /** The sheets at the width of their column. */
@@ -246,6 +250,7 @@ function GameSheet({ id, kidId, guestAge, canMark, onBack, onExtra }: { id: Prin
   };
 
   const perPage = tasksPerPage(s, choice.level, choice.density);
+  const explainer = s.explain?.(choice.level) ?? null;
 
   return (
     <div className="pa-page">
@@ -297,6 +302,15 @@ function GameSheet({ id, kidId, guestAge, canMark, onBack, onExtra }: { id: Prin
               </span>
               <Stepper label="Lapok" value={`${choice.pages} lap · ${choice.pages * perPage} feladat`} atMin={choice.pages <= 1} atMax={choice.pages >= MAX_PAGES} onStep={(by) => change({ pages: choice.pages + by })} />
             </div>
+            {explainer && (
+              <Check
+                id="ps-explain"
+                checked={!!choice.explain}
+                onChange={(on) => change({ explain: on })}
+                title="Magyarázó lap az elejére"
+                hint={`„${explainer.title}” – amit a játék a „?” gombra elmagyaráz, egy külön lapon, feladatok nélkül.`}
+              />
+            )}
           </section>
 
           <div className="pa-row">
