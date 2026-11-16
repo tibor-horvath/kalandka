@@ -14,7 +14,7 @@ import { speak, stopSpeaking } from '../lib/speech';
 import { useProgress } from '../state/progress';
 import { seedBalance } from '../state/garden';
 import { boltBalance } from '../state/robotParts';
-import { WORLDS, currentWorld, type WorldId } from '../state/worlds';
+import { WORLDS, WORLD_IDS, currentWorld, type WorldId } from '../state/worlds';
 
 /** Where the child's boat waits, said the way the guide says it. */
 const DOCKED: Record<WorldId, string> = { garden: 'a kertnél', robot: 'a műhelynél', tower: 'a toronynál' };
@@ -60,8 +60,6 @@ interface MapLayout {
   /** The islands asleep in the fog: worlds still to come. A tap only makes the guide talk. */
   mist: Mist[];
 }
-
-const WORLD_IDS: WorldId[] = ['garden', 'robot', 'tower'];
 
 type Lane = 'garden-robot' | 'garden-tower' | 'robot-tower';
 const laneOf = (a: WorldId, b: WorldId) => [a, b].sort().join('-') as Lane;

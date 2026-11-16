@@ -1,3 +1,4 @@
+import { save } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { buildAddRound } from '../worlds/garden/games/add/logic';
 import { LADDER_RULES, ladderOf } from './ladder';
@@ -7,7 +8,7 @@ import { buildLevelRound } from '../worlds/garden/games/patterns/logic';
 import { plantForLevel } from '../worlds/garden/games/water/logic';
 import { LADDER_GAMES, type LadderGame } from './games';
 import { LEVEL_SETTINGS, ladderHint, ladderStepLine } from './levels';
-import { DEFAULT_PROGRESS, migrate } from './progress';
+import { DEFAULT_PROGRESS, readProgress } from './progress';
 
 const setting = (id: string) => LEVEL_SETTINGS.find((s) => s.id === id)!;
 
@@ -25,7 +26,7 @@ describe('per-game level settings', () => {
   });
 
   it('changes what the game actually serves', () => {
-    expect(buildLearnRound(setting('learn').apply(DEFAULT_PROGRESS, 10).learnRound).count).toBe(11);
+    expect(buildLearnRound(setting('learn').apply(DEFAULT_PROGRESS, 10).games.learn.round).count).toBe(11);
     expect(plantForLevel(ladderOf(setting('water').apply(DEFAULT_PROGRESS, 2), 'water').level, 0).target).toBeGreaterThan(10);
     expect(buildLevelRound(ladderOf(setting('patterns').apply(DEFAULT_PROGRESS, 1), 'patterns').level, 0).shape).toBe('ABC');
     expect(ladderOf(setting('trace').apply(DEFAULT_PROGRESS, 2), 'trace')).toMatchObject({ level: 2, floor: 2 });
@@ -37,20 +38,21 @@ describe('per-game level settings', () => {
   });
 
   it('moves an older Méhkas save onto the new ladder once, and leaves fresh profiles at the start', () => {
-    const old = { ...DEFAULT_PROGRESS, addLevelsVersion: 1 };
-    expect(migrate({ ...old, addLevel: 0, addSolved: 7 }).addLevel).toBe(2);
-    expect(migrate({ ...old, addLevel: 4, addSolved: 30 }).addLevel).toBe(8);
-    expect(migrate({ ...old, addLevelsVersion: 2, addLevel: 9, addSolved: 30 }).addLevel).toBe(12);
-    expect(migrate({ ...old, addLevel: 0, addSolved: 0 }).addLevel).toBe(0);
-    const once = migrate({ ...old, addLevel: 1, addSolved: 3 });
-    expect(migrate(once)).toBe(once);
+    // Saves from before versions, written with the first Méhkas ladder (no addLevelsVersion) or the second.
+    expect(readProgress({ addLevel: 0, addSolved: 7 }).addLevel).toBe(2);
+    expect(readProgress({ addLevel: 4, addSolved: 30 }).addLevel).toBe(8);
+    expect(readProgress({ addLevelsVersion: 2, addLevel: 9, addSolved: 30 }).addLevel).toBe(12);
+    expect(readProgress({ addLevel: 0, addSolved: 0 }).addLevel).toBe(0);
+    expect(readProgress({ addLevelsVersion: 3, addLevel: 9, addSolved: 30 }).addLevel).toBe(9);
+    const once = readProgress({ addLevel: 1, addSolved: 3 });
+    expect(readProgress(once)).toEqual(once);
   });
 
   it('keeps other progress untouched', () => {
-    const p = { ...DEFAULT_PROGRESS, seeds: 7, garden: ['tulipan'] };
+    const p = save({ seeds: 7, garden: ['tulipan'] });
     for (const s of LEVEL_SETTINGS) {
       const next = s.apply(p, s.options[s.options.length - 1].value);
-      expect(next.seeds).toBe(7);
+      expect(next.worlds.garden.earned).toBe(7);
       expect(next.garden).toEqual(['tulipan']);
     }
   });

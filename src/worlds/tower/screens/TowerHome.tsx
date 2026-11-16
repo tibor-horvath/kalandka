@@ -1,3 +1,4 @@
+import { markOpened, welcome } from '../../../state/worlds';
 import { useEffect, type ReactNode } from 'react';
 import type { Badge, Place, RewardPlace } from '../../../components/island';
 import { WorldHub, type HubActions } from '../../../components/WorldHub';
@@ -32,12 +33,12 @@ export function TowerHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
   const sticker = newStickers(progress, 'tower')[0] ?? null;
 
   const hello = shared ? `Kakukk, ${kidName(kid)}! Jó, hogy itt vagy a toronynál!` : HELLO;
-  const greeting = progress.towerWelcomed ? hello : 'Kakukk! Én Kakukk vagyok!';
-  const question = progress.towerWelcomed ? 'Mit játsszunk ma?' : 'A toronyórában lakom.';
-  const intro = progress.towerWelcomed
+  const greeting = progress.worlds.tower.welcomed ? hello : 'Kakukk! Én Kakukk vagyok!';
+  const question = progress.worlds.tower.welcomed ? 'Mit játsszunk ma?' : 'A toronyórában lakom.';
+  const intro = progress.worlds.tower.welcomed
     ? `${greeting} ${question}`
     : 'Kakukk! Én Kakukk vagyok, a toronyóra madara. Itt a napokkal, az évszakokkal és az órával játszunk. Kezdjük a Napirenddel!';
-  const sayIntro = () => speak(intro, { online: progress.towerWelcomed ? `${HELLO} ${question}` : intro });
+  const sayIntro = () => speak(intro, { online: progress.worlds.tower.welcomed ? `${HELLO} ${question}` : intro });
 
   useEffect(() => {
     if (!sticker) sayIntro();
@@ -45,17 +46,17 @@ export function TowerHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
   }, []);
 
   const welcomeOnce = () => {
-    if (!progress.towerWelcomed) update((p) => ({ ...p, towerWelcomed: true }));
+    if (!progress.worlds.tower.welcomed) update((p) => welcome(p, 'tower'));
   };
   const open = (game: GameId) => {
     welcomeOnce();
-    if (!progress.towerOpened.includes(game)) update((p) => ({ ...p, towerOpened: [...p.towerOpened, game] }));
+    if (!progress.worlds.tower.opened.includes(game)) update((p) => markOpened(p, 'tower', game));
     onOpen(game);
   };
 
   const places: Place[] = gamesIn('tower').map(({ id, name }, i) => {
     const fresh = solvedOf(progress, id) === 0;
-    const unopened = fresh && !progress.towerOpened.includes(id);
+    const unopened = fresh && !progress.worlds.tower.opened.includes(id);
     const level = isLadderGame(id) ? ladderOf(progress, id).level : 0;
     const badge: Badge = i === 0 && fresh ? { text: 'Kezdd itt!', kind: 'new' } : unopened ? { text: 'Új!', kind: 'new' } : { text: `${level + 1}. szint`, kind: 'level' };
     return { id, name, label: TILES[id]!.label, badge, start: i === 0 && fresh, art: TILES[id]!.art, onOpen: () => open(id) };

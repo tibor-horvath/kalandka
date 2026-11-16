@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLadderRound, WinCard } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
 import { BinSign, Crate, SortPart } from '../art';
-import { DoneTick, GuideBubble } from '../../../components/ui';
+import { DoneTick } from '../../../components/ui';
 import {
   SHOW_BIN_AFTER,
   SHOW_ODD_AFTER,
@@ -23,10 +23,9 @@ import {
   type SortFeedback,
   type SortRound,
 } from '../games/sort';
-import { speak } from '../../../lib/speech';
-import { buzz, chime, fanfare, popBubble } from '../../../lib/sound';
+import { buzz, chime, popBubble } from '../../../lib/sound';
 import { useProgress } from '../../../state/progress';
-import { ROUND_HELP_AFTER } from '../../../state/taskLog';
+import { CsavarSays, useCsavar } from './kit';
 
 /** After the odd part is found, the row stays a moment so the child sees why, then the next row comes. */
 const NEXT_ROW_MS = 2200;
@@ -45,34 +44,16 @@ function PartPic({ part, size }: { part: Part; size: number }) {
 export function Sort({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('sort');
-  const round = useMemo(() => buildRound(levelIndex, progress.sortRound), [levelIndex, progress.sortRound]);
-  const [fb, setFb] = useState<SortFeedback>(() => startFeedback(round));
+  const round = useMemo(() => buildRound(levelIndex, progress.games.sort.round), [levelIndex, progress.games.sort.round]);
+  const csavar = useCsavar(startFeedback(round));
   const [solved, setSolved] = useState(false);
   /** Kakukktojás: the row the child is on, and whether its odd part is found, for the meter's pips. */
   const [oddAt, setOddAt] = useState<OddProgress>({ at: 0, found: false });
-  const timers = useRef<number[]>([]);
-
-  /** Corrections Csavar gave this round; enough of them and the round needed help (parents' notes). */
-  const oops = useRef(0);
-  const say = (f: SortFeedback) => {
-    if (f.tone === 'oops') oops.current += 1;
-    setFb(f);
-    speak(f.speech);
-  };
-
-  useEffect(() => {
-    speak(startFeedback(round).speech);
-    const pending = timers.current;
-    return () => pending.forEach((t) => window.clearTimeout(t));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- One round per mount: App keys this screen by round.
-  }, []);
 
   const win = (f: SortFeedback) => {
     setSolved(true);
-    fanfare();
-    buzz(40);
-    say(f);
-    solve(oops.current >= ROUND_HELP_AFTER);
+    csavar.cheer(f);
+    solve(csavar.helped());
   };
 
   return (
@@ -84,19 +65,15 @@ export function Sort({ onBack }: { onBack: () => void }) {
       justSolved={solved}
       tasks={isOdd(round) ? { at: oddAt.at, of: round.rows.length, done: oddAt.found, unit: 'sor' } : undefined}
       onBack={onBack}
-      onReplay={() => speak(fb.speech)}
+      onReplay={csavar.replay}
     >
 
-      <div className="sort-guide">
-        <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
-          {fb.text}
-        </GuideBubble>
-      </div>
+      <CsavarSays line={csavar.line} className="sort-guide" />
 
       {isOdd(round) ? (
-        <OddRows round={round} solved={solved} say={say} onWin={win} onProgress={setOddAt} later={(fn, ms) => timers.current.push(window.setTimeout(fn, ms))} />
+        <OddRows round={round} solved={solved} say={csavar.say} onWin={win} onProgress={setOddAt} later={csavar.later} />
       ) : (
-        <Belt round={round} solved={solved} say={say} onWin={win} />
+        <Belt round={round} solved={solved} say={csavar.say} onWin={win} />
       )}
 
       {solved && <WinCard onNext={goNext} />}

@@ -1,3 +1,4 @@
+import { worldInfo } from '../state/worlds';
 import { useRef, useState } from 'react';
 import { speak } from '../lib/speech';
 import { GAMES, creditSolve, nextRound, roundOf, type LadderGame } from '../state/games';
@@ -24,7 +25,7 @@ interface WinOptions {
 /** Said when practice pays the day's last seed or bolt; the tasks go on, the pod rests till tomorrow. */
 export function restedSpeech(game: LadderGame): string {
   const world = GAMES[game].world;
-  return `Mára megvan az öt ${world === 'robot' ? 'csavarod' : world === 'tower' ? 'harangod' : 'magod'}! Gyakorolhatsz tovább, holnap újra gyűjthetsz.`;
+  return `Mára megvan az öt ${worldInfo(world).reward.yours}! Gyakorolhatsz tovább, holnap újra gyűjthetsz.`;
 }
 
 /**

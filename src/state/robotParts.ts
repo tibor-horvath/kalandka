@@ -1,3 +1,4 @@
+import { spentIn } from './balance';
 import type { Progress } from './progress';
 import type { ArrivalProgress } from './garden';
 
@@ -85,7 +86,7 @@ export function partsIn(slot: PartSlot): Part[] {
 
 /** Bolts the child can still spend. `bolts` counts every bolt ever earned. */
 export function boltBalance(p: Progress): number {
-  return Math.max(0, p.bolts - p.boltsSpent);
+  return Math.max(0, p.worlds.robot.earned - p.worlds.robot.spent);
 }
 
 function ownedList(p: Progress, r: RobotIdx): string[] {
@@ -157,7 +158,7 @@ export function buy(p: Progress, id: string, r: RobotIdx = activeRobot(p)): Prog
   if (!canBuy(p, id, r)) return p;
   const part = partById(id)!;
   const wished = p.robotWish?.part === id && p.robotWish.robot === r;
-  return withRobot({ ...p, boltsSpent: p.boltsSpent + part.cost, ...(wished ? { robotWish: null } : {}) }, r, [...ownedList(p, r), id], { ...lookOf(p, r), [part.slot]: id });
+  return withRobot({ ...p, worlds: spentIn(p, 'robot', part.cost), ...(wished ? { robotWish: null } : {}) }, r, [...ownedList(p, r), id], { ...lookOf(p, r), [part.slot]: id });
 }
 
 /** Puts on a part the robot already owns; free, and unchanged for one it does not own. */
@@ -343,7 +344,7 @@ export function canGiveFriend(p: Progress, id: FriendId): boolean {
 export function giveFriend(p: Progress, id: FriendId): Progress {
   if (!canGiveFriend(p, id)) return p;
   const cost = nextFriendGift(p, id)!.cost;
-  return { ...p, boltsSpent: p.boltsSpent + cost, friendGifts: { ...p.friendGifts, [id]: friendGiftsOf(p, id) + 1 } };
+  return { ...p, worlds: spentIn(p, 'robot', cost), friendGifts: { ...p.friendGifts, [id]: friendGiftsOf(p, id) + 1 } };
 }
 
 // ---------- care: battery, oil and tricks ----------
@@ -373,23 +374,23 @@ export const TRICKS: Trick[] = [
 
 /** 0 … BATTERY_BARS. */
 export function batteryOf(p: Progress): number {
-  return Math.max(0, Math.min(BATTERY_BARS, BATTERY_BARS - (p.robotTasks - p.robotChargedAt)));
+  return Math.max(0, Math.min(BATTERY_BARS, BATTERY_BARS - (p.worlds.robot.tasks - p.robotChargedAt)));
 }
 
 /** Charges one bar; filling the last bar counts as a full charge. Unchanged when it is full. */
 export function chargeOne(p: Progress): Progress {
   const now = batteryOf(p);
   if (now >= BATTERY_BARS) return p;
-  const from = Math.max(p.robotChargedAt, p.robotTasks - BATTERY_BARS);
+  const from = Math.max(p.robotChargedAt, p.worlds.robot.tasks - BATTERY_BARS);
   return { ...p, robotChargedAt: from + 1, robotCharges: p.robotCharges + (now + 1 === BATTERY_BARS ? 1 : 0) };
 }
 
 export function isSqueaky(p: Progress): boolean {
-  return p.robotTasks - p.robotOiledAt >= SQUEAKY_AFTER;
+  return p.worlds.robot.tasks - p.robotOiledAt >= SQUEAKY_AFTER;
 }
 
 export function oil(p: Progress): Progress {
-  return isSqueaky(p) ? { ...p, robotOiledAt: p.robotTasks } : p;
+  return isSqueaky(p) ? { ...p, robotOiledAt: p.worlds.robot.tasks } : p;
 }
 
 export function tricksOf(p: Progress): Trick[] {

@@ -1,5 +1,5 @@
 import { Modal } from '../../components/Modal';
-import { TASKS_PER_REWARD, TASKS_PER_SEED } from '../../state/pod';
+import { tasksPerReward } from '../../state/pod';
 import { readKey, writeKey } from '../../lib/storage';
 import { Seed } from '../../worlds/garden/art';
 import { Bolt } from '../../worlds/robot/art';
@@ -43,7 +43,7 @@ export function RewardsIntro({ onClose, onMore }: { onClose: () => void; onMore:
             </span>
             <b>Feladatért mag vagy csavar</b>
             <span>
-              A kertben {TASKS_PER_SEED} megoldott feladat 1 mag, a műhelyben {TASKS_PER_REWARD} kör 1 csavar. Ebből ültet és robotot épít.
+              A kertben {tasksPerReward('garden')} megoldott feladat 1 mag, a műhelyben {tasksPerReward('robot')} kör 1 csavar. Ebből ültet és robotot épít.
             </span>
           </li>
           <li className="pa-intro__step pa-intro__step--sticker">

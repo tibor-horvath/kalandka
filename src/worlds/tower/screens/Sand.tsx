@@ -13,7 +13,7 @@ export function Sand({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('sand');
   const intro = useLevelIntro('sand', level);
-  const [round] = useState(() => buildSandRound(level, progress.sandRound));
+  const [round] = useState(() => buildSandRound(level, progress.games.sand.round));
   const q = useQuestion(sandStart(round), intro.open);
   const solved = q.solved !== null;
   const right = round.mode === 'span' ? SPANS.indexOf(round.answer) : round.answer;
