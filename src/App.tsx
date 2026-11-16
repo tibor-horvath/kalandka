@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { resumed } from './app/resume';
 import { useBackLayers, useLandingRoute, type BackLayer } from './app/route';
 import { useAudioSettings, useUpdateWhenIdle } from './app/useDevice';
 import { useScreenTime } from './app/useScreenTime';
@@ -67,8 +68,9 @@ function Game() {
   // An older save may hold only the unnamed placeholder, which counts as no child yet.
   const named = hasSave() && profiles.kids.some((k) => k.name.trim() !== '');
   const route = useLandingRoute(named);
-  // "Ki játszik?" comes first on a shared device, unless parents chose to continue with the last child.
-  const [picking, setPicking] = useState(() => profiles.kids.length > 1 && profiles.askOnStart);
+  // "Ki játszik?" comes first on a shared device, unless parents chose to continue with the last child
+  // or this is a restart after a crash, which goes straight back to the world the child was in.
+  const [picking, setPicking] = useState(() => !resumed && profiles.kids.length > 1 && profiles.askOnStart);
   // Without the picker, a child who has never chosen a world starts on the map, like after picking.
   const [screen, setScreen] = useState<Screen>(() => (picking || progress.world ? 'home' : 'map'));
   const [parents, setParents] = useState<Parents>('closed');
