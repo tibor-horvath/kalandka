@@ -1,17 +1,18 @@
 import type { WorldScreens } from '../screens';
-import { Add } from './screens/Add';
-import { Flash } from './screens/Flash';
-import { Garden } from './screens/Garden';
-import { Home } from './screens/Home';
-import { Learn } from './screens/Learn';
-import { Patterns } from './screens/Patterns';
-import { Pots } from './screens/Pots';
-import { Trace } from './screens/Trace';
-import { Water } from './screens/Water';
+import { gardenScreen, loadGardenWorld } from './screens/lazy';
 
-/** The garden's screens. They load with the app: the garden is where a new child starts. */
+/** The garden's screens, in a chunk of their own (see screens/lazy.ts), so the landing page loads without them. */
 export const gardenScreens: WorldScreens<'garden'> = {
-  hub: Home,
-  reward: Garden,
-  games: { learn: Learn, water: Water, patterns: Patterns, flash: Flash, add: Add, trace: Trace, pots: Pots }
+  hub: gardenScreen('Home'),
+  reward: gardenScreen('Garden'),
+  preload: loadGardenWorld,
+  games: {
+    learn: gardenScreen('Learn'),
+    water: gardenScreen('Water'),
+    patterns: gardenScreen('Patterns'),
+    flash: gardenScreen('Flash'),
+    add: gardenScreen('Add'),
+    trace: gardenScreen('Trace'),
+    pots: gardenScreen('Pots')
+  }
 };

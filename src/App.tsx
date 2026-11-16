@@ -12,13 +12,10 @@ import type { PlaceReturn } from './components/WorldHub';
 import { Stage } from './components/Stage';
 import { stopSpeaking } from './lib/speech';
 import { readLink } from './print/link';
-import { Album } from './screens/Album';
 import { Landing } from './screens/Landing';
 import { Gate } from './screens/parents/Gate';
 import type { ParentStart } from './screens/parents/ParentArea';
-import { Picker } from './screens/Picker';
-import { Rest, TimeBanner } from './screens/Rest';
-import { WorldMap } from './screens/WorldMap';
+import { Album, Picker, Rest, TimeBanner, WorldMap, loadPlayScreens } from './screens/play';
 import { GAME_SCREENS, WORLD_SCREENS } from './worlds/screens';
 import { GAMES, isGameId, roundOf, solvedOf, type GameId } from './state/games';
 import { ProfilesProvider, editKid, firstKid, hasSave, progressOf, setActive, useProfiles } from './state/profiles';
@@ -81,10 +78,11 @@ function Game() {
   const inParents = parents !== 'closed';
   const world = currentWorld(progress);
 
-  // The other worlds' chunks, once the page has loaded and the browser is idle, so they never hold up the
-  // first screen; the map rarely waits for them.
+  // The worlds' chunks (the garden's too), once the page has loaded and the browser is idle, so they never hold up
+  // the first screen; the map rarely waits for them.
   useEffect(() => {
     const preload = () => {
+      loadPlayScreens().catch(() => {});
       for (const w of WORLDS) WORLD_SCREENS[w.id].preload?.().catch(() => {});
     };
     // Safari has no requestIdleCallback: a short timeout stands in.
@@ -256,11 +254,14 @@ function Game() {
         {game && GameScreen && <GameScreen key={roundOf(progress, game)} onBack={() => leavePlace(game)} />}
         </Suspense>
       </PageMotion>
-      {!resting && !inParents && progress.warnBefore && remaining <= WARN_SECONDS && <TimeBanner remaining={remaining} />}
-      {!resting && !inParents && timeUp && !progress.warnBefore && <TimeBanner remaining={0} />}
-      {resting && !inParents && (
-        <Rest evening={evening && remaining > 0} onParents={() => openGate()} onSwitchTo={profiles.kids.length > 1 && !evening ? pick : undefined} />
-      )}
+      {/* Their chunk (see screens/play.ts) is usually in long before the play clock runs out. */}
+      <Suspense fallback={null}>
+        {!resting && !inParents && progress.warnBefore && remaining <= WARN_SECONDS && <TimeBanner remaining={remaining} />}
+        {!resting && !inParents && timeUp && !progress.warnBefore && <TimeBanner remaining={0} />}
+        {resting && !inParents && (
+          <Rest evening={evening && remaining > 0} onParents={() => openGate()} onSwitchTo={profiles.kids.length > 1 && !evening ? pick : undefined} />
+        )}
+      </Suspense>
       {parents === 'gate' && <Gate onPass={() => setParents('open')} onCancel={closeParents} />}
       {/* Adult pages, at the window's own size: outside the scaled stage, like the landing page's sheets. */}
       {parents === 'open' &&
