@@ -939,7 +939,7 @@ export function Landing({ onStart, onResume }: { onStart: (kid: KidDraft) => voi
                 <p className="landing__tag landing__in" style={delay(120)}>
                   5–7 éveseknek · magyarul
                 </p>
-                <h1 className="landing__in" style={delay(200)}>
+                <h1 className="landing__in landing__in--solid">
                   Számolás, logika, programozás és az óra – játszva, kudarc nélkül.
                 </h1>
                 <p className="landing__lead landing__in" style={delay(280)}>

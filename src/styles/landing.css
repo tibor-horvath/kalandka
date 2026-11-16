@@ -254,6 +254,7 @@
 .landing__dialog-buttons { justify-content: flex-end; }
 
 /* ---------- motion: everything runs once, nothing loops ---------- */
+@keyframes landing-rise-solid { from { transform: translateY(18px); } }
 @keyframes landing-drop { from { opacity: 0; transform: translateY(-12px); } }
 @keyframes landing-rise { from { opacity: 0; transform: translateY(18px); } }
 @keyframes landing-pop { 0% { opacity: 0; transform: translateY(32px) scale(0.9); } 65% { opacity: 1; transform: translateY(-4px) scale(1.02); } }
@@ -263,6 +264,8 @@
 @keyframes landing-check { from { stroke-dashoffset: 44; } }
 
 .landing__in { animation: landing-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms) backwards; }
+/* The hero heading is the page's largest paint: it rises in without fading, so it is on screen from the first frame. */
+.landing__in--solid { animation-name: landing-rise-solid; }
 .landing__in--bar { animation: landing-drop 0.35s ease-out backwards; }
 .landing__pop { animation: landing-pop 0.62s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms) backwards; }
 .landing__hop { animation: landing-hop 0.7s ease-in-out 0.9s backwards; }

@@ -87,10 +87,26 @@ function Game() {
   const inParents = parents !== 'closed';
   const world = currentWorld(progress);
 
-  // The other worlds' chunks, right after the first screen is up: the map rarely waits for them.
+  // The other worlds' chunks, once the page has loaded and the browser is idle, so they never hold up the
+  // first screen; the map rarely waits for them.
   useEffect(() => {
-    loadRobotWorld().catch(() => {});
-    loadTowerWorld().catch(() => {});
+    const preload = () => {
+      loadRobotWorld().catch(() => {});
+      loadTowerWorld().catch(() => {});
+    };
+    // Safari has no requestIdleCallback: a short timeout stands in.
+    const idle = 'requestIdleCallback' in window;
+    let handle = 0;
+    const whenIdle = () => {
+      handle = idle ? window.requestIdleCallback(preload, { timeout: 3000 }) : window.setTimeout(preload, 1500);
+    };
+    if (document.readyState === 'complete') whenIdle();
+    else window.addEventListener('load', whenIdle, { once: true });
+    return () => {
+      window.removeEventListener('load', whenIdle);
+      if (idle) window.cancelIdleCallback(handle);
+      else window.clearTimeout(handle);
+    };
   }, []);
 
   /** The place just opened from the island, and a game's solved count then, so coming back knows if a task was solved. */
