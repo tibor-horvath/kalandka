@@ -19,77 +19,79 @@ export const MINUTE = '#2E86DE';
 
 // ---------- Kakukk ----------
 
+/** Real cuckoos have a yellow ring round each eye: open eyes sit in one, happy and sleeping eyes are ink arcs. */
 function KakukkEyes({ mood }: { mood: Mood }) {
-  if (mood === 'sleep') {
-    return (
-      <g fill="none" stroke={INK} strokeWidth="4" strokeLinecap="round">
-        <path d="M41 72 Q47 78 53 72" />
-        <path d="M67 72 Q73 78 79 72" />
-      </g>
-    );
+  if (mood === 'sleep' || mood === 'cheer') {
+    const d = mood === 'sleep' ? 'M39 64 Q46 71 53 64 M67 64 Q74 71 81 64' : 'M39 66 Q46 57 53 66 M67 66 Q74 57 81 66';
+    return <path d={d} fill="none" stroke={INK} strokeWidth="4" strokeLinecap="round" />;
   }
-  if (mood === 'cheer') {
-    return (
-      <g fill="none" stroke={INK} strokeWidth="4" strokeLinecap="round">
-        <path d="M41 71 Q47 63 53 71" />
-        <path d="M67 71 Q73 63 79 71" />
-      </g>
-    );
-  }
-  const up = mood === 'think' ? -3 : 0;
+  const [dx, dy] = mood === 'think' ? [2, -3] : mood === 'oops' ? [0, 2] : [0, 0];
   return (
     <g>
-      <circle cx="47" cy={70 + up} r="5.5" fill={INK} />
-      <circle cx="73" cy={70 + up} r="5.5" fill={INK} />
-      <circle cx="49" cy={68 + up} r="1.8" fill="#FFFFFF" />
-      <circle cx="75" cy={68 + up} r="1.8" fill="#FFFFFF" />
-      {mood === 'oops' && <path d="M39 58 L52 62 M81 58 L68 62" stroke={INK} strokeWidth="3" strokeLinecap="round" />}
+      <circle cx="46" cy="64" r="9" fill={BELL} stroke={INK} strokeWidth="2.5" />
+      <circle cx="74" cy="64" r="9" fill={BELL} stroke={INK} strokeWidth="2.5" />
+      <g transform={`translate(${dx} ${dy})`}>
+        <circle cx="46" cy="64" r="5" fill={INK} />
+        <circle cx="74" cy="64" r="5" fill={INK} />
+        <circle cx="47.8" cy="62.2" r="1.8" fill="#FFFFFF" />
+        <circle cx="75.8" cy="62.2" r="1.8" fill="#FFFFFF" />
+      </g>
+      {mood === 'oops' && <path d="M37 50 L50 46 M83 50 L70 46" fill="none" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />}
     </g>
   );
 }
 
-/** Kakukk's body in a 120 × 140 box: a round purple cuckoo whose crest is two clock hands. */
+/**
+ * Kakukk's body in a 120 × 140 box: an upright purple cuckoo with a yellow eye-ring, a barred cream belly and a long
+ * tail with white spots, like the real bird.
+ */
 function KakukkBody({ mood }: { mood: Mood }) {
   const cheer = mood === 'cheer';
+  const think = mood === 'think';
+  const beakOpen = cheer || mood === 'oops';
+  const line = { stroke: INK, strokeWidth: 4, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
   return (
     <>
-      <path d="M22 104 L4 124 L30 116 Z" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
-      <path d={mood === 'sleep' ? 'M60 40 L52 20' : 'M60 40 V18'} stroke={INK} strokeWidth="5" strokeLinecap="round" />
-      <path d={mood === 'sleep' ? 'M60 40 L72 32' : 'M60 40 L74 28'} stroke={INK} strokeWidth="6" strokeLinecap="round" />
-      <circle cx="60" cy="40" r="5" fill={BELL} stroke={INK} strokeWidth="2.5" />
+      <path d="M40 104 C28 110 14 118 4 126 C2 132 6 137 13 136 C24 130 36 122 46 116 Z" fill={KAKUKK_DEEP} {...line} />
+      <g fill="#FFFFFF">
+        <circle cx="31" cy="117" r="2.6" />
+        <circle cx="21" cy="124" r="2.6" />
+        <circle cx="11" cy="131" r="2.6" />
+      </g>
+      <path d="M70 46 C76 36 84 32 92 32 C88 40 82 46 74 50 Z" fill={KAKUKK_DEEP} {...line} strokeWidth="3.5" />
       {cheer && (
         <>
-          <path d="M24 74 C6 64 4 42 16 34 C22 50 28 60 36 64 Z" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
-          <path d="M96 74 C114 64 116 42 104 34 C98 50 92 60 84 64 Z" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
+          <path d="M32 70 C22 62 12 56 2 56 C4 68 14 78 30 86 Z" fill={KAKUKK_DEEP} {...line} />
+          <path d="M88 70 C98 62 108 56 118 56 C116 68 106 78 90 86 Z" fill={KAKUKK_DEEP} {...line} />
         </>
       )}
-      <ellipse cx="60" cy="84" rx="40" ry="44" fill={KAKUKK} stroke={INK} strokeWidth="4" />
-      <ellipse cx="60" cy="98" rx="24" ry="25" fill={CREAM} />
-      {!cheer && (
-        <path
-          d={mood === 'think' ? 'M94 80 C106 88 92 102 72 94' : 'M96 76 C112 84 110 108 92 112'}
-          fill={KAKUKK_DEEP}
-          stroke={INK}
-          strokeWidth="4"
-          strokeLinejoin="round"
-        />
-      )}
+      <path d="M50 128 V133 M44 137 L50 133 L56 137 M70 128 V133 M64 137 L70 133 L76 137" fill="none" {...line} stroke="#E8833A" strokeWidth="4.5" />
+      <ellipse cx="60" cy="86" rx="34" ry="44" fill={KAKUKK} {...line} />
+      <ellipse cx="60" cy="104" rx="20" ry="21" fill={CREAM} />
+      <path
+        d="M50 92 q5 -2.5 10 0 q5 2.5 10 0 M45 100 q7.5 -3 15 0 q7.5 3 15 0 M45 108 q7.5 -3 15 0 q7.5 3 15 0 M48 116 q6 -2.5 12 0 q6 2.5 12 0"
+        fill="none"
+        stroke={KAKUKK_DEEP}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <g fill="#F79AB8" opacity={mood === 'sleep' ? 0.55 : 1}>
+        <ellipse cx="39" cy="80" rx="5" ry="3" />
+        <ellipse cx="81" cy="80" rx="5" ry="3" />
+      </g>
+      {!cheer && <path d="M30 70 C20 86 18 106 22 124 C32 112 36 92 34 72 Z" fill={KAKUKK_DEEP} {...line} />}
+      {!cheer && !think && <path d="M90 70 C100 86 102 106 98 124 C88 112 84 92 86 72 Z" fill={KAKUKK_DEEP} {...line} />}
+      {think && <path d="M92 74 C106 84 94 100 70 92 C78 86 84 78 92 74 Z" fill={KAKUKK_DEEP} {...line} />}
       <KakukkEyes mood={mood} />
-      {mood !== 'sleep' && (
+      {beakOpen ? (
         <>
-          <ellipse cx="38" cy="82" rx="6" ry="3.5" fill="#F79AB8" />
-          <ellipse cx="82" cy="82" rx="6" ry="3.5" fill="#F79AB8" />
-        </>
-      )}
-      {cheer ? (
-        <>
-          <path d="M52 78 L68 78 L60 84 Z" fill={BELL} stroke={INK} strokeWidth="3" strokeLinejoin="round" />
-          <path d="M53 88 L67 88 L60 95 Z" fill={BELL} stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+          <path d="M53 74 L67 74 L60 81 Z" fill={BELL} {...line} strokeWidth="3" />
+          <path d="M55 83 L65 83 L60 89 Z" fill={BELL} {...line} strokeWidth="3" />
         </>
       ) : (
-        <path d="M53 79 L67 79 L60 90 Z" fill={BELL} stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+        <path d="M54 75 L66 75 L60 86 Z" fill={BELL} {...line} strokeWidth="3" />
       )}
-      <path d="M48 126 V136 M72 126 V136" stroke="#E8833A" strokeWidth="5" strokeLinecap="round" />
+      {mood === 'oops' && <path d="M98 50 C94 56 94 60 98 60 C102 60 102 56 98 50 Z" fill="#9AD3F5" {...line} strokeWidth="2.5" />}
     </>
   );
 }
