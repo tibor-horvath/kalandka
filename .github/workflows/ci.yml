@@ -15,7 +15,7 @@ permissions: {}
 jobs:
   node:
     name: Node
-    uses: tibor-horvath/ci-toolkit/.github/workflows/node-build-test.yml@v1
+    uses: tibor-horvath/ci-toolkit/.github/workflows/node-build-test.yml@v2
     with:
       node-version: "22.x"
       # `npm run lint`: the React hooks rules (eslint.config.js).
