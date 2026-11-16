@@ -20,7 +20,14 @@ const ABOUT: Record<GameId, { skill: string; mode?: string; glyph: string; tile:
   seq: { skill: 'mintázatok, szabályok', glyph: 'AB?', tile: 'pa-tile--blue' },
   mirror: { skill: 'tükrözés, szimmetria', glyph: '•|•', tile: 'pa-tile--sky' },
   code: { skill: 'jelek és kódok', glyph: '●→?', tile: 'pa-tile--sand' },
-  fix: { skill: 'hibakeresés a programban', glyph: '↑✗', tile: 'pa-tile--pink' }
+  fix: { skill: 'hibakeresés a programban', glyph: '↑✗', tile: 'pa-tile--pink' },
+  day: { skill: 'napirend, napszakok', glyph: '☀→☾', tile: 'pa-tile--sun' },
+  season: { skill: 'évszakok, a hét napjai, hónapok', glyph: '❀', tile: 'pa-tile--pink' },
+  set: { skill: 'óra beállítása', glyph: '3:00', tile: 'pa-tile--blue' },
+  read: { skill: 'óra leolvasása', glyph: '?:30', tile: 'pa-tile--sky' },
+  digi: { skill: 'mutatós és digitális óra', glyph: '7:15', tile: 'pa-tile--sand' },
+  sleep: { skill: 'eltelt idő', glyph: '+2', tile: 'pa-tile--pink' },
+  sand: { skill: 'időtartamok', glyph: '⧗', tile: 'pa-tile--sun' }
 };
 
 export function LevelsPage() {

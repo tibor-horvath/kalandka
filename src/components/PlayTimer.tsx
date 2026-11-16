@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from 'react';
+import { HourglassGauge } from '../worlds/tower/art';
 import { useProgress } from '../state/progress';
 import { WARN_SECONDS, allowanceSeconds, remainingSeconds, today } from '../state/screenTime';
 import type { WorldId } from '../state/worlds';
@@ -45,7 +46,8 @@ function BatteryGauge({ left }: { left: number }) {
  */
 const GAUGES: Record<WorldId, (left: number) => ReactNode> = {
   garden: (left) => <DropGauge left={left} />,
-  robot: (left) => <BatteryGauge left={left} />
+  robot: (left) => <BatteryGauge left={left} />,
+  tower: (left) => <HourglassGauge left={left} />
 };
 
 /** Today's play time when parents set a limit and some is left; null otherwise (no limit, or resting). */

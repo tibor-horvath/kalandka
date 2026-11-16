@@ -16,6 +16,7 @@ import './styles/rewards.css';
 import './styles/seeds.css';
 import './styles/kiskert.css';
 import './worlds/robot/robot.css';
+import './worlds/tower/tower.css';
 import './styles/island.css';
 // Here rather than in the parents' area, which loads later: the gate needs it too, and phone.css must come after it.
 import './styles/parents.css';

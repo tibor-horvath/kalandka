@@ -112,6 +112,41 @@ const GAME_TEXTS: GameText[] = [
     id: 'fix', where: 'A Hibavadásznál', unit: 'kör',
     hard: 'A legutóbbi körökben többször is jó kártyára koppintott, vagy Csavar mutatta meg a hibát.',
     home: 'Adj neki rossz utasítást az ajtóig, például egy lépéssel többet: ő keresse meg, hol csúszott el!'
+  },
+  {
+    id: 'day', where: 'A Napirendben', unit: 'feladat',
+    hard: 'A legutóbbi feladatokban többször is rossz kártyát választott.',
+    home: 'Este meséljétek el együtt a napot sorban: mi volt reggel, délben, délután?'
+  },
+  {
+    id: 'season', where: 'Az Évszakokban', unit: 'feladat',
+    hard: 'A legutóbbi feladatokban többször is rosszul választott.',
+    home: 'Reggelente mondjátok ki: ma kedd van, tegnap hétfő volt, holnap szerda lesz.'
+  },
+  {
+    id: 'set', where: 'Az Óraállítóban', unit: 'feladat',
+    hard: 'A legutóbbi feladatokban többször is rossz helyre állította a mutatót.',
+    home: 'Egész órakor kérdezd meg: hova mutat most a kis mutató? Egy papíróra is sokat segít.'
+  },
+  {
+    id: 'read', where: 'A Hány óra? játékban', unit: 'feladat',
+    hard: 'A legutóbbi feladatokban többször is rossz időt választott.',
+    home: 'Nézzétek meg együtt a falióra mutatóit: melyik a kicsi, merre tart?'
+  },
+  {
+    id: 'digi', where: 'A Digitórában', unit: 'feladat',
+    hard: 'A legutóbbi feladatokban többször is rossz kijelzőt választott.',
+    home: 'Ha digitális órát láttok, olvassátok le, és mondjátok el úgy is: negyed nyolc.'
+  },
+  {
+    id: 'sleep', where: 'A Kakukk alszik játékban', unit: 'feladat',
+    hard: 'A legutóbbi feladatokban többször is rosszul számolta az eltelt időt.',
+    home: 'Számoljátok ki együtt: ha háromkor indulunk és ötkor érünk haza, mennyi ideig voltunk oda?'
+  },
+  {
+    id: 'sand', where: 'A Homokórában', unit: 'feladat',
+    hard: 'A legutóbbi feladatokban többször is rosszul becsülte, mi tart tovább.',
+    home: 'Mérjétek le egy homokórával vagy a telefonnal, meddig tart a fogmosás!'
   }
 ];
 
@@ -187,7 +222,7 @@ export function insights(p: Progress, day: string, max = 4): Insight[] {
   const ordered = all.map((n, i) => ({ n, i })).sort((a, b) => rank(a.n) - rank(b.n) || a.i - b.i).map((x) => x.n);
 
   const picked: Insight[] = [];
-  for (const world of ['garden', 'robot'] as WorldId[]) {
+  for (const world of ['garden', 'robot', 'tower'] as WorldId[]) {
     const first = ordered.find((n) => n.world === world);
     if (first && picked.length < max) picked.push(first);
   }

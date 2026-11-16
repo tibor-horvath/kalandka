@@ -5,7 +5,7 @@ import { LADDER_LEVELS, LADDER_RULES, afterSolve, ladderOf, startAt, withLadder,
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
 import { FRIENDS, PARTS } from './robotParts';
 import { seedBalance } from './garden';
-import { LEVEL_STICKERS, STICKERS, STICKER_GAMES, carryOverStickers, earnedStickers, markEarnedSeen, markPageDone, markStickerSeen, newStickers, pageReward, pagesDoneIn, stickerRow, todaysStickers } from './stickers';
+import { LEVEL_STICKERS, STICKERS, STICKER_TASKS, STICKER_GAMES, carryOverStickers, earnedStickers, markEarnedSeen, markPageDone, markStickerSeen, newStickers, pageReward, pagesDoneIn, stickerRow, todaysStickers } from './stickers';
 
 describe('stickers', () => {
   const solvedUpTo = (game: LadderGame, solvedTop: number, p: Progress = DEFAULT_PROGRESS): Progress =>
@@ -34,13 +34,26 @@ describe('stickers', () => {
     expect(newStickers(p)).toHaveLength(2);
   });
 
-  it('gives a level’s sticker with the first task solved on it', () => {
+  it('gives a level’s sticker when it is finished, or after four tasks solved on it, not for one task', () => {
+    const solve = (p: Progress, game: LadderGame, helped: boolean) => withLadder(p, game, afterSolve(ladderOf(p, game), LADDER_RULES[game], helped).ladder);
+    const solveMany = (p: Progress, game: LadderGame, helped: boolean, n: number) => Array.from({ length: n }).reduce<Progress>((q) => solve(q, game, helped), p);
+    // One task, or three, is not enough.
+    expect(ids(solve(DEFAULT_PROGRESS, 'water', false), 'water')).toEqual([]);
+    expect(ids(solveMany(DEFAULT_PROGRESS, 'water', true, STICKER_TASKS - 1), 'water')).toEqual([]);
+    // Four tasks that all needed help: the sticker comes, though the level is not finished.
+    const helped = solveMany(DEFAULT_PROGRESS, 'water', true, STICKER_TASKS);
+    expect(ladderOf(helped, 'water').level).toBe(0);
+    expect(ids(helped, 'water')).toEqual(['water-level-1']);
+    // Finishing a level (a row without help steps up) earns its sticker, never the next level's.
+    const up = solveMany(DEFAULT_PROGRESS, 'water', false, LADDER_RULES.water.up);
+    expect(ladderOf(up, 'water')).toMatchObject({ level: 1, cleared: [0] });
+    expect(ids(solve(up, 'water', false), 'water')).toEqual(['water-level-1']);
+    // A save from before the tally keeps the sticker of every level it had solved a task on.
     expect(ids(DEFAULT_PROGRESS)).toEqual([]);
     expect(ids(solvedUpTo('sort', 0), 'sort')).toEqual(['sort-level-1']);
     expect(ids(solvedUpTo('sort', 2), 'sort')).toEqual(['sort-level-1', 'sort-level-2', 'sort-level-3']);
     expect(ids(solvedUpTo('sort', SORT_LEVELS.length - 1), 'sort')).toHaveLength(7);
     // A child who keeps needing help on the first level still has its sticker.
-    expect(ids({ ...DEFAULT_PROGRESS, ladders: { water: { ...ladderOf(DEFAULT_PROGRESS, 'water'), solvedTop: 0, helpRun: 5 } } }, 'water')).toEqual(['water-level-1']);
   });
 
   it('gives the long ladders a sticker for every level too', () => {
@@ -219,10 +232,11 @@ describe('stickers', () => {
 
   it('wants each level solved in the game for its sticker, in any order', () => {
     const game = (p: Progress) => earnedStickers(p).filter((s) => s.game === 'patterns').map((s) => s.id);
-    // Solved on level 3 only (a parent started the child there): only that level's sticker.
+    // Played on level 3 only (a parent started the child there): only that level's sticker, once it was played enough.
     const started = withLadder(DEFAULT_PROGRESS, 'patterns', startAt(ladderOf(DEFAULT_PROGRESS, 'patterns'), 3));
     expect(game(started)).toEqual([]);
-    const solved = withLadder(started, 'patterns', afterSolve(ladderOf(started, 'patterns'), LADDER_RULES.patterns, false).ladder);
+    let solved = started;
+    for (let i = 0; i < STICKER_TASKS; i++) solved = withLadder(solved, 'patterns', afterSolve(ladderOf(solved, 'patterns'), LADDER_RULES.patterns, true).ladder);
     expect(game(solved)).toEqual(['patterns-level-4']);
     // A save from before the solved list: every level up to the highest solved one counts.
     expect(game(solvedUpTo('patterns', 2))).toEqual(['patterns-level-1', 'patterns-level-2', 'patterns-level-3']);
@@ -236,7 +250,7 @@ describe('stickers', () => {
     expect(markPageDone(DEFAULT_PROGRESS, 'code.1.0.b.3.1', 4)).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['code.1.0.b.3.1'], robotTasks: 4, bolts: 1 });
     // A part-filled pod: half of it full already, so a two-task page pays one.
     const filled = { ...DEFAULT_PROGRESS, gardenTasks: 3 };
-    expect(pageReward(filled, 'water.1.0.n.7.0', 2)).toEqual({ seeds: 1, bolts: 0 });
+    expect(pageReward(filled, 'water.1.0.n.7.0', 2)).toEqual({ seeds: 1, bolts: 0, bells: 0 });
     expect(markPageDone(filled, 'water.1.0.n.7.0', 2)).toMatchObject({ gardenTasks: 5, seeds: 1 });
   });
 

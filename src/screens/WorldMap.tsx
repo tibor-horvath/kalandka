@@ -5,6 +5,8 @@ import { BoatArt } from '../components/boat';
 import { FitBox } from '../components/FitBox';
 import { ParentsButton } from '../components/hub';
 import { Bolt, Csavar } from '../worlds/robot/art';
+import { Bell, Kakukk, TowerMapArt } from '../worlds/tower/art';
+import { bellBalance } from '../state/town';
 import { PlayTimer, pausedLabel, useTimeLeft } from '../components/PlayTimer';
 import { useForm, useWideStage } from '../components/Stage';
 import { GuideBubble, KalandkaIcon, KalandkaWordmark, RoundButton, SpeakerIcon } from '../components/ui';
@@ -15,10 +17,10 @@ import { boltBalance } from '../state/robotParts';
 import { WORLDS, currentWorld, type WorldId } from '../state/worlds';
 
 /** Where the child's boat waits, said the way the guide says it. */
-const DOCKED: Record<WorldId, string> = { garden: 'a kertnél', robot: 'a műhelynél' };
+const DOCKED: Record<WorldId, string> = { garden: 'a kertnél', robot: 'a műhelynél', tower: 'a toronynál' };
 
 const speech = (last: WorldId | null) =>
-  `Hova evezünk ma?${last ? ` A hajód ${DOCKED[last]} vár.` : ''} A kert szigetén Csepi, a műhely szigetén Csavar, a robot. Koppints az egyik szigetre!`;
+  `Hova evezünk ma?${last ? ` A hajód ${DOCKED[last]} vár.` : ''} A kert szigetén Csepi, a műhely szigetén Csavar, a robot, a torony szigetén Kakukk, a kakukk. Koppints az egyik szigetre!`;
 
 /*
  * The trip after a tap (ms): the boat sets off, sails to the island while its guide hops to greet it,
@@ -43,18 +45,57 @@ interface Pt {
 interface MapLayout {
   w: number;
   h: number;
-  garden: Pt;
-  robot: Pt;
-  /** The boat at each island's dock; `flip` turns it to face the other island. */
+  /** Each world island's centre. */
+  isles: Record<WorldId, Pt>;
+  /** The boat at each island's dock; `flip` turns it to face left. */
   boat: Record<WorldId, Pt & { flip: boolean }>;
-  /** The dotted route from the boat at each island to the other island. */
-  route: Record<WorldId, string>;
-  /** Where the boat sails after a tap, keyed `from-to`: to the other island, or a short way to its own shore. */
+  /** The dotted routes from the boat at each island to the other islands' docks. */
+  route: Record<WorldId, string[]>;
+  /** Where the boat sails after a tap, keyed `from-to`: to another island, or a short way to its own shore. */
   sail: Record<`${WorldId}-${WorldId}`, string>;
+  /** Each pair of islands' sea lane: the point the boat's way bends towards, so it goes round the third island, not over it. */
+  lanes: Record<Lane, Pt>;
   /** The fog banks at the map's far edges, each a pale lower bank and a whiter upper one. */
   banks: [string, string][];
   /** The islands asleep in the fog: worlds still to come. A tap only makes the guide talk. */
   mist: Mist[];
+}
+
+const WORLD_IDS: WorldId[] = ['garden', 'robot', 'tower'];
+
+type Lane = 'garden-robot' | 'garden-tower' | 'robot-tower';
+const laneOf = (a: WorldId, b: WorldId) => [a, b].sort().join('-') as Lane;
+
+/** A way from `a` to `b` bending towards `via`. */
+const bendVia = (a: Pt, b: Pt, via: Pt) => `M${Math.round(a.x)} ${Math.round(a.y)} Q${Math.round(via.x)} ${Math.round(via.y)} ${Math.round(b.x)} ${Math.round(b.y)}`;
+
+/** A gentle curve from `a` to `b`, bowed `bend` px to its right (seen from `a`). */
+function curve(a: Pt, b: Pt, bend: number): string {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = (-dy / len) * bend;
+  const ny = (dx / len) * bend;
+  const r = (n: number) => Math.round(n);
+  return `M${r(a.x)} ${r(a.y)} C${r(a.x + dx / 3 + nx)} ${r(a.y + dy / 3 + ny)} ${r(a.x + (2 * dx) / 3 + nx)} ${r(a.y + (2 * dy) / 3 + ny)} ${r(b.x)} ${r(b.y)}`;
+}
+
+/** The boat's routes and trips, drawn from where the islands and their docks stand. */
+function withRoutes(map: Omit<MapLayout, 'route' | 'sail'>): MapLayout {
+  const route = {} as MapLayout['route'];
+  const sail = {} as MapLayout['sail'];
+  for (const from of WORLD_IDS) {
+    const a = map.boat[from];
+    const down = (p: Pt) => ({ x: p.x, y: p.y + 30 });
+    route[from] = WORLD_IDS.filter((to) => to !== from).map((to) => bendVia(down(a), down(map.boat[to]), down(map.lanes[laneOf(from, to)])));
+    for (const to of WORLD_IDS) {
+      // A tap on its own island: a short way towards that island's shore.
+      const isle = map.isles[from];
+      const home = { x: a.x + (isle.x - a.x) * 0.35, y: a.y + (isle.y - a.y) * 0.25 };
+      sail[`${from}-${to}`] = to === from ? curve(a, home, 30) : bendVia(a, map.boat[to], map.lanes[laneOf(from, to)]);
+    }
+  }
+  return { ...map, route, sail };
 }
 
 type MistKind = 'grove' | 'tower' | 'peak';
@@ -67,13 +108,13 @@ interface Mist extends Pt {
 
 const MIST_LINE: Record<MistKind, string> = {
   grove: 'Ez a sziget még a ködben alszik. Egyszer odaevezünk!',
-  tower: 'Látod a kis fényt? Ott már készül valami.',
+  tower: 'Látod a kis fényt? Egy világítótorony. Egyszer arra is evezünk!',
   peak: 'Egy hegyes sziget! Majd ha eloszlik a köd, megnézzük.'
 };
 
 const MIST_NAME: Record<MistKind, string> = {
   grove: 'Ködös sziget a távolban',
-  tower: 'Ködös sziget toronnyal',
+  tower: 'Ködös sziget világítótoronnyal',
   peak: 'Ködös hegyes sziget'
 };
 
@@ -92,111 +133,72 @@ function bank(w: number, h: number, y: number, radii: number[], fromBottom = fal
   return `${d} V${base} Z`;
 }
 
-const WIDE: MapLayout = {
-  w: 1100,
-  h: 560,
-  garden: { x: 263, y: 320 },
-  robot: { x: 837, y: 320 },
+const WIDE: MapLayout = withRoutes({
+  w: 1600,
+  h: 840,
+  isles: { garden: { x: 330, y: 320 }, robot: { x: 1270, y: 320 }, tower: { x: 800, y: 660 } },
   boat: {
-    garden: { x: 520, y: 466, flip: false },
-    robot: { x: 582, y: 466, flip: true }
+    garden: { x: 587, y: 466, flip: false },
+    robot: { x: 1013, y: 466, flip: true },
+    tower: { x: 566, y: 484, flip: false }
   },
-  route: {
-    garden: 'M566 494 C610 545 680 545 690 486',
-    robot: 'M536 494 C492 545 420 545 410 486'
-  },
-  sail: {
-    'garden-robot': 'M520 466 C566 524 652 534 702 474',
-    'garden-garden': 'M520 466 C498 506 446 510 402 470',
-    'robot-garden': 'M582 466 C536 524 450 534 400 474',
-    'robot-robot': 'M582 466 C604 506 656 510 700 470'
-  },
-  banks: [[bank(1100, 560, 86, [38, 26, 44, 30]), bank(1100, 560, 34, [30, 22, 34])]],
+  lanes: { 'garden-robot': { x: 800, y: 380 }, 'garden-tower': { x: 600, y: 470 }, 'robot-tower': { x: 820, y: 390 } },
+  banks: [[bank(1600, 840, 86, [38, 26, 44, 30]), bank(1600, 840, 34, [30, 22, 34])]],
   mist: [
-    { kind: 'peak', x: 107, y: 71, w: 170 },
-    { kind: 'grove', x: 550, y: 112, w: 250 },
-    { kind: 'tower', x: 995, y: 81, w: 186 }
+    { kind: 'peak', x: 130, y: 71, w: 170 },
+    { kind: 'grove', x: 800, y: 112, w: 250 },
+    { kind: 'tower', x: 1440, y: 720, w: 170 }
   ]
-};
+});
 
 /** How far each island may move out on a wide stage. */
 const WIDE_SPREAD = 260;
 
-/**
- * Moves each pair of an absolute path's numbers by `dx`, the first pair by `from` and the last by `to`, those
- * between by a share of both: a route from one island to the other keeps both its ends at their places.
- */
-const slidePath = (d: string, from: number, to: number) => {
-  const pairs = (d.match(/-?\d+(\.\d+)?/g) ?? []).length / 2;
-  let i = 0;
-  return d.replace(/-?\d+(\.\d+)?/g, (n) => {
-    const at = Math.floor(i / 2);
-    const x = i++ % 2 === 0;
-    return x ? String(Math.round(Number(n) + from + ((to - from) * at) / Math.max(1, pairs - 1))) : n;
-  });
-};
-
-/** The wide map on a stage `extra` px wider: the islands, their boats and the far fog islands move apart. */
+/** The wide map on a stage `extra` px wider: the side islands, their boats and the far fog islands move apart. */
 function spread(map: MapLayout, extra: number): MapLayout {
   const d = Math.min(WIDE_SPREAD, Math.round(extra / 2));
   if (d <= 0) return map;
   const w = map.w + 2 * d;
-  const side: Record<WorldId, number> = { garden: -d, robot: d };
-  const other: Record<WorldId, WorldId> = { garden: 'robot', robot: 'garden' };
+  const side: Record<WorldId, number> = { garden: -d, robot: d, tower: 0 };
   const move = <T extends Pt>(p: T, dx: number): T => ({ ...p, x: p.x + d + dx });
-  return {
+  return withRoutes({
     ...map,
     w,
-    garden: move(map.garden, -d),
-    robot: move(map.robot, d),
-    boat: { garden: move(map.boat.garden, -d), robot: move(map.boat.robot, d) },
-    route: {
-      garden: slidePath(map.route.garden, d + side.garden, d + side[other.garden]),
-      robot: slidePath(map.route.robot, d + side.robot, d + side[other.robot])
-    },
-    sail: {
-      'garden-robot': slidePath(map.sail['garden-robot'], 0, 2 * d),
-      'garden-garden': slidePath(map.sail['garden-garden'], 0, 0),
-      'robot-garden': slidePath(map.sail['robot-garden'], 2 * d, 0),
-      'robot-robot': slidePath(map.sail['robot-robot'], 2 * d, 2 * d)
+    isles: { garden: move(map.isles.garden, side.garden), robot: move(map.isles.robot, side.robot), tower: move(map.isles.tower, side.tower) },
+    boat: { garden: move(map.boat.garden, side.garden), robot: move(map.boat.robot, side.robot), tower: move(map.boat.tower, side.tower) },
+    lanes: {
+      'garden-robot': move(map.lanes['garden-robot'], 0),
+      'garden-tower': move(map.lanes['garden-tower'], (side.garden + side.tower) / 2),
+      'robot-tower': move(map.lanes['robot-tower'], (side.robot + side.tower) / 2)
     },
     banks: [[bank(w, map.h, 86, [38, 26, 44, 30]), bank(w, map.h, 34, [30, 22, 34])]],
     mist: map.mist.map((m) => move(m, m.x < map.w / 3 ? -d : m.x > (map.w * 2) / 3 ? d : 0))
-  };
+  });
 }
 
-const TALL: MapLayout = {
+const TALL: MapLayout = withRoutes({
   w: 600,
-  h: 1040,
-  garden: { x: 300, y: 260 },
-  robot: { x: 300, y: 770 },
+  h: 1520,
+  isles: { garden: { x: 300, y: 260 }, tower: { x: 300, y: 760 }, robot: { x: 300, y: 1260 } },
   boat: {
     garden: { x: 480, y: 500, flip: false },
-    robot: { x: 110, y: 560, flip: true }
+    tower: { x: 110, y: 556, flip: false },
+    robot: { x: 110, y: 1030, flip: true }
   },
-  route: {
-    garden: 'M478 528 C520 570 525 620 505 668',
-    robot: 'M68 560 C40 510 60 450 112 398'
-  },
-  sail: {
-    'garden-robot': 'M480 500 C532 548 540 606 500 646',
-    'garden-garden': 'M480 500 C474 472 448 450 420 432',
-    'robot-garden': 'M110 560 C66 520 76 462 128 424',
-    'robot-robot': 'M110 560 C118 590 140 612 172 630'
-  },
+  lanes: { 'garden-tower': { x: 300, y: 540 }, 'robot-tower': { x: -40, y: 800 }, 'garden-robot': { x: 600, y: 780 } },
   banks: [
-    [bank(600, 1040, 80, [34, 24, 40]), bank(600, 1040, 30, [26, 20, 30])],
-    [bank(600, 1040, 975, [34, 26, 40], true), bank(600, 1040, 1015, [24, 30, 20], true)]
+    [bank(600, 1520, 80, [34, 24, 40]), bank(600, 1520, 30, [26, 20, 30])],
+    [bank(600, 1520, 1455, [34, 26, 40], true), bank(600, 1520, 1495, [24, 30, 20], true)]
   ],
   mist: [
     { kind: 'peak', x: 105, y: 67, w: 170 },
     { kind: 'tower', x: 494, y: 71, w: 180 },
-    { kind: 'grove', x: 300, y: 1000, w: 230 }
+    { kind: 'grove', x: 300, y: 1480, w: 230 }
   ]
-};
+});
 
 /*
- * The two world islands, each about 420 × 290 around its centre, with room under it for its sign on the bottom shore.
+ * The world islands, each about 420 × 290 around its centre, with room under it for its sign on the bottom shore.
  * The garden is soft and round; the workshop is a many-sided rock under a steel deck. Each dock points at the boat.
  */
 const GARDEN_SHORE = 'M-205 -40 C-218 -120 -132 -160 -40 -148 C22 -170 132 -164 182 -110 C226 -64 222 12 200 52 C186 78 160 90 140 106 C108 140 34 146 -44 140 C-134 136 -210 82 -205 -40 Z';
@@ -218,9 +220,9 @@ function Shore({ d, edge, sand, side, top, round }: { d: string; edge: string; s
 }
 
 /** A short pier from the beach out towards the boat; `dir` is -1 for one pointing left. */
-function Dock({ dir, deck, post }: { dir: 1 | -1; deck: string; post: string }) {
+function Dock({ dir, deck, post, up = false }: { dir: 1 | -1; deck: string; post: string; up?: boolean }) {
   return (
-    <g transform={`scale(${dir} 1)`} strokeLinecap="round">
+    <g transform={`scale(${dir} ${up ? -1 : 1})`} strokeLinecap="round">
       <path d="M146 102 L214 132" stroke={deck} strokeWidth="26" />
       <path d="M150 116 L218 146" stroke={post} strokeWidth="6" />
     </g>
@@ -306,6 +308,22 @@ function WorkshopIsland({ at }: { at: Pt }) {
       <g transform="translate(46 -56)">
         <g className="map-hop">
           <Csavar mood="cheer" width={70} />
+        </g>
+      </g>
+    </g>
+  );
+}
+
+/** Kakukk's island: a cobbled square, the clock tower and two houses, and Kakukk. Only Kakukk hops hello. */
+function TowerIsland({ at }: { at: Pt }) {
+  return (
+    <g transform={`translate(${at.x} ${at.y})`}>
+      <Shore d={GARDEN_SHORE} edge="#DDBF7A" sand="#F3DFA8" side="#A9C97C" top="#BFE08F" />
+      <Dock dir={-1} up deck="#C99A6B" post="#5A3B26" />
+      <TowerMapArt />
+      <g transform="translate(-196 -70)">
+        <g className="map-hop">
+          <Kakukk mood="cheer" width={64} />
         </g>
       </g>
     </g>
@@ -472,19 +490,21 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
   };
   const isle = (id: WorldId, delay: number) =>
     ({ className: `map-isle${picked === id ? ' is-picked' : ''}`, style: { '--d': `${delay}ms` } as CSSProperties });
-  const diveAt = picked === 'robot' ? map.robot : map.garden;
+  const diveAt = map.isles[picked ?? last];
 
   // The whole island is the button; its sign sits on the bottom shore.
   const spot = (at: Pt): CSSProperties => ({ left: at.x - 230, top: at.y - 170, width: 460, height: 340 });
   const counts: Record<WorldId, { icon: ReactNode; n: number }> = {
     garden: { icon: <Seed size={28} />, n: seedBalance(progress) },
-    robot: { icon: <Bolt size={28} />, n: boltBalance(progress) }
+    robot: { icon: <Bolt size={28} />, n: boltBalance(progress) },
+    tower: { icon: <Bell size={28} />, n: bellBalance(progress) }
   };
   // With a daily limit, each island shows the time left in its own gauge; the clock stands on the map, so it is paused here.
   const time = useTimeLeft();
   const faces: Record<WorldId, ReactNode> = {
     garden: <Csepi mood="cheer" width={40} />,
-    robot: <Csavar mood="cheer" width={40} />
+    robot: <Csavar mood="cheer" width={40} />,
+    tower: <Kakukk mood="cheer" width={40} />
   };
 
   return (
@@ -517,7 +537,7 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
         </GuideBubble>
       </div>
 
-      <FitBox className="map-fit" width={map.w} height={map.h}>
+      <FitBox className="map-fit" width={map.w} height={map.h} always>
         <nav
           className={`map${picked ? ' is-sailing' : ''}${diving ? ' is-diving' : ''}`}
           aria-label="Kalandka térkép: válassz szigetet"
@@ -544,18 +564,24 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
                 <MistIsland key={m.kind} mist={m} asked={asked === m.kind} />
               ))}
               <g {...isle('garden', 0)}>
-                <GardenIsland at={map.garden} />
-                <ellipse cx={map.garden.x} cy={map.garden.y - 8} rx="226" ry="160" className="map-ring" />
+                <GardenIsland at={map.isles.garden} />
+                <ellipse cx={map.isles.garden.x} cy={map.isles.garden.y - 8} rx="226" ry="160" className="map-ring" />
               </g>
               <g {...isle('robot', 110)}>
-                <WorkshopIsland at={map.robot} />
-                <ellipse cx={map.robot.x} cy={map.robot.y - 8} rx="226" ry="160" className="map-ring" />
+                <WorkshopIsland at={map.isles.robot} />
+                <ellipse cx={map.isles.robot.x} cy={map.isles.robot.y - 8} rx="226" ry="160" className="map-ring" />
               </g>
-              <path d={map.route[last]} className="map-route map-route--boat" />
+              <g {...isle('tower', 220)}>
+                <TowerIsland at={map.isles.tower} />
+                <ellipse cx={map.isles.tower.x} cy={map.isles.tower.y - 8} rx="226" ry="160" className="map-ring" />
+              </g>
+              {map.route[last].map((d) => (
+                <path key={d} d={d} className="map-route map-route--boat" />
+              ))}
               <Boat
                 at={map.boat[last]}
                 sail={picked ? map.sail[`${last}-${picked}`] : undefined}
-                flipTo={picked === last ? !map.boat[last].flip : map.boat[last].flip}
+                flipTo={picked === null ? map.boat[last].flip : picked === last ? !map.boat[last].flip : map.boat[picked].x < map.boat[last].x}
               />
             </svg>
 
@@ -572,7 +598,7 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
             ))}
 
             {WORLDS.map((w) => {
-              const at = w.id === 'garden' ? map.garden : map.robot;
+              const at = map.isles[w.id];
               return (
                 <button
                   key={w.id}
@@ -597,7 +623,7 @@ export function WorldMap({ onPick, onParents }: { onPick: (world: WorldId) => vo
             {/* Planted on top of each island; only the first is read out, the second says the same. */}
             {time &&
               WORLDS.map((w, i) => {
-                const at = w.id === 'garden' ? map.garden : map.robot;
+                const at = map.isles[w.id];
                 return (
                   <div key={w.id} className="map-timer" style={{ left: at.x, top: at.y - 150 }}>
                     <PlayTimer world={w.id} remaining={time.remaining} total={time.allowance} paused label={i === 0 ? pausedLabel(time.remaining) : undefined} />

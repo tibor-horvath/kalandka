@@ -5,6 +5,7 @@ import { STICKERS, gameOf, type Sticker } from '../state/stickers';
 import { StickerDisc, StickerSlot } from './stickers';
 import { useModal } from './Modal';
 import { GuideBubble } from './ui';
+import { WORLD_LOOK } from './worldLook';
 
 type Phase = 'measure' | 'fly' | 'landed';
 
@@ -130,7 +131,7 @@ export function StickerPop({ sticker, seen, onDone }: { sticker: Sticker; seen: 
 
       <div className="sticker-pop__foot">
         <div className="sticker-pop__say">
-          <GuideBubble guide={game.world === 'robot' ? 'csavar' : 'csepi'} mood="cheer" tone="good" csepiWidth={56}>
+          <GuideBubble guide={WORLD_LOOK[game.world].guide} mood="cheer" tone="good" csepiWidth={56}>
             {sticker.praise}
           </GuideBubble>
         </div>

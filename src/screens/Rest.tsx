@@ -14,6 +14,7 @@ import { tasksOn } from '../state/taskLog';
 import { currentWorld, type WorldId } from '../state/worlds';
 import { CsepiResting } from '../worlds/garden/art';
 import { Csavar, CsavarCharging } from '../worlds/robot/art';
+import { Kakukk, KakukkResting } from '../worlds/tower/art';
 
 interface RestGuide {
   name: string;
@@ -45,6 +46,15 @@ const GUIDES: Record<WorldId, RestGuide> = {
     accent: { fill: '#138A86', deep: '#0C5F5C', tint: '#DDF3F2' },
     day: 'Csavar is töltődik egy kicsit.',
     evening: 'Este van, Csavar is töltődik.'
+  },
+  tower: {
+    name: 'Kakukk',
+    speaker: 'csepi',
+    Figure: Kakukk,
+    Scene: KakukkResting,
+    accent: { fill: '#5B4B9A', deep: '#3A2E6B', tint: '#E3DEF5' },
+    day: 'Kakukk is szundít egy kicsit.',
+    evening: 'Este van, Kakukk is alszik a fészkében.'
   }
 };
 

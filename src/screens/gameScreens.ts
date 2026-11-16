@@ -8,6 +8,7 @@ import { Pots } from '../worlds/garden/screens/Pots';
 import { Trace } from '../worlds/garden/screens/Trace';
 import { Water } from '../worlds/garden/screens/Water';
 import { robotScreen } from '../worlds/robot/screens/lazy';
+import { towerScreen } from '../worlds/tower/screens/lazy';
 
 type GameScreen = ComponentType<{ onBack: () => void }>;
 
@@ -26,5 +27,12 @@ export const GAME_SCREENS: Record<GameId, GameScreen | LazyExoticComponent<GameS
   seq: robotScreen('Seq'),
   mirror: robotScreen('Mirror'),
   code: robotScreen('Code'),
-  fix: robotScreen('Fix')
+  fix: robotScreen('Fix'),
+  day: towerScreen('Day'),
+  season: towerScreen('SeasonGame'),
+  set: towerScreen('SetClock'),
+  read: towerScreen('ReadClock'),
+  digi: towerScreen('Digital'),
+  sleep: towerScreen('Sleep'),
+  sand: towerScreen('Sand')
 };

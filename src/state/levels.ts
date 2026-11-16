@@ -67,14 +67,22 @@ const STEP_WORDS: Record<LadderGame, StepWords> = {
   seq: { good: 'jó kör', hard: 'nehéz kör' },
   mirror: { good: 'jó kör', hard: 'nehéz kör' },
   code: { good: 'jó kör', hard: 'nehéz kör' },
-  fix: { good: 'jó kör', hard: 'nehéz kör' }
+  fix: { good: 'jó kör', hard: 'nehéz kör' },
+  day: { good: 'jó válasz', hard: 'nehéz feladat' },
+  season: { good: 'jó válasz', hard: 'nehéz feladat' },
+  set: { good: 'jól beállított óra', hard: 'nehéz feladat' },
+  read: { good: 'jó válasz', hard: 'nehéz feladat' },
+  digi: { good: 'jó válasz', hard: 'nehéz feladat' },
+  sleep: { good: 'jó válasz', hard: 'nehéz feladat' },
+  sand: { good: 'jó válasz', hard: 'nehéz feladat' }
 };
 
-/** The ladder's own numbers, so the hint never drifts from what the game does. Workshop hints name their world. */
+/** The ladder's own numbers, so the hint never drifts from what the game does. Hints outside the garden name their world. */
 export function ladderHint(game: LadderGame): string {
   const { up, down } = LADDER_RULES[game];
   const words = STEP_WORDS[game];
-  const world = GAMES[game].world === 'robot' ? `${WORLDS.find((w) => w.id === 'robot')!.name}. ` : '';
+  const home = GAMES[game].world;
+  const world = home === 'garden' ? '' : `${WORLDS.find((w) => w.id === home)!.name}. `;
   const note = words.note ? ` (${words.note})` : '';
   return `${world}${up} ${words.good} egymás után${longerRow(game)}: nehezebb szint, ${down} ${words.hard} egymás után: könnyebb${note}. Ez alá nem lép vissza.`;
 }

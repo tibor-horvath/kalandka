@@ -12,8 +12,9 @@ const SHEET_INK = '#10233A';
  * sticker's inside.
  */
 function SheetArt({ sticker }: { sticker: Sticker }) {
-  const robot = gameOf(sticker).world === 'robot';
-  const badge = robot ? '#5E7184' : '#2F7D32';
+  const world = gameOf(sticker).world;
+  const robot = world === 'robot';
+  const badge = robot ? '#5E7184' : world === 'tower' ? '#5B4B9A' : '#2F7D32';
   const page = (turn: number) => <path d={SHEET} transform={`rotate(${turn} 50 80)`} fill="#FFFFFF" stroke={SHEET_INK} strokeWidth="3" strokeLinejoin="round" />;
   return (
     <svg aria-hidden="true" className="sticker__art" viewBox="0 0 100 100">
@@ -26,7 +27,9 @@ function SheetArt({ sticker }: { sticker: Sticker }) {
       {page(0)}
       <path d="M62 18V28H72" fill="#EEF1F4" stroke={SHEET_INK} strokeWidth="3" strokeLinejoin="round" />
       <circle cx="76" cy="76" r="13" fill={badge} stroke="#FFFFFF" strokeWidth="3" />
-      {robot ? (
+      {world === 'tower' ? (
+        <path d="M76 68 C72 68 71 72 71 75 V79 L69 81 H83 L81 79 V75 C81 72 80 68 76 68 Z M74 83 H78" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="1.5" strokeLinejoin="round" />
+      ) : robot ? (
         <>
           <polygon points="84.5,76 80.25,83.36 71.75,83.36 67.5,76 71.75,68.64 80.25,68.64" fill="#FFFFFF" />
           <circle cx="76" cy="76" r="3.4" fill={badge} />

@@ -28,6 +28,14 @@
 .map-guide .bubble { box-shadow: 0 6px 0 #5fa9d3; }
 .map-fit { position: relative; }
 .map { position: relative; margin: 14px auto 0; }
+/* On the tablet stage the map fills the room under the guide's bubble and scales to it, like on phones. */
+.stage--tablet .screen--map { display: flex; flex-direction: column; }
+.stage--tablet .screen--map .topbar, .stage--tablet .map-guide { flex: none; }
+.stage--tablet .map-fit { flex: 1 1 0; min-height: 0; margin: 6px 24px 18px; }
+.stage--tablet .map { margin: 0; }
+.stage--tablet .map-fit.fit-box { display: flex; align-items: center; justify-content: center; }
+.stage--tablet .map-fit .fit-box__frame { position: relative; flex: none; }
+.stage--tablet .map-fit .fit-box__drawing { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .map__art { position: absolute; inset: 0; }
 .map-waves path { fill: none; stroke: #c4e6f7; stroke-width: 4; stroke-linecap: round; }
 .map-route { fill: none; stroke: #ffffff; stroke-width: 9; stroke-linecap: round; stroke-dasharray: 0 22; }

@@ -10,7 +10,7 @@ import { DoneTick } from './ui';
 // The tablet draws the island on the whole stage; phones draw a tall (portrait) or wide (landscape)
 // island in the room left under or beside Csepi, scaled to fit.
 
-export type IslandWorld = 'garden' | 'robot';
+export type IslandWorld = 'garden' | 'robot' | 'tower';
 
 /** What a place's badge asks: something new, something waiting for care, or how far the child got. One badge per place. */
 export type BadgeKind = 'new' | 'care' | 'level';
@@ -328,8 +328,25 @@ const GARDEN_LANDSCAPE: Geometry = {
 /** The workshop's phone islands: the garden's turned around, so its dock and trail start on the other side. */
 const mirrored = (g: Geometry): Geometry => ({ ...g, flip: true, meadows: [], spots: g.spots.map((p) => ({ x: g.w - p.x, y: p.y })), book: { x: g.w - g.book.x, y: g.book.y }, timer: { ...g.timer, x: g.w - g.timer.x } });
 
+/** The Óratorony on the tablet: the garden's shore and trail, a cobbled square in the middle where the meadow was, and its clock tower. */
+const TOWER_TABLET: Geometry = {
+  ...GARDEN_TABLET,
+  meadows: [{ x: 700, y: 430, rx: 150, ry: 56 }],
+  props: [
+    { x: 221, y: 378, r: 26 },
+    { x: 1014, y: 325, r: 24 },
+    { x: 585, y: 728, r: 22 }
+  ],
+  critters: [
+    { x: 700, y: 452, role: 0 },
+    { x: 420, y: 712, role: 1 },
+    { x: 960, y: 590, role: 2 }
+  ]
+};
+
 const GEOMETRY: Record<IslandWorld, Record<Form, Geometry>> = {
   garden: { tablet: GARDEN_TABLET, portrait: GARDEN_PORTRAIT, landscape: GARDEN_LANDSCAPE },
+  tower: { tablet: TOWER_TABLET, portrait: { ...GARDEN_PORTRAIT, meadows: [] }, landscape: { ...GARDEN_LANDSCAPE, meadows: [] } },
   robot: { tablet: ROBOT_TABLET, portrait: mirrored(GARDEN_PORTRAIT), landscape: mirrored(GARDEN_LANDSCAPE) }
 };
 
@@ -396,7 +413,8 @@ export interface Return {
 
 const COLORS = {
   garden: { sand: '#F3DFA8', ground: '#A6D676', meadow: '#B4DE88', path: '#EFD9A0', pathDots: '#E0B95E', islet: '#B4DE88', wave: '#D8F0FB', plank: '#5A3B26', deck: '#C99A6B' },
-  robot: { sand: '#E6DCC4', ground: 'url(#island-tiles)', meadow: '', path: '#E9EEF4', pathDots: '#F2B33D', islet: '#DFE7F0', wave: '#DCEBF6', plank: '#4F5F72', deck: '#8FA3BA' }
+  robot: { sand: '#E6DCC4', ground: 'url(#island-tiles)', meadow: '', path: '#E9EEF4', pathDots: '#F2B33D', islet: '#DFE7F0', wave: '#DCEBF6', plank: '#4F5F72', deck: '#8FA3BA' },
+  tower: { sand: '#F3DFA8', ground: '#BFE08F', meadow: '#E7D7BC', path: '#EFD9A0', pathDots: '#C8A35E', islet: '#CFE8A8', wave: '#D8F0FB', plank: '#5A3B26', deck: '#C99A6B' }
 };
 
 /** A loose bolt lying in the workshop, centred on its point. */
@@ -471,9 +489,55 @@ function Gear() {
   );
 }
 
-/** One of the island's creatures, its feet on its point; phones draw them a little smaller. */
+/** A street lamp of the Óratorony's square. */
+function Lamp() {
+  return (
+    <g>
+      <path d="M0 0 V-40" stroke="#3A2E6B" strokeWidth="4" strokeLinecap="round" />
+      <path d="M-8 -40 H8 L5 -54 H-5 Z" fill="#FFE08A" stroke="#3A2E6B" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M-9 -54 L0 -60 L9 -54 Z" fill="#3A2E6B" />
+    </g>
+  );
+}
+
+/** A townsperson on the square, in a hat or a scarf. */
+function Townsperson({ hat }: { hat: boolean }) {
+  return (
+    <g>
+      <path d="M-9 0 V-18 C-9 -26 9 -26 9 -18 V0 Z" fill={hat ? '#2E86DE' : '#E8577D'} stroke="#10233A" strokeWidth="2.5" />
+      <circle cy="-30" r="8" fill="#F6D2B5" stroke="#10233A" strokeWidth="2.5" />
+      {hat ? <path d="M-10 -34 H10 M-6 -34 V-42 H6 V-34" fill="#10233A" stroke="#10233A" strokeWidth="3" /> : <path d="M-8 -22 H8" stroke="#F2B33D" strokeWidth="4" />}
+    </g>
+  );
+}
+
+/** The Óratorony's own tower, standing in the square. */
+function TowerLandmark() {
+  return (
+    <g>
+      <ellipse cx="0" cy="4" rx="56" ry="11" fill="#A9C97C" />
+      <rect x="-30" y="-130" width="60" height="134" rx="6" fill="#F6EBD3" stroke="#10233A" strokeWidth="4" />
+      <path d="M-42 -128 L0 -182 L42 -128 Z" fill="#C8553D" stroke="#10233A" strokeWidth="4" strokeLinejoin="round" />
+      <circle cx="0" cy="-190" r="6" fill="#F2B33D" stroke="#10233A" strokeWidth="3" />
+      <circle cx="0" cy="-92" r="22" fill="#FFFFFF" stroke="#10233A" strokeWidth="4" />
+      <path d="M0 -92 V-108" stroke="#2E86DE" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M0 -92 L10 -92" stroke="#10233A" strokeWidth="5" strokeLinecap="round" />
+      <rect x="-11" y="-146" width="22" height="15" rx="7" fill="#5B4B9A" stroke="#10233A" strokeWidth="3" />
+      <path d="M-12 4 V-24 a12 12 0 0 1 24 0 V4 Z" fill="#8A5A3B" stroke="#10233A" strokeWidth="4" />
+    </g>
+  );
+}
+
+/** One of the island's creatures, its feet on its point; phones draw them a little smaller. The Óratorony's townsfolk and lamp stand still. */
 function Critter({ world, at, k }: { world: IslandWorld; at: CritterSpot; k: number }) {
   const s = Math.max(k, 0.8);
+  if (world === 'tower') {
+    return (
+      <g className="island__critter island__critter--still">
+        <g transform={`translate(${at.x} ${at.y}) scale(${s})`}>{at.role === 2 ? <Lamp /> : <Townsperson hat={at.role === 0} />}</g>
+      </g>
+    );
+  }
   const garden = world === 'garden';
   const motion = at.role === 2 && !garden ? 'still' : at.role === 2 ? 'sway' : garden ? 'breathe' : 'sway';
   const flip = at.role === 1 ? -1 : 1;
@@ -489,6 +553,7 @@ function Critter({ world, at, k }: { world: IslandWorld; at: CritterSpot; k: num
 function Scene({ world, g }: { world: IslandWorld; g: Geometry }) {
   const c = COLORS[world];
   const robot = world === 'robot';
+  const tower = world === 'tower';
   const turn = (on?: boolean) => (on ? `translate(${g.w} 0) scale(-1 1)` : undefined);
   return (
     <svg className="island__scene" aria-hidden="true" width={g.w} height={g.h} viewBox={`0 0 ${g.w} ${g.h}`}>
@@ -529,6 +594,11 @@ function Scene({ world, g }: { world: IslandWorld; g: Geometry }) {
               <circle cx={p.x} cy={p.y} r={p.r} fill={i % 2 ? '#3D8F3F' : '#2F7D32'} />
             </g>
           )
+        )}
+        {tower && g.w > 1000 && (
+          <g transform={`translate(${g.meadows[0]?.x ?? g.w / 2} ${(g.meadows[0]?.y ?? 430) + 40}) scale(0.72)`}>
+            <TowerLandmark />
+          </g>
         )}
         {g.dots.map((p, i) =>
           robot ? (
