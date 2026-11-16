@@ -13,6 +13,6 @@ permissions: {}
 jobs:
   title:
     name: Conventional title
-    uses: tibor-horvath/ci-toolkit/.github/workflows/pr-title-lint.yml@v1
+    uses: tibor-horvath/ci-toolkit/.github/workflows/pr-title-lint.yml@v2
     permissions:
       pull-requests: read
