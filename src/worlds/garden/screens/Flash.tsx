@@ -5,10 +5,11 @@ import { GameShell } from '../../../components/GameShell';
 import { FitBox } from '../../../components/FitBox';
 import { useForm } from '../../../components/Stage';
 import { DotFace, MiniSprout } from '../seeds';
-import { DoneTick, GuideBubble, NextIcon } from '../../../components/ui';
+import { DoneTick } from '../../../components/ui';
 import { ASK, FIELD_H, FIELD_W, READY, foldSeeds, buildFlashRound, revealFeedback, rightFeedback } from '../games/flash/logic';
 import { speak } from '../../../lib/speech';
 import { useProgress } from '../../../state/progress';
+import { GuideSays, NextButton } from '../../../components/round';
 
 type Phase = 'ready' | 'flash' | 'ask' | 'reveal' | 'solved';
 
@@ -16,7 +17,7 @@ type Phase = 'ready' | 'flash' | 'ask' | 'reveal' | 'solved';
 export function Flash({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, win, meter, goNext } = useLadderRound('flash');
-  const [round] = useState(() => buildFlashRound(progress.flashRound, level));
+  const [round] = useState(() => buildFlashRound(progress.games.flash.round, level));
   // Portrait phones: the two groups stand one above the other, so the seeds can be bigger.
   // One big ten-frame (6–10 on a frame level) stays as it is: folding splits the field down the middle.
   const fold = useForm() === 'portrait' && !(round.cells && round.count <= 10);
@@ -63,7 +64,6 @@ export function Flash({ onBack }: { onBack: () => void }) {
       speak(revealFeedback(round.count, framed).speech);
     }
   };
-
 
   const seedsVisible = phase === 'flash' || phase === 'reveal' || phase === 'solved';
   const answering = phase === 'ask' || phase === 'reveal';
@@ -112,11 +112,7 @@ export function Flash({ onBack }: { onBack: () => void }) {
         </div>
       </FitBox>
 
-      <div className="flash-guide">
-        <GuideBubble mood={fb.mood} tone={fb.tone}>
-          {fb.text}
-        </GuideBubble>
-      </div>
+      <GuideSays line={fb} className="flash-guide" />
 
       <div className="choices">
         {round.choices.map((n) => {
@@ -129,11 +125,7 @@ export function Flash({ onBack }: { onBack: () => void }) {
             </button>
           );
         })}
-        {phase === 'solved' && (
-          <button type="button" className="big-btn" onClick={goNext}>
-            Újra! <NextIcon />
-          </button>
-        )}
+        <NextButton show={phase === 'solved'} onNext={goNext} label="Újra!" />
       </div>
 
     </GameShell>

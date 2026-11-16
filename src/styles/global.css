@@ -64,6 +64,30 @@ h1, h2, p { margin: 0; }
 .big-btn { height: 68px; padding: 0 34px; border: none; border-radius: 34px; background: var(--leaf); color: var(--paper); font-size: 26px; font-weight: 800; display: flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 6px 0 var(--leaf-deep); flex: none; }
 .big-btn { transition: transform 70ms ease-out, box-shadow 70ms ease-out; }
 .big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--leaf-deep); }
+.big-btn { position: relative; }
+
+/* Stuck hint: a hand that taps the way-on button once, then leaves (StuckHint). The fingertip sits near the arrow. */
+.tap-hint { position: absolute; left: calc(100% - 50px); top: calc(50% - 4px); width: 64px; height: 64px; pointer-events: none; z-index: 2; animation: tap-hint 2.4s ease-in-out both; filter: drop-shadow(0 3px 4px rgb(16 35 58 / 0.25)); }
+.tap-hint svg { display: block; }
+.tap-hint__ring { position: absolute; left: -3px; top: -19px; width: 48px; height: 48px; border-radius: 50%; border: 5px solid var(--sun); box-sizing: border-box; opacity: 0; animation: tap-ring 2.4s ease-out both; }
+@keyframes tap-hint {
+  0% { opacity: 0; transform: translate(18px, 22px); }
+  25% { opacity: 1; transform: translate(0, 0); }
+  38% { transform: translate(0, 0) scale(0.88); }
+  48% { transform: translate(0, 0) scale(1); }
+  80% { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+@keyframes tap-ring {
+  0%, 36% { opacity: 0; transform: scale(0.3); }
+  42% { opacity: 1; transform: scale(0.6); }
+  70%, 100% { opacity: 0; transform: scale(1.4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tap-hint { animation-name: tap-hint-still; }
+  .tap-hint__ring { animation: none; }
+  @keyframes tap-hint-still { 0% { opacity: 0; } 15%, 80% { opacity: 1; } 100% { opacity: 0; } }
+}
 
 .kalandka-mark { display: inline-flex; font-family: var(--display); font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: var(--ink); }
 .kalandka-mark span { display: inline-block; }

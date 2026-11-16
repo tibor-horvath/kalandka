@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { DoneTick, GuideBubble, NextIcon } from '../../../components/ui';
+import { DoneTick, GuideBubble } from '../../../components/ui';
 import { speak } from '../../../lib/speech';
 import { buzz, chime, fanfare } from '../../../lib/sound';
 import { SHOW_AFTER, type Say } from '../games/common';
+import { NextButton as SharedNext } from '../../../components/round';
 
 // What the Óratorony's games share: Kakukk's bubble, a row of answer cards, and the way on to the next task.
 // One question per task: a wrong card shakes once and stays dimmed, two misses light the right one up, and a
@@ -121,9 +122,7 @@ export function NextButton({ show, onNext, label = 'Következő' }: { show: bool
   if (!show) return null;
   return (
     <div className="tower-next">
-      <button type="button" className="big-btn big-btn--tower" onClick={onNext}>
-        {label} <NextIcon />
-      </button>
+      <SharedNext onNext={onNext} label={label} look="tower" />
     </div>
   );
 }

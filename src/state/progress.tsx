@@ -1,21 +1,39 @@
 import { createContext, useContext } from 'react';
-import { ADD_LEVELS_VERSION, migrateAddLevel } from '../worlds/garden/games/add/logic';
-import type { GameId } from './games';
-import { carryOverBeds, type Bed, type FlowerId, type GiftFruit, type TreatId, type VegSpot, type VisitorId } from './garden';
+import { GAME_IDS, WORLD_IDS, type GameId, type WorldId } from '../worlds';
+import type { Bed, FlowerId, GiftFruit, TreatId, VegSpot, VisitorId } from './garden';
+import { SAVE_VERSION, migrateSave } from './migrations';
 import { carryOverStickers, markEarnedSeen } from './stickers';
 import type { PartSlot } from './robotParts';
 import type { Ladder, LadderGame } from './ladder';
 import type { PracticePay } from './pod';
 import type { TaskLog } from './taskLog';
-import type { WorldId } from './worlds';
+
+/** One game's part of the save. */
+export interface GameSave {
+  /** Goes up when the child moves on to the next task; App keys the game's screen by it. */
+  round: number;
+  /** Tasks solved (Locsolás counts its plants instead, see solvedOf in games.ts). */
+  solved: number;
+}
+
+/** One world's part of the save. */
+export interface WorldSave {
+  /** Every task ever solved in the world (games and finished paper pages): the clock its reward place runs on. */
+  tasks: number;
+  /** Every reward ever earned (seeds, bolts, bells: one per full reward pod, see pod.ts); the balance is earned − spent. */
+  earned: number;
+  spent: number;
+  /** The world's guide has introduced themself. */
+  welcomed: boolean;
+  /** Games opened at least once; the rest wear the "Új!" badge. */
+  opened: GameId[];
+}
 
 export interface Progress {
-  /** Every seed ever earned (one per full reward pod, see pod.ts); the balance to plant is seeds − seedsSpent. */
-  seeds: number;
-  /** Every task solved in the garden world: the clock the Kiskert's plants grow, ripen and get thirsty on. */
-  gardenTasks: number;
-  /** Seeds planted in the Kiskert. */
-  seedsSpent: number;
+  /** The save's shape (see migrations.ts). */
+  version: number;
+  games: Record<GameId, GameSave>;
+  worlds: Record<WorldId, WorldSave>;
   /** The Kiskert's beds (see BEDS in garden/beds.ts); null is an empty bed. */
   beds: (Bed | null)[];
   /** Flower kinds bought in the Magtár, for good; Mályva is every child's and is not listed (see FLOWERS in garden/beds.ts). */
@@ -24,8 +42,6 @@ export interface Progress {
   border: (FlowerId | null)[];
   /** The Veteményes, five spots per open plot (see garden/veg.ts); null is an empty spot. */
   veg: (VegSpot | null)[];
-  /** Beds per plot the save was made with; missing: the old ten (see carryOverBeds). */
-  plotBeds: number;
   /** Apples, cherries and walnuts in the basket, given straight to the visitors who love them. */
   basket: Partial<Record<GiftFruit, number>>;
   /** When each flower last gave Méhecske pollen, by "b<bed>" or "s<border spot>": the garden task count then. */
@@ -55,33 +71,15 @@ export interface Progress {
   pagesDone: string[];
   /** Plant ids grown in the watering game, oldest first. */
   garden: string[];
-  waterRound: number;
-  patternRound: number;
-  patternsSolved: number;
-  learnRound: number;
-  /** Numbers met in Számmagok; 5 opens Villámszem. */
-  learnSolved: number;
   /** Számmagok's Vegyesen rounds solved: mixed numbers whose numeral the child found. */
   learnMixSolved: number;
-  flashRound: number;
-  addRound: number;
-  addSolved: number;
   /** Méhkas's level and counters from before the ladders; read once into ladders.add (see ladder.ts). */
   addLevel: number;
   addStreak: number;
   addMisses: number;
-  /** Which Méhkas ladder addLevel indexes into; older saves are migrated on load. */
-  addLevelsVersion: number;
   addAnnounced: boolean;
-  flashSolved: number;
-  /** Mézút round: which digit to trace next (see TRACE_ORDER). */
-  traceRound: number;
-  traceSolved: number;
   /** Mézút digits written on a faded trail (Halvány út, from the second lap on). */
   traceFadedSolved: number;
-  potsRound: number;
-  /** Cserépbarátok rounds solved; every five move up a level (see POTS_LEVELS); parents can set it. */
-  potsSolved: number;
   potsAnnounced: boolean;
   /** Csepi has announced that Villámszem opened. */
   flashAnnounced: boolean;
@@ -92,8 +90,6 @@ export interface Progress {
   unlockAll: boolean;
   /** Daily play limit in minutes; 0 = no limit. */
   screenLimitMin: number;
-  /** The 15-minute default limit has been applied (saves from before it had no limit). */
-  limitDefaulted: boolean;
   /** Day the counters below belong to (local YYYY-MM-DD). */
   playDate: string;
   playSeconds: number;
@@ -117,37 +113,6 @@ export interface Progress {
   welcomed: boolean;
   /** The world the child last chose on the Kalandka map (see state/worlds.ts); null until they first choose one. */
   world: WorldId | null;
-  /** Csavar has introduced himself. */
-  robotWelcomed: boolean;
-  /** Workshop machines opened at least once; the rest wear the "Új gép!" badge. */
-  robotOpened: GameId[];
-  /** Robotműhely's reward: one bolt per full reward pod, like the garden's seeds. */
-  bolts: number;
-  /** Every task solved in the workshop: the clock the robot's battery and oil run on. */
-  robotTasks: number;
-  /** Robotút course: which one comes next, and how many were done (five per level). */
-  pathRound: number;
-  pathSolved: number;
-  /** Válogatógép round: which one comes next, and how many were done (five per level, see SORT_LEVELS). */
-  sortRound: number;
-  sortSolved: number;
-  /** Mérleg round: which one comes next, and how many were done (five per level, see SCALE_LEVELS). */
-  scaleRound: number;
-  scaleSolved: number;
-  /** Mintagép round: which one comes next, and how many were done (five per level, see SEQ_LEVELS). */
-  seqRound: number;
-  seqSolved: number;
-  /** Tükörgép round: which one comes next, and how many were done (five per level, see MIRROR_LEVELS). */
-  mirrorRound: number;
-  mirrorSolved: number;
-  /** Kódzár round: which one comes next, and how many were done. */
-  codeRound: number;
-  codeSolved: number;
-  /** Hibavadász round: which one comes next, and how many were done. */
-  fixRound: number;
-  fixSolved: number;
-  /** Bolts spent in Robotépítő; the balance is bolts − boltsSpent. */
-  boltsSpent: number;
   /** Robot parts bought (see state/robotParts.ts); the starting parts are always owned. */
   robotOwned: string[];
   /** The part worn in each slot. */
@@ -171,16 +136,6 @@ export interface Progress {
   robotWish: { robot: number; part: string } | null;
   /** Gifts each robot friend has had (see FRIEND_GIFTS in robotParts.ts). */
   friendGifts: Partial<Record<string, number>>;
-  /** Óratorony's reward: one bell per full reward pod (every second task, like the garden's seeds). */
-  bells: number;
-  /** Bells spent in the Kisváros; the balance is bells − bellsSpent. */
-  bellsSpent: number;
-  /** Every task solved in the Óratorony: the clock the Kisváros's day runs on. */
-  towerTasks: number;
-  /** Kakukk has introduced himself. */
-  towerWelcomed: boolean;
-  /** Óratorony games opened at least once; the rest wear the "Új!" badge. */
-  towerOpened: GameId[];
   /** Kisváros buildings put up, in the order they were bought (see state/town.ts). */
   town: string[];
   /** Upgrades each Kisváros building has had (0 … 2; built is stage 1). */
@@ -191,20 +146,6 @@ export interface Progress {
   townWelcomed: string[];
   /** Szint-bemutatók seen (by idea, see worlds/tower/games/intros.ts): they no longer open by themselves. */
   introsSeen: string[];
-  dayRound: number;
-  daySolved: number;
-  seasonRound: number;
-  seasonSolved: number;
-  setRound: number;
-  setSolved: number;
-  readRound: number;
-  readSolved: number;
-  digiRound: number;
-  digiSolved: number;
-  sleepRound: number;
-  sleepSolved: number;
-  sandRound: number;
-  sandSolved: number;
   /** Recent solved tasks per game and whether they needed help, for the parents' notes (see taskLog.ts). */
   taskLog: TaskLog;
   /** Each levelled game's difficulty ladder; a game missing here starts from its older save fields (see ladder.ts). */
@@ -214,14 +155,13 @@ export interface Progress {
 }
 
 export const DEFAULT_PROGRESS: Progress = {
-  seeds: 0,
-  gardenTasks: 0,
-  seedsSpent: 0,
+  version: SAVE_VERSION,
+  games: Object.fromEntries(GAME_IDS.map((id) => [id, { round: 0, solved: 0 }])) as Record<GameId, GameSave>,
+  worlds: Object.fromEntries(WORLD_IDS.map((id): [WorldId, WorldSave] => [id, { tasks: 0, earned: 0, spent: 0, welcomed: false, opened: [] }])) as Record<WorldId, WorldSave>,
   beds: [],
   flowersOwned: [],
   border: [],
   veg: [],
-  plotBeds: 15,
   basket: {},
   pollen: {},
   snacked: {},
@@ -238,33 +178,18 @@ export const DEFAULT_PROGRESS: Progress = {
   stickersToday: [],
   pagesDone: [],
   garden: [],
-  waterRound: 0,
-  patternRound: 0,
-  patternsSolved: 0,
-  learnRound: 0,
-  learnSolved: 0,
   learnMixSolved: 0,
-  flashRound: 0,
-  addRound: 0,
-  addSolved: 0,
   addLevel: 0,
   addStreak: 0,
   addMisses: 0,
-  addLevelsVersion: ADD_LEVELS_VERSION,
   addAnnounced: false,
-  flashSolved: 0,
-  traceRound: 0,
-  traceSolved: 0,
   traceFadedSolved: 0,
-  potsRound: 0,
-  potsSolved: 0,
   potsAnnounced: false,
   flashAnnounced: false,
   voice: true,
   sounds: true,
   unlockAll: false,
   screenLimitMin: 15,
-  limitDefaulted: true,
   playDate: '',
   playSeconds: 0,
   bonusSeconds: 0,
@@ -279,25 +204,6 @@ export const DEFAULT_PROGRESS: Progress = {
   robotVoice: '',
   welcomed: false,
   world: null,
-  robotWelcomed: false,
-  robotOpened: [],
-  bolts: 0,
-  robotTasks: 0,
-  pathRound: 0,
-  pathSolved: 0,
-  sortRound: 0,
-  sortSolved: 0,
-  scaleRound: 0,
-  scaleSolved: 0,
-  seqRound: 0,
-  seqSolved: 0,
-  mirrorRound: 0,
-  mirrorSolved: 0,
-  codeRound: 0,
-  codeSolved: 0,
-  fixRound: 0,
-  fixSolved: 0,
-  boltsSpent: 0,
   robotOwned: [],
   robotLook: {},
   robot2Owned: [],
@@ -310,55 +216,36 @@ export const DEFAULT_PROGRESS: Progress = {
   robotCharges: 0,
   robotWish: null,
   friendGifts: {},
-  bells: 0,
-  bellsSpent: 0,
-  towerTasks: 0,
-  towerWelcomed: false,
-  towerOpened: [],
   town: [],
   townStages: {},
   townGifts: {},
   townWelcomed: [],
   introsSeen: [],
-  dayRound: 0,
-  daySolved: 0,
-  seasonRound: 0,
-  seasonSolved: 0,
-  setRound: 0,
-  setSolved: 0,
-  readRound: 0,
-  readSolved: 0,
-  digiRound: 0,
-  digiSolved: 0,
-  sleepRound: 0,
-  sleepSolved: 0,
-  sandRound: 0,
-  sandSolved: 0,
   taskLog: {},
   ladders: {},
   practicePay: { day: '', paid: {} }
 };
 
-/** Saves from before the gather and take levels: keep the child on the same sums. */
-export function migrate(p: Progress): Progress {
-  if (p.addLevelsVersion >= ADD_LEVELS_VERSION) return p;
-  const played = p.addSolved > 0 || p.addLevel > 0;
-  return { ...p, addLevel: played ? migrateAddLevel(p.addLevel, p.addLevelsVersion) : 0, addLevelsVersion: ADD_LEVELS_VERSION };
+/** A saved record of parts (games, worlds), each filled up with its defaults: a game added since the save starts fresh. */
+function fillParts<K extends string, T extends object>(defaults: Record<K, T>, saved: unknown): Record<K, T> {
+  const raw: Partial<Record<K, Partial<T>>> = saved && typeof saved === 'object' ? saved : {};
+  return Object.fromEntries((Object.keys(defaults) as K[]).map((k) => [k, { ...defaults[k], ...raw[k] }])) as Record<K, T>;
 }
 
-/** One child's saved progress, filled up with defaults. Saves without a version predate the add levels. */
+/** One child's saved progress: brought up to the current version (see migrations.ts), then filled up with defaults. */
 export function readProgress(saved: unknown): Progress {
-  const raw = saved && typeof saved === 'object' ? (saved as Partial<Progress>) : {};
-  let p = migrate({ ...DEFAULT_PROGRESS, addLevelsVersion: 1, ...raw });
-  // Saves from before the 15-minute default: switch "no limit" to it once; parents can turn it off again.
-  if (!raw.limitDefaulted) p = { ...p, screenLimitMin: p.screenLimitMin || DEFAULT_PROGRESS.screenLimitMin, limitDefaulted: true };
-  // Saves from the ten-bed plots: every bed stays in its plot, and each plot gets five new empty beds.
-  if (raw.plotBeds === undefined) p = { ...p, beds: carryOverBeds(p.beds), plotBeds: DEFAULT_PROGRESS.plotBeds };
-  // Saves from before the reward pod paid one seed or bolt per task, which was the clock then: the clock starts there.
-  if (raw.gardenTasks === undefined) p = { ...p, gardenTasks: p.seeds, robotTasks: p.bolts };
-  // Saves from before the stickers: what was already earned goes into the album without a celebration each.
-  // Saves from before the level stickers: the stickers of the old list carry over to the level stickers.
-  return raw.stickersSeen ? carryOverStickers(p) : markEarnedSeen(p);
+  const given = saved && typeof saved === 'object' ? (saved as Record<string, unknown>) : {};
+  const raw = migrateSave(given);
+  const p: Progress = {
+    ...DEFAULT_PROGRESS,
+    ...(raw as Partial<Progress>),
+    games: fillParts(DEFAULT_PROGRESS.games, raw.games),
+    worlds: fillParts(DEFAULT_PROGRESS.worlds, raw.worlds)
+  };
+  // Not a change of shape but of the album, so it runs on every load (it does nothing the second time):
+  // saves from before the stickers get what was already earned without a celebration each, and the stickers
+  // of older lists carry over to the level stickers.
+  return given.stickersSeen ? carryOverStickers(p) : markEarnedSeen(p);
 }
 
 export type Update = (fn: (p: Progress) => Progress) => void;

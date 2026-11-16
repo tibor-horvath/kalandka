@@ -1,3 +1,4 @@
+import { save } from './testSave';
 import jsQR from 'jsqr';
 import qrcode from 'qrcode-generator';
 import { describe, expect, it } from 'vitest';
@@ -7,8 +8,8 @@ import { PIECE_BYTES, collect, isComplete, merge, pack, toPieces, unpack, type C
 
 const family = () => {
   let s = addKid(fromProgress(DEFAULT_PROGRESS, 'a'), { name: 'Lili', avatar: 'ladybug', age: '5' }, 'b');
-  s = applyUpdate(s, 'a', (p) => ({ ...p, seeds: 42, addLevel: 7, garden: ['tulipan', 'pipacs'], stickersSeen: ['water-level-1'], robotOwned: ['hat'], voice: false }));
-  return applyUpdate(s, 'b', (p) => ({ ...p, bolts: 12, seqSolved: 9 }));
+  s = applyUpdate(s, 'a', (p) => (save({ seeds: 42, addLevel: 7, garden: ['tulipan', 'pipacs'], stickersSeen: ['water-level-1'], robotOwned: ['hat'], voice: false }, p)));
+  return applyUpdate(s, 'b', (p) => (save({ bolts: 12, seqSolved: 9 }, p)));
 };
 
 /** Draws a piece as the parents' page does (byte mode, low correction, 4-module margin) and reads it back. */
@@ -96,26 +97,26 @@ describe('merging a transfer', () => {
     expect(m.result.kids.map((k) => k.id)).toEqual(['a', 'b']);
     expect(m.added.map((k) => k.id)).toEqual(['a', 'b']);
     expect(m.result.activeId).toBe('a');
-    expect(progressOf(m.result, 'a').seeds).toBe(42);
+    expect(progressOf(m.result, 'a').worlds.garden.earned).toBe(42);
     expect(m.result.progress.x).toBeUndefined();
   });
 
   it('updates a child who is already here and keeps the children only this device has', () => {
-    let here = applyUpdate(editKid(fromProgress(DEFAULT_PROGRESS, 'a'), 'a', { name: 'Bence' }), 'a', (p) => ({ ...p, seeds: 3 }));
+    let here = applyUpdate(editKid(fromProgress(DEFAULT_PROGRESS, 'a'), 'a', { name: 'Bence' }), 'a', (p) => (save({ seeds: 3 }, p)));
     here = addKid(here, { name: 'Panni', avatar: 'bee', age: '6' }, 'c');
-    here = applyUpdate(here, 'c', (p) => ({ ...p, seeds: 8 }));
+    here = applyUpdate(here, 'c', (p) => (save({ seeds: 8 }, p)));
     const m = merge({ ...here, activeId: 'c' }, sent());
     expect(m.result.kids.map((k) => k.id)).toEqual(['a', 'c', 'b']);
     expect(m.updated.map((k) => k.id)).toEqual(['a']);
     expect(m.added.map((k) => k.id)).toEqual(['b']);
-    expect(progressOf(m.result, 'a').seeds).toBe(42);
-    expect(progressOf(m.result, 'c').seeds).toBe(8);
+    expect(progressOf(m.result, 'a').worlds.garden.earned).toBe(42);
+    expect(progressOf(m.result, 'c').worlds.garden.earned).toBe(8);
     expect(m.result.activeId).toBe('c');
     expect(m.tooMany).toBe(false);
   });
 
   it('gives a child only on this device another figure when a sent child has theirs', () => {
-    const here = applyUpdate(editKid(fromProgress(DEFAULT_PROGRESS, 'z'), 'z', { name: 'Zoé', avatar: 'ladybug' }), 'z', (p) => ({ ...p, seeds: 1 }));
+    const here = applyUpdate(editKid(fromProgress(DEFAULT_PROGRESS, 'z'), 'z', { name: 'Zoé', avatar: 'ladybug' }), 'z', (p) => (save({ seeds: 1 }, p)));
     const m = merge(here, sent());
     const avatars = m.result.kids.map((k) => k.avatar);
     expect(new Set(avatars).size).toBe(avatars.length);
@@ -124,7 +125,7 @@ describe('merging a transfer', () => {
   });
 
   it('refuses more children than one device holds', () => {
-    let here = applyUpdate(editKid(fromProgress(DEFAULT_PROGRESS, 'k0'), 'k0', { name: 'K0' }), 'k0', (p) => ({ ...p, seeds: 1 }));
+    let here = applyUpdate(editKid(fromProgress(DEFAULT_PROGRESS, 'k0'), 'k0', { name: 'K0' }), 'k0', (p) => (save({ seeds: 1 }, p)));
     for (let i = 1; i < 5; i++) here = addKid(here, { name: `K${i}`, avatar: 'fish', age: null }, `k${i}`);
     expect(merge(here, sent()).tooMany).toBe(true);
   });

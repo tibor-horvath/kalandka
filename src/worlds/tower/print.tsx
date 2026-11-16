@@ -1,13 +1,15 @@
 import type { ReactNode } from 'react';
 import { handAngles, timeWords, type ClockTime } from '../../lib/time';
-import { ANSWER, At, Choices, FONT, INK, Pic, Ring, WriteBox, roundOf, spec, type Density, type Grid } from '../../print/sheet';
+import { ANSWER, At, Choices, FONT, INK, Pic, Ring, WriteBox, roundOf, spec, type Density, type Explainer, type Grid, type PrintSpec } from '../../print/sheet';
+import type { GameId } from '../../state/games';
 import { ladderOf } from '../../state/ladder';
 import { ActivityPic, DIAL_NUMBERS, DayPartSign, SeasonSign, SeasonTree } from './art';
 import { ACTIVITIES, DAY_PARTS, SPANS, capital } from './games/activities';
+import { introFor, type IntroArt } from './games/intros';
 import { DIGI_LEVELS, READ_LEVELS, SET_LEVELS, buildDigiRound, buildReadRound, buildSetRound, type DigiRound, type ReadRound, type SetRound } from './games/clock';
 import { DAY_LEVELS, buildDayRound, type DayRound } from './games/day';
 import { SAND_LEVELS, SPAN_WORDS, buildSandRound, type SandRound } from './games/sand';
-import { MONTHS, SEASON_LEVELS, SEASON_NAMES, WEEK, answerOf, buildSeasonRound, type SeasonRound } from './games/season';
+import { MONTHS, SEASONS, SEASON_LEVELS, SEASON_NAMES, WEEK, answerOf, buildSeasonRound, type SeasonRound } from './games/season';
 import { SLEEP_LEVELS, buildSleepRound, cardText, type SleepRound } from './games/sleep';
 
 // Óratorony on paper: the tasks come from the games' own generators, so a sheet matches the child's level.
@@ -24,14 +26,30 @@ function Word({ x, y, w, h, text, size = 40 }: { x: number; y: number; w: number
   );
 }
 
-/** A clock face for paper, `size` across, its top-left at the origin; hands only where given. */
-function PaperClock({ size, time, hourOnly = false, hands = true, answerHands = false }: { size: number; time?: ClockTime; hourOnly?: boolean; hands?: boolean; answerHands?: boolean }) {
+/** The point `r` from the dial's middle, `deg` clockwise from 12. */
+const onDial = (deg: number, r: number) => ({ x: 100 + r * Math.sin((deg * Math.PI) / 180), y: 100 - r * Math.cos((deg * Math.PI) / 180) });
+
+/**
+ * A clock face for paper, `size` across, its top-left at the origin; hands only where given. For the magyarázó lap,
+ * `wedge` shades the dial between two angles (light grey, so it prints in black and white) and `glow` rings a number.
+ */
+function PaperClock({ size, time, hourOnly = false, hands = true, answerHands = false, wedge, glow }: { size: number; time?: ClockTime; hourOnly?: boolean; hands?: boolean; answerHands?: boolean; wedge?: [number, number]; glow?: number }) {
   const k = size / 200;
   const a = time ? handAngles(time) : null;
   const color = answerHands ? ANSWER : INK;
+  const wedgePath =
+    wedge &&
+    (() => {
+      const p = onDial(wedge[0], 88);
+      const q = onDial(wedge[1], 88);
+      return `M100 100 L${p.x.toFixed(1)} ${p.y.toFixed(1)} A88 88 0 ${wedge[1] - wedge[0] > 180 ? 1 : 0} 1 ${q.x.toFixed(1)} ${q.y.toFixed(1)} Z`;
+    })();
+  const ring = glow ? DIAL_NUMBERS[glow - 1] : null;
   return (
     <g transform={`scale(${k})`}>
       <circle cx="100" cy="100" r="94" fill="#FFFFFF" stroke={INK} strokeWidth="5" />
+      {wedgePath && <path d={wedgePath} fill="#DCE6EE" />}
+      {ring && <circle cx={ring.x} cy={ring.y} r="17" fill="none" stroke={INK} strokeWidth="3" strokeDasharray="6 4" />}
       {Array.from({ length: 12 }, (_, i) => (
         <path key={i} d="M100 10 V18" stroke={INK} strokeWidth="3.5" strokeLinecap="round" transform={`rotate(${i * 30} 100 100)`} />
       ))}
@@ -61,9 +79,13 @@ function DayCard({ id }: { id: keyof typeof ACTIVITIES }) {
   );
 }
 
+/** The "what comes next" level: one card shown, two to choose from (one of them came earlier). */
+const isNext = (r: { given: number; sequence: unknown[] }) => r.given === 1 && r.sequence.length === 2;
+const isNextLevel = (level: number) => DAY_LEVELS[level].given === 1 && DAY_LEVELS[level].slots === 2;
+
 export const daySheet = spec<DayRound>({
   id: 'day',
-  rev: 1,
+  rev: 2,
   levels: DAY_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'day').level,
   grid: (_, d) => pickGrid(d, [1, 3], [2, 3], [2, 4]),
@@ -71,37 +93,53 @@ export const daySheet = spec<DayRound>({
     const l = DAY_LEVELS[level];
     if (l.mode === 'part') return 'Mikor van ez? Karikázd be: reggel, délben, délután vagy este!';
     if (l.mode === 'before') return 'Mi volt előbb? Karikázd be!';
-    return 'Mi történik először, mi utána? Írd a képek alá: 1, 2, 3!';
+    if (isNextLevel(level)) return 'Az első kép már megvolt. Mi jön utána? Karikázd be!';
+    return l.slots === 4 ? 'Mi történik először, mi utána? Írd a képek alá: 1, 2, 3, 4!' : 'Mi történik először, mi utána? Írd a képek alá: 1, 2, 3!';
   },
   tip: (level) =>
-    DAY_LEVELS[level].mode === 'seq'
-      ? 'Meséljék el együtt, mit csinálnak reggel, délben és este. Aki még nem írja a számokat, húzhat egy, kettő vagy három vonalat.'
-      : 'Gondolják végig együtt a gyerkőc saját napját: mi volt ma reggel, mi lesz este?',
+    isNextLevel(level)
+      ? 'Nézzék meg együtt a bal oldali képet: ez már megtörtént. A két kép közül az egyik még előtte volt, a másik jön utána.'
+      : DAY_LEVELS[level].mode === 'seq'
+        ? 'Meséljék el együtt, mit csinálnak reggel, délben és este. Aki még nem írja a számokat, húzhat egy, kettő vagy három vonalat.'
+        : 'Gondolják végig együtt a gyerkőc saját napját: mi volt ma reggel, mi lesz este?',
   tasks: (req) => Array.from({ length: req.count }, (_, i) => buildDayRound(req.level, roundOf(req, i))),
   Task: ({ task, answers }) => {
+    if (task.mode === 'seq' && isNext(task)) {
+      // "Mi jön utána?": the card that already happened, an arrow, and two cards to choose from.
+      // One of them came earlier, so they can't be numbered 1, 2, 3 in a row: the child circles the next one.
+      return (
+        <Pic w={760} h={220}>
+          <At x={10} y={10}>
+            <rect width="200" height="200" rx="18" fill="#FFFFFF" stroke={INK} strokeWidth="4" />
+            <DayCard id={task.sequence[0]} />
+          </At>
+          <path d="M232 110 H290 M272 90 L294 110 L272 130" fill="none" stroke={INK} strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+          <Choices x={320} y={10} w={200} h={200} gap={30} pick={task.choices.indexOf(task.sequence[1])} answers={answers}>
+            {task.choices.map((id) => (
+              <DayCard key={id} id={id} />
+            ))}
+          </Choices>
+        </Pic>
+      );
+    }
     if (task.mode === 'seq') {
-      // Every card of the row on paper, in a mixed order; the ones given already carry their number.
-      const shown = [...task.sequence].sort((a, b) => task.choices.indexOf(a) - task.choices.indexOf(b));
-      const cards = task.given === 1 && task.sequence.length === 2 ? [task.sequence[0], ...task.choices] : shown;
+      // Every card of the row on paper, in a mixed order; the given first card carries its number.
+      const cards = [...task.sequence].sort((a, b) => task.choices.indexOf(a) - task.choices.indexOf(b));
       return (
         <Pic w={cards.length * 220} h={320}>
           {cards.map((id, i) => {
             const n = task.sequence.indexOf(id);
-            const given = n >= 0 && n < task.given;
+            const given = n < task.given;
             return (
               <g key={id}>
                 <At x={i * 220 + 10} y={0}>
                   <rect width="200" height="200" rx="18" fill="#FFFFFF" stroke="#B9CBD8" strokeWidth="3" />
                   <DayCard id={id} />
                 </At>
-                {n >= 0 ? (
-                  given ? (
-                    <Word x={i * 220 + 65} y={220} w={90} h={90} text={String(n + 1)} size={60} />
-                  ) : (
-                    <WriteBox x={i * 220 + 65} y={220} answer={n + 1} answers={answers} />
-                  )
+                {given ? (
+                  <Word x={i * 220 + 65} y={220} w={90} h={90} text={String(n + 1)} size={60} />
                 ) : (
-                  answers && <path d={`M${i * 220 + 30} 20 L${i * 220 + 190} 180 M${i * 220 + 190} 20 L${i * 220 + 30} 180`} stroke={ANSWER} strokeWidth="6" />
+                  <WriteBox x={i * 220 + 65} y={220} answer={n + 1} answers={answers} />
                 )}
               </g>
             );
@@ -408,4 +446,146 @@ export const sandSheet = spec<SandRound>({
     )
 });
 
-export const TOWER_SHEETS = [daySheet, seasonSheet, setSheet, readSheet, digiSheet, sleepSheet, sandSheet];
+// ---------- magyarázó lap ----------
+
+const pad = (m: number) => String(m).padStart(2, '0');
+
+/** A digital display on paper: the time in big digits on a light board, like the Digitális óra sheet's cards. */
+function PaperDigital({ x, y, text }: { x: number; y: number; text: string }) {
+  return (
+    <g>
+      <rect x={x} y={y} width="210" height="100" rx="18" fill="#EEF2F6" stroke={INK} strokeWidth="3" />
+      <Word x={x} y={y} w={210} h={100} text={text} size={56} />
+    </g>
+  );
+}
+
+/** A clock with its words under it, `w` wide. */
+function CaptionedClock({ x, h, m, wedge, caption }: { x: number; h: number; m: number; wedge?: [number, number]; caption: string }) {
+  return (
+    <g>
+      <At x={x + 10} y={0}>
+        <PaperClock size={200} time={{ h, m }} wedge={wedge} />
+      </At>
+      <Word x={x} y={205} w={220} h={50} text={caption} size={caption.length > 16 ? 20 : 24} />
+    </g>
+  );
+}
+
+/** One intro slide's picture, drawn for paper: ink only, the screen's yellow becomes light grey. */
+function IntroPic({ art }: { art: IntroArt }): ReactNode {
+  switch (art.kind) {
+    case 'clock': {
+      const clock = <PaperClock size={220} time={{ h: art.h, m: art.m }} hourOnly={art.hourOnly} wedge={art.wedge} glow={art.glow} />;
+      return art.digital ? (
+        <Pic w={500} h={230}>
+          <At x={10} y={5}>
+            {clock}
+          </At>
+          <PaperDigital x={280} y={65} text={art.digital} />
+        </Pic>
+      ) : (
+        <Pic w={230} h={230}>
+          <At x={5} y={5}>
+            {clock}
+          </At>
+        </Pic>
+      );
+    }
+    case 'sleep':
+      return (
+        <Pic w={480} h={260}>
+          {[art.from, art.to].map(([h, m], i) => (
+            <CaptionedClock key={i} x={i * 260} h={h} m={m} caption={`${i ? 'Felébredt' : 'Elaludt'} · ${h}:${pad(m)}`} />
+          ))}
+        </Pic>
+      );
+    case 'quarters':
+      return (
+        <Pic w={700} h={260}>
+          {(
+            [
+              [15, 'negyed három', [0, 90]],
+              [30, 'fél három', [0, 180]],
+              [45, 'háromnegyed három', [0, 270]]
+            ] as [number, string, [number, number]][]
+          ).map(([m, words, wedge], i) => (
+            <CaptionedClock key={m} x={i * 240} h={2} m={m} wedge={wedge} caption={`${words} · 2:${m}`} />
+          ))}
+        </Pic>
+      );
+    case 'pics':
+      return (
+        <Pic w={art.ids.length * 220 - 20} h={200}>
+          {art.ids.map((id, i) => (
+            <At key={id} x={i * 220} y={0}>
+              <DayCard id={id} />
+            </At>
+          ))}
+        </Pic>
+      );
+    case 'parts':
+      return (
+        <Pic w={DAY_PARTS.length * 170 - 10} h={160}>
+          {DAY_PARTS.map((p, i) => (
+            <g key={p}>
+              <At x={i * 170 + 30} y={0}>
+                <DayPartSign part={p} size={100} />
+              </At>
+              <Word x={i * 170} y={108} w={160} h={50} text={capital(p)} size={28} />
+            </g>
+          ))}
+        </Pic>
+      );
+    case 'seasons':
+      return (
+        <Pic w={SEASONS.length * 170 - 10} h={210}>
+          {SEASONS.map((s, i) => (
+            <g key={s}>
+              <At x={i * 170 + 5} y={0}>
+                <SeasonTree season={s} size={150} />
+              </At>
+              <Word x={i * 170} y={158} w={160} h={50} text={capital(SEASON_NAMES[s])} size={28} />
+            </g>
+          ))}
+        </Pic>
+      );
+    case 'chips': {
+      // Seven days fit one row; the twelve months take two rows of six. A marked chip is drawn bold, its label above it.
+      const cols = art.items.length > 7 ? 6 : art.items.length;
+      const rows = Math.ceil(art.items.length / cols);
+      return (
+        <Pic w={cols * 140 - 10} h={rows * 100}>
+          {art.items.map((w, i) => {
+            const x = (i % cols) * 140;
+            const y = Math.floor(i / cols) * 100 + 34;
+            const mark = art.mark?.[i];
+            return (
+              <g key={w}>
+                {mark && <Word x={x} y={y - 34} w={130} h={30} text={mark} size={20} />}
+                <rect x={x} y={y} width="130" height="60" rx="14" fill="#FFFFFF" stroke={mark ? INK : '#B9CBD8'} strokeWidth={mark ? 5 : 3} />
+                <Word x={x} y={y} w={130} h={60} text={w} size={w.length > 9 ? 20 : 24} />
+              </g>
+            );
+          })}
+        </Pic>
+      );
+    }
+  }
+}
+
+/** The magyarázó lap for a game's level: the intro its "?" button replays, slide by slide. */
+function explainerFor(game: GameId, level: number): Explainer | null {
+  const found = introFor(game, level);
+  if (!found) return null;
+  return {
+    title: found.intro.ask,
+    note: 'Ugyanezt mondja el Kakukk az appban a „?” gombra. Nézzék végig együtt, sorban, és a gyerkőc mutasson rá a képen arra, amiről szó van. Ezen a lapon nincs mit megoldani.',
+    slides: found.intro.slides.map((s) => ({ title: s.title, text: s.text, art: <IntroPic art={s.art} /> }))
+  };
+}
+
+/** Every Óratorony sheet can bring its level's magyarázó lap. */
+const withExplainer = (s: PrintSpec<unknown>): PrintSpec<unknown> => ({ ...s, explain: (level) => explainerFor(s.id, level) });
+
+export const TOWER_SHEETS = [daySheet, seasonSheet, setSheet, readSheet, digiSheet, sleepSheet, sandSheet].map(withExplainer);

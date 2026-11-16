@@ -220,10 +220,10 @@ export function Garden({ onBack }: { onBack: () => void }) {
       return;
     }
     pokeAt(`bed${i}`);
-    const left = growAfter(bed.kind) - growthOf(bed, progress.gardenTasks);
+    const left = growAfter(bed.kind) - growthOf(bed, progress.worlds.garden.tasks);
     const name = bedName(bed).toLowerCase();
     // Ripe fruit first, one per tap, counted aloud; then a thirsty plant gets its water.
-    const ripe = ripeFruit(bed, progress.gardenTasks);
+    const ripe = ripeFruit(bed, progress.worlds.garden.tasks);
     if (ripe > 0) {
       const count = pickedFruit(bed) + 1;
       const word = capitalize(numberCount(count));
@@ -233,12 +233,12 @@ export function Garden({ onBack }: { onBack: () => void }) {
         tell({ text: `${word}!`, speech: `${word}!`, mood: 'cheer', tone: 'plain' });
       } else {
         const all = `${word}! ${capitalize(numberAttr(count))} ${fruitName(bed)} a kosárban.`;
-        const thirst = isThirsty(bed, progress.gardenTasks) ? ' Most locsold meg, és újra terem!' : '';
+        const thirst = isThirsty(bed, progress.worlds.garden.tasks) ? ' Most locsold meg, és újra terem!' : '';
         tell({ text: all + thirst, speech: all + thirst, mood: 'cheer', tone: 'good' });
       }
       return;
     }
-    if (isThirsty(bed, progress.gardenTasks)) {
+    if (isThirsty(bed, progress.worlds.garden.tasks)) {
       chime();
       update((p) => water(p, i));
       tell({ text: 'Köszöni! Megint teremni fog.', speech: `Megöntözted! A ${name} köszöni. Ha tovább játszol, megint terem.`, mood: 'cheer', tone: 'good' });
@@ -340,7 +340,7 @@ export function Garden({ onBack }: { onBack: () => void }) {
       const v = vegOf(here.kind);
       const eater = visitorOf(v.bringer);
       tell(
-        vegRipe(here, progress.gardenTasks)
+        vegRipe(here, progress.worlds.garden.tasks)
           ? { text: `Érett ${v.name.toLowerCase()}!`, speech: `Három érett ${v.name.toLowerCase()}. ${eater.name} nagyon szereti!`, mood: 'cheer', tone: 'plain' }
           : { text: 'Még nő.', speech: `Itt ${v.name.toLowerCase()} nő. Még egy kis játék, és megérik.`, mood: 'smile', tone: 'plain' }
       );
@@ -503,7 +503,7 @@ export function Garden({ onBack }: { onBack: () => void }) {
   }, [feast, bite]);
 
   // Where the bee and the butterfly sit: one bee on every third grown flower, the butterfly on the first one left.
-  const grownFlowers = progress.beds.flatMap((b, i) => (b && b.kind === 'flower' && isGrown(b, progress.gardenTasks) ? [i] : []));
+  const grownFlowers = progress.beds.flatMap((b, i) => (b && b.kind === 'flower' && isGrown(b, progress.worlds.garden.tasks) ? [i] : []));
   const beeOn = new Set(hasBees ? grownFlowers.filter((_, k) => k % 3 === 0) : []);
   const butterflyOn = hasButterfly ? grownFlowers.find((i) => !beeOn.has(i)) : undefined;
   const feastKey = feast?.kind === 'pollen' ? feast.keys[Math.min(bite, feast.keys.length - 1)] : null;
@@ -605,11 +605,11 @@ export function Garden({ onBack }: { onBack: () => void }) {
               {Array.from({ length: PLOT_BEDS }, (_, k) => {
                 const i = plot * PLOT_BEDS + k;
                 const bed = bedAt(progress, i);
-                const growth = bed ? growthOf(bed, progress.gardenTasks) : 0;
+                const growth = bed ? growthOf(bed, progress.worlds.garden.tasks) : 0;
                 const needs = bed ? growAfter(bed.kind) : 0;
                 const grown = !!bed && growth >= needs;
-                const dry = !!bed && isThirsty(bed, progress.gardenTasks);
-                const ripe = bed ? ripeFruit(bed, progress.gardenTasks) : 0;
+                const dry = !!bed && isThirsty(bed, progress.worlds.garden.tasks);
+                const ripe = bed ? ripeFruit(bed, progress.worlds.garden.tasks) : 0;
                 const name = bed ? bedName(bed) : '';
                 const bee = beeOn.has(i);
                 const butterfly = butterflyOn === i;
@@ -712,7 +712,7 @@ export function Garden({ onBack }: { onBack: () => void }) {
                   {Array.from({ length: VEG_SPOTS }, (_, k) => {
                     const i = plot * VEG_SPOTS + k;
                     const here = vegAt(progress, i);
-                    const ripe = !!here && vegRipe(here, progress.gardenTasks);
+                    const ripe = !!here && vegRipe(here, progress.worlds.garden.tasks);
                     const on = vegSpot === i;
                     const left = leftIn(i);
                     const eating = feast?.kind === 'veg' && feast.spots.includes(i);

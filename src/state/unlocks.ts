@@ -28,12 +28,12 @@ export function unlockOf(game: GameId): Unlock | null {
 /** Every game without an unlock rule is always open. */
 export function isOpen(p: Progress, game: GameId): boolean {
   const u = unlockOf(game);
-  return !u || p.unlockAll || p.learnSolved >= u.after;
+  return !u || p.unlockAll || p.games.learn.solved >= u.after;
 }
 
 /** Numbers still to meet before `u` opens. */
 export function numbersLeft(p: Progress, u: Unlock): number {
-  return Math.max(0, u.after - p.learnSolved);
+  return Math.max(0, u.after - p.games.learn.solved);
 }
 
 /** The earliest game that opened and has not been announced yet. */

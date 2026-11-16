@@ -14,7 +14,7 @@ export function Sleep({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('sleep');
   const intro = useLevelIntro('sleep', level);
-  const [round] = useState(() => buildSleepRound(level, progress.sleepRound));
+  const [round] = useState(() => buildSleepRound(level, progress.games.sleep.round));
   const q = useQuestion(sleepStart(round), intro.open);
   const solved = q.solved !== null;
   const from = handAngles(round.from);

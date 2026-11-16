@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLadderRound, WinCard } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
 import { FitBox } from '../../../components/FitBox';
 import { useForm } from '../../../components/Stage';
 import { Crate, WeightBlock } from '../art';
-import { GuideBubble } from '../../../components/ui';
 import {
   BALANCE_MAX,
   FULL_FEEDBACK,
@@ -32,7 +31,7 @@ import {
 import { speak } from '../../../lib/speech';
 import { buzz, chime, fanfare, popBubble, thud } from '../../../lib/sound';
 import { useProgress } from '../../../state/progress';
-import { ROUND_HELP_AFTER } from '../../../state/taskLog';
+import { CsavarSays, useCsavar } from './kit';
 
 // The scale, in board units.
 const BOARD_H = 440;
@@ -467,43 +466,26 @@ export function Scale({ onBack }: { onBack: () => void }) {
   const [solved, setSolved] = useState(false);
   // The meter fills when the round's last line is over and the win card shows.
   const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('scale', { showStep: solved });
-  const round = useMemo(() => buildScaleRound(levelIndex, progress.scaleRound), [levelIndex, progress.scaleRound]);
+  const round = useMemo(() => buildScaleRound(levelIndex, progress.games.scale.round), [levelIndex, progress.games.scale.round]);
   const { level, tasks } = round;
   const [at, setAt] = useState(0);
   const [taskDone, setTaskDone] = useState(false);
-  const [fb, setFb] = useState<ScaleFeedback>(() => startFeedback(level, tasks[0]));
-  const timers = useRef<number[]>([]);
-
-  /** Corrections Csavar gave this round; enough of them and the round needed help (parents' notes). */
-  const oops = useRef(0);
-  const say = (f: ScaleFeedback) => {
-    if (f.tone === 'oops') oops.current += 1;
-    setFb(f);
-    speak(f.speech);
-  };
-  const later = (fn: () => void, ms: number) => {
-    timers.current.push(window.setTimeout(fn, ms));
-  };
-
-  useEffect(() => {
-    speak(startFeedback(level, tasks[0]).speech);
-    const pending = timers.current;
-    return () => pending.forEach((t) => window.clearTimeout(t));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- One round per mount: App keys this screen by round.
-  }, []);
+  const csavar = useCsavar(startFeedback(level, tasks[0]));
+  const { say, later } = csavar;
 
   const done = (f: ScaleFeedback) => {
     setTaskDone(true);
     if (at === tasks.length - 1) {
-      setFb(f);
+      // The round's line is said with the last answer's praise; the win card and its line show once it is over.
+      csavar.show(f);
       fanfare();
       buzz(40);
       speak(`${f.speech} ${solvedFeedback().speech}`);
       later(() => {
         setSolved(true);
-        setFb(solvedFeedback());
+        csavar.show(solvedFeedback());
       }, NEXT_TASK_MS);
-      solve(oops.current >= ROUND_HELP_AFTER);
+      solve(csavar.helped());
       return;
     }
     chime();
@@ -527,14 +509,10 @@ export function Scale({ onBack }: { onBack: () => void }) {
       justSolved={solved}
       tasks={{ at, of: tasks.length, done: taskDone }}
       onBack={onBack}
-      onReplay={() => speak(fb.speech)}
+      onReplay={csavar.replay}
     >
 
-      <div className="scale-guide">
-        <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
-          {fb.text}
-        </GuideBubble>
-      </div>
+      <CsavarSays line={csavar.line} className="scale-guide" />
 
       <div key={at} className="scale-task">
         {task.kind === 'compare' && <CompareTaskView task={task} {...props} />}

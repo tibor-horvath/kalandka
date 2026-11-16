@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Seed } from '../art';
 import { FitBox } from '../../../components/FitBox';
 import { GameShell } from '../../../components/GameShell';
 import { useForm } from '../../../components/Stage';
 import { DotFace, MiniSprout } from '../seeds';
-import { DoneTick, GuideBubble, NextIcon } from '../../../components/ui';
+import { DoneTick } from '../../../components/ui';
 import { FIELD_H, FIELD_W, foldSeeds } from '../games/flash/layout';
 import {
   LEARN_CYCLE,
@@ -19,9 +19,10 @@ import {
 } from '../games/learn/logic';
 import { numberCount } from '../../../lib/numbers';
 import { speak } from '../../../lib/speech';
-import { creditSolve } from '../../../state/games';
+import { creditSolve, nextRound } from '../../../state/games';
 import { evenLevels, levelMeter } from '../../../state/levelMeter';
 import { useProgress } from '../../../state/progress';
+import { GuideSays, NextButton, useSayOnOpen } from '../../../components/round';
 
 /**
  * Számmagok: tap every seed, Csepi counts, then the number is named. No timer.
@@ -29,9 +30,9 @@ import { useProgress } from '../../../state/progress';
  */
 export function Learn({ onBack }: { onBack: () => void }) {
   const { progress, update } = useProgress();
-  const [round] = useState(() => buildLearnRound(progress.learnRound));
+  const [round] = useState(() => buildLearnRound(progress.games.learn.round));
   // Five stages of five rounds (1–5, 6–10, 11–15, 16–20, Vegyesen), the same starts parents can pick.
-  const [startRound] = useState(() => progress.learnRound % LEARN_CYCLE);
+  const [startRound] = useState(() => progress.games.learn.round % LEARN_CYCLE);
   // Portrait phones: the two groups stand one above the other, so the seeds can be bigger.
   const folded = useForm() === 'portrait' ? foldSeeds(round.seeds) : null;
   const field = folded ?? { width: FIELD_W, height: FIELD_H, seeds: round.seeds };
@@ -46,10 +47,7 @@ export function Learn({ onBack }: { onBack: () => void }) {
   const ready = mixed ? LEARN_MIX_READY : LEARN_READY;
   const fb: LearnFeedback = learned ? learnedFeedback(round.count) : counted ? (wrong !== null ? mixWrongFeedback(wrong, round.count) : LEARN_MIX_ASK) : ready;
 
-  useEffect(() => {
-    speak(ready.speech);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- One round per mount: App keys this screen by round.
-  }, []);
+  useSayOnOpen(ready.speech);
 
   const reward = () => {
     if (rewarded.current) return;
@@ -88,7 +86,7 @@ export function Learn({ onBack }: { onBack: () => void }) {
   };
 
   // App keys this screen by round, so the next number remounts with fresh state.
-  const next = () => update((p) => ({ ...p, learnRound: p.learnRound + 1 }));
+  const next = () => update((p) => nextRound(p, 'learn'));
   const meter = levelMeter(startRound, evenLevels(LEARN_CYCLE / LEARN_STAGE, LEARN_STAGE), learned);
 
   return (
@@ -122,11 +120,7 @@ export function Learn({ onBack }: { onBack: () => void }) {
         </div>
       </FitBox>
 
-      <div className="flash-guide">
-        <GuideBubble mood={fb.mood} tone={fb.tone}>
-          {fb.text}
-        </GuideBubble>
-      </div>
+      <GuideSays line={fb} className="flash-guide" />
 
       <div className="choices">
         {mixed && counted ? (
@@ -156,11 +150,7 @@ export function Learn({ onBack }: { onBack: () => void }) {
             )}
           </div>
         )}
-        {learned && (
-          <button type="button" className="big-btn" onClick={next}>
-            Következő szám <NextIcon />
-          </button>
-        )}
+        <NextButton show={learned} onNext={next} label="Következő szám" />
       </div>
 
     </GameShell>

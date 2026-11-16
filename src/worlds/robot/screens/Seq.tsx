@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { useLadderRound, WinCard } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
 import { FitBox } from '../../../components/FitBox';
 import { ArrowTile, BlockStack, SortPart } from '../art';
-import { DoneTick, GuideBubble } from '../../../components/ui';
+import { DoneTick } from '../../../components/ui';
 import {
   SHOW_ANSWER_AFTER,
   SHOW_WRONG_AFTER,
@@ -22,10 +22,9 @@ import {
   type SeqLevel,
   type SeqTask,
 } from '../games/seq';
-import { speak } from '../../../lib/speech';
-import { buzz, chime, fanfare, popBubble } from '../../../lib/sound';
+import { buzz, chime, popBubble } from '../../../lib/sound';
 import { useProgress } from '../../../state/progress';
-import { ROUND_HELP_AFTER } from '../../../state/taskLog';
+import { CsavarSays, MissMark, short, useTaskRound } from './kit';
 
 /** After the gap is filled, the finished row stays a moment so the child sees it, then the next task comes. */
 const NEXT_TASK_MS = 3000;
@@ -58,65 +57,20 @@ function ItemPic({ item, size }: { item: Item; size: number }) {
   );
 }
 
-/** Orange badge on a wrong pick: a cross, the counterpart of the green tick. */
-function MissMark() {
-  return (
-    <span className="seq-miss" aria-hidden="true">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round">
-        <path d="M7 7l10 10M17 7L7 17" />
-      </svg>
-    </span>
-  );
-}
-
 /** Mintagép: carry on the pattern on the belt, or find the part that does not fit. */
 export function Seq({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('seq');
-  const round = useMemo(() => buildSeqRound(levelIndex, progress.seqRound), [levelIndex, progress.seqRound]);
-  const first = progress.seqSolved === 0;
-  const [taskIdx, setTaskIdx] = useState(0);
-  const [fb, setFb] = useState<SeqFeedback>(() => startFeedback(round.level, round.tasks[0], first));
-  const [solved, setSolved] = useState(false);
-  const timers = useRef<number[]>([]);
-  const later = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms));
-
-  /** Corrections Csavar gave this round; enough of them and the round needed help (parents' notes). */
-  const oops = useRef(0);
-  const say = (f: SeqFeedback) => {
-    if (f.tone === 'oops') oops.current += 1;
-    setFb(f);
-    speak(f.speech);
-  };
-
-  useEffect(() => {
-    speak(startFeedback(round.level, round.tasks[0], first).speech);
-    const pending = timers.current;
-    return () => pending.forEach((t) => window.clearTimeout(t));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- One round per mount: App keys this screen by round.
-  }, []);
-
-  const done = (right: SeqFeedback) => {
-    const last = taskIdx === round.tasks.length - 1;
-    if (!last) {
-      chime();
-      say(right);
-      later(() => {
-        const next = startFeedback(round.level, round.tasks[taskIdx + 1], false);
-        setTaskIdx(taskIdx + 1);
-        // Only the short line: the child heard the whole instruction at the start of the round.
-        say({ ...next, speech: next.text });
-      }, NEXT_TASK_MS);
-      return;
-    }
-    const win = solvedFeedback(round.level);
-    setSolved(true);
-    fanfare();
-    buzz(40);
-    say({ ...win, speech: `${right.speech} ${win.speech}` });
-    solve(oops.current >= ROUND_HELP_AFTER);
-  };
-
+  const round = useMemo(() => buildSeqRound(levelIndex, progress.games.seq.round), [levelIndex, progress.games.seq.round]);
+  const first = progress.games.seq.solved === 0;
+  const run = useTaskRound({
+    count: round.tasks.length,
+    first: startFeedback(round.level, round.tasks[0], first),
+    next: (i) => short(startFeedback(round.level, round.tasks[i], false)),
+    won: () => solvedFeedback(round.level),
+    pause: NEXT_TASK_MS,
+    onWin: solve
+  });
 
   return (
     <GameShell
@@ -124,24 +78,14 @@ export function Seq({ onBack }: { onBack: () => void }) {
       className="screen--seq"
       title={round.level.kind === 'fix' ? 'Hibavadász' : 'Mintagép'}
       meter={meter}
-      justSolved={solved}
-      tasks={{ at: taskIdx, of: round.tasks.length, done: solved }}
+      justSolved={run.solved}
+      tasks={run.tasks}
       onBack={onBack}
-      onReplay={() => speak(fb.speech)}
+      onReplay={run.replay}
     >
-
-      <div className="seq-guide">
-        <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
-          {fb.text}
-        </GuideBubble>
-      </div>
-
-      <Task key={taskIdx} level={round.level} task={round.tasks[taskIdx]} n={taskIdx} solved={solved} say={say} onDone={done} later={later} />
-
-      {solved && (
-        <WinCard onNext={goNext} />
-      )}
-
+      <CsavarSays line={run.line} className="seq-guide" />
+      <Task key={run.taskIdx} level={round.level} task={round.tasks[run.taskIdx]} n={run.taskIdx} solved={run.solved} say={run.say} onDone={run.done} later={run.later} />
+      {run.solved && <WinCard onNext={goNext} />}
     </GameShell>
   );
 }

@@ -79,7 +79,7 @@ export function SeasonGame({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('season');
   const intro = useLevelIntro('season', level);
-  const [round] = useState(() => buildSeasonRound(level, progress.seasonRound));
+  const [round] = useState(() => buildSeasonRound(level, progress.games.season.round));
   const q = useQuestion(seasonStart(round), intro.open);
   const right = answerOf(round);
   const solved = q.solved !== null;

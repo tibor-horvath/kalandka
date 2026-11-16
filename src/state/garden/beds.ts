@@ -1,3 +1,4 @@
+import { spentIn } from '../balance';
 import type { Progress } from '../progress';
 import type { FruitKind } from './harvest';
 import { welcomedVisitors, type VisitorId } from './visitors';
@@ -45,7 +46,7 @@ export interface Bed {
 
 /** Seeds the child can still plant. `seeds` counts every seed ever earned. */
 export function seedBalance(p: Progress): number {
-  return Math.max(0, p.seeds - p.seedsSpent);
+  return Math.max(0, p.worlds.garden.earned - p.worlds.garden.spent);
 }
 
 export function bedAt(p: Progress, i: number): Bed | null {
@@ -71,7 +72,7 @@ export function isGrown(bed: Bed, tasks: number): boolean {
  * so this only ever goes up: visitors and their ring never step back.
  */
 export function grownCount(p: Progress): number {
-  return p.beds.filter((b): b is Bed => !!b && isGrown(b, p.gardenTasks)).length;
+  return p.beds.filter((b): b is Bed => !!b && isGrown(b, p.worlds.garden.tasks)).length;
 }
 
 /**
@@ -135,8 +136,8 @@ export function plant(p: Progress, i: number, kind: PlantKind, flower: FlowerId 
       : kind === 'tree' && tree !== FIRST_TREE && ownsTree(p, tree)
         ? { tree }
         : {};
-  beds[i] = { kind, at: p.gardenTasks, ...kept };
-  return { ...p, beds, seedsSpent: p.seedsSpent + cost };
+  beds[i] = { kind, at: p.worlds.garden.tasks, ...kept };
+  return { ...p, beds, worlds: spentIn(p, 'garden', cost) };
 }
 
 // ---------- tree kinds ----------
@@ -244,7 +245,7 @@ export function canBuyFlower(p: Progress, id: FlowerId): boolean {
 /** Buys a packet of flower seeds for good; unchanged when it is already the child's or the seeds are not enough. */
 export function buyFlower(p: Progress, id: FlowerId): Progress {
   if (!canBuyFlower(p, id)) return p;
-  return { ...p, flowersOwned: [...p.flowersOwned, id], seedsSpent: p.seedsSpent + flowerOf(id).cost };
+  return { ...p, flowersOwned: [...p.flowersOwned, id], worlds: spentIn(p, 'garden', flowerOf(id).cost) };
 }
 
 // ---------- the border (Szegély) ----------
@@ -282,7 +283,7 @@ export function plantBorder(p: Progress, i: number, id: FlowerId): Progress {
   const border = Array.from({ length: openBorder(p) }, (_, k) => borderAt(p, k));
   const paid = border[i] ? 0 : BORDER_COST;
   border[i] = id;
-  return { ...p, border, seedsSpent: p.seedsSpent + paid };
+  return { ...p, border, worlds: spentIn(p, 'garden', paid) };
 }
 
 /**

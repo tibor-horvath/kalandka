@@ -1,3 +1,4 @@
+import { withRound } from './games';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ladderOf, placeAt, withLadder, type LadderGame } from './ladder';
 import { announceAll } from './unlocks';
@@ -101,9 +102,9 @@ function placed(p: Progress, levels: Partial<Record<LadderGame, number>>): Progr
 
 /** Starting levels for a new child of this age. */
 export function startingProgress(age: AgeBand | null): Progress {
-  if (age === '6') return placed({ ...DEFAULT_PROGRESS, learnRound: 5 }, AGE_LEVELS['6']);
+  if (age === '6') return placed(withRound(DEFAULT_PROGRESS, 'learn', 5), AGE_LEVELS['6']);
   // Everything is open from the start, so Csepi says hello instead of announcing unlocks.
-  if (age === '7+') return placed(announceAll({ ...DEFAULT_PROGRESS, learnRound: 10, unlockAll: true }), AGE_LEVELS['7+']);
+  if (age === '7+') return placed(announceAll({ ...withRound(DEFAULT_PROGRESS, 'learn', 10), unlockAll: true }), AGE_LEVELS['7+']);
   return DEFAULT_PROGRESS;
 }
 

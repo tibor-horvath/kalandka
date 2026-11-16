@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react';
 import { gameOf, type Sticker } from '../state/stickers';
+import { worldInfo } from '../state/worlds';
+import { WORLD_MARKS } from '../worlds/marks';
 
 // Artwork for the stickers and the sticker album, shared by every world.
 
@@ -8,13 +10,13 @@ const SHEET_INK = '#10233A';
 
 /**
  * The page drawn on a Feladatlapok sticker, under its mark: one sheet (a stack from five pages on) with a folded
- * corner, and the world's sign in the corner, a sprout in the garden and a nut in the workshop. 100 × 100, the
+ * corner, and the world's sign in the corner (see the worlds' marks.tsx). 100 × 100, the
  * sticker's inside.
  */
 function SheetArt({ sticker }: { sticker: Sticker }) {
   const world = gameOf(sticker).world;
-  const robot = world === 'robot';
-  const badge = robot ? '#5E7184' : world === 'tower' ? '#5B4B9A' : '#2F7D32';
+  const badge = worldInfo(world).color;
+  const { SheetMark } = WORLD_MARKS[world];
   const page = (turn: number) => <path d={SHEET} transform={`rotate(${turn} 50 80)`} fill="#FFFFFF" stroke={SHEET_INK} strokeWidth="3" strokeLinejoin="round" />;
   return (
     <svg aria-hidden="true" className="sticker__art" viewBox="0 0 100 100">
@@ -27,20 +29,7 @@ function SheetArt({ sticker }: { sticker: Sticker }) {
       {page(0)}
       <path d="M62 18V28H72" fill="#EEF1F4" stroke={SHEET_INK} strokeWidth="3" strokeLinejoin="round" />
       <circle cx="76" cy="76" r="13" fill={badge} stroke="#FFFFFF" strokeWidth="3" />
-      {world === 'tower' ? (
-        <path d="M76 68 C72 68 71 72 71 75 V79 L69 81 H83 L81 79 V75 C81 72 80 68 76 68 Z M74 83 H78" fill="#FFFFFF" stroke="#FFFFFF" strokeWidth="1.5" strokeLinejoin="round" />
-      ) : robot ? (
-        <>
-          <polygon points="84.5,76 80.25,83.36 71.75,83.36 67.5,76 71.75,68.64 80.25,68.64" fill="#FFFFFF" />
-          <circle cx="76" cy="76" r="3.4" fill={badge} />
-        </>
-      ) : (
-        <>
-          <path d="M76 84V73" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" />
-          <path d="M76 77C69.5 77 68.5 71.5 68.5 69C73 69 76 71.5 76 77Z" fill="#FFFFFF" />
-          <path d="M76 74.5C82.5 74.5 83.5 69 83.5 66.5C79 66.5 76 69 76 74.5Z" fill="#FFFFFF" />
-        </>
-      )}
+      <SheetMark color={badge} />
       {sticker.gold && <path d="M22 9L25.1 15.7L32.4 16.5L27 21.5L28.5 28.7L22 25.1L15.5 28.7L17 21.5L11.6 16.5L18.9 15.7Z" fill="#FFC93C" stroke="#FFFFFF" strokeWidth="2.4" strokeLinejoin="round" />}
     </svg>
   );

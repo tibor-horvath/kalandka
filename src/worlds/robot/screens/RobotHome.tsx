@@ -1,3 +1,4 @@
+import { markOpened, welcome } from '../../../state/worlds';
 import { useEffect, type ReactNode } from 'react';
 import type { Badge, Place, RewardPlace } from '../../../components/island';
 import { Bolt, CodeArt, FixArt, MirrorArt, PathArt, ScaleArt, SeqArt, SortArt } from '../art';
@@ -36,10 +37,10 @@ export function RobotHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
 
   // Aloud with an online voice Csavar leaves the name out: it would leave the device.
   const hello = shared ? `Szia, ${kidName(kid)}! Jó, hogy itt vagy a műhelyben!` : HELLO;
-  const greeting = progress.robotWelcomed ? hello : 'Szia, én Csavar vagyok!';
-  const question = progress.robotWelcomed ? 'Melyik gépet indítjuk?' : 'Itt robotokat programozunk!';
-  const intro = progress.robotWelcomed ? `${greeting} ${question}` : 'Szia, én Csavar vagyok, a műhely robotja! Itt robotokat programozunk. Kezdjük a Robotúttal!';
-  const sayIntro = () => speak(intro, { online: progress.robotWelcomed ? `${HELLO} ${question}` : intro });
+  const greeting = progress.worlds.robot.welcomed ? hello : 'Szia, én Csavar vagyok!';
+  const question = progress.worlds.robot.welcomed ? 'Melyik gépet indítjuk?' : 'Itt robotokat programozunk!';
+  const intro = progress.worlds.robot.welcomed ? `${greeting} ${question}` : 'Szia, én Csavar vagyok, a műhely robotja! Itt robotokat programozunk. Kezdjük a Robotúttal!';
+  const sayIntro = () => speak(intro, { online: progress.worlds.robot.welcomed ? `${HELLO} ${question}` : intro });
 
   useEffect(() => {
     if (!sticker) sayIntro();
@@ -47,11 +48,11 @@ export function RobotHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
   }, []);
 
   const welcomeOnce = () => {
-    if (!progress.robotWelcomed) update((p) => ({ ...p, robotWelcomed: true }));
+    if (!progress.worlds.robot.welcomed) update((p) => welcome(p, 'robot'));
   };
   const open = (game: GameId) => {
     welcomeOnce();
-    if (!progress.robotOpened.includes(game)) update((p) => ({ ...p, robotOpened: [...p.robotOpened, game] }));
+    if (!progress.worlds.robot.opened.includes(game)) update((p) => markOpened(p, 'robot', game));
     onOpen(game);
   };
   const openWorkshop = () => {
@@ -62,7 +63,7 @@ export function RobotHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
   // The first machine is where a new child starts, until first solved; the others are new until first opened, then show their level.
   const places: Place[] = gamesIn('robot').map(({ id, name }, i) => {
     const fresh = solvedOf(progress, id) === 0;
-    const unopened = fresh && !progress.robotOpened.includes(id);
+    const unopened = fresh && !progress.worlds.robot.opened.includes(id);
     const level = isLadderGame(id) ? ladderOf(progress, id).level : 0;
     const badge: Badge = i === 0 && fresh ? { text: 'Kezdd itt!', kind: 'new' } : unopened ? { text: 'Új gép!', kind: 'new' } : { text: `${level + 1}. szint`, kind: 'level' };
     return { id, name, label: TILES[id]!.label, badge, start: i === 0 && fresh, art: TILES[id]!.art, onOpen: () => open(id) };
