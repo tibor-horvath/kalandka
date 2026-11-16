@@ -10,7 +10,7 @@ permissions: {}
 jobs:
   lighthouse:
     name: Lighthouse
-    uses: tibor-horvath/ci-toolkit/.github/workflows/lighthouse-ci.yml@v1
+    uses: tibor-horvath/ci-toolkit/.github/workflows/lighthouse-ci.yml@v2
     with:
       node-version: "22.x"
       # Local baseline (Oct 2026): performance 0.94, accessibility 0.93, best practices 0.82.
