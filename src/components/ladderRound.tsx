@@ -1,3 +1,4 @@
+import { worldInfo } from '../state/worlds';
 import { useRef, useState } from 'react';
 import { speak } from '../lib/speech';
 import { GAMES, creditSolve, nextRound, roundOf, type LadderGame } from '../state/games';
@@ -5,6 +6,7 @@ import { EASIER_SPEECH, LADDER_RULES, afterSolve, isFinished, ladderMeter, ladde
 import { PRACTICE_PAY_PER_DAY, practicePaid, practiceRested, rewardFor } from '../state/pod';
 import { useProgress, type Progress } from '../state/progress';
 import { logTask } from '../state/taskLog';
+import { StuckHint } from './StuckHint';
 import { NextIcon } from './ui';
 
 interface RoundOptions {
@@ -24,7 +26,7 @@ interface WinOptions {
 /** Said when practice pays the day's last seed or bolt; the tasks go on, the pod rests till tomorrow. */
 export function restedSpeech(game: LadderGame): string {
   const world = GAMES[game].world;
-  return `Mára megvan az öt ${world === 'robot' ? 'csavarod' : world === 'tower' ? 'harangod' : 'magod'}! Gyakorolhatsz tovább, holnap újra gyűjthetsz.`;
+  return `Mára megvan az öt ${worldInfo(world).reward.yours}! Gyakorolhatsz tovább, holnap újra gyűjthetsz.`;
 }
 
 /**
@@ -85,6 +87,7 @@ export function WinCard({ title = 'Kész!', next = 'Következő kör', className
       <span className="path-win__title">{title}</span>
       <button type="button" className="big-btn big-btn--robot" onClick={onNext}>
         {next} <NextIcon />
+        <StuckHint />
       </button>
     </div>
   );

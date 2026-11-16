@@ -6,7 +6,7 @@ import { useProgress } from '../../state/progress';
 import { FRIENDS, FRIEND_GIFTS_EACH, PARTS, SECOND_ROBOT_AFTER, boltBalance } from '../../state/robotParts';
 import { FLOWERS, PLANT_OPTIONS, RECIPES, VEG_COST, seedBalance } from '../../state/garden';
 import { PAGE_STEPS, STICKER_GAMES, stickerRow, type StickerGameId } from '../../state/stickers';
-import { WORLDS, type WorldId } from '../../state/worlds';
+import { WORLDS, worldInfo, type WorldId } from '../../state/worlds';
 import { Seed } from '../../worlds/garden/art';
 import { Bolt } from '../../worlds/robot/art';
 import { WorldGroup } from './controls';
@@ -89,8 +89,7 @@ function Currency({
   const { progress } = useProgress();
   const parts = tasksPerReward(world);
   const left = parts - podFill(progress, world);
-  const unit = world === 'robot' ? 'kör' : 'feladat';
-  const worldName = WORLDS.find((w) => w.id === world)!.name;
+  const { reward: { task: unit }, name: worldName } = worldInfo(world);
   const headId = `rw-${world}`;
   return (
     <section className={`pa-card pa-rw-cur pa-rw-cur--${world}`} aria-labelledby={headId}>

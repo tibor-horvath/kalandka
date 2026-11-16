@@ -194,7 +194,7 @@ function legacyLadder(p: Progress, game: LadderGame): Ladder {
   const top = rule.levels - 1;
   if (game === 'add') {
     const level = clampLevel(p.addLevel);
-    return { ...fresh(level), streak: Math.min(rule.up - 1, p.addStreak), helpRun: p.addMisses, solvedTop: p.addSolved > 0 ? level : -1 };
+    return { ...fresh(level), streak: Math.min(rule.up - 1, p.addStreak), helpRun: p.addMisses, solvedTop: p.games.add.solved > 0 ? level : -1 };
   }
   const walked = ROUND_LEVELS[game];
   if (walked) {

@@ -61,9 +61,13 @@ function DayCard({ id }: { id: keyof typeof ACTIVITIES }) {
   );
 }
 
+/** The "what comes next" level: one card shown, two to choose from (one of them came earlier). */
+const isNext = (r: { given: number; sequence: unknown[] }) => r.given === 1 && r.sequence.length === 2;
+const isNextLevel = (level: number) => DAY_LEVELS[level].given === 1 && DAY_LEVELS[level].slots === 2;
+
 export const daySheet = spec<DayRound>({
   id: 'day',
-  rev: 1,
+  rev: 2,
   levels: DAY_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'day').level,
   grid: (_, d) => pickGrid(d, [1, 3], [2, 3], [2, 4]),
@@ -71,37 +75,53 @@ export const daySheet = spec<DayRound>({
     const l = DAY_LEVELS[level];
     if (l.mode === 'part') return 'Mikor van ez? Karikázd be: reggel, délben, délután vagy este!';
     if (l.mode === 'before') return 'Mi volt előbb? Karikázd be!';
-    return 'Mi történik először, mi utána? Írd a képek alá: 1, 2, 3!';
+    if (isNextLevel(level)) return 'Az első kép már megvolt. Mi jön utána? Karikázd be!';
+    return l.slots === 4 ? 'Mi történik először, mi utána? Írd a képek alá: 1, 2, 3, 4!' : 'Mi történik először, mi utána? Írd a képek alá: 1, 2, 3!';
   },
   tip: (level) =>
-    DAY_LEVELS[level].mode === 'seq'
-      ? 'Meséljék el együtt, mit csinálnak reggel, délben és este. Aki még nem írja a számokat, húzhat egy, kettő vagy három vonalat.'
-      : 'Gondolják végig együtt a gyerkőc saját napját: mi volt ma reggel, mi lesz este?',
+    isNextLevel(level)
+      ? 'Nézzék meg együtt a bal oldali képet: ez már megtörtént. A két kép közül az egyik még előtte volt, a másik jön utána.'
+      : DAY_LEVELS[level].mode === 'seq'
+        ? 'Meséljék el együtt, mit csinálnak reggel, délben és este. Aki még nem írja a számokat, húzhat egy, kettő vagy három vonalat.'
+        : 'Gondolják végig együtt a gyerkőc saját napját: mi volt ma reggel, mi lesz este?',
   tasks: (req) => Array.from({ length: req.count }, (_, i) => buildDayRound(req.level, roundOf(req, i))),
   Task: ({ task, answers }) => {
+    if (task.mode === 'seq' && isNext(task)) {
+      // "Mi jön utána?": the card that already happened, an arrow, and two cards to choose from.
+      // One of them came earlier, so they can't be numbered 1, 2, 3 in a row: the child circles the next one.
+      return (
+        <Pic w={760} h={220}>
+          <At x={10} y={10}>
+            <rect width="200" height="200" rx="18" fill="#FFFFFF" stroke={INK} strokeWidth="4" />
+            <DayCard id={task.sequence[0]} />
+          </At>
+          <path d="M232 110 H290 M272 90 L294 110 L272 130" fill="none" stroke={INK} strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+          <Choices x={320} y={10} w={200} h={200} gap={30} pick={task.choices.indexOf(task.sequence[1])} answers={answers}>
+            {task.choices.map((id) => (
+              <DayCard key={id} id={id} />
+            ))}
+          </Choices>
+        </Pic>
+      );
+    }
     if (task.mode === 'seq') {
-      // Every card of the row on paper, in a mixed order; the ones given already carry their number.
-      const shown = [...task.sequence].sort((a, b) => task.choices.indexOf(a) - task.choices.indexOf(b));
-      const cards = task.given === 1 && task.sequence.length === 2 ? [task.sequence[0], ...task.choices] : shown;
+      // Every card of the row on paper, in a mixed order; the given first card carries its number.
+      const cards = [...task.sequence].sort((a, b) => task.choices.indexOf(a) - task.choices.indexOf(b));
       return (
         <Pic w={cards.length * 220} h={320}>
           {cards.map((id, i) => {
             const n = task.sequence.indexOf(id);
-            const given = n >= 0 && n < task.given;
+            const given = n < task.given;
             return (
               <g key={id}>
                 <At x={i * 220 + 10} y={0}>
                   <rect width="200" height="200" rx="18" fill="#FFFFFF" stroke="#B9CBD8" strokeWidth="3" />
                   <DayCard id={id} />
                 </At>
-                {n >= 0 ? (
-                  given ? (
-                    <Word x={i * 220 + 65} y={220} w={90} h={90} text={String(n + 1)} size={60} />
-                  ) : (
-                    <WriteBox x={i * 220 + 65} y={220} answer={n + 1} answers={answers} />
-                  )
+                {given ? (
+                  <Word x={i * 220 + 65} y={220} w={90} h={90} text={String(n + 1)} size={60} />
                 ) : (
-                  answers && <path d={`M${i * 220 + 30} 20 L${i * 220 + 190} 180 M${i * 220 + 190} 20 L${i * 220 + 30} 180`} stroke={ANSWER} strokeWidth="6" />
+                  <WriteBox x={i * 220 + 65} y={220} answer={n + 1} answers={answers} />
                 )}
               </g>
             );

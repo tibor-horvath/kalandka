@@ -1,5 +1,6 @@
 import { useRef, useState, type PointerEvent } from 'react';
 import { GameShell } from '../../../components/GameShell';
+import { CheckIcon } from '../../../components/ui';
 import { useLadderRound } from '../../../components/ladderRound';
 import { dialHour, timeWords } from '../../../lib/time';
 import { popBubble } from '../../../lib/sound';
@@ -24,7 +25,7 @@ export function SetClock({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('set');
   const intro = useLevelIntro('set', level);
-  const [round] = useState(() => buildSetRound(level, progress.setRound));
+  const [round] = useState(() => buildSetRound(level, progress.games.set.round));
   const hourOnly = round.level.step === 'hourOnly';
   /** The minutes a drag of the long hand snaps to: quarters until the five-minute level. */
   const snap = round.level.step === 'five' ? 5 : 15;
@@ -135,7 +136,7 @@ export function SetClock({ onBack }: { onBack: () => void }) {
           )}
           {!solved && (
             <button type="button" className="big-btn big-btn--tower" onClick={check}>
-              Kész
+              <CheckIcon /> Kész
             </button>
           )}
         </div>

@@ -1,5 +1,6 @@
+import { save } from './testSave';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PROGRESS, type Progress } from './progress';
+import { type Progress } from './progress';
 import {
   BUILDINGS,
   GIFTS_EACH,
@@ -22,7 +23,7 @@ import {
   welcome
 } from './town';
 
-const rich = (bells = 500): Progress => ({ ...DEFAULT_PROGRESS, bells });
+const rich = (bells = 500): Progress => (save({ bells }));
 
 describe('the Kisváros', () => {
   it('puts a building up for its bells, once', () => {
@@ -74,7 +75,7 @@ describe('the Kisváros', () => {
     const all = BUILDINGS.reduce((p, b) => build(p, b.id), rich(37));
     expect(bellBalance(all)).toBe(0);
     expect(canBuild(all)).toBe(false);
-    expect(canBuild({ ...all, bells: all.bells + 1 })).toBe(true);
+    expect(canBuild(save({ bells: all.worlds.tower.earned + 1 }, all))).toBe(true);
   });
 
   it('starts the tower clock at the real time and turns it round the day', () => {

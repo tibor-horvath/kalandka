@@ -74,7 +74,7 @@ export function KidsPage({ startAdding = false, onView }: { startAdding?: boolea
                   {shared && k.id === profiles.activeId && <span className="pa-kid__now">Most ő játszik</span>}
                 </div>
                 <div className="pa-kid__sub">
-                  {last ? `Utoljára ${last}` : 'Még nem játszott'} · {p.seeds} mag
+                  {last ? `Utoljára ${last}` : 'Még nem játszott'} · {p.worlds.garden.earned} mag
                 </div>
               </div>
               <div className="pa-kid__time">

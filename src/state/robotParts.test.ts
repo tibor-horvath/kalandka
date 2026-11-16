@@ -1,3 +1,4 @@
+import { save, type SavePatch } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROGRESS, type Progress } from './progress';
 import {
@@ -41,7 +42,7 @@ import {
 /** Buys every part there is for one robot. */
 const buyAll = (p: Progress, r: RobotIdx): Progress => PARTS.reduce((q, part) => buy(q, part.id, r), p);
 
-const withBolts = (bolts: number, extra: Partial<Progress> = {}): Progress => ({ ...DEFAULT_PROGRESS, bolts, ...extra });
+const withBolts = (bolts: number, extra: SavePatch = {}): Progress => save({ bolts, ...extra });
 
 describe('Robotépítő parts', () => {
   it('has a free starting part in every slot, and both robots start in free parts, in different colours', () => {
@@ -59,7 +60,7 @@ describe('Robotépítő parts', () => {
 
   it('spends bolts from the balance, puts the part on, and never lowers the bolts earned', () => {
     const p = buy(withBolts(5), 'head-square');
-    expect(p.bolts).toBe(5);
+    expect(p.worlds.robot.earned).toBe(5);
     expect(boltBalance(p)).toBe(2);
     expect(owns(p, 'head-square')).toBe(true);
     expect(lookOf(p).head).toBe('head-square');
@@ -170,7 +171,7 @@ describe('where to go (C · Hová menjek?)', () => {
     const p = { ...buyAll(withBolts(91), 0), robotFriendsSeen: 3 };
     expect(boltBalance(p)).toBe(0);
     expect(canBuyAnything(p)).toBe(false);
-    expect(canBuyAnything({ ...p, bolts: p.bolts + 1 })).toBe(true);
+    expect(canBuyAnything(save({ bolts: p.worlds.robot.earned + 1 }, p))).toBe(true);
   });
 });
 
@@ -184,7 +185,7 @@ describe('the wish (B · Ezt szeretném)', () => {
     expect(startSlot(p)).toBe('legs');
     p = setWish(p, 'body-gear');
     expect(wishOf(p)?.part.id).toBe('body-gear');
-    expect(wishOf({ ...p, bolts: 20 })?.need).toBe(0);
+    expect(wishOf(save({ bolts: 20 }, p))?.need).toBe(0);
   });
 
   it('never wishes for a part already owned, and clears the wish when it is bought', () => {

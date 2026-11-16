@@ -12,22 +12,18 @@ import { Stage } from './components/Stage';
 import { stopSpeaking } from './lib/speech';
 import { readLink } from './print/link';
 import { Album } from './screens/Album';
-import { GAME_SCREENS } from './screens/gameScreens';
-import { Garden } from './worlds/garden/screens/Garden';
-import { Home } from './worlds/garden/screens/Home';
 import { Landing } from './screens/Landing';
 import { Gate } from './screens/parents/Gate';
 import type { ParentStart } from './screens/parents/ParentArea';
 import { Picker } from './screens/Picker';
 import { Rest, TimeBanner } from './screens/Rest';
 import { WorldMap } from './screens/WorldMap';
-import { loadRobotWorld, robotScreen } from './worlds/robot/screens/lazy';
-import { loadTowerWorld, towerScreen } from './worlds/tower/screens/lazy';
+import { GAME_SCREENS, WORLD_SCREENS } from './worlds/screens';
 import { GAMES, isGameId, roundOf, solvedOf, type GameId } from './state/games';
 import { ProfilesProvider, editKid, firstKid, hasSave, progressOf, setActive, useProfiles } from './state/profiles';
 import { useProgress } from './state/progress';
 import { WARN_SECONDS } from './state/screenTime';
-import { WORLDS, currentWorld, type WorldId } from './state/worlds';
+import { WORLDS, currentWorld, worldInfo, type WorldId } from './state/worlds';
 
 /**
  * 'home' is the current world's home screen and 'reward' its reward place (the Kiskert, Robotépítő). The Kalandka
@@ -42,10 +38,6 @@ const loadParentArea = () => import('./screens/parents/ParentArea');
 const ParentArea = lazy(async () => ({ default: (await loadParentArea()).ParentArea }));
 const PrintArea = lazy(async () => ({ default: (await import('./screens/PrintArea')).PrintArea }));
 const Answers = lazy(async () => ({ default: (await import('./screens/Answers')).Answers }));
-
-/** Each world's home screen, and its reward place. */
-const HUBS = { garden: Home, robot: robotScreen('RobotHome'), tower: towerScreen('TowerHome') } as const;
-const REWARDS = { garden: Garden, robot: robotScreen('Workshop'), tower: towerScreen('Town') } as const;
 
 /** Screens a child rests on when time is up, and where an update may reload the app. */
 function isHub(s: Screen): boolean {
@@ -81,7 +73,7 @@ function Game() {
   const [screen, setScreen] = useState<Screen>(() => (picking || progress.world ? 'home' : 'map'));
   const [parents, setParents] = useState<Parents>('closed');
   /** The world whose island opened the sticker album, and so which page it opens on. */
-  const [albumWorld, setAlbumWorld] = useState<WorldId>('garden');
+  const [albumWorld, setAlbumWorld] = useState<WorldId>(WORLDS[0].id);
   const [parentStart, setParentStart] = useState<ParentStart>('overview');
   const showPicker = picking && profiles.kids.length > 1;
   const inParents = parents !== 'closed';
@@ -91,8 +83,7 @@ function Game() {
   // first screen; the map rarely waits for them.
   useEffect(() => {
     const preload = () => {
-      loadRobotWorld().catch(() => {});
-      loadTowerWorld().catch(() => {});
+      for (const w of WORLDS) WORLD_SCREENS[w.id].preload?.().catch(() => {});
     };
     // Safari has no requestIdleCallback: a short timeout stands in.
     const idle = 'requestIdleCallback' in window;
@@ -162,8 +153,9 @@ function Game() {
   if (!route.landing && inParents) backLayers.push({ key: parents === 'print' ? 'print' : 'parents', close: () => setParents('closed') });
   useBackLayers(backLayers);
 
-  // Kakukk speaks in Csepi's voice: the voice settings have one voice for the robot and one for the other guides.
-  useAudioSettings(progress, worldOfScreen(screen, world, albumWorld) === 'robot' ? 'robot' : 'csepi');
+  // Each guide speaks in their world's voice (see the manifests); on the map Csepi talks.
+  const speaking = worldOfScreen(screen, world, albumWorld);
+  useAudioSettings(progress, speaking ? worldInfo(speaking).speaker : 'csepi');
   useUpdateWhenIdle(isHub(screen) && !inParents);
   const { remaining, evening, timeUp, resting } = useScreenTime(
     {
@@ -180,7 +172,7 @@ function Game() {
   );
 
   useEffect(() => {
-    document.title = route.landing ? 'Kalandka' : `Kalandka – ${WORLDS.find((w) => w.id === world)!.name}`;
+    document.title = route.landing ? 'Kalandka' : `Kalandka – ${worldInfo(world).name}`;
   }, [world, route.landing]);
 
   const openGate = (start: ParentStart = 'overview') => {
@@ -227,8 +219,8 @@ function Game() {
 
   if (route.landing) return <Landing onStart={start} onResume={named ? route.openGame : undefined} />;
 
-  const Hub = HUBS[world];
-  const Reward = REWARDS[world];
+  const Hub = WORLD_SCREENS[world].hub;
+  const Reward = WORLD_SCREENS[world].reward;
   const game = isGameId(screen) ? screen : null;
   const GameScreen = game ? GAME_SCREENS[game] : null;
 

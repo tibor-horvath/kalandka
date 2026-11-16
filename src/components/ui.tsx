@@ -47,6 +47,15 @@ export function NextIcon() {
   );
 }
 
+/** A tick: "check it", on buttons that hand the answer in (the clock's "Kész"). */
+export function CheckIcon() {
+  return (
+    <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" {...strokeProps} strokeWidth="3.4">
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+  );
+}
+
 export function PlayIcon() {
   return (
     <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">

@@ -17,7 +17,7 @@ export const learn = spec<number>({
   rev: 2,
   levels: ['1-től', '6-tól', '11-től', '16-tól', 'Vegyesen, 1–20'],
   // After 20 the game mixes the numbers it has met: so does the last sheet.
-  current: (p) => (p.learnRound % LEARN_CYCLE >= LEARN_MAX ? LEARN_STARTS.length : LEARN_STARTS.filter((s) => (p.learnRound % LEARN_CYCLE) + 1 >= s).length - 1),
+  current: (p) => (p.games.learn.round % LEARN_CYCLE >= LEARN_MAX ? LEARN_STARTS.length : LEARN_STARTS.filter((s) => (p.games.learn.round % LEARN_CYCLE) + 1 >= s).length - 1),
   grid: (_, d) => pickGrid(d, [1, 4], [1, 5], [1, 7]),
   ask: () => 'Nézd meg a számot, és színezz ki pont ennyi magot!',
   tip: (level) =>

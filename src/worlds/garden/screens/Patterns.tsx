@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { PatternBunch, PatternFlower } from '../art';
 import { useLadderRound } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
-import { DoneTick, GuideBubble, NextIcon } from '../../../components/ui';
+import { DoneTick } from '../../../components/ui';
 import {
   CHOICES,
   FLOWER_LABELS,
@@ -22,6 +22,7 @@ import {
 } from '../games/patterns/logic';
 import { speak } from '../../../lib/speech';
 import { useProgress } from '../../../state/progress';
+import { GuideSays, NextButton, useSayOnOpen } from '../../../components/round';
 
 type Ladder = ReturnType<typeof useLadderRound>;
 
@@ -35,7 +36,7 @@ export function Patterns({ onBack }: { onBack: () => void }) {
 function FlowerRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = ladder;
-  const [round] = useState(() => buildLevelRound(level, progress.patternRound));
+  const [round] = useState(() => buildLevelRound(level, progress.games.patterns.round));
   // How many of the hidden flowers are planted, left to right; the next open gap takes the next pick.
   const [filled, setFilled] = useState(0);
   const [wrong, setWrong] = useState<FlowerKind | null>(null);
@@ -50,10 +51,7 @@ function FlowerRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) 
   const now = { ...round, shown: slots };
   const fb = solved ? solvedFeedback() : wrong ? hintFeedback(now, misses) : filled > 0 ? halfwayFeedback() : startFeedback(round);
 
-  useEffect(() => {
-    speak(startFeedback(round).speech);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- One row per mount: App keys this screen by round.
-  }, []);
+  useSayOnOpen(startFeedback(round).speech);
 
   const pick = (kind: FlowerKind) => {
     if (solved) return;
@@ -110,11 +108,7 @@ function FlowerRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) 
         <div className="bed__soil" aria-hidden="true" />
       </div>
 
-      <div className="patterns-guide">
-        <GuideBubble mood={fb.mood} tone={fb.tone}>
-          {fb.text}
-        </GuideBubble>
-      </div>
+      <GuideSays line={fb} className="patterns-guide" />
 
       <div className="choices">
         {CHOICES.map((kind) => {
@@ -127,11 +121,7 @@ function FlowerRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) 
             </button>
           );
         })}
-        {solved && (
-          <button type="button" className="big-btn" onClick={goNext}>
-            Új virágsor <NextIcon />
-          </button>
-        )}
+        <NextButton show={solved} onNext={goNext} label="Új virágsor" />
       </div>
 
     </GameShell>
@@ -142,7 +132,7 @@ function FlowerRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) 
 function GrowRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = ladder;
-  const [round] = useState(() => buildGrowRound(level, progress.patternRound));
+  const [round] = useState(() => buildGrowRound(level, progress.games.patterns.round));
   const [picked, setPicked] = useState<number | null>(null);
   const [wrong, setWrong] = useState<number | null>(null);
   const [misses, setMisses] = useState(0);
@@ -150,10 +140,7 @@ function GrowRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) {
   const solved = picked === round.answer;
   const fb = solved ? growSolvedFeedback(round) : wrong !== null ? growHintFeedback(round, misses) : growStartFeedback(round);
 
-  useEffect(() => {
-    speak(growStartFeedback(round).speech);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- One row per mount: App keys this screen by round.
-  }, []);
+  useSayOnOpen(growStartFeedback(round).speech);
 
   const pick = (n: number) => {
     if (solved) return;
@@ -201,11 +188,7 @@ function GrowRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) {
         <div className="bed__soil" aria-hidden="true" />
       </div>
 
-      <div className="patterns-guide">
-        <GuideBubble mood={fb.mood} tone={fb.tone}>
-          {fb.text}
-        </GuideBubble>
-      </div>
+      <GuideSays line={fb} className="patterns-guide" />
 
       <div className="choices">
         {round.choices.map((n) => {
@@ -218,11 +201,7 @@ function GrowRows({ ladder, onBack }: { ladder: Ladder; onBack: () => void }) {
             </button>
           );
         })}
-        {solved && (
-          <button type="button" className="big-btn" onClick={goNext}>
-            Új virágsor <NextIcon />
-          </button>
-        )}
+        <NextButton show={solved} onNext={goNext} label="Új virágsor" />
       </div>
 
     </GameShell>
