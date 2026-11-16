@@ -424,50 +424,123 @@ export function DayPartSign({ part, size = 44 }: { part: string; size?: number }
 
 // ---------- seasons ----------
 
-/** A tree in its season, in a 120 × 120 box: blossom, fruit, falling leaves, bare branches in snow. */
+/** The ground under a season's tree: a hill cut to the bottom of the sky disc. */
+const TREE_GROUND = 'M-41 40 Q0 30 41 40 A57 57 0 0 1 -41 40 Z';
+/** The same trunk with its two arms in every season, so it reads as one tree through the year. */
+const TREE_TRUNK = 'M-6 48 L-4 12 L-22 -8 L-17 -13 L-2 2 L-3 -18 L3 -18 L3 0 L17 -14 L22 -9 L5 12 L7 48 Z';
+const SEASON_SKY: Record<Season, string> = { spring: '#E3F3FF', summer: '#CDE9FF', autumn: '#FBEBD3', winter: '#DDE7F3' };
+
+/** A crown of overlapping lobes with one outline round the whole: a thick ink layer, then the fills on top. */
+function Crown({ lobes }: { lobes: [number, number, number, string][] }) {
+  return (
+    <>
+      <g fill={INK} stroke={INK} strokeWidth="6.5">
+        {lobes.map(([cx, cy, r], i) => (
+          <circle key={i} cx={cx} cy={cy} r={r} />
+        ))}
+      </g>
+      {lobes.map(([cx, cy, r, fill], i) => (
+        <circle key={i} cx={cx} cy={cy} r={r} fill={fill} />
+      ))}
+    </>
+  );
+}
+
+/** A leaf, falling or lying, centred on (x, y). */
+const Leaf = ({ x, y, rot, fill }: { x: number; y: number; rot: number; fill: string }) => (
+  <path d="M0 -6 C5 -3 5 3 0 6 C-5 3 -5 -3 0 -6 Z M0 -5 V5" fill={fill} stroke={INK} strokeWidth="1.5" strokeLinejoin="round" transform={`translate(${x} ${y}) rotate(${rot})`} />
+);
+
+const BLOSSOMS: [number, number][] = [[-24, -20], [-10, -32], [5, -38], [14, -26], [25, -13], [-14, -8], [2, -18], [12, -8]];
+const WINTER_TWIGS = 'M-17 -11 L-27 -26 M-12 -6 L-32 -4 M18 -12 L25 -28 M14 -9 L33 -16 M0 -16 L-6 -36 M0 -16 L7 -38';
+
+const TREE_SEASON: Record<Season, ReactNode> = {
+  // a small light crown full of blossom, flowers in fresh grass
+  spring: (
+    <>
+      <path d={TREE_GROUND} fill="#A8D88A" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <path d={TREE_TRUNK} fill="#8A5A3B" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <Crown lobes={[[-18, -16, 14, '#C4E59A'], [0, -28, 16, '#C4E59A'], [18, -16, 14, '#C4E59A']]} />
+      {BLOSSOMS.map(([cx, cy]) => (
+        <g key={`${cx},${cy}`}>
+          <circle cx={cx} cy={cy} r="5" fill="#FFFFFF" stroke={INK} strokeWidth="1.5" />
+          <circle cx={cx} cy={cy} r="2" fill="#F07EA0" />
+        </g>
+      ))}
+      <path d="M-26 47 V38 M26 48 V39 M-18 50 V43" fill="none" stroke="#3D7A2E" strokeWidth="2.5" strokeLinecap="round" />
+      <g stroke={INK} strokeWidth="1.5">
+        <circle cx="-26" cy="36" r="4" fill="#FFC93C" />
+        <circle cx="26" cy="37" r="4" fill="#F07EA0" />
+        <circle cx="-18" cy="41" r="3.2" fill="#F07EA0" />
+      </g>
+    </>
+  ),
+  // a big dark crown hung with apples, the sun out, deep green grass
+  summer: (
+    <>
+      <circle cx="34" cy="-36" r="7.5" fill="#FFC93C" stroke={INK} strokeWidth="3" />
+      <path d={TREE_GROUND} fill="#6DBE5A" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <path d={TREE_TRUNK} fill="#8A5A3B" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <Crown lobes={[[-20, -12, 18, '#2F7D32'], [0, -24, 22, '#2F7D32'], [20, -12, 18, '#2F7D32'], [0, -2, 17, '#2F7D32']]} />
+      <g fill="#E5484D" stroke={INK} strokeWidth="1.5">
+        {[[-22, -14], [10, -32], [22, -8], [-4, 2], [-8, -28], [8, -12]].map(([cx, cy]) => (
+          <circle key={`${cx},${cy}`} cx={cx} cy={cy} r="5.5" />
+        ))}
+      </g>
+      <path d="M-34 46 l3 -6 l3 6 M24 45 l3 -6 l3 6" fill="none" stroke={INK} strokeWidth="1.5" strokeLinejoin="round" />
+    </>
+  ),
+  // a thin yellow-orange-red crown, leaves in the air and a pile on dry ground
+  autumn: (
+    <>
+      <path d={TREE_GROUND} fill="#D8B26E" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <path d={TREE_TRUNK} fill="#8A5A3B" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <Crown lobes={[[-19, -16, 13, '#E8833A'], [1, -29, 15, '#FFC93C'], [20, -15, 12, '#D9542F']]} />
+      <Leaf x={-34} y={4} rot={-30} fill="#FFC93C" />
+      <Leaf x={30} y={14} rot={40} fill="#E8833A" />
+      <Leaf x={-14} y={24} rot={70} fill="#D9542F" />
+      <Leaf x={37} y={-5} rot={-60} fill="#FFC93C" />
+      <Leaf x={-26} y={44} rot={80} fill="#D9542F" />
+      <Leaf x={-16} y={46} rot={100} fill="#FFC93C" />
+      <Leaf x={20} y={44} rot={75} fill="#E8833A" />
+      <Leaf x={30} y={47} rot={110} fill="#D9542F" />
+      <Leaf x={1.5} y={49.5} rot={95} fill="#E8833A" />
+    </>
+  ),
+  // bare branches with snow lying on them, a snow drift, flakes falling
+  winter: (
+    <>
+      <path d={WINTER_TWIGS} fill="none" stroke={INK} strokeWidth="8" strokeLinecap="round" />
+      <path d={WINTER_TWIGS} fill="none" stroke="#8A5A3B" strokeWidth="4" strokeLinecap="round" />
+      <path d={TREE_TRUNK} fill="#8A5A3B" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <g fill="#FFFFFF" stroke={INK} strokeWidth="1.5">
+        <ellipse cx="-19.5" cy="-13" rx="6" ry="2.8" transform="rotate(45 -19.5 -13)" />
+        <ellipse cx="19.5" cy="-13.5" rx="6" ry="2.8" transform="rotate(-45 19.5 -13.5)" />
+        <ellipse cx="0" cy="-19.5" rx="4.5" ry="2.6" />
+        <ellipse cx="-24" cy="-23" rx="3.6" ry="2.2" transform="rotate(55 -24 -23)" />
+        <ellipse cx="24" cy="-25" rx="3.6" ry="2.2" transform="rotate(-65 24 -25)" />
+        <ellipse cx="-27" cy="-6" rx="4" ry="2" transform="rotate(-5 -27 -6)" />
+        <ellipse cx="28" cy="-15" rx="4" ry="2" transform="rotate(-20 28 -15)" />
+      </g>
+      <path d="M-41 40 Q-10 26 0 34 Q12 26 41 40 A57 57 0 0 1 -41 40 Z" fill="#FFFFFF" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <g fill="#FFFFFF" stroke="#8FA3B8" strokeWidth="2">
+        {[[-34, -34, 3.5], [32, -38, 3.5], [-14, -46, 3], [16, -46, 3], [40, 2, 3.5], [-42, 12, 3.5], [28, 20, 3], [-22, 22, 3]].map(([cx, cy, r]) => (
+          <circle key={`${cx},${cy}`} cx={cx} cy={cy} r={r} />
+        ))}
+      </g>
+    </>
+  )
+};
+
+/**
+ * A tree in its season, in a 120 × 120 box on a sky disc: the same trunk every time, with three cues each —
+ * blossom and flowers, apples and sun, falling leaves and a leaf pile, bare branches in snow.
+ */
 export function SeasonTree({ season, size = 110, label }: { season: Season; size?: number; label?: string }) {
   return (
     <svg width={size} height={size} viewBox="-60 -60 120 120" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
-      {season === 'winter' ? (
-        <>
-          <path d="M0 54 V0 M0 20 L-24 -6 M0 12 L22 -14 M-12 8 L-14 -18 M12 0 L30 2" stroke="#8A5A3B" strokeWidth="7" strokeLinecap="round" />
-          <path d="M-50 54 Q0 36 50 54 Z" fill="#FFFFFF" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
-          <g fill="#FFFFFF" stroke="#8FA3B8" strokeWidth="2">
-            <circle cx="-30" cy="-30" r="4.5" />
-            <circle cx="34" cy="-24" r="4.5" />
-            <circle cx="-4" cy="-42" r="4.5" />
-            <circle cx="20" cy="-46" r="3.5" />
-          </g>
-        </>
-      ) : (
-        <>
-          <rect x="-6" y="14" width="12" height="40" fill="#8A5A3B" stroke={INK} strokeWidth="3" />
-          <circle cy="-4" r="40" fill={season === 'spring' ? '#9CCB7A' : season === 'summer' ? '#2F7D32' : '#E8833A'} stroke={INK} strokeWidth="3" />
-          {season === 'spring' && (
-            <g fill="#F59AB0" stroke={INK} strokeWidth="1.5">
-              <circle cx="-18" cy="-16" r="6" />
-              <circle cx="10" cy="-26" r="6" />
-              <circle cx="20" cy="2" r="6" />
-              <circle cx="-8" cy="10" r="6" />
-            </g>
-          )}
-          {season === 'summer' && (
-            <g fill="#E5484D" stroke={INK} strokeWidth="1.5">
-              <circle cx="-16" cy="-12" r="6" />
-              <circle cx="14" cy="-22" r="6" />
-              <circle cx="18" cy="8" r="6" />
-            </g>
-          )}
-          {season === 'autumn' && (
-            <g fill="#C8553D" stroke={INK} strokeWidth="1.5">
-              <ellipse cx="34" cy="44" rx="7" ry="4" transform="rotate(30 34 44)" />
-              <ellipse cx="-36" cy="40" rx="7" ry="4" transform="rotate(-20 -36 40)" />
-              <circle cx="-12" cy="-10" r="5" fill="#FFC93C" />
-              <circle cx="14" cy="4" r="5" fill="#FFC93C" />
-            </g>
-          )}
-        </>
-      )}
+      <circle r="57" fill={SEASON_SKY[season]} />
+      {TREE_SEASON[season]}
     </svg>
   );
 }
