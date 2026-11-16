@@ -1,3 +1,4 @@
+import { spentIn } from '../balance';
 import type { Progress } from '../progress';
 import { today } from '../screenTime';
 import { TREES, gardenFull, grownCount, isGrown, isWelcomed, seedBalance, type TreeKind } from './beds';
@@ -77,7 +78,7 @@ export function visitorProgress(p: Progress): ArrivalProgress | null {
   const from = VISITORS[p.visitorsSeen - 1]?.after ?? 0;
   const need = next.after - from;
   const done = Math.min(need, Math.max(0, grownCount(p) - from));
-  const growing = p.beds.filter((b) => !!b && !isGrown(b, p.gardenTasks)).length;
+  const growing = p.beds.filter((b) => !!b && !isGrown(b, p.worlds.garden.tasks)).length;
   return { need, done, coming: Math.min(growing, need - done) };
 }
 
@@ -374,7 +375,7 @@ export function canGiveSeeds(p: Progress, id: VisitorId): boolean {
 /** Gives the visitor their next gift as a handful of seeds; it leaves the same decoration a treat would. */
 export function giveSeeds(p: Progress, id: VisitorId): Progress {
   if (!canGiveSeeds(p, id)) return p;
-  return { ...p, seedsSpent: p.seedsSpent + seedGiftSize(p, id), gifts: { ...p.gifts, [id]: giftsOf(p, id) + 1 } };
+  return { ...p, worlds: spentIn(p, 'garden', seedGiftSize(p, id)), gifts: { ...p.gifts, [id]: giftsOf(p, id) + 1 } };
 }
 
 /** Welcomed visitors whose next gift is ready: on the shelf, in the garden, or (for the birds) in the seed bag. */
@@ -444,7 +445,7 @@ export function snack(p: Progress, id: VisitorId, how: SnackHow, day = today()):
       ? { ...p, pantry: { ...p.pantry, [treat]: treatsOf(p, treat) - 1 } }
       : how === 'food'
         ? spendFood(p, food!, SNACK_SIZE)
-        : { ...p, seedsSpent: p.seedsSpent + SNACK_SIZE };
+        : { ...p, worlds: spentIn(p, 'garden', SNACK_SIZE) };
   return { ...spent, snacked: { ...p.snacked, [id]: day }, snacks: { ...p.snacks, [id]: (p.snacks[id] ?? 0) + 1 } };
 }
 

@@ -76,7 +76,7 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
     const idx = s.options.findIndex((o) => o.value === s.current(progress));
     return (idx + 1) / s.options.length;
   };
-  const learned = Math.min(LEARN_MAX, progress.learnSolved);
+  const learned = Math.min(LEARN_MAX, progress.games.learn.solved);
   /** "3. szint · Name", from the game's ladder. */
   const at = (game: LadderGame) => {
     const i = ladderOf(progress, game).level;

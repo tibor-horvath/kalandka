@@ -1,3 +1,4 @@
+import { spentIn } from '../balance';
 import type { Progress } from '../progress';
 import { BEDS, bedAt, bedTree, gardenFull, growAfter, isGrown, seedBalance, treeOf, type Bed, type PlantKind } from './beds';
 
@@ -55,11 +56,11 @@ export function pickedFruit(bed: Bed): number {
 }
 
 export function thirstyBeds(p: Progress): number[] {
-  return p.beds.flatMap((b, i) => (b && isThirsty(b, p.gardenTasks) ? [i] : []));
+  return p.beds.flatMap((b, i) => (b && isThirsty(b, p.worlds.garden.tasks) ? [i] : []));
 }
 
 export function ripeTotal(p: Progress): number {
-  return p.beds.reduce((n, b) => n + (b ? ripeFruit(b, p.gardenTasks) : 0), 0);
+  return p.beds.reduce((n, b) => n + (b ? ripeFruit(b, p.worlds.garden.tasks) : 0), 0);
 }
 
 function withBed(p: Progress, i: number, bed: Bed): (Bed | null)[] {
@@ -89,16 +90,16 @@ export function basketTotal(p: Progress): number {
 /** Picks one ripe fruit into the basket; unchanged when there is none. */
 export function pickFruit(p: Progress, i: number): Progress {
   const bed = bedAt(p, i);
-  if (!bed || ripeFruit(bed, p.gardenTasks) === 0) return p;
+  if (!bed || ripeFruit(bed, p.worlds.garden.tasks) === 0) return p;
   return addFruit({ ...p, beds: withBed(p, i, { ...bed, picked: pickedFruit(bed) + 1 }) }, bed, 1);
 }
 
 /** Waters a thirsty plant; fruit still on it stays there to pick. Unchanged when it is not thirsty. */
 export function water(p: Progress, i: number): Progress {
   const bed = bedAt(p, i);
-  if (!bed || !isThirsty(bed, p.gardenTasks)) return p;
-  const kept = ripeFruit(bed, p.gardenTasks);
-  return { ...p, beds: withBed(p, i, { ...bed, watered: p.gardenTasks, picked: 0, kept }) };
+  if (!bed || !isThirsty(bed, p.worlds.garden.tasks)) return p;
+  const kept = ripeFruit(bed, p.worlds.garden.tasks);
+  return { ...p, beds: withBed(p, i, { ...bed, watered: p.worlds.garden.tasks, picked: 0, kept }) };
 }
 
 /** Waters every thirsty plant at once (the watering can). */
@@ -159,7 +160,7 @@ export function make(p: Progress, id: TreatId): Progress {
     ...p,
     pearsUsed: p.pearsUsed + r.pears,
     berriesUsed: p.berriesUsed + r.berries,
-    seedsSpent: p.seedsSpent + r.seeds,
+    worlds: spentIn(p, 'garden', r.seeds),
     pantry: { ...p.pantry, [id]: (p.pantry[id] ?? 0) + 1 }
   };
 }

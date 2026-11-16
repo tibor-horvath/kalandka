@@ -1,12 +1,13 @@
+import { save, type SavePatch } from './testSave';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
+import { readProgress, type Progress } from './progress';
 import { GIFTS_EACH, VISITORS, WISHES, canGive, decorCount, decorOf, gardenDone, giftSize, giftsOf, giftsReady, give, treatsOf, wishOf } from './garden';
 import { earnedStickers } from './stickers';
 
 /** A garden where every visitor has been welcomed, with these treats on the shelf. */
-const shelf = (pantry: Progress['pantry'], extra: Partial<Progress> = {}): Progress => {
+const shelf = (pantry: Progress['pantry'], extra: SavePatch = {}): Progress => {
   const beds = Array.from({ length: 30 }, () => ({ kind: 'flower' as const, at: 0 }));
-  return { ...DEFAULT_PROGRESS, seeds: 100, gardenTasks: 100, beds, visitorsSeen: VISITORS.length, pantry, ...extra };
+  return save({ seeds: 100, gardenTasks: 100, beds, visitorsSeen: VISITORS.length, pantry, ...extra });
 };
 
 describe('visitor gifts', () => {

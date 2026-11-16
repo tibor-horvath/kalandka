@@ -1,54 +1,29 @@
+import { GAME_IDS, WORLD_MANIFESTS, type GameId } from '../worlds';
 import { creditPractice, creditTasks } from './pod';
-import type { Progress } from './progress';
+import type { GameSave, Progress } from './progress';
 import type { WorldId } from './worlds';
 
-// Every Kalandka game in one list, in hub order: its id, world, name and the save fields that count its rounds.
+// Every Kalandka game in one list, in hub order, built from the worlds' manifests (see worlds/index.ts).
 // Screens, ladders, stickers, notes and printable sheets read a game from here instead of listing the games again.
 
-export const GAME_IDS = ['learn', 'water', 'patterns', 'flash', 'add', 'trace', 'pots', 'path', 'sort', 'scale', 'seq', 'mirror', 'code', 'fix', 'day', 'season', 'set', 'read', 'digi', 'sleep', 'sand'] as const;
-
-export type GameId = (typeof GAME_IDS)[number];
+export { GAME_IDS, type GameId };
 
 /** Games with a difficulty ladder: all but Számmagok, which walks the numbers in order. */
 export type LadderGame = Exclude<GameId, 'learn'>;
-
-/** Number fields of a save. */
-type CounterKey = { [K in keyof Progress]: Progress[K] extends number ? K : never }[keyof Progress];
 
 export interface GameInfo {
   id: GameId;
   world: WorldId;
   name: string;
-  /** Goes up when the child moves on to the next task; App keys the game's screen by it. */
-  roundKey: CounterKey;
-  /** Tasks solved; null for Locsolás, which counts the plants in its garden instead. */
-  solvedKey: CounterKey | null;
+  /** Locsolás counts the plants in its garden instead of a solved count of its own. */
+  solvedFromPlants: boolean;
 }
 
-// The save keeps its older field names (patternRound next to patternsSolved), so saves and sheets keep working.
-export const GAMES: Record<GameId, GameInfo> = {
-  learn: { id: 'learn', world: 'garden', name: 'Számmagok', roundKey: 'learnRound', solvedKey: 'learnSolved' },
-  water: { id: 'water', world: 'garden', name: 'Locsolás', roundKey: 'waterRound', solvedKey: null },
-  patterns: { id: 'patterns', world: 'garden', name: 'Virágsor', roundKey: 'patternRound', solvedKey: 'patternsSolved' },
-  flash: { id: 'flash', world: 'garden', name: 'Villámszem', roundKey: 'flashRound', solvedKey: 'flashSolved' },
-  add: { id: 'add', world: 'garden', name: 'Méhkas', roundKey: 'addRound', solvedKey: 'addSolved' },
-  trace: { id: 'trace', world: 'garden', name: 'Mézút', roundKey: 'traceRound', solvedKey: 'traceSolved' },
-  pots: { id: 'pots', world: 'garden', name: 'Cserépbarátok', roundKey: 'potsRound', solvedKey: 'potsSolved' },
-  path: { id: 'path', world: 'robot', name: 'Robotút', roundKey: 'pathRound', solvedKey: 'pathSolved' },
-  sort: { id: 'sort', world: 'robot', name: 'Válogatógép', roundKey: 'sortRound', solvedKey: 'sortSolved' },
-  scale: { id: 'scale', world: 'robot', name: 'Mérleg', roundKey: 'scaleRound', solvedKey: 'scaleSolved' },
-  seq: { id: 'seq', world: 'robot', name: 'Mintagép', roundKey: 'seqRound', solvedKey: 'seqSolved' },
-  mirror: { id: 'mirror', world: 'robot', name: 'Tükörgép', roundKey: 'mirrorRound', solvedKey: 'mirrorSolved' },
-  code: { id: 'code', world: 'robot', name: 'Kódzár', roundKey: 'codeRound', solvedKey: 'codeSolved' },
-  fix: { id: 'fix', world: 'robot', name: 'Hibavadász', roundKey: 'fixRound', solvedKey: 'fixSolved' },
-  day: { id: 'day', world: 'tower', name: 'Napirend', roundKey: 'dayRound', solvedKey: 'daySolved' },
-  season: { id: 'season', world: 'tower', name: 'Évszakok', roundKey: 'seasonRound', solvedKey: 'seasonSolved' },
-  set: { id: 'set', world: 'tower', name: 'Óraállító', roundKey: 'setRound', solvedKey: 'setSolved' },
-  read: { id: 'read', world: 'tower', name: 'Hány óra?', roundKey: 'readRound', solvedKey: 'readSolved' },
-  digi: { id: 'digi', world: 'tower', name: 'Digitóra', roundKey: 'digiRound', solvedKey: 'digiSolved' },
-  sleep: { id: 'sleep', world: 'tower', name: 'Kakukk alszik', roundKey: 'sleepRound', solvedKey: 'sleepSolved' },
-  sand: { id: 'sand', world: 'tower', name: 'Homokóra', roundKey: 'sandRound', solvedKey: 'sandSolved' }
-};
+export const GAMES = Object.fromEntries(
+  WORLD_MANIFESTS.flatMap((w) =>
+    w.games.map((g): [GameId, GameInfo] => [g.id, { id: g.id, world: w.id, name: g.name, solvedFromPlants: 'solvedFromPlants' in g && g.solvedFromPlants }])
+  )
+) as Record<GameId, GameInfo>;
 
 export function isLadderGame(id: GameId): id is LadderGame {
   return id !== 'learn';
@@ -68,26 +43,31 @@ export function gamesIn(world: WorldId): GameInfo[] {
   return GAME_IDS.map((id) => GAMES[id]).filter((g) => g.world === world);
 }
 
+/** Goes up when the child moves on to the next task; App keys the game's screen by it. */
 export function roundOf(p: Progress, id: GameId): number {
-  return p[GAMES[id].roundKey];
+  return p.games[id].round;
 }
 
+/** Tasks solved; Locsolás's is the plants in its garden. */
 export function solvedOf(p: Progress, id: GameId): number {
-  const key = GAMES[id].solvedKey;
-  return key ? p[key] : p.garden.length;
+  return GAMES[id].solvedFromPlants ? p.garden.length : p.games[id].solved;
+}
+
+export function withGame(p: Progress, id: GameId, change: Partial<GameSave>): Progress {
+  return { ...p, games: { ...p.games, [id]: { ...p.games[id], ...change } } };
 }
 
 export function withRound(p: Progress, id: GameId, round: number): Progress {
-  return { ...p, [GAMES[id].roundKey]: round };
+  return withGame(p, id, { round });
 }
 
 export function nextRound(p: Progress, id: GameId): Progress {
   return withRound(p, id, roundOf(p, id) + 1);
 }
 
-/** A solved task: the game's count, and a quarter of its world's reward pod (see pod.ts); `practice` caps the day's pay. */
+/** A solved task: the game's count, and a part of its world's reward pod (see pod.ts); `practice` caps the day's pay. */
 export function creditSolve(p: Progress, id: GameId, practice = false): Progress {
-  const { world, solvedKey } = GAMES[id];
+  const { world, solvedFromPlants } = GAMES[id];
   const paid = practice && isLadderGame(id) ? creditPractice(p, id, world) : creditTasks(p, world);
-  return solvedKey ? { ...paid, [solvedKey]: paid[solvedKey] + 1 } : paid;
+  return solvedFromPlants ? paid : withGame(paid, id, { solved: paid.games[id].solved + 1 });
 }

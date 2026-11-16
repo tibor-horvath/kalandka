@@ -19,7 +19,7 @@ export function ReadClock({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('read');
   const intro = useLevelIntro('read', level);
-  const [round] = useState(() => buildReadRound(level, progress.readRound));
+  const [round] = useState(() => buildReadRound(level, progress.games.read.round));
   const q = useQuestion(readStart(round), intro.open);
   const solved = q.solved !== null;
   const angles = handAngles(round.time);
@@ -63,7 +63,7 @@ export function Digital({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('digi');
   const intro = useLevelIntro('digi', level);
-  const [round] = useState(() => buildDigiRound(level, progress.digiRound));
+  const [round] = useState(() => buildDigiRound(level, progress.games.digi.round));
   const q = useQuestion(digiStart(round), intro.open);
   const solved = q.solved !== null;
   const angles = handAngles(round.time);

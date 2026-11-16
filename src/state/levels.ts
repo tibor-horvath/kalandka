@@ -1,5 +1,5 @@
 import { LEARN_CYCLE, LEARN_MAX } from '../worlds/garden/games/learn/logic';
-import { GAMES, LADDER_GAMES, type GameId, type LadderGame } from './games';
+import { GAMES, LADDER_GAMES, withRound, type GameId, type LadderGame } from './games';
 import { LADDER_LEVELS, LADDER_RULES, ladderOf, startAt, withLadder } from './ladder';
 import type { Progress } from './progress';
 import { WORLDS, type WorldId } from './worlds';
@@ -38,10 +38,10 @@ const learn: LevelSetting = {
   hint: 'Innen tanulja sorban a számokat 20-ig, aztán vegyesen ismétli őket.',
   options: LEARN_STARTS,
   current: (p) => {
-    const r = p.learnRound % LEARN_CYCLE;
+    const r = p.games.learn.round % LEARN_CYCLE;
     return [...LEARN_STARTS].reverse().find((o) => r >= o.value)!.value;
   },
-  apply: (p, v) => ({ ...p, learnRound: v })
+  apply: (p, v) => withRound(p, 'learn', v)
 };
 
 /** How the hint names a task the child solved alone, and one that needed help. */

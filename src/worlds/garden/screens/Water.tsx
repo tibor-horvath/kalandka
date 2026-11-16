@@ -3,17 +3,17 @@ import { Cloud, Drop, GrowingPlant, Pot, WateringCan } from '../art';
 import { useLadderRound } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
 import { useForm } from '../../../components/Stage';
-import { GuideBubble, NextIcon } from '../../../components/ui';
 import { CAN_DROPS, addDrop, feedback, growth, introSpeech, maxDropsFor, plantForLevel, removeDrop, slotKinds } from '../games/water/logic';
 import { numberCount } from '../../../lib/numbers';
 import { speak } from '../../../lib/speech';
 import { useProgress } from '../../../state/progress';
+import { GuideSays, NextButton } from '../../../components/round';
 
 export function Water({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   // On phones Csepi talks above the scene instead of inside the panel.
   const phone = useForm() !== 'tablet';
-  const round = progress.waterRound;
+  const round = progress.games.water.round;
   const { level, step, win, meter, goNext } = useLadderRound('water');
   // One plant object per round: effects below key on it, so it must not change between renders.
   const plant = useMemo(() => plantForLevel(level, round), [level, round]);
@@ -115,9 +115,7 @@ export function Water({ onBack }: { onBack: () => void }) {
   };
 
   const guide = (
-    <GuideBubble mood={fb.mood} tone={fb.tone}>
-      {fb.text}
-    </GuideBubble>
+    <GuideSays line={fb} />
   );
 
   const kinds = slotKinds(count, plant.target, given);
@@ -224,11 +222,7 @@ export function Water({ onBack }: { onBack: () => void }) {
                   : 'Koppints egy cseppre, és elveszed. Koppints egy üres helyre, és adsz egyet.'}
               </p>
             )}
-            {done && (
-              <button type="button" className="big-btn" onClick={goNext}>
-                Következő virág <NextIcon />
-              </button>
-            )}
+            <NextButton show={done} onNext={goNext} label="Következő virág" />
           </div>
         </div>
       </div>

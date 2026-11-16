@@ -212,7 +212,7 @@ export function Home({ onOpen, onReward, ...actions }: HubActions & { onOpen: (g
     return {
       skill: text.skill ? `${text.skill} · még ${left} szám` : `Még ${left} szám, és kinyílik`,
       hint: `még ${left} szám`,
-      onTap: () => showNotice({ kicker: text.asleep, title: `Ismerj meg még ${left} számot!`, mood: 'think' }, text.lockedSpeech(progress.learnSolved))
+      onTap: () => showNotice({ kicker: text.asleep, title: `Ismerj meg még ${left} számot!`, mood: 'think' }, text.lockedSpeech(progress.games.learn.solved))
     };
   };
 

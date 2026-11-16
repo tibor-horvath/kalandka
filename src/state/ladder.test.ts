@@ -1,3 +1,4 @@
+import { save } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { buildTraceRound } from '../worlds/garden/games/trace/logic';
 import { MIXED_SHAPES, PATTERN_LEVELS, buildLevelRound } from '../worlds/garden/games/patterns/logic';
@@ -130,24 +131,24 @@ describe('a finished game', () => {
 
 describe('saves from before the ladders', () => {
   it('keeps a workshop game on the level its solved rounds gave', () => {
-    const l = ladderOf({ ...DEFAULT_PROGRESS, sortSolved: 12 }, 'sort');
+    const l = ladderOf(save({ sortSolved: 12 }), 'sort');
     expect(l).toMatchObject({ level: 2, streak: 2, solvedTop: 2, floor: 0 });
   });
 
   it('counts a whole top level as mastered', () => {
     const top = LADDER_RULES.pots.levels;
-    expect(ladderOf({ ...DEFAULT_PROGRESS, potsSolved: 5 * top }, 'pots')).toMatchObject({ level: top - 1, reached: top });
+    expect(ladderOf(save({ potsSolved: 5 * top }), 'pots')).toMatchObject({ level: top - 1, reached: top });
   });
 
   it('takes Méhkas’s own level and counters', () => {
-    expect(ladderOf({ ...DEFAULT_PROGRESS, addLevel: 4, addStreak: 2, addMisses: 1, addSolved: 9 }, 'add')).toMatchObject({
+    expect(ladderOf(save({ addLevel: 4, addStreak: 2, addMisses: 1, addSolved: 9 }), 'add')).toMatchObject({
       level: 4, streak: 2, helpRun: 1, solvedTop: 4
     });
     expect(ladderOf(DEFAULT_PROGRESS, 'add').solvedTop).toBe(-1);
   });
 
   it('keeps Locsolás on the drops its plants had reached', () => {
-    const at = (waterRound: number) => ladderOf({ ...DEFAULT_PROGRESS, waterRound }, 'water');
+    const at = (waterRound: number) => ladderOf(save({ waterRound }), 'water');
     expect(at(0)).toMatchObject({ level: 0, solvedTop: -1 });
     expect(at(5)).toMatchObject({ level: 1, solvedTop: 1 });
     expect(at(9)).toMatchObject({ level: 2, reached: 2, solvedTop: 1 });
@@ -155,12 +156,12 @@ describe('saves from before the ladders', () => {
   });
 
   it('keeps Virágsor on the shape it had reached, and in the row once the first lap was done', () => {
-    const at = (patternRound: number) => ladderOf({ ...DEFAULT_PROGRESS, patternRound }, 'patterns').level;
+    const at = (patternRound: number) => ladderOf(save({ patternRound }), 'patterns').level;
     expect([0, 1, 2, 3, 4, 30].map(at)).toEqual([0, 1, 2, 2, 3, 3]);
   });
 
   it('keeps Mézút on the same half of the digits and the same trail, at the same digit', () => {
-    const at = (traceRound: number) => ladderOf({ ...DEFAULT_PROGRESS, traceRound }, 'trace');
+    const at = (traceRound: number) => ladderOf(save({ traceRound }), 'trace');
     expect([0, 4, 5, 9, 10, 15, 22].map((r) => at(r).level)).toEqual([0, 0, 1, 1, 2, 3, 2]);
     expect(buildTraceRound(at(7).level, at(7).sinceChange).digit).toBe(8);
   });
