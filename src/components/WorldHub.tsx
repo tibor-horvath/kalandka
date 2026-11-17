@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Door, type DoorPlace } from './Door';
-import { KidChip, MapButton, ParentsButton, PrintButton, VoiceButton } from './hub';
+import { KidChip, ParentsButton, VoiceButton } from './hub';
 import { Island, RewardDock, useEnter, useLeave, type Place, type RewardPlace } from './island';
 import { PlayTimer, pausedLabel, useTimeLeft } from './PlayTimer';
 import { useForm } from './Stage';
@@ -21,7 +21,6 @@ export interface PlaceReturn {
 /** The buttons every world's home screen hands back to App, and the place the child is coming back from. */
 export interface HubActions {
   onParents: () => void;
-  onPrint: () => void;
   onSwitch: () => void;
   onMap: () => void;
   onAlbum: () => void;
@@ -53,7 +52,6 @@ export function WorldHub({
   onReplay,
   sticker,
   onParents,
-  onPrint,
   onSwitch,
   onMap,
   onAlbum,
@@ -80,6 +78,7 @@ export function WorldHub({
   const info = WORLDS.find((w) => w.id === world)!;
   // With a daily limit, the island shows today's time left in this world's gauge; the clock stands at home.
   const time = useTimeLeft();
+  const timer = time && <PlayTimer world={world} remaining={time.remaining} total={time.allowance} paused label={pausedLabel(time.remaining)} />;
   const book = { count: earnedStickers(progress).filter((s) => gameOf(s).world === world).length, onOpen: onAlbum };
 
   return (
@@ -95,9 +94,10 @@ export function WorldHub({
           </div>
           <div className="topbar__right">
             {profiles.kids.length > 1 && <KidChip onSwitch={onSwitch} />}
-            <MapButton onClick={leaveForMap} />
+            {/* Phones keep the play-time sign up here, clear of the places' names; tablets plant it on the island. */}
+            {phone && timer}
             <VoiceButton guide={info.guide} />
-            <PrintButton onClick={onPrint} />
+            {/* Printing lives in the parents' corner (Szülőknek → Nyomtatás), so the child's screen holds no adult tools. */}
             <ParentsButton onClick={onParents} />
           </div>
         </header>
@@ -124,10 +124,11 @@ export function WorldHub({
           leaving={leaving}
           opening={opening}
           back={back && { id: back.place, solved: back.solved, landed }}
-          timer={time && <PlayTimer world={world} remaining={time.remaining} total={time.allowance} paused label={pausedLabel(time.remaining)} />}
+          timer={phone ? null : timer}
           onMap={phone ? undefined : leaveForMap}
         />
-        {phone && <RewardDock reward={rewardDoor} book={book} />}
+        {/* Phones have no boat to tap: the way back to the map leads the bar under the island. */}
+        {phone && <RewardDock reward={rewardDoor} book={book} onMap={leaveForMap} />}
 
         {sticker && <StickerPop key={sticker.id} sticker={sticker} seen={progress.stickersSeen} onDone={() => update((p) => markStickerSeen(p, sticker.id))} />}
       </div>

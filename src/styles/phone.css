@@ -104,6 +104,24 @@
 /* The bleed layer would add 1000 px of empty scrolling; the stage already fills the phone screen. */
 .stage--portrait .screen--home::before { display: none; }
 .stage--portrait .screen--home .topbar { padding-top: 18px; }
+
+/* The play-time sign rides in the phone home topbar, clear of the island's names: button-high, the gauge and bars drawn small. */
+.is-phone .topbar .play-timer__sign { height: 44px; box-sizing: border-box; padding: 0 10px 0 7px; gap: 6px; border-radius: 22px; box-shadow: none; }
+.is-phone .topbar .play-timer__gauge { width: auto; height: 28px; }
+.is-phone .topbar .play-timer__bars { gap: 3px; }
+.is-phone .topbar .play-timer__bars i { width: 6px; height: 20px; border-width: 1.5px; border-radius: 3px; }
+.is-phone .topbar .play-timer__pause { right: -7px; top: -7px; width: 22px; height: 22px; border-width: 2px; gap: 3px; }
+.is-phone .topbar .play-timer__pause i { width: 3px; height: 8px; }
+
+/* Portrait bottom bar: Térkép, Kiskertem and Matricáim side by side, each its picture over its name, the count on a tag in the corner. */
+.stage--portrait .dock-item { flex-direction: column; justify-content: center; height: 80px; gap: 3px; padding: 6px 4px 4px; }
+.stage--portrait .dock-item--map { flex: 1 1 0; padding-right: 4px; }
+.stage--portrait .dock-item .spot__disc { width: 42px; height: 42px; }
+.stage--portrait .dock-item__text { flex: none; align-items: center; max-width: 100%; }
+.stage--portrait .dock-item__name { font-size: 15px; }
+.stage--portrait .dock-item__count { position: absolute; top: 4px; right: 6px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--paper); font-size: 14px; }
+.stage--portrait .dock-item__count svg { width: 13px; height: 13px; }
+.stage--portrait .dock-item .spot__badge--pic { left: 26px; }
 .stage--portrait .home-guide { margin-top: 14px; }
 /* Home topbar on a phone: the active child shows as their figure alone. */
 .is-phone .kid-chip { height: 44px; padding: 0; border-width: 3px; border-radius: 22px; }
@@ -167,9 +185,12 @@
 .stage--landscape .bubble__title { font-size: 18px; }
 .stage--landscape .home-guide .bubble__row { gap: 6px; }
 .stage--landscape .screen--home .island { grid-area: island; min-height: 0; margin: -14px 0 -8px; }
-/* Kincseim under Csepi: the reward place over the sticker album, at the bottom of the side column. */
-.stage--landscape .reward-dock { grid-area: dock; align-self: end; flex-direction: column; gap: 8px; padding: 0 0 12px; background: none; box-shadow: none; }
-.stage--landscape .dock-item { flex: none; height: 54px; }
+/* Under Csepi, at the bottom of the side column: Térkép as a tall narrow tile, beside it the reward place over the sticker album. */
+.stage--landscape .reward-dock { grid-area: dock; align-self: end; display: grid; grid-template-columns: 66px minmax(0, 1fr); grid-template-rows: auto auto; gap: 8px; padding: 0 0 12px; background: none; box-shadow: none; }
+.stage--landscape .dock-item { flex: none; height: 50px; }
+.stage--landscape .dock-item--map { grid-row: 1 / 3; height: auto; flex-direction: column; justify-content: center; gap: 4px; padding: 0 4px; }
+.stage--landscape .dock-item--map .dock-item__text { flex: none; align-items: center; }
+.stage--landscape .dock-item--map .dock-item__name { font-size: 14px; }
 
 /* ---------- Locsolás ---------- */
 .is-phone .screen--water { display: flex; flex-direction: column; }

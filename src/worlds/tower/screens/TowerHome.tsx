@@ -58,7 +58,7 @@ export function TowerHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
     const fresh = solvedOf(progress, id) === 0;
     const unopened = fresh && !progress.worlds.tower.opened.includes(id);
     const level = isLadderGame(id) ? ladderOf(progress, id).level : 0;
-    const badge: Badge = i === 0 && fresh ? { text: 'Kezdd itt!', kind: 'new' } : unopened ? { text: 'Új!', kind: 'new' } : { text: `${level + 1}. szint`, kind: 'level' };
+    const badge: Badge = i === 0 && fresh ? { text: 'Kezdd itt!', kind: 'new' } : unopened ? { text: 'Új!', kind: 'new' } : { text: `${level + 1}. szint`, kind: 'level', level: level + 1 };
     return { id, name, label: TILES[id]!.label, badge, start: i === 0 && fresh, art: TILES[id]!.art, onOpen: () => open(id) };
   });
   const reward: RewardPlace = {
@@ -68,7 +68,7 @@ export function TowerHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
     icon: <Bell size={30} />,
     count: bellBalance(progress),
     unit: 'harang',
-    badge: canBuild(progress) ? 'Építhetsz!' : null,
+    badge: canBuild(progress) ? { text: 'Építhetsz!', kind: 'build' } : null,
     onClick: () => {
       welcomeOnce();
       onReward();
