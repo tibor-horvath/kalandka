@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.14.0](https://github.com/tibor-horvath/kalandka/compare/v1.13.0...v1.14.0) (2026-11-17)
+
+
+### Added
+
+* design enhancements ([#84](https://github.com/tibor-horvath/kalandka/issues/84)) ([faac692](https://github.com/tibor-horvath/kalandka/commit/faac69221d8090df92e354b5083fe90bff821b7f))
+
+
+### Fixed
+
+* enhance rewards system with new tower world mechanics ([#82](https://github.com/tibor-horvath/kalandka/issues/82)) ([aea7a45](https://github.com/tibor-horvath/kalandka/commit/aea7a45a69591d7110b018c4e5e3aa6fdf2cc8e7))
+
 ## [1.13.0](https://github.com/tibor-horvath/kalandka/compare/v1.12.0...v1.13.0) (2026-11-16)
 
 
