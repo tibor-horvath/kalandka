@@ -8,7 +8,7 @@ export const robot = {
   about: 'Programozás, logika · nagyobbaknak',
   speaker: 'robot',
   color: '#5E7184',
-  reward: { unit: 'csavar', yours: 'csavarod', tasksPer: 4, task: 'kör' },
+  reward: { unit: 'csavar', yours: 'csavarod', object: 'csavart', theirs: 'csavarjai', tasksPer: 4, task: 'kör' },
   games: [
     { id: 'path', name: 'Robotút' },
     { id: 'sort', name: 'Válogatógép' },

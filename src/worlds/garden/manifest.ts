@@ -9,7 +9,7 @@ export const garden = {
   speaker: 'csepi',
   color: '#2F7D32',
   // Seeds are what the Kiskert runs on, so they come every second task.
-  reward: { unit: 'mag', yours: 'magod', tasksPer: 2, task: 'feladat' },
+  reward: { unit: 'mag', yours: 'magod', object: 'magot', theirs: 'magjai', tasksPer: 2, task: 'feladat' },
   games: [
     { id: 'learn', name: 'Számmagok' },
     { id: 'water', name: 'Locsolás', solvedFromPlants: true },

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { podArcs } from '../../components/LevelMeter';
 import { WORLD_MARKS } from '../../worlds/marks';
-import { rewardUnit } from '../../state/balance';
+import { worldInfo } from '../../state/worlds';
 import { tasksPerReward } from '../../state/pod';
 import { gameOf, type Sticker } from '../../state/stickers';
 import type { WorldId } from '../../state/worlds';
@@ -82,7 +82,7 @@ export function PageReceipt({ win, world, worldName, name }: { win: PageWin; wor
 
   const { RewardIcon } = WORLD_MARKS[world];
   const icon = <RewardIcon size={24} />;
-  const unit = rewardUnit(world);
+  const { unit, object, theirs } = worldInfo(world).reward;
   const left = parts - endFrame(win, parts).fill;
 
   return (
@@ -126,15 +126,15 @@ export function PageReceipt({ win, world, worldName, name }: { win: PageWin; wor
             </span>
           </span>
           <span className="ps-receipt__label">
-            {name} {unit === 'mag' ? 'magjai' : 'csavarjai'}
+            {name} {theirs}
           </span>
         </div>
       </div>
       {frame.finished && (
         <div className="ps-result" role="status">
           <p className="pa-muted">
-            <b>{win.pay > 0 ? `${name} ${win.pay} ${unit === 'mag' ? 'magot' : 'csavart'} kapott` : `${name} jutalomtartója telt`}</b>
-            {' · '}még {left} feladat a következő {unit === 'mag' ? 'magig' : 'csavarig'}.
+            <b>{win.pay > 0 ? `${name} ${win.pay} ${object} kapott` : `${name} jutalomtartója telt`}</b>
+            {' · '}még {left} feladat a következő {unit}ig.
           </p>
           {win.stickers.map((s) => {
             const game = gameOf(s);

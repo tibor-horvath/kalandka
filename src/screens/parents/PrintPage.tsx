@@ -138,7 +138,7 @@ function DonePages({ s, choice }: { s: PrintSpec<unknown>; choice: PrintChoice }
   return (
     <section className="pa-card ps-done">
       <h2 className="pa-h2">Kész lapok</h2>
-      <p className="pa-muted">Ha a gyerkőc befejezett egy lapot, jelöld meg itt. A feladatai úgy töltik a jutalomtartót, mint a játékban: minden négy feladatért egy mag (a Robotműhelyben csavar) jár, és mindkét világban matrica jár a kész lapokért ({PAGE_STEPS.slice(0, 5).join(', ')}… lapnál), valamint a lap szintjéért a játék saját matricája.</p>
+      <p className="pa-muted">Ha a gyerkőc befejezett egy lapot, jelöld meg itt. A feladatai úgy töltik a jutalomtartót, mint a játékban ({WORLDS.map((w) => `${w.name}: ${w.reward.tasksPer} feladat 1 ${w.reward.unit}`).join(', ')}), és minden világban matrica jár a kész lapokért ({PAGE_STEPS.slice(0, 5).join(', ')}… lapnál), valamint a lap szintjéért a játék saját matricája.</p>
       <div className="pa-row">
         {Array.from({ length: choice.pages }, (_, i) => {
           const key = pageKey(pageRef(s, choice, i));

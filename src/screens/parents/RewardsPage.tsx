@@ -9,9 +9,11 @@ import { PAGE_STEPS, STICKER_GAMES, stickerRow, type StickerGameId } from '../..
 import { WORLDS, worldInfo, type WorldId } from '../../state/worlds';
 import { Seed } from '../../worlds/garden/art';
 import { Bolt } from '../../worlds/robot/art';
+import { Bell } from '../../worlds/tower/art';
+import { BUILDINGS, GIFTS_EACH, STAGES, bellBalance } from '../../state/town';
 import { WorldGroup } from './controls';
 
-// What seeds, bolts and stickers are, for grown-ups: the rules from the reward code itself (so the page never
+// What seeds, bolts, bells and stickers are, for grown-ups: the rules from the reward code itself (so the page never
 // drifts from what the games do), and where the child stands now. The child never sees this page.
 
 const range = (costs: number[]) => {
@@ -29,8 +31,10 @@ const ROW_ABOUT: Partial<Record<StickerGameId, string>> = {
   learn: 'a számok felismerése a játékban vagy kész lapon',
   kiskert: 'ajándékok a kert lakóinak',
   robotepito: 'alkatrészek, második robot, robotbarátok és ajándékaik',
+  kisvaros: 'épületek, bővítések és ajándékok a Kisváros lakóinak',
   'paper-garden': `kész lapok: ${PAGE_STEPS.join(', ')}`,
-  'paper-robot': `kész lapok: ${PAGE_STEPS.join(', ')}`
+  'paper-robot': `kész lapok: ${PAGE_STEPS.join(', ')}`,
+  'paper-tower': `kész lapok: ${PAGE_STEPS.join(', ')}`
 };
 
 /** The child's reward pod as it is now, drawn like the one in the games' top bar. */
@@ -179,6 +183,9 @@ export function RewardsPage() {
   const loaf = RECIPES.find((r) => r.id === 'loaf')!;
   const seed = (size: number) => <Seed size={size} />;
   const bolt = (size: number) => <Bolt size={size} />;
+  const bell = (size: number) => <Bell size={size} />;
+  const buildCosts = range(BUILDINGS.map((b) => b.cost));
+  const upgradeCosts = range(BUILDINGS.flatMap((b) => [b.cost + 1, b.cost + 3]));
 
   return (
     <div className="pa-page">
@@ -186,7 +193,7 @@ export function RewardsPage() {
         <div>
           <h1 className="pa-h1">Jutalmak</h1>
           <p className="pa-lead">
-            Minden megoldott feladattal közelebb kerül egy maghoz vagy csavarhoz, és minden új szintért matricát kap. Itt látod, mi mennyit ér, mire jó,
+            Minden megoldott feladattal közelebb kerül egy maghoz, csavarhoz vagy haranghoz, és minden új szintért matricát kap. Itt látod, mi mennyit ér, mire jó,
             és hol tart most.
           </p>
         </div>
@@ -206,11 +213,11 @@ export function RewardsPage() {
 
       <section className="pa-rw-section" aria-labelledby="rw-pod">
         <h2 id="rw-pod" className="pa-rw-h2">
-          Magok és csavarok
+          Magok, csavarok és harangok
         </h2>
         <p className="pa-lead">
-          Minden játék felső sávjában, a szintlépcső mellett van egy gyűjtőkör. Megoldott feladatonként egy része megtelik; ha betelik, egy mag (a kertben)
-          vagy egy csavar (a műhelyben) kerül a gyerek készletébe.
+          Minden játék felső sávjában, a szintlépcső mellett van egy gyűjtőkör. Megoldott feladatonként egy része megtelik; ha betelik, egy mag (a kertben),
+          egy csavar (a műhelyben) vagy egy harang (az Óratoronyban) kerül a gyerek készletébe.
         </p>
         <div className="pa-grid2">
           <Currency
@@ -244,6 +251,21 @@ export function RewardsPage() {
             ]}
             note={`Egy műhelykör több lépésből áll, ezért ritkábban jár csavar. ${SECOND_ROBOT_AFTER} alkatrész után jön a második robot, és robotbarátok költöznek be (${FRIENDS.map((f) => f.after).join(', ')} alkatrésznél). Egy drágább alkatrészre koppintva a gyerek kijelölheti, mire gyűjt; a játékokban látja, hány csavar hiányzik még.`}
           />
+          <Currency
+            world="tower"
+            name="Harangok"
+            one="harang"
+            icon={bell}
+            balance={bellBalance(progress)}
+            rule={`Minden ${ORDINAL[tasksPerReward('tower')]} megoldott feladat 1 harang.`}
+            spendTitle="Mire költheti a Kisvárosban"
+            spend={[
+              [`Új épület (${BUILDINGS.length} közül bármelyik, a lakójával együtt)`, `${buildCosts} harang`],
+              [`Bővítés: egy épület ${STAGES - 1} lépésben szépül`, `${upgradeCosts} harang`],
+              [`Ajándék egy lakónak (lakónként ${GIFTS_EACH})`, `1–${GIFTS_EACH} harang`]
+            ]}
+            note="Minden épülettel új lakó költözik a térre, és minden ajándék díszként az épülete mellett marad. A tér a toronyórát követi: a gyerek forgatja az órát, és vele együtt változik az égbolt, a nyitva tartó boltok és az egész órás vonat."
+          />
         </div>
         <div className="pa-rw-note">
           <p>
@@ -251,8 +273,8 @@ export function RewardsPage() {
             befejezésért, nem a hibátlanságért.
           </p>
           <p>
-            <b>Végigjátszott játék.</b> Ha egy játék minden szintje megvan, gyakorlásként játékonként naponta legfeljebb {PRACTICE_PAY_PER_DAY} magot vagy
-            csavart ad; utána másnapig csak a növények nőnek tőle.
+            <b>Végigjátszott játék.</b> Ha egy játék minden szintje megvan, gyakorlásként játékonként naponta legfeljebb {PRACTICE_PAY_PER_DAY} magot,
+            csavart vagy harangot ad; utána másnapig csak a növények nőnek tőle.
           </p>
         </div>
       </section>
@@ -269,7 +291,7 @@ export function RewardsPage() {
             Ha a játék visszalép egy könnyebb szintre, a matrica akkor is megmarad.
           </Rule>
           <Rule title="Külön sorok" icon={<><path d="M6 2h9l4 4v16H6z" /><path d="M9 12l2 2 4-4" /></>}>
-            A Kiskert és a Robotépítő mérföldkövei, és a kész feladatlapok ({PAGE_STEPS.slice(0, 5).join(', ')}… lap).
+            A Kiskert, a Robotépítő és a Kisváros mérföldkövei, és a kész feladatlapok ({PAGE_STEPS.slice(0, 5).join(', ')}… lap).
           </Rule>
         </div>
         {WORLDS.map((w) => (
