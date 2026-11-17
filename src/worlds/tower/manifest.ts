@@ -9,7 +9,7 @@ export const tower = {
   // Kakukk speaks in Csepi's voice: the voice settings have one voice for the robot and one for the other guides.
   speaker: 'csepi',
   color: '#5B4B9A',
-  reward: { unit: 'harang', yours: 'harangod', tasksPer: 2, task: 'feladat' },
+  reward: { unit: 'harang', yours: 'harangod', object: 'harangot', theirs: 'harangjai', tasksPer: 2, task: 'feladat' },
   games: [
     { id: 'day', name: 'Napirend' },
     { id: 'season', name: 'Évszakok' },

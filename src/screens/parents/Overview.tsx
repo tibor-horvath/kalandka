@@ -174,7 +174,7 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
           <h2 id="ov-notes" className="pa-h2">
             Mi megy jól, hol segíthetsz
           </h2>
-          <p className="pa-lead">Az elmúlt hét játékai alapján, mindkét világból, egy-egy otthoni ötlettel, képernyő nélkül.</p>
+          <p className="pa-lead">Az elmúlt hét játékai alapján, minden világból, egy-egy otthoni ötlettel, képernyő nélkül.</p>
         </div>
         <div className="pa-notes__grid">
           {notes.map((n) => (
