@@ -70,13 +70,15 @@
 .px-caption { font-size: 9.5pt; font-weight: 700; color: #4a5e70; }
 .px-tip { margin: auto 0 0; padding: 3mm 4mm; border-radius: 3mm; background: #f4f7fa; font-size: 10.5pt; line-height: 1.35; }
 
-.px-tents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12mm; justify-items: center; }
+.px-tents { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10mm; justify-items: center; }
 .px-tent-wrap { display: flex; flex-direction: column; align-items: center; gap: 1.5mm; }
-.px-tent { width: 84mm; height: 186mm; box-sizing: border-box; display: flex; flex-direction: column; border: 0.6mm dashed #10233a; border-radius: 6mm; }
+.px-tent { width: 56mm; height: 186mm; box-sizing: border-box; display: flex; flex-direction: column; border: 0.6mm dashed #10233a; border-radius: 6mm; }
 .px-tent__half { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5mm; }
 .px-tent__half--back { transform: rotate(180deg); }
 .px-tent__half b { font-family: var(--display); font-size: 22pt; font-weight: 800; line-height: 1; }
 .px-tent .px-guide { width: 44mm; height: 68mm; }
+/* Kakukk's viewBox is padded, so his box may overflow the tent; the bird itself stays inside the cut line. */
+.px-tent .px-guide--kakukk { flex: none; width: 58mm; height: 75mm; }
 .px-fold { position: relative; height: 0; border-top: 0.5mm dashed #8fa3b8; }
 .px-fold span { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); padding: 0 2.5mm; background: #ffffff; font-size: 9.5pt; font-weight: 700; color: #4a5e70; white-space: nowrap; }
 .px-steps { margin-top: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4mm; }
@@ -91,6 +93,7 @@
 .px-badges { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3.5mm; justify-items: center; }
 .px-badge { width: 30mm; height: 30mm; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0.6mm dashed #10233a; border-radius: 50%; }
 .px-badge .px-guide { width: 13mm; height: 20mm; }
+.px-badge .px-guide--kakukk { flex: none; width: 18mm; height: 23mm; }
 .px-badge b { font-family: var(--display); font-size: 13pt; font-weight: 800; line-height: 1; }
 
 .px-rovers { display: flex; justify-content: space-between; align-items: flex-end; gap: 4mm; }

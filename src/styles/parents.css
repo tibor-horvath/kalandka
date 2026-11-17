@@ -363,9 +363,11 @@
 .pa-rw-cur__rule { margin: 0; font-size: 17px; font-weight: 800; }
 .pa-rw-pill { flex: none; padding: 6px 12px; border-radius: 14px; background: #e4f4da; color: #1e5520; font-size: 15px; font-weight: 800; white-space: nowrap; }
 .pa-rw-cur--robot .pa-rw-pill { background: #e3f1fc; color: #1f5c9e; }
+.pa-rw-cur--tower .pa-rw-pill { background: #ece8f8; color: #5b4b9a; }
 .pa-rw-pod { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 14px; background: var(--pa-bg); }
 .pa-rw-pod .ps-pod__reward { opacity: 0.55; filter: none; }
 .pa-rw-cur--robot .ps-pod__quarter.is-full { stroke: var(--pa-accent); }
+.pa-rw-cur--tower .ps-pod__quarter.is-full { stroke: #7b68c8; }
 .pa-rw-costs { margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; font-size: 16px; }
 .pa-rw-costs > div { display: flex; justify-content: space-between; gap: 16px; }
 .pa-rw-costs dd { margin: 0; flex: none; font-weight: 800; }

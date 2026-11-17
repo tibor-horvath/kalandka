@@ -738,8 +738,9 @@ h1, h2, p { margin: 0; }
 .harbour__art { display: block; overflow: visible; }
 /* Five or more cards fill two rows down to the water: no dock under them then. */
 .screen--picker:has(.kid-card:nth-child(5)) .harbour__dock { display: none; }
-.kid-card__treasure { display: flex; gap: 8px; }
+.kid-card__treasure { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .kid-card__seeds--bolts { background: #eaeff4; }
+.kid-card__seeds--bells { background: #ece8f8; }
 
 /* Motion plays once on arrival, and once more for the chosen card; nothing loops. */
 @keyframes picker-rise { from { opacity: 0; transform: translateY(48px) scale(0.94); } }

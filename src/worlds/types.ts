@@ -24,6 +24,10 @@ export interface WorldManifest {
     readonly unit: string;
     /** "Your …", for Csepi's lines: "magod". */
     readonly yours: string;
+    /** As an object: "magot", "csavart", "harangot". */
+    readonly object: string;
+    /** The child's, for the parents' corner: "Panni magjai". */
+    readonly theirs: string;
     /** Solved tasks that fill the reward pod and pay one. */
     readonly tasksPer: number;
     /** What a solved task is called in the parents' corner: "feladat", or the workshop's "kör". */
