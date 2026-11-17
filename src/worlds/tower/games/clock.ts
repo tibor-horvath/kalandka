@@ -149,10 +149,16 @@ export function setSolved(r: SetRound): Say {
 
 // ---------- Hány óra? ----------
 
+/**
+ * Kakukk says a time and the child finds the clock that shows it: the cards are three dials (`times`), so the
+ * child reads the clock, never a word. `choices` holds the same cards in words, for screen readers and the hints.
+ */
 export interface ReadRound {
   level: ClockLevel;
   time: ClockTime;
-  /** The cards, in words; `answer` is the right one's index. */
+  /** The cards as clock times, drawn as dials; `answer` is the right one's index. */
+  times: ClockTime[];
+  /** The same cards in words. */
   choices: string[];
   answer: number;
 }
@@ -162,18 +168,19 @@ export function buildReadRound(level: number, round: number): ReadRound {
   const rand = rng(seedOf(4, level, round));
   const time = timeFor(l.step, rand);
   const cards = shuffle([time, ...distractors(time, l.step, rand)], rand);
-  return { level: l, time, choices: cards.map(timeWords), answer: cards.findIndex((c) => same(c, time)) };
+  return { level: l, time, times: cards, choices: cards.map(timeWords), answer: cards.findIndex((c) => same(c, time)) };
 }
 
 export function readStart(r: ReadRound): Say {
-  return say(r.level.step === 'hourOnly' ? 'Hova mutat a kis mutató? Hány óra van?' : 'Hány óra van?');
+  const ask = `Melyik órán van ${timeWords(r.time)}?`;
+  return say(r.level.step === 'hourOnly' ? `${ask} Nézd a kis mutatót!` : ask);
 }
 
 export function readWrong(r: ReadRound, wrong: number, misses: number): Say {
   const t = r.time;
   const show = misses >= SHOW_AFTER;
-  if (show) return say(`Hoppá! ${capital(timeWords(t))} van. Nézd, világít.`, 'think', 'oops');
-  if (t.m === 0) return say(`Hoppá! Nézd a kis mutatót: melyik számra mutat?`, 'think', 'oops');
+  if (show) return say(`Hoppá! ${capital(timeWords(t))} ezen az órán van. Nézd, világít.`, 'think', 'oops');
+  if (t.m === 0) return say(`Hoppá! ${capital(timeWords(t))}kor a kis mutató a ${numberSuffix(t.h)} mutat. Keresd meg!`, 'think', 'oops');
   const said = r.choices[wrong];
   if (said === timeWords(numberAsMinutes(t))) return say(fiveHint(t), 'think', 'oops');
   if (said.endsWith(' óra') && t.m === 30) return say('Hoppá! A hosszú mutató a percet mutatja. Nézd a rövidet!', 'think', 'oops');

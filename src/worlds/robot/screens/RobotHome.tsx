@@ -65,7 +65,7 @@ export function RobotHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
     const fresh = solvedOf(progress, id) === 0;
     const unopened = fresh && !progress.worlds.robot.opened.includes(id);
     const level = isLadderGame(id) ? ladderOf(progress, id).level : 0;
-    const badge: Badge = i === 0 && fresh ? { text: 'Kezdd itt!', kind: 'new' } : unopened ? { text: 'Új gép!', kind: 'new' } : { text: `${level + 1}. szint`, kind: 'level' };
+    const badge: Badge = i === 0 && fresh ? { text: 'Kezdd itt!', kind: 'new' } : unopened ? { text: 'Új gép!', kind: 'new' } : { text: `${level + 1}. szint`, kind: 'level', level: level + 1 };
     return { id, name, label: TILES[id]!.label, badge, start: i === 0 && fresh, art: TILES[id]!.art, onOpen: () => open(id) };
   });
   const reward: RewardPlace = {
@@ -75,7 +75,7 @@ export function RobotHome({ onOpen, onReward, ...actions }: HubActions & { onOpe
     icon: <Bolt size={30} />,
     count: boltBalance(progress),
     unit: 'csavar',
-    badge: newFriend(progress) ? 'Barát jött!' : secondRobotNew(progress) ? 'Új robot!' : canBuyAnything(progress) ? 'Építhetsz!' : null,
+    badge: newFriend(progress) ? { text: 'Barát jött!', kind: 'visitor' } : secondRobotNew(progress) ? { text: 'Új robot!', kind: 'new' } : canBuyAnything(progress) ? { text: 'Építhetsz!', kind: 'build' } : null,
     onClick: openWorkshop
   };
 

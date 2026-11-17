@@ -1,16 +1,16 @@
 import type { ReactNode } from 'react';
 import { handAngles, timeWords, type ClockTime } from '../../lib/time';
-import { ANSWER, At, Choices, FONT, INK, Pic, Ring, WriteBox, roundOf, spec, type Density, type Explainer, type Grid, type PrintSpec } from '../../print/sheet';
+import { ANSWER, At, Choices, FAINT, FONT, INK, Pic, Ring, WriteBox, roundOf, spec, type Density, type Explainer, type Grid, type PrintSpec } from '../../print/sheet';
 import type { GameId } from '../../state/games';
 import { ladderOf } from '../../state/ladder';
-import { ActivityPic, DIAL_NUMBERS, DayPartSign, SeasonSign, SeasonTree } from './art';
+import { ActivityPic, DIAL_NUMBERS, DayPartSign, DaySign, SeasonSign, SeasonTree, SpanSign } from './art';
 import { ACTIVITIES, DAY_PARTS, SPANS, capital } from './games/activities';
 import { introFor, type IntroArt } from './games/intros';
 import { DIGI_LEVELS, READ_LEVELS, SET_LEVELS, buildDigiRound, buildReadRound, buildSetRound, type DigiRound, type ReadRound, type SetRound } from './games/clock';
 import { DAY_LEVELS, buildDayRound, type DayRound } from './games/day';
-import { SAND_LEVELS, SPAN_WORDS, buildSandRound, type SandRound } from './games/sand';
+import { SAND_LEVELS, buildSandRound, type SandRound } from './games/sand';
 import { MONTHS, SEASONS, SEASON_LEVELS, SEASON_NAMES, WEEK, answerOf, buildSeasonRound, type SeasonRound } from './games/season';
-import { SLEEP_LEVELS, buildSleepRound, cardText, type SleepRound } from './games/sleep';
+import { SLEEP_LEVELS, buildSleepRound, type SleepRound } from './games/sleep';
 
 // Óratorony on paper: the tasks come from the games' own generators, so a sheet matches the child's level.
 // Tapping becomes circling, writing a number under a picture, or drawing the clock's hands.
@@ -211,20 +211,72 @@ function SeasonScene({ r }: { r: SeasonRound }): ReactNode {
         </At>
       ));
     case 'week':
-      return WEEK.map((d, i) => (
-        <g key={d}>
-          <rect x={i * 108 + 2} y={50} width="100" height="70" rx="14" fill="#FFFFFF" stroke={i === r.gap ? INK : '#B9CBD8'} strokeWidth="3" strokeDasharray={i === r.gap ? '10 8' : undefined} />
-          {i !== r.gap && <Word x={i * 108 + 2} y={50} w={100} h={70} text={d} size={d.length > 7 ? 18 : 22} />}
-        </g>
-      ));
+      return <WeekRow y={40} gap={r.gap} />;
     case 'near':
     case 'far': {
       const when = r.mode === 'near' ? (r.ask === 'after' ? 'holnap' : 'tegnap') : r.ask === 'after' ? 'holnapután' : 'tegnapelőtt';
-      return <Word x={0} y={40} w={760} h={110} text={`Ma ${WEEK[r.today]} van. ${capital(when)}?`} size={48} />;
+      return (
+        <g>
+          <Word x={0} y={0} w={760} h={60} text={`Ma ${WEEK[r.today]} van. ${capital(when)}?`} size={34} />
+          <WeekRow y={86} today={r.today} />
+        </g>
+      );
     }
     case 'month':
-      return <Word x={0} y={40} w={760} h={110} text={capital(MONTHS[r.month])} size={64} />;
+      // The month's place in the year: twelve numbered tiles, the asked one drawn thick; its name above, read aloud.
+      return (
+        <g>
+          <Word x={0} y={0} w={760} h={70} text={capital(MONTHS[r.month])} size={48} />
+          {MONTHS.map((m, i) => (
+            <g key={m}>
+              <rect x={20 + i * 61} y={96} width="54" height="64" rx="12" fill="#FFFFFF" stroke={i === r.month ? INK : FAINT} strokeWidth={i === r.month ? 6 : 3} />
+              <Word x={20 + i * 61} y={96} w={54} h={64} text={String(i + 1)} size={26} />
+            </g>
+          ))}
+        </g>
+      );
   }
+}
+
+/**
+ * The week as a row of tiles, each day's sign over its small name, so the day is found by its shape and its place.
+ * `gap` leaves one tile empty (dashed); `today` draws one thick with "ma" over it.
+ */
+function WeekRow({ y, gap, today }: { y: number; gap?: number; today?: number }) {
+  return (
+    <g>
+      {WEEK.map((d, i) => {
+        const x = 4 + i * 108;
+        const empty = i === gap;
+        return (
+          <g key={d}>
+            <rect x={x} y={y} width="100" height="104" rx="14" fill="#FFFFFF" stroke={empty || i === today ? INK : FAINT} strokeWidth={i === today ? 6 : 3} strokeDasharray={empty ? '10 8' : undefined} />
+            {!empty && (
+              <>
+                <At x={x + 28} y={y + 8}>
+                  <DaySign day={i} size={44} />
+                </At>
+                <Word x={x} y={y + 58} w={100} h={40} text={d} size={d.length > 7 ? 16 : 19} />
+              </>
+            )}
+            {i === today && <Word x={x} y={y - 34} w={100} h={30} text="ma" size={24} />}
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+/** A day's card for circling: its sign big, its name small. */
+function DayChoice({ day, w }: { day: number; w: number }) {
+  return (
+    <g>
+      <At x={w / 2 - 40} y={18}>
+        <DaySign day={day} size={80} />
+      </At>
+      <Word x={0} y={108} w={w} h={44} text={WEEK[day]} size={WEEK[day].length > 7 ? 22 : 26} />
+    </g>
+  );
 }
 
 export const seasonSheet = spec<SeasonRound>({
@@ -265,7 +317,7 @@ export const seasonSheet = spec<SeasonRound>({
         <Choices x={x0} y={210} w={w} h={160} gap={gap} pick={answerOf(task)} answers={answers}>
           {(task.choices as (string | number)[]).map((c) =>
             words ? (
-              <Word key={c} x={0} y={0} w={w} h={160} text={WEEK[c as number]} size={30} />
+              <DayChoice key={c} day={c as number} w={w} />
             ) : (
               <SeasonCard key={c} season={c as keyof typeof SEASON_NAMES} tree={tree} />
             )
@@ -306,28 +358,24 @@ export const setSheet = spec<SetRound>({
 
 export const readSheet = spec<ReadRound>({
   id: 'read',
-  rev: 1,
+  // 2: the time is read aloud and the child circles the clock that shows it, as in the game (was: circle the words).
+  rev: 2,
   levels: READ_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'read').level,
   grid: (_, d) => pickGrid(d, [2, 2], [2, 3], [2, 4]),
-  ask: () => 'Hány óra van? Karikázd be!',
-  tip: () => 'A kis mutató az órát, a nagy a percet mutatja. A fél és a negyed mindig a következő órát mondja: ha a kis mutató a 2 és a 3 között van, az „fél három”.',
+  ask: () => 'Olvasd fel az időt! Melyik óra mutatja? Karikázd be!',
+  tip: () => 'A felnőtt felolvassa az időt, a gyerkőc az órát keresi. A kis mutató az órát, a nagy a percet mutatja. A fél és a negyed mindig a következő órát mondja: ha a kis mutató a 2 és a 3 között van, az „fél három”.',
   tasks: (req) => Array.from({ length: req.count }, (_, i) => buildReadRound(req.level, roundOf(req, i))),
   Task: ({ task, answers }) => (
     <Pic w={560} h={250}>
-      <At x={5} y={5}>
-        <PaperClock size={240} time={task.time} hourOnly={task.level.step === 'hourOnly'} />
-      </At>
-      <Choices x={0} y={0} w={0} h={0} pick={-1} answers={false}>
-        {[]}
+      <Word x={0} y={0} w={560} h={56} text={capital(timeWords(task.time))} size={timeWords(task.time).length > 16 ? 28 : 36} />
+      <Choices x={5} y={70} w={170} h={170} gap={15} pick={task.answer} answers={answers}>
+        {task.times.map((t) => (
+          <At key={timeWords(t)} x={10} y={10}>
+            <PaperClock size={150} time={t} hourOnly={task.level.step === 'hourOnly'} />
+          </At>
+        ))}
       </Choices>
-      {task.choices.map((c, i) => (
-        <g key={c}>
-          <rect x={270} y={i * 82 + 4} width="280" height="70" rx="16" fill="#FFFFFF" stroke="#B9CBD8" strokeWidth="3" />
-          <Word x={270} y={i * 82 + 4} w={280} h={70} text={capital(c)} size={c.length > 16 ? 22 : 30} />
-          {answers && i === task.answer && <Ring x={270} y={i * 82 + 4} w={280} h={70} />}
-        </g>
-      ))}
     </Pic>
   )
 });
@@ -362,9 +410,40 @@ export const digiSheet = spec<DigiRound>({
 
 // ---------- Kakukk alszik ----------
 
+/**
+ * How long, drawn as in the game: one block an hour, half a block for the half hour, the number small under them.
+ * Grey and black, so it prints on any printer. Centred in a `w` × `h` box.
+ */
+function PaperBlocks({ minutes, w, h }: { minutes: number; w: number; h: number }) {
+  const whole = Math.floor(minutes / 60);
+  const half = minutes % 60 !== 0;
+  const n = whole + (half ? 1 : 0);
+  // A wrong card can be two hours past the longest nap (seven blocks): the blocks narrow so every row fits its box.
+  const gap = n > 5 ? 4 : 6;
+  const bw = Math.min(24, (w - 24 - (n - 1) * gap) / n);
+  const x0 = (w - (n * bw + (n - 1) * gap)) / 2;
+  const top = h / 2 - 34;
+  return (
+    <g>
+      {Array.from({ length: n }, (_, i) => {
+        const x = x0 + i * (bw + gap);
+        const isHalf = half && i === n - 1;
+        return (
+          <g key={i}>
+            <rect x={x} y={top} width={bw} height="42" rx="6" fill="#FFFFFF" stroke={INK} strokeWidth="3" />
+            <rect x={x} y={top} width={isHalf ? bw / 2 : bw} height="42" rx="6" fill="#6E7F8F" />
+          </g>
+        );
+      })}
+      <Word x={0} y={top + 46} w={w} h={30} text={`${whole > 0 || !half ? whole : ''}${half ? '½' : ''}`} size={24} />
+    </g>
+  );
+}
+
 export const sleepSheet = spec<SleepRound>({
   id: 'sleep',
-  rev: 1,
+  // 2: hour blocks for how long and clocks for when he woke, as in the game (was: words to circle).
+  rev: 2,
   levels: SLEEP_LEVELS.map((l) => l.name),
   current: (p) => ladderOf(p, 'sleep').level,
   grid: (_, d) => pickGrid(d, [1, 3], [2, 3], [2, 4]),
@@ -375,15 +454,16 @@ export const sleepSheet = spec<SleepRound>({
   tip: () => 'A gyerkőc ujjával lépjen végig a számlapon a kis mutató első helyétől a másodikig, és számolja a lépéseket: minden szám egy óra.',
   tasks: (req) => Array.from({ length: req.count }, (_, i) => buildSleepRound(req.level, roundOf(req, i))),
   Task: ({ task, answers }) => (
-    <Pic w={560} h={380}>
+    <Pic w={560} h={task.level.ask === 'woke' ? 450 : 380}>
       <At x={30} y={0}>
         <PaperClock size={200} time={task.from} />
       </At>
       {task.level.ask === 'woke' ? (
         <g>
-          <rect x={300} y={40} width="220" height="120" rx="18" fill="#FFFFFF" stroke="#B9CBD8" strokeWidth="3" />
-          <Word x={300} y={40} w={220} h={70} text="aludt:" size={26} />
-          <Word x={300} y={90} w={220} h={70} text={cardText(task.minutes)} size={cardText(task.minutes).length > 7 ? 28 : 40} />
+          <rect x={300} y={40} width="220" height="120" rx="18" fill="#FFFFFF" stroke={FAINT} strokeWidth="3" />
+          <At x={300} y={40}>
+            <PaperBlocks minutes={task.minutes} w={220} h={120} />
+          </At>
         </g>
       ) : (
         <At x={300} y={0}>
@@ -396,11 +476,21 @@ export const sleepSheet = spec<SleepRound>({
       <At x={380} y={206}>
         <DayPartSign part="délben" size={40} />
       </At>
-      <Choices x={10} y={260} w={170} h={100} gap={15} pick={task.answer} answers={answers}>
-        {task.level.ask === 'woke'
-          ? task.times.map((t) => <Word key={t} x={0} y={0} w={170} h={100} text={capital(t)} size={t.length > 10 ? 20 : 28} />)
-          : task.choices.map((m) => <Word key={m} x={0} y={0} w={170} h={100} text={cardText(m)} size={cardText(m).length > 7 ? 24 : 34} />)}
-      </Choices>
+      {task.level.ask === 'woke' ? (
+        <Choices x={10} y={260} w={170} h={170} gap={15} pick={task.answer} answers={answers}>
+          {task.wakeTimes.map((t) => (
+            <At key={timeWords(t)} x={10} y={10}>
+              <PaperClock size={150} time={t} />
+            </At>
+          ))}
+        </Choices>
+      ) : (
+        <Choices x={10} y={260} w={170} h={100} gap={15} pick={task.answer} answers={answers}>
+          {task.choices.map((m) => (
+            <PaperBlocks key={m} minutes={m} w={170} h={100} />
+          ))}
+        </Choices>
+      )}
     </Pic>
   )
 });
@@ -415,7 +505,7 @@ export const sandSheet = spec<SandRound>({
   grid: (_, d) => pickGrid(d, [1, 3], [2, 3], [2, 4]),
   ask: (level) => {
     const mode = SAND_LEVELS[level].mode;
-    if (mode === 'span') return 'Meddig tart? Karikázd be: egy pillanat, néhány perc vagy órák!';
+    if (mode === 'span') return 'Meddig tart? Karikázd be: egy pislantás, egy homokóra, vagy reggeltől estig!';
     if (mode === 'longest') return 'Melyik tart a leghosszabb ideig? Karikázd be!';
     if (mode === 'shortest') return 'Melyik a legrövidebb? Karikázd be!';
     return mode === 'longer' ? 'Melyik tart tovább? Karikázd be!' : 'Melyik a rövidebb? Karikázd be!';
@@ -431,7 +521,9 @@ export const sandSheet = spec<SandRound>({
         </At>
         <Choices x={240} y={60} w={160} h={110} gap={10} pick={SPANS.indexOf(task.answer)} answers={answers}>
           {SPANS.map((s) => (
-            <Word key={s} x={0} y={0} w={160} h={110} text={capital(SPAN_WORDS[s])} size={22} />
+            <At key={s} x={30} y={10}>
+              <SpanSign span={s} size={100} />
+            </At>
           ))}
         </Choices>
       </Pic>

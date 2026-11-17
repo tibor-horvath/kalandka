@@ -241,7 +241,6 @@ function Game() {
             onOpen={openPlace}
             onReward={() => openPlace('reward')}
             onParents={() => openGate()}
-            onPrint={openPrint}
             onSwitch={switchKid}
             onMap={() => go('map')}
             onAlbum={() => openAlbum(world)}

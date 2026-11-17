@@ -675,7 +675,7 @@ function LegalSheet({ onClose }: { onClose: () => void }) {
 
 /**
  * Stays at the top while the page scrolls: on the sky at first, then a slim white bar that marks the section in view.
- * Below 980px the section links fold into a menu that opens under the bar.
+ * Below 1140px the section links fold into a menu that opens under the bar.
  */
 function Header({ page, installed, onStart, back }: { page: RefObject<HTMLDivElement | null>; installed: boolean; onStart: () => void; back?: string }) {
   const current = useCurrentSection(page);
