@@ -37,6 +37,8 @@ export interface SleepRound {
   /** How long he slept: the cards, as minutes. When he woke: the cards, as times in words. `answer` is the right one's index. */
   choices: number[];
   times: string[];
+  /** When he woke: the same cards as clock times, drawn as dials in the game. */
+  wakeTimes: ClockTime[];
   answer: number;
 }
 
@@ -61,13 +63,13 @@ export function buildSleepRound(level: number, round: number): SleepRound {
   const to: ClockTime = { h: Math.floor(end / 60) || 12, m: end % 60 };
   if (l.ask === 'woke') {
     // The wake-up time, against an hour too early and an hour too late.
-    const right = timeWords(to);
-    const times = shuffle([right, timeWords({ h: dialHour(to.h - 1), m: to.m }), timeWords({ h: dialHour(to.h + 1), m: to.m })], rand);
-    return { level: l, from, to, minutes, choices: [], times, answer: times.indexOf(right) };
+    const wakeTimes = shuffle([to, { h: dialHour(to.h - 1), m: to.m }, { h: dialHour(to.h + 1), m: to.m }], rand);
+    const times = wakeTimes.map(timeWords);
+    return { level: l, from, to, minutes, choices: [], times, wakeTimes, answer: wakeTimes.indexOf(to) };
   }
   const near = [minutes - step, minutes + step, minutes + 2 * step].filter((m) => m > 0 && m !== minutes);
   const cards = shuffle([minutes, ...shuffle(near, rand).slice(0, 2)], rand);
-  return { level: l, from, to, minutes, choices: cards, times: [], answer: cards.indexOf(minutes) };
+  return { level: l, from, to, minutes, choices: cards, times: [], wakeTimes: [], answer: cards.indexOf(minutes) };
 }
 
 /** How long, as the object of "aludtam": "két órát", "másfél órát". */

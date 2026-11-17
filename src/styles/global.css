@@ -122,6 +122,10 @@ h1, h2, p { margin: 0; }
 /* ---------- home ---------- */
 .hill { position: absolute; left: -400px; right: -400px; bottom: -1000px; height: 1600px; background: var(--grass); border-top-left-radius: 50% 70px; border-top-right-radius: 50% 70px; }
 .brand { display: flex; align-items: center; gap: 14px; }
+/* Térkép, top-left on a world's home (tablets): the map's own picture and its name, where every game keeps its back button. */
+.topbar__left { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.map-btn { height: 72px; padding: 0 22px 0 8px; border: 0; background: var(--paper); border-radius: 36px; box-shadow: 0 5px 0 #b9d8f2; color: var(--drop-deep); font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 10px; cursor: pointer; flex: none; }
+.map-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #b9d8f2; }
 .brand__text { display: flex; flex-direction: column; gap: 2px; }
 .brand__world { font-size: 38px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; }
 

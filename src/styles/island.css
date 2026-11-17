@@ -176,13 +176,9 @@
 @keyframes island-drift { from { transform: translateX(-10px); opacity: 0.55; } to { transform: translateX(10px); opacity: 1; } }
 @keyframes island-bob { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-3px) rotate(var(--tilt)); } 70% { transform: translateY(2px) rotate(calc(var(--tilt) * -0.75)); } }
 
-/* ---------- Kincseim's sign, and the boat as the way back to the map (tablets) ---------- */
+/* ---------- Kincseim's sign (tablets); the boat at the pier is scenery, the way back to the map is the top-left Térkép button ---------- */
 .island__sign { position: absolute; z-index: 1; translate: -50% -50%; padding: 2px 14px; border-radius: 10px; background: #8a5a3b; color: #ffffff; font-size: 18px; font-weight: 800; line-height: 1.3; box-shadow: 0 4px 0 #5f3d27; pointer-events: none; animation: island-pop 0.45s cubic-bezier(.34, 1.56, .64, 1) var(--last) backwards; }
 .world--robot .island__sign { background: #4f5f72; box-shadow: 0 4px 0 #2f3d4c; }
-.island__boat-btn { position: absolute; z-index: 1; width: 150px; height: 150px; translate: -50% -86%; border: 0; padding: 0; background: none; display: flex; justify-content: center; align-items: flex-start; cursor: pointer; color: var(--drop-deep); }
-.island__boat-label { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px 0 9px; border-radius: 17px; border: 3px solid currentColor; background: var(--paper); font-size: 18px; font-weight: 800; line-height: 1; animation: island-pop 0.45s cubic-bezier(.34, 1.56, .64, 1) 0.9s backwards; }
-.island__boat-btn:active .island__boat-label { transform: translateY(2px); }
-.is-leaving .island__boat-label { opacity: 0; transition: opacity 0.15s ease-in; }
 
 /* ---------- leaving for the map: the places go in reverse, the boat sails off, the island sinks away ---------- */
 .is-leaving :is(.spot, .island__timer) { animation: island-out 0.3s ease-in calc((var(--last) - var(--d, 0s)) * 0.6) both; }
@@ -204,7 +200,7 @@
 .door--in { clip-path: circle(0); }
 
 /* Back from a game: the island is already in place, so nothing arrives again; only the place the child left lands. */
-.island.is-back:not(.is-leaving) :is(.island__scene, .island__boat, .island__trail, .island__dots, .spot, .spot__badge, .island__timer, .island__sign, .island__boat-label) { animation: none; }
+.island.is-back:not(.is-leaving) :is(.island__scene, .island__boat, .island__trail, .island__dots, .spot, .spot__badge, .island__timer, .island__sign) { animation: none; }
 .island.is-back .spot--start .spot__disc::after { animation: none; }
 .island.is-back .island__trail { stroke-dashoffset: 0; }
 .island.is-back:not(.is-leaving) .spot.is-landing .spot__disc { animation: spot-land 0.22s ease-out both; }
@@ -221,7 +217,7 @@
 @media (prefers-reduced-motion: reduce) {
   .island__scene, .island__boat, .island__bob, .island__trail, .island__dots, .island__waves path,
   .spot, .spot__badge, .island__timer, .spot--start .spot__disc::after, .screen--home .spot .spot__art > svg,
-  .island__critter, .island__gear, .island__sign, .island__boat-label { animation: none !important; }
+  .island__critter, .island__gear, .island__sign { animation: none !important; }
   .island__trail { stroke-dashoffset: 0; }
 }
 

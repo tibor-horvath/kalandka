@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Door, type DoorPlace } from './Door';
-import { KidChip, ParentsButton, VoiceButton } from './hub';
+import { KidChip, MapButton, ParentsButton, VoiceButton } from './hub';
 import { Island, RewardDock, useEnter, useLeave, type Place, type RewardPlace } from './island';
 import { PlayTimer, pausedLabel, useTimeLeft } from './PlayTimer';
 import { useForm } from './Stage';
@@ -85,11 +85,15 @@ export function WorldHub({
     <>
       <div className={look.className}>
         <header className="topbar">
-          <div className="brand">
-            <KalandkaIcon size={56} />
-            <div className="brand__text">
-              <KalandkaWordmark size={phone ? 15 : 22} accent={look.accent} />
-              <div className="brand__world">{info.name}</div>
+          <div className="topbar__left">
+            {/* Tablets: the way back to the map in the top-left corner, where every game keeps its back button; it takes the logo's place. Phones have it in the bar under the island. */}
+            {!phone && <MapButton onClick={leaveForMap} />}
+            <div className="brand">
+              {phone && <KalandkaIcon size={56} />}
+              <div className="brand__text">
+                <KalandkaWordmark size={phone ? 15 : 22} accent={look.accent} />
+                <div className="brand__world">{info.name}</div>
+              </div>
             </div>
           </div>
           <div className="topbar__right">
@@ -125,7 +129,6 @@ export function WorldHub({
           opening={opening}
           back={back && { id: back.place, solved: back.solved, landed }}
           timer={phone ? null : timer}
-          onMap={phone ? undefined : leaveForMap}
         />
         {/* Phones have no boat to tap: the way back to the map leads the bar under the island. */}
         {phone && <RewardDock reward={rewardDoor} book={book} onMap={leaveForMap} />}

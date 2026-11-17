@@ -3,7 +3,7 @@ import { FitBox } from './FitBox';
 import { useForm, useWideStage, type Form } from './Stage';
 import { StickerBookArt } from './stickers';
 import { BoatArt } from './boat';
-import { MapIcon } from './hub';
+import { MiniMap } from './hub';
 import { DoneTick } from './ui';
 
 // A world's home: its island, every game a place along one trail from the boat's dock.
@@ -116,8 +116,6 @@ interface Geometry {
   /** Where the bottom of the play-time sign sits, and how big the sign is drawn there. */
   timer: Pt & { scale: number };
   critters: CritterSpot[];
-  /** Tablets: the boat's centre, where it also works as the way back to the map. */
-  boatAt?: Pt;
   /** Tablets: Kincseim, the small island off the shore holding the reward place and the sticker album, and its sign. */
   islet?: { shore: string; sign: Pt };
 }
@@ -183,7 +181,6 @@ const GARDEN_TABLET: Geometry = {
     { x: 420, y: 712, role: 1 },
     { x: 462, y: 724, role: 2 }
   ],
-  boatAt: { x: 92, y: 748 },
   islet: { shore: ISLET_TABLET, sign: { x: 1100, y: 632 } }
 };
 
@@ -231,7 +228,6 @@ const ROBOT_TABLET: Geometry = {
     { x: 770, y: 712, role: 1 },
     { x: 822, y: 652, role: 2 }
   ],
-  boatAt: { x: 1088, y: 748 },
   islet: { shore: ISLET_TABLET, sign: { x: 80, y: 632 } }
 };
 
@@ -404,7 +400,6 @@ function widen(g: Geometry, extra: number): Geometry {
     book: at(g.book),
     timer: at(g.timer),
     critters: g.critters.map(at),
-    boatAt: g.boatAt && { x: g.boatAt.x + shift, y: g.boatAt.y },
     islet: g.islet && { shore: g.shoreMirror ? mapPath(g.islet.shore, (x) => X(g.w - x)) : mapPath(g.islet.shore, X), sign: at(g.islet.sign) }
   };
 }
@@ -822,7 +817,7 @@ export function RewardDock({ reward, book, onMap }: { reward: RewardPlace; book:
     <nav className="reward-dock" aria-label="Térkép és Kincseim">
       <button type="button" className="dock-item dock-item--map" onClick={onMap} aria-label="Térkép: másik világ választása">
         <span className="spot__disc">
-          <MapIcon size={24} />
+          <MiniMap size={40} />
         </span>
         <span className="dock-item__text">
           <span className="dock-item__name">Térkép</span>
@@ -870,8 +865,7 @@ export function Island({
   leaving,
   opening,
   back,
-  timer,
-  onMap
+  timer
 }: {
   world: IslandWorld;
   places: Place[];
@@ -882,8 +876,6 @@ export function Island({
   back: Return | null;
   /** Today's play-time sign, planted where the island keeps room for it. */
   timer?: ReactNode;
-  /** Tablets: the docked boat also takes the child back to the map. */
-  onMap?: () => void;
 }) {
   const form = useForm();
   const extra = useWideStage();
@@ -919,14 +911,6 @@ export function Island({
               <RewardSpot reward={reward} at={g.spots[last]} i={last} chosen={opening !== null && opening === reward.id} landed={landed !== null && landed.id === reward.id} />
               <BookSpot book={book} at={g.book} i={last} />
             </>
-          )}
-          {onMap && g.boatAt && (
-            <button type="button" className="island__boat-btn" style={{ left: g.boatAt.x, top: g.boatAt.y }} onClick={onMap} aria-label="Hajóval vissza a térképre">
-              <span className="island__boat-label">
-                <MapIcon size={18} />
-                Térkép
-              </span>
-            </button>
           )}
           {timer && (
             <div className="island__timer" style={{ left: g.timer.x, top: g.timer.y, '--s': g.timer.scale, '--d': `${FIRST_SPOT + (last + 1) * SPOT_STEP}s` } as CSSProperties}>

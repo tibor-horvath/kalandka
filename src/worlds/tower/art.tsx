@@ -1,6 +1,6 @@
 import type { ReactNode, SVGProps } from 'react';
 import type { Mood } from '../../lib/types';
-import type { ActivityId } from './games/activities';
+import type { ActivityId, Span } from './games/activities';
 import type { Season } from './games/season';
 import { useNowText } from './useNow';
 
@@ -543,6 +543,65 @@ export function SeasonTree({ season, size = 110, label }: { season: Season; size
     <svg width={size} height={size} viewBox="-60 -60 120 120" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       <circle r="57" fill={SEASON_SKY[season]} />
       {TREE_SEASON[season]}
+    </svg>
+  );
+}
+
+/**
+ * Each day of the week keeps one sign wherever it shows (the week row and its cards), so a child who can't read
+ * the day's name still finds it: a shape and a colour, the shapes all different so colour is never the only clue.
+ * Monday to Sunday: circle, square, triangle, star, heart, diamond, moon.
+ */
+const DAY_SIGN_FILL = ['#2E86DE', '#D9741A', '#2F7D32', '#C99A12', '#C2417A', '#0C6E6A', '#5B4B9A'];
+const DAY_SIGN_PATH = [
+  'M20 4 A16 16 0 1 1 19.99 4 Z',
+  'M6 6 H34 V34 H6 Z',
+  'M20 4 L36 34 H4 Z',
+  'M20 3 L24.5 15 L37 15 L27 23 L31 36 L20 28 L9 36 L13 23 L3 15 L15.5 15 Z',
+  'M20 36 C7 26 2 18 6 11 C10 4 18 6 20 12 C22 6 30 4 34 11 C38 18 33 26 20 36 Z',
+  'M20 3 L37 20 L20 37 L3 20 Z',
+  'M27 4 A16 16 0 1 0 36 28 A13 13 0 0 1 27 4 Z'
+];
+
+export function DaySign({ day, size = 40 }: { day: number; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+      <path d={DAY_SIGN_PATH[day]} fill={DAY_SIGN_FILL[day]} stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * How long something takes, drawn so a child needn't read it (Homokóra's last level, on screen and on paper):
+ * a blink for a moment, an hourglass running out for a few minutes, the sun crossing to the moon for hours.
+ * Each picture is longer than the one before; `size` is its width.
+ */
+export function SpanSign({ span, size }: { span: Span; size?: number }) {
+  if (span === 'pillanat') {
+    const w = size ?? 96;
+    return (
+      <svg width={w} height={(w * 44) / 56} viewBox="0 0 56 44" aria-hidden="true">
+        <path d="M4 22 Q28 2 52 22" fill="none" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+        <path d="M14 27 L10 35 M28 29 V39 M42 27 L46 35" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (span === 'perc') {
+    const w = size ? size * 0.6 : 56;
+    return (
+      <svg width={w} height={(w * 50) / 36} viewBox="0 0 36 50" aria-hidden="true">
+        <path d="M4 3h28M4 47h28" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+        <path d="M7 5 C7 18 18 21 18 25 C18 29 7 32 7 45 H29 C29 32 18 29 18 25 C18 21 29 18 29 5 Z" fill="#FFF8E1" stroke={INK} strokeWidth="3" />
+        <path d="M10 45 C12 38 16 37 18 35 C20 37 24 38 26 45 Z" fill="#D9A21A" stroke={INK} strokeWidth="1.5" />
+      </svg>
+    );
+  }
+  const w = size ?? 110;
+  return (
+    <svg width={w} height={(w * 44) / 64} viewBox="0 0 64 44" aria-hidden="true">
+      <path d="M6 38 A26 26 0 0 1 58 38" fill="none" stroke={INK} strokeWidth="2.5" strokeDasharray="3 6" />
+      <circle cx="8" cy="36" r="7" fill="#FFC93C" stroke={INK} strokeWidth="2" />
+      <path d="M58 26 A9 9 0 1 0 58 42 A7 7 0 0 1 58 26 Z" fill="#5B4B9A" stroke={INK} strokeWidth="1.5" />
     </svg>
   );
 }

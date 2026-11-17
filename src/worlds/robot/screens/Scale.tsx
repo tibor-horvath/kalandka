@@ -372,11 +372,16 @@ function BalanceTaskView({ level, task, say, onDone }: TaskProps<BalanceTask>) {
     <>
       <Board left={task.left} right={right} angle={tilt(l, r)} counts={done ? { left: l, right: r } : null} onTapRight={removeAt} label={sideLabel(l, r)} verdict={verdict} />
       <div className="scale-tray">
-        <button type="button" className="scale-tray__btn scale-tray__btn--off" onClick={() => removeAt(right.length - 1)} disabled={done || right.length === 0}>
+        {/* Taking a weight off, drawn: a minus and a weight lifting up off the pan. The word stays for screen readers. */}
+        <button type="button" className="scale-tray__btn scale-tray__btn--off" onClick={() => removeAt(right.length - 1)} disabled={done || right.length === 0} aria-label="Levesz egy súlyt a jobb oldalról">
           <span className="scale-tray__sign" aria-hidden="true">
             −
           </span>
-          Levesz
+          <svg aria-hidden="true" width="40" height="44" viewBox="0 0 40 44">
+            <path d="M20 2 V14 M13 8 L20 2 L27 8" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M8 22 H32 L36 42 H4 Z" fill="currentColor" opacity="0.85" />
+            <circle cx="20" cy="18" r="4" fill="none" stroke="currentColor" strokeWidth="3" />
+          </svg>
         </button>
         {task.tray.map((w) => (
           <button key={w} type="button" className="scale-tray__btn" onClick={() => add(w)} disabled={done} aria-label={w === 2 ? 'Kettes súlyt teszek a jobb oldalra' : 'Egy súlyt teszek a jobb oldalra'}>
