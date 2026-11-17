@@ -3,6 +3,7 @@ import { Bee } from '../art';
 import { FitBox } from '../../../components/FitBox';
 import { useLadderRound } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
+import { PeekButton } from '../../../components/PeekButton';
 import { DotFace } from '../seeds';
 import {
   BOX_H,
@@ -397,16 +398,13 @@ export function Trace({ onBack }: { onBack: () => void }) {
 
           <div className="trace-actions">
             {!done && (
-              <button
-                type="button"
-                className="peek-btn peek-btn--light"
+              <PeekButton
+                label="Mutasd az utat!"
                 onClick={() => {
                   askedWay.current = true;
                   runDemo();
                 }}
-              >
-                Mutasd az utat!
-              </button>
+              />
             )}
             <NextButton show={done} onNext={goNext} label="Következő szám" />
           </div>

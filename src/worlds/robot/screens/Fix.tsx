@@ -2,6 +2,7 @@ import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { CELL, FRAME_H, FRAME_W, FloorCrates, FloorRobot, FloorTiles, useRover } from '../floor';
 import { useLadderRound, WinCard } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
+import { PeekButton } from '../../../components/PeekButton';
 import { FitBox } from '../../../components/FitBox';
 import { STAGE_W, useWideStage } from '../../../components/Stage';
 import { Battery, CmdIcon } from '../art';
@@ -377,9 +378,7 @@ function Task({ level, task, solved, say, noteHelp, onDone, later, children }: T
 
         {!finished && (
           <div className="path-actions">
-            <button type="button" className="peek-btn peek-btn--robot" onClick={show} disabled={running}>
-              Mutasd!
-            </button>
+            <PeekButton label="Mutasd a hibát!" onClick={show} disabled={running} />
             {open === null && (
               <button type="button" className="big-btn big-btn--robot" onClick={play} disabled={running}>
                 <PlayIcon /> Indulás

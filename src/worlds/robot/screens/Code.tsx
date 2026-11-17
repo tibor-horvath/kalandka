@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useLadderRound, WinCard } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
+import { PeekButton } from '../../../components/PeekButton';
 import { FitBox } from '../../../components/FitBox';
 import { useForm } from '../../../components/Stage';
 import { Bolt, CodeSign } from '../art';
@@ -314,14 +315,9 @@ function Task({ level, task, n, solved, say, noteHelp, onDone, later }: TaskProp
     </div>
   );
 
-  const showButton = !opened && !solved && (
-    <button type="button" className="peek-btn peek-btn--robot code-show" onClick={show}>
-      Mutasd!
-    </button>
-  );
-
   return (
     <>
+      {!opened && !solved && <PeekButton label="Mutasd a következő jelet!" onClick={show} />}
       <div className="code-machine">
         <FitBox className="code-fit" width={w} height={h}>
           <div className={`code-stage${fold ? ' code-stage--fold' : ''}`} style={{ width: w, height: h }}>
@@ -354,7 +350,6 @@ function Task({ level, task, n, solved, say, noteHelp, onDone, later }: TaskProp
               </button>
             );
           })}
-          {showButton}
         </div>
       ) : (
         <div className="choices code-pad">
@@ -366,7 +361,6 @@ function Task({ level, task, n, solved, say, noteHelp, onDone, later }: TaskProp
               </button>
             );
           })}
-          {showButton}
         </div>
       )}
     </>

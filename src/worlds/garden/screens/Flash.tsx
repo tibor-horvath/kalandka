@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Seed } from '../art';
 import { useLadderRound } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
+import { PeekButton } from '../../../components/PeekButton';
 import { FitBox } from '../../../components/FitBox';
 import { useForm } from '../../../components/Stage';
 import { DotFace, MiniSprout } from '../seeds';
@@ -96,16 +97,13 @@ export function Flash({ onBack }: { onBack: () => void }) {
                   Mutasd a magokat!
                 </button>
               ) : (
-                <button
-                  type="button"
-                  className="peek-btn"
+                <PeekButton
+                  label="Mutasd újra a magokat!"
                   onClick={() => {
                     helped.current = true;
                     show();
                   }}
-                >
-                  Mutasd újra!
-                </button>
+                />
               )}
             </div>
           )}

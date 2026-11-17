@@ -25,6 +25,9 @@
 .is-phone .topbar__right { gap: 8px; }
 .is-phone .round-btn { width: 48px; height: 48px; border-radius: 24px; }
 .is-phone .round-btn svg { width: 24px; height: 24px; }
+.is-phone .topbar__actions { gap: 8px; }
+.is-phone .peek-eye { width: 48px; height: 48px; border-radius: 24px; box-shadow: 0 4px 0 #d9a21a; }
+.is-phone .peek-eye svg { width: 24px; height: 24px; }
 .is-phone .pill { white-space: nowrap; height: 44px; padding: 0 14px 0 10px; gap: 6px; border-radius: 22px; font-size: 20px; }
 .is-phone .pill svg { width: 22px; height: 22px; }
 /* Home topbar holds seeds, mute and parents: the number alone carries the seed count. */
@@ -236,7 +239,9 @@
 .is-phone .ten-frame--double .slot svg { width: 20px; }
 .is-phone .ten-frame--double .slot:nth-child(n + 11):nth-child(-n + 15) { margin-top: 6px; }
 /* The hint is for grown-ups reading along; on a phone the space goes to the game. */
-.is-phone .panel__hint { display: none; }
+.is-phone .panel__hint, .is-phone .slot-howto { display: none; }
+/* The cloud's label is a short picture now, so it stays inside the middle column instead of running under the panel. */
+.is-phone .cloud-btn__label { white-space: nowrap; }
 .is-phone .panel__foot { min-height: 0; }
 .is-phone .panel__foot:empty { display: none; }
 .is-phone .panel__foot .big-btn { flex: 1; margin-left: 0; }

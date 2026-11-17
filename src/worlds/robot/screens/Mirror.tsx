@@ -1,6 +1,7 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { useLadderRound, WinCard } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
+import { PeekButton } from '../../../components/PeekButton';
 import { FitBox } from '../../../components/FitBox';
 import { Lamp, LampGrid } from '../art';
 import { DoneTick } from '../../../components/ui';
@@ -317,9 +318,7 @@ function LightBoard({ task, n, solved, say, onDone, later }: BoardProps & { task
           </div>
         )}
         {!finished && !solved && (
-          <button type="button" className="peek-btn peek-btn--robot" onClick={() => show(nearestTarget(task, lit, null))}>
-            Mutasd!
-          </button>
+          <PeekButton label="Mutasd, hova kerül a lámpa!" onClick={() => show(nearestTarget(task, lit, null))} />
         )}
       </div>
     </>

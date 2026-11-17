@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, type CSSProperties } from 'react';
 import { CELL, FRAME_H, FRAME_W, FloorCrates, FloorRobot, FloorTiles, useRover } from '../floor';
 import { useLadderRound, WinCard } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
+import { PeekButton } from '../../../components/PeekButton';
 import { FitBox } from '../../../components/FitBox';
 import { Battery, CmdIcon } from '../art';
 import { PlayIcon } from '../../../components/ui';
@@ -426,14 +427,14 @@ export function Path({ onBack }: { onBack: () => void }) {
 
           <div className="path-actions">
             {!solved && (
-              <button type="button" className="peek-btn peek-btn--robot" onClick={() => {
+              <PeekButton
+                label="Mutasd az utat!"
+                onClick={() => {
                   askedWay.current = true;
                   showRoute();
                 }}
                 disabled={running}
-              >
-                Mutasd az utat!
-              </button>
+              />
             )}
             {plan && !solved && (
               <button type="button" className="big-btn big-btn--robot" onClick={play} disabled={running}>

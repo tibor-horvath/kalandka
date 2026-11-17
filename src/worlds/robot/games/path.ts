@@ -399,8 +399,8 @@ export const ROUTE_FEEDBACK: PathFeedback = {
 
 /** After a couple of tries Csavar offers to show the way, never says "wrong". */
 export const OFFER_FEEDBACK: PathFeedback = {
-  text: 'Megmutassam az utat? Koppints a Mutasd az utat! gombra.',
-  speech: 'Ez egy nehéz pálya. Ha szeretnéd, megmutatom az utat: koppints a Mutasd az utat gombra!',
+  text: 'Megmutassam az utat? Koppints a sárga szemre.',
+  speech: 'Ez egy nehéz pálya. Ha szeretnéd, megmutatom az utat: koppints fent a sárga szemre!',
   mood: 'think',
   tone: 'plain'
 };

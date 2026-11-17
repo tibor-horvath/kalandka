@@ -9,6 +9,63 @@ import { speak } from '../../../lib/speech';
 import { useProgress } from '../../../state/progress';
 import { GuideSays, NextButton } from '../../../components/round';
 
+function TapIcon() {
+  return (
+    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 11V5a2 2 0 0 1 4 0v6" />
+      <path d="M13 9a2 2 0 0 1 4 0v3a7 7 0 0 1-7 7h-1a5 5 0 0 1-4.6-3L3 12.5a1.8 1.8 0 0 1 3-1.8L9 14" />
+    </svg>
+  );
+}
+
+function Arrow() {
+  return (
+    <svg aria-hidden="true" width="20" height="14" viewBox="0 0 22 16">
+      <path d="M2 8h16M12 2l6 6-6 6" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * How the slots work, drawn instead of written: an empty slot becomes a drop, a drop becomes an empty slot.
+ * The sentence stays for screen readers; Csepi says it when the round starts.
+ */
+function SlotHowTo({ perTap }: { perTap: number }) {
+  const text =
+    perTap > 1
+      ? 'Koppints egy cseppre, és elveszel kettőt. Koppints egy üres helyre, és adsz kettőt.'
+      : 'Koppints egy cseppre, és elveszed. Koppints egy üres helyre, és adsz egyet.';
+  return (
+    <div className="slot-howto" role="img" aria-label={text}>
+      {/* Tap an empty slot (the hand) and a drop appears: one more. */}
+      <span className="slot-howto__pair">
+        <i className="slot-howto__slot slot-howto__slot--empty">
+          <span className="slot-howto__tap">
+            <TapIcon />
+          </span>
+        </i>
+        <Arrow />
+        <i className="slot-howto__slot slot-howto__slot--drop">
+          <Drop size={14} />
+        </i>
+        <b className="slot-howto__n">+{perTap}</b>
+      </span>
+      {/* Tap a drop and it goes: one less. */}
+      <span className="slot-howto__pair">
+        <i className="slot-howto__slot slot-howto__slot--drop">
+          <Drop size={14} />
+          <span className="slot-howto__tap">
+            <TapIcon />
+          </span>
+        </i>
+        <Arrow />
+        <i className="slot-howto__slot slot-howto__slot--gone" />
+        <b className="slot-howto__n">−{perTap}</b>
+      </span>
+    </div>
+  );
+}
+
 export function Water({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   // On phones Csepi talks above the scene instead of inside the panel.
@@ -34,6 +91,8 @@ export function Water({ onBack }: { onBack: () => void }) {
   const fb = feedback(count, plant);
   // A pour is judged where it ends: drops passing the target on their way to too many are no bloom.
   const done = fb.status === 'done' && !isPouring;
+  /** The plant bloomed this round: the cloud sleeps and the drops stay put, so one more tap can't undo the win. */
+  const [bloomed, setBloomed] = useState(false);
 
   const stopPouring = () => {
     pourTimers.current.forEach((t) => window.clearTimeout(t));
@@ -46,6 +105,7 @@ export function Water({ onBack }: { onBack: () => void }) {
     stopPouring();
     setCount(plant.given ?? 0);
     setFalling([]);
+    setBloomed(false);
     overflowed.current = false;
     speak(introSpeech(plant));
     return stopPouring;
@@ -53,7 +113,9 @@ export function Water({ onBack }: { onBack: () => void }) {
 
   // First time this round's plant blooms: a seed and a flower for the garden.
   useEffect(() => {
-    if (done) win(overflowed.current, { extra: (p) => ({ ...p, garden: [...p.garden, plant.id] }) });
+    if (!done) return;
+    setBloomed(true);
+    win(overflowed.current, { extra: (p) => ({ ...p, garden: [...p.garden, plant.id] }) });
   // eslint-disable-next-line react-hooks/exhaustive-deps -- Runs once, when the plant blooms; win and the plant are read from that render.
   }, [done]);
 
@@ -78,7 +140,7 @@ export function Water({ onBack }: { onBack: () => void }) {
   };
 
   const add = (amount = perTap) => {
-    if (pouring.current || count >= maxDrops) return;
+    if (bloomed || pouring.current || count >= maxDrops) return;
     const end = addDrop(count, plant.target, amount);
     const steps = end - count;
     // The can counts every drop it pours; a pair from the cloud is counted as its total ("kettő, négy, hat").
@@ -111,7 +173,7 @@ export function Water({ onBack }: { onBack: () => void }) {
     }
   };
   const remove = () => {
-    if (!pouring.current) change(removeDrop(count, given, perTap));
+    if (!bloomed && !pouring.current) change(removeDrop(count, given, perTap));
   };
 
   const guide = (
@@ -135,10 +197,17 @@ export function Water({ onBack }: { onBack: () => void }) {
         {phone && <div className="water-guide">{guide}</div>}
         <div className="scene">
           <div className="sky-tools">
-            <button type="button" className="cloud-btn" onClick={() => add()} aria-label={perTap > 1 ? 'Koppints a felhőre két cseppért' : 'Koppints a felhőre egy cseppért'}>
-              <Cloud />
-              <span className="cloud-btn__label">
-                <Drop size={16} /> {perTap > 1 ? `${perTap} csepp` : double ? '1 csepp' : 'Koppints rám egy cseppért!'}
+            <button
+              type="button"
+              className={`cloud-btn${bloomed ? ' is-asleep' : ''}`}
+              onClick={() => add()}
+              disabled={bloomed}
+              aria-label={bloomed ? 'A felhő alszik: a virág kinyílt' : perTap > 1 ? 'Koppints a felhőre két cseppért' : 'Koppints a felhőre egy cseppért'}
+            >
+              <Cloud asleep={bloomed} />
+              {/* A picture, not a sentence: a tapping hand, how many drops, a drop. Csepi's bubble is the one voice. */}
+              <span className="cloud-btn__label" aria-hidden="true">
+                <TapIcon />+{perTap} <Drop size={16} />
               </span>
             </button>
             {showCan && (
@@ -203,6 +272,7 @@ export function Water({ onBack }: { onBack: () => void }) {
                   key={k}
                   type="button"
                   className={`slot slot--${kind}`}
+                  disabled={bloomed && kind !== 'given'}
                   onClick={kind === 'given' ? undefined : filled ? remove : () => add()}
                   aria-label={label}
                 >
@@ -215,13 +285,7 @@ export function Water({ onBack }: { onBack: () => void }) {
           {!phone && guide}
 
           <div className="panel__foot">
-            {!done && (
-              <p className="panel__hint">
-                {perTap > 1
-                  ? 'Koppints egy cseppre, és elveszel kettőt. Koppints egy üres helyre, és adsz kettőt.'
-                  : 'Koppints egy cseppre, és elveszed. Koppints egy üres helyre, és adsz egyet.'}
-              </p>
-            )}
+            {!done && <SlotHowTo perTap={perTap} />}
             <NextButton show={done} onNext={goNext} label="Következő virág" />
           </div>
         </div>
