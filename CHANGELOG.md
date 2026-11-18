@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.0](https://github.com/tibor-horvath/kalandka/compare/v1.14.0...v1.15.0) (2026-11-18)
+
+
+### Added
+
+* add ScanButton component and integrate scanning functionality ([#85](https://github.com/tibor-horvath/kalandka/issues/85)) ([7a02ace](https://github.com/tibor-horvath/kalandka/commit/7a02ace18ea6868acb5a242c0fea022b3c3dd963))
+
 ## [1.14.0](https://github.com/tibor-horvath/kalandka/compare/v1.13.0...v1.14.0) (2026-11-17)
 
 
