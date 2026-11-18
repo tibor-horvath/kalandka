@@ -1,3 +1,4 @@
+import { save } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROGRESS } from './progress';
 import { startingProgress } from './profiles';
@@ -12,13 +13,13 @@ describe('unlocks', () => {
 
   it('opens a game after enough numbers, or all at once for the parents', () => {
     const flash = unlockOf('flash')!;
-    expect(isOpen({ ...DEFAULT_PROGRESS, learnSolved: flash.after }, 'flash')).toBe(true);
-    expect(numbersLeft({ ...DEFAULT_PROGRESS, learnSolved: flash.after - 2 }, flash)).toBe(2);
+    expect(isOpen(save({ learnSolved: flash.after }), 'flash')).toBe(true);
+    expect(numbersLeft(save({ learnSolved: flash.after - 2 }), flash)).toBe(2);
     expect(UNLOCKS.every((u) => isOpen({ ...DEFAULT_PROGRESS, unlockAll: true }, u.game))).toBe(true);
   });
 
   it('announces each opened game once, the earliest first', () => {
-    let p = { ...DEFAULT_PROGRESS, learnSolved: 99 };
+    let p = save({ learnSolved: 99 });
     const seen: string[] = [];
     for (let u = nextToAnnounce(p); u; u = nextToAnnounce(p)) {
       seen.push(u.game);

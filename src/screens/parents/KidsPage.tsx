@@ -18,6 +18,7 @@ import {
   type Profiles
 } from '../../state/profiles';
 import { lastPlayed, playedToday, today } from '../../state/screenTime';
+import { WORLDS } from '../../state/worlds';
 import type { ParentPage } from './ParentArea';
 
 /** Removes a child; removing the only one forgets the device and starts over from the landing page. */
@@ -74,7 +75,8 @@ export function KidsPage({ startAdding = false, onView }: { startAdding?: boolea
                   {shared && k.id === profiles.activeId && <span className="pa-kid__now">Most ő játszik</span>}
                 </div>
                 <div className="pa-kid__sub">
-                  {last ? `Utoljára ${last}` : 'Még nem játszott'} · {p.seeds} mag
+                  {last ? `Utoljára ${last}` : 'Még nem játszott'}
+                  {WORLDS.map((w) => ` · ${p.worlds[w.id].earned} ${w.reward.unit}`).join('')}
                 </div>
               </div>
               <div className="pa-kid__time">

@@ -1,8 +1,9 @@
+import { save, type SavePatch } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
 import { BORDER_SPOTS, FLOWERS, PLOT_BEDS, VISITORS, bedAt, bedFlower, borderAt, borderPattern, buyFlower, canBuyFlower, canGive, canGiveSeeds, canPlantBorder, decorOf, emptyBorder, giftsOf, giftsReady, giveSeeds, openBorder, ownedFlowers, ownsFlower, plant, plantBorder, seedBalance, seedGiftSize, type FlowerId } from './garden';
 
-const withSeeds = (n: number, extra: Partial<Progress> = {}): Progress => ({ ...DEFAULT_PROGRESS, seeds: n, ...extra });
+const withSeeds = (n: number, extra: SavePatch = {}): Progress => save({ seeds: n, ...extra });
 
 describe('flower kinds (Magtár)', () => {
   it('starts every child with Mályva only, and the packets cost more the further along', () => {
@@ -46,7 +47,7 @@ describe('flower kinds (Magtár)', () => {
 });
 
 describe('the border (Szegély)', () => {
-  const full = (kinds: FlowerId[], extra: Partial<Progress> = {}) =>
+  const full = (kinds: FlowerId[], extra: SavePatch = {}) =>
     kinds.reduce((p, f, i) => plantBorder(p, i, f), FLOWERS.reduce((p, f) => buyFlower(p, f.id), withSeeds(100, extra)));
 
   it('opens ten spots per open plot', () => {
@@ -93,10 +94,10 @@ describe('the border (Szegély)', () => {
 });
 
 describe('a handful of seeds for the birds', () => {
-  const birds = (seeds: number, extra: Partial<Progress> = {}): Progress => {
+  const birds = (seeds: number, extra: SavePatch = {}): Progress => {
     // Ten grown plants: the hedgehog, ladybug, butterfly and blackbird have come.
     const beds = Array.from({ length: 10 }, () => ({ kind: 'flower' as const, at: 0 }));
-    return { ...DEFAULT_PROGRESS, seeds, gardenTasks: 100, beds, visitorsSeen: 4, ...extra };
+    return save({ seeds, gardenTasks: 100, beds, visitorsSeen: 4, ...extra });
   };
 
   it('is three seeds for each treat asked for, for the blackbird and Mókus only', () => {

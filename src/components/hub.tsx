@@ -74,6 +74,22 @@ export function PrinterIcon({ size = 22 }: { size?: number }) {
   );
 }
 
+/** Lap beolvasása, behind the parents' gate: beside Nyomtatás on "Ki játszik?", where the printouts come from. */
+export function ScanButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" className="parents-btn" onClick={onClick}>
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 8V5a1 1 0 0 1 1-1h3" />
+        <path d="M16 4h3a1 1 0 0 1 1 1v3" />
+        <path d="M20 16v3a1 1 0 0 1-1 1h-3" />
+        <path d="M8 20H5a1 1 0 0 1-1-1v-3" />
+        <path d="M9 9h2v2H9zM13 9h2v2h-2zM9 13h2v2H9zM13 13h2v2h-2z" />
+      </svg>
+      <span className="parents-btn__label">Kész lap</span>
+    </button>
+  );
+}
+
 export function ParentsButton({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" className="parents-btn" onClick={onClick}>
@@ -92,13 +108,34 @@ export function MapIcon({ size = 26 }: { size?: number }) {
   );
 }
 
-/** Back to the Kalandka map, to change worlds. */
+/**
+ * The Kalandka map in small: the three islands on the sea, each in its own colours (the garden green with Csepi's
+ * drop, the workshop grey with its teal roof, the tower sand with its purple tower). It is the picture of the place
+ * the button leads to, so a child who can't read "Térkép" still knows where it goes.
+ */
+export function MiniMap({ size = 56 }: { size?: number }) {
+  return (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 60 60">
+      <circle cx="30" cy="30" r="29" fill="#7CC0EF" stroke="#1F5C9E" strokeWidth="2" />
+      <path d="M8 23 Q30 35 52 23" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeDasharray="2 4" strokeLinecap="round" />
+      <ellipse cx="16" cy="22" rx="10" ry="7" fill="#A6D676" />
+      <path d="M16 15 C18 18 19.5 20 19.5 21.5 a3.5 3.5 0 0 1 -7 0 C12.5 20 14 18 16 15Z" fill="#2E86DE" />
+      <ellipse cx="44" cy="22" rx="10" ry="7" fill="#D6DDE3" />
+      <path d="M39 22 V17 L44 14 L49 17 V22 Z" fill="#0C6E6A" />
+      <ellipse cx="30" cy="43" rx="11" ry="7" fill="#F0D9A8" />
+      <path d="M28 43 V33 L30 30 L32 33 V43 Z" fill="#5B4B9A" />
+    </svg>
+  );
+}
+
+/**
+ * Back to the Kalandka map, to change worlds: top-left on a world's home, the same corner as every game's back
+ * button, with the map's own picture beside its name.
+ */
 export function MapButton({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" className="map-btn" onClick={onClick} aria-label="Térkép: másik világ választása">
-      <span className="map-btn__icon">
-        <MapIcon />
-      </span>
+      <MiniMap />
       <span className="map-btn__label">Térkép</span>
     </button>
   );

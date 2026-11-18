@@ -1,6 +1,6 @@
 import type { ReactNode, SVGProps } from 'react';
 import type { Mood } from '../../lib/types';
-import type { ActivityId } from './games/activities';
+import type { ActivityId, Span } from './games/activities';
 import type { Season } from './games/season';
 import { useNowText } from './useNow';
 
@@ -19,77 +19,79 @@ export const MINUTE = '#2E86DE';
 
 // ---------- Kakukk ----------
 
+/** Real cuckoos have a yellow ring round each eye: open eyes sit in one, happy and sleeping eyes are ink arcs. */
 function KakukkEyes({ mood }: { mood: Mood }) {
-  if (mood === 'sleep') {
-    return (
-      <g fill="none" stroke={INK} strokeWidth="4" strokeLinecap="round">
-        <path d="M41 72 Q47 78 53 72" />
-        <path d="M67 72 Q73 78 79 72" />
-      </g>
-    );
+  if (mood === 'sleep' || mood === 'cheer') {
+    const d = mood === 'sleep' ? 'M39 64 Q46 71 53 64 M67 64 Q74 71 81 64' : 'M39 66 Q46 57 53 66 M67 66 Q74 57 81 66';
+    return <path d={d} fill="none" stroke={INK} strokeWidth="4" strokeLinecap="round" />;
   }
-  if (mood === 'cheer') {
-    return (
-      <g fill="none" stroke={INK} strokeWidth="4" strokeLinecap="round">
-        <path d="M41 71 Q47 63 53 71" />
-        <path d="M67 71 Q73 63 79 71" />
-      </g>
-    );
-  }
-  const up = mood === 'think' ? -3 : 0;
+  const [dx, dy] = mood === 'think' ? [2, -3] : mood === 'oops' ? [0, 2] : [0, 0];
   return (
     <g>
-      <circle cx="47" cy={70 + up} r="5.5" fill={INK} />
-      <circle cx="73" cy={70 + up} r="5.5" fill={INK} />
-      <circle cx="49" cy={68 + up} r="1.8" fill="#FFFFFF" />
-      <circle cx="75" cy={68 + up} r="1.8" fill="#FFFFFF" />
-      {mood === 'oops' && <path d="M39 58 L52 62 M81 58 L68 62" stroke={INK} strokeWidth="3" strokeLinecap="round" />}
+      <circle cx="46" cy="64" r="9" fill={BELL} stroke={INK} strokeWidth="2.5" />
+      <circle cx="74" cy="64" r="9" fill={BELL} stroke={INK} strokeWidth="2.5" />
+      <g transform={`translate(${dx} ${dy})`}>
+        <circle cx="46" cy="64" r="5" fill={INK} />
+        <circle cx="74" cy="64" r="5" fill={INK} />
+        <circle cx="47.8" cy="62.2" r="1.8" fill="#FFFFFF" />
+        <circle cx="75.8" cy="62.2" r="1.8" fill="#FFFFFF" />
+      </g>
+      {mood === 'oops' && <path d="M37 50 L50 46 M83 50 L70 46" fill="none" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />}
     </g>
   );
 }
 
-/** Kakukk's body in a 120 × 140 box: a round purple cuckoo whose crest is two clock hands. */
+/**
+ * Kakukk's body in a 120 × 140 box: an upright purple cuckoo with a yellow eye-ring, a barred cream belly and a long
+ * tail with white spots, like the real bird.
+ */
 function KakukkBody({ mood }: { mood: Mood }) {
   const cheer = mood === 'cheer';
+  const think = mood === 'think';
+  const beakOpen = cheer || mood === 'oops';
+  const line = { stroke: INK, strokeWidth: 4, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
   return (
     <>
-      <path d="M22 104 L4 124 L30 116 Z" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
-      <path d={mood === 'sleep' ? 'M60 40 L52 20' : 'M60 40 V18'} stroke={INK} strokeWidth="5" strokeLinecap="round" />
-      <path d={mood === 'sleep' ? 'M60 40 L72 32' : 'M60 40 L74 28'} stroke={INK} strokeWidth="6" strokeLinecap="round" />
-      <circle cx="60" cy="40" r="5" fill={BELL} stroke={INK} strokeWidth="2.5" />
+      <path d="M40 104 C28 110 14 118 4 126 C2 132 6 137 13 136 C24 130 36 122 46 116 Z" fill={KAKUKK_DEEP} {...line} />
+      <g fill="#FFFFFF">
+        <circle cx="31" cy="117" r="2.6" />
+        <circle cx="21" cy="124" r="2.6" />
+        <circle cx="11" cy="131" r="2.6" />
+      </g>
+      <path d="M70 46 C76 36 84 32 92 32 C88 40 82 46 74 50 Z" fill={KAKUKK_DEEP} {...line} strokeWidth="3.5" />
       {cheer && (
         <>
-          <path d="M24 74 C6 64 4 42 16 34 C22 50 28 60 36 64 Z" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
-          <path d="M96 74 C114 64 116 42 104 34 C98 50 92 60 84 64 Z" fill={KAKUKK_DEEP} stroke={INK} strokeWidth="4" strokeLinejoin="round" />
+          <path d="M32 70 C22 62 12 56 2 56 C4 68 14 78 30 86 Z" fill={KAKUKK_DEEP} {...line} />
+          <path d="M88 70 C98 62 108 56 118 56 C116 68 106 78 90 86 Z" fill={KAKUKK_DEEP} {...line} />
         </>
       )}
-      <ellipse cx="60" cy="84" rx="40" ry="44" fill={KAKUKK} stroke={INK} strokeWidth="4" />
-      <ellipse cx="60" cy="98" rx="24" ry="25" fill={CREAM} />
-      {!cheer && (
-        <path
-          d={mood === 'think' ? 'M94 80 C106 88 92 102 72 94' : 'M96 76 C112 84 110 108 92 112'}
-          fill={KAKUKK_DEEP}
-          stroke={INK}
-          strokeWidth="4"
-          strokeLinejoin="round"
-        />
-      )}
+      <path d="M50 128 V133 M44 137 L50 133 L56 137 M70 128 V133 M64 137 L70 133 L76 137" fill="none" {...line} stroke="#E8833A" strokeWidth="4.5" />
+      <ellipse cx="60" cy="86" rx="34" ry="44" fill={KAKUKK} {...line} />
+      <ellipse cx="60" cy="104" rx="20" ry="21" fill={CREAM} />
+      <path
+        d="M50 92 q5 -2.5 10 0 q5 2.5 10 0 M45 100 q7.5 -3 15 0 q7.5 3 15 0 M45 108 q7.5 -3 15 0 q7.5 3 15 0 M48 116 q6 -2.5 12 0 q6 2.5 12 0"
+        fill="none"
+        stroke={KAKUKK_DEEP}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <g fill="#F79AB8" opacity={mood === 'sleep' ? 0.55 : 1}>
+        <ellipse cx="39" cy="80" rx="5" ry="3" />
+        <ellipse cx="81" cy="80" rx="5" ry="3" />
+      </g>
+      {!cheer && <path d="M30 70 C20 86 18 106 22 124 C32 112 36 92 34 72 Z" fill={KAKUKK_DEEP} {...line} />}
+      {!cheer && !think && <path d="M90 70 C100 86 102 106 98 124 C88 112 84 92 86 72 Z" fill={KAKUKK_DEEP} {...line} />}
+      {think && <path d="M92 74 C106 84 94 100 70 92 C78 86 84 78 92 74 Z" fill={KAKUKK_DEEP} {...line} />}
       <KakukkEyes mood={mood} />
-      {mood !== 'sleep' && (
+      {beakOpen ? (
         <>
-          <ellipse cx="38" cy="82" rx="6" ry="3.5" fill="#F79AB8" />
-          <ellipse cx="82" cy="82" rx="6" ry="3.5" fill="#F79AB8" />
-        </>
-      )}
-      {cheer ? (
-        <>
-          <path d="M52 78 L68 78 L60 84 Z" fill={BELL} stroke={INK} strokeWidth="3" strokeLinejoin="round" />
-          <path d="M53 88 L67 88 L60 95 Z" fill={BELL} stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+          <path d="M53 74 L67 74 L60 81 Z" fill={BELL} {...line} strokeWidth="3" />
+          <path d="M55 83 L65 83 L60 89 Z" fill={BELL} {...line} strokeWidth="3" />
         </>
       ) : (
-        <path d="M53 79 L67 79 L60 90 Z" fill={BELL} stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+        <path d="M54 75 L66 75 L60 86 Z" fill={BELL} {...line} strokeWidth="3" />
       )}
-      <path d="M48 126 V136 M72 126 V136" stroke="#E8833A" strokeWidth="5" strokeLinecap="round" />
+      {mood === 'oops' && <path d="M98 50 C94 56 94 60 98 60 C102 60 102 56 98 50 Z" fill="#9AD3F5" {...line} strokeWidth="2.5" />}
     </>
   );
 }
@@ -424,50 +426,182 @@ export function DayPartSign({ part, size = 44 }: { part: string; size?: number }
 
 // ---------- seasons ----------
 
-/** A tree in its season, in a 120 × 120 box: blossom, fruit, falling leaves, bare branches in snow. */
+/** The ground under a season's tree: a hill cut to the bottom of the sky disc. */
+const TREE_GROUND = 'M-41 40 Q0 30 41 40 A57 57 0 0 1 -41 40 Z';
+/** The same trunk with its two arms in every season, so it reads as one tree through the year. */
+const TREE_TRUNK = 'M-6 48 L-4 12 L-22 -8 L-17 -13 L-2 2 L-3 -18 L3 -18 L3 0 L17 -14 L22 -9 L5 12 L7 48 Z';
+const SEASON_SKY: Record<Season, string> = { spring: '#E3F3FF', summer: '#CDE9FF', autumn: '#FBEBD3', winter: '#DDE7F3' };
+
+/** A crown of overlapping lobes with one outline round the whole: a thick ink layer, then the fills on top. */
+function Crown({ lobes }: { lobes: [number, number, number, string][] }) {
+  return (
+    <>
+      <g fill={INK} stroke={INK} strokeWidth="6.5">
+        {lobes.map(([cx, cy, r], i) => (
+          <circle key={i} cx={cx} cy={cy} r={r} />
+        ))}
+      </g>
+      {lobes.map(([cx, cy, r, fill], i) => (
+        <circle key={i} cx={cx} cy={cy} r={r} fill={fill} />
+      ))}
+    </>
+  );
+}
+
+/** A leaf, falling or lying, centred on (x, y). */
+const Leaf = ({ x, y, rot, fill }: { x: number; y: number; rot: number; fill: string }) => (
+  <path d="M0 -6 C5 -3 5 3 0 6 C-5 3 -5 -3 0 -6 Z M0 -5 V5" fill={fill} stroke={INK} strokeWidth="1.5" strokeLinejoin="round" transform={`translate(${x} ${y}) rotate(${rot})`} />
+);
+
+const BLOSSOMS: [number, number][] = [[-24, -20], [-10, -32], [5, -38], [14, -26], [25, -13], [-14, -8], [2, -18], [12, -8]];
+const WINTER_TWIGS = 'M-17 -11 L-27 -26 M-12 -6 L-32 -4 M18 -12 L25 -28 M14 -9 L33 -16 M0 -16 L-6 -36 M0 -16 L7 -38';
+
+const TREE_SEASON: Record<Season, ReactNode> = {
+  // a small light crown full of blossom, flowers in fresh grass
+  spring: (
+    <>
+      <path d={TREE_GROUND} fill="#A8D88A" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <path d={TREE_TRUNK} fill="#8A5A3B" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <Crown lobes={[[-18, -16, 14, '#C4E59A'], [0, -28, 16, '#C4E59A'], [18, -16, 14, '#C4E59A']]} />
+      {BLOSSOMS.map(([cx, cy]) => (
+        <g key={`${cx},${cy}`}>
+          <circle cx={cx} cy={cy} r="5" fill="#FFFFFF" stroke={INK} strokeWidth="1.5" />
+          <circle cx={cx} cy={cy} r="2" fill="#F07EA0" />
+        </g>
+      ))}
+      <path d="M-26 47 V38 M26 48 V39 M-18 50 V43" fill="none" stroke="#3D7A2E" strokeWidth="2.5" strokeLinecap="round" />
+      <g stroke={INK} strokeWidth="1.5">
+        <circle cx="-26" cy="36" r="4" fill="#FFC93C" />
+        <circle cx="26" cy="37" r="4" fill="#F07EA0" />
+        <circle cx="-18" cy="41" r="3.2" fill="#F07EA0" />
+      </g>
+    </>
+  ),
+  // a big dark crown hung with apples, the sun out, deep green grass
+  summer: (
+    <>
+      <circle cx="34" cy="-36" r="7.5" fill="#FFC93C" stroke={INK} strokeWidth="3" />
+      <path d={TREE_GROUND} fill="#6DBE5A" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <path d={TREE_TRUNK} fill="#8A5A3B" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <Crown lobes={[[-20, -12, 18, '#2F7D32'], [0, -24, 22, '#2F7D32'], [20, -12, 18, '#2F7D32'], [0, -2, 17, '#2F7D32']]} />
+      <g fill="#E5484D" stroke={INK} strokeWidth="1.5">
+        {[[-22, -14], [10, -32], [22, -8], [-4, 2], [-8, -28], [8, -12]].map(([cx, cy]) => (
+          <circle key={`${cx},${cy}`} cx={cx} cy={cy} r="5.5" />
+        ))}
+      </g>
+      <path d="M-34 46 l3 -6 l3 6 M24 45 l3 -6 l3 6" fill="none" stroke={INK} strokeWidth="1.5" strokeLinejoin="round" />
+    </>
+  ),
+  // a thin yellow-orange-red crown, leaves in the air and a pile on dry ground
+  autumn: (
+    <>
+      <path d={TREE_GROUND} fill="#D8B26E" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <path d={TREE_TRUNK} fill="#8A5A3B" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <Crown lobes={[[-19, -16, 13, '#E8833A'], [1, -29, 15, '#FFC93C'], [20, -15, 12, '#D9542F']]} />
+      <Leaf x={-34} y={4} rot={-30} fill="#FFC93C" />
+      <Leaf x={30} y={14} rot={40} fill="#E8833A" />
+      <Leaf x={-14} y={24} rot={70} fill="#D9542F" />
+      <Leaf x={37} y={-5} rot={-60} fill="#FFC93C" />
+      <Leaf x={-26} y={44} rot={80} fill="#D9542F" />
+      <Leaf x={-16} y={46} rot={100} fill="#FFC93C" />
+      <Leaf x={20} y={44} rot={75} fill="#E8833A" />
+      <Leaf x={30} y={47} rot={110} fill="#D9542F" />
+      <Leaf x={1.5} y={49.5} rot={95} fill="#E8833A" />
+    </>
+  ),
+  // bare branches with snow lying on them, a snow drift, flakes falling
+  winter: (
+    <>
+      <path d={WINTER_TWIGS} fill="none" stroke={INK} strokeWidth="8" strokeLinecap="round" />
+      <path d={WINTER_TWIGS} fill="none" stroke="#8A5A3B" strokeWidth="4" strokeLinecap="round" />
+      <path d={TREE_TRUNK} fill="#8A5A3B" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <g fill="#FFFFFF" stroke={INK} strokeWidth="1.5">
+        <ellipse cx="-19.5" cy="-13" rx="6" ry="2.8" transform="rotate(45 -19.5 -13)" />
+        <ellipse cx="19.5" cy="-13.5" rx="6" ry="2.8" transform="rotate(-45 19.5 -13.5)" />
+        <ellipse cx="0" cy="-19.5" rx="4.5" ry="2.6" />
+        <ellipse cx="-24" cy="-23" rx="3.6" ry="2.2" transform="rotate(55 -24 -23)" />
+        <ellipse cx="24" cy="-25" rx="3.6" ry="2.2" transform="rotate(-65 24 -25)" />
+        <ellipse cx="-27" cy="-6" rx="4" ry="2" transform="rotate(-5 -27 -6)" />
+        <ellipse cx="28" cy="-15" rx="4" ry="2" transform="rotate(-20 28 -15)" />
+      </g>
+      <path d="M-41 40 Q-10 26 0 34 Q12 26 41 40 A57 57 0 0 1 -41 40 Z" fill="#FFFFFF" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+      <g fill="#FFFFFF" stroke="#8FA3B8" strokeWidth="2">
+        {[[-34, -34, 3.5], [32, -38, 3.5], [-14, -46, 3], [16, -46, 3], [40, 2, 3.5], [-42, 12, 3.5], [28, 20, 3], [-22, 22, 3]].map(([cx, cy, r]) => (
+          <circle key={`${cx},${cy}`} cx={cx} cy={cy} r={r} />
+        ))}
+      </g>
+    </>
+  )
+};
+
+/**
+ * A tree in its season, in a 120 × 120 box on a sky disc: the same trunk every time, with three cues each —
+ * blossom and flowers, apples and sun, falling leaves and a leaf pile, bare branches in snow.
+ */
 export function SeasonTree({ season, size = 110, label }: { season: Season; size?: number; label?: string }) {
   return (
     <svg width={size} height={size} viewBox="-60 -60 120 120" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
-      {season === 'winter' ? (
-        <>
-          <path d="M0 54 V0 M0 20 L-24 -6 M0 12 L22 -14 M-12 8 L-14 -18 M12 0 L30 2" stroke="#8A5A3B" strokeWidth="7" strokeLinecap="round" />
-          <path d="M-50 54 Q0 36 50 54 Z" fill="#FFFFFF" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
-          <g fill="#FFFFFF" stroke="#8FA3B8" strokeWidth="2">
-            <circle cx="-30" cy="-30" r="4.5" />
-            <circle cx="34" cy="-24" r="4.5" />
-            <circle cx="-4" cy="-42" r="4.5" />
-            <circle cx="20" cy="-46" r="3.5" />
-          </g>
-        </>
-      ) : (
-        <>
-          <rect x="-6" y="14" width="12" height="40" fill="#8A5A3B" stroke={INK} strokeWidth="3" />
-          <circle cy="-4" r="40" fill={season === 'spring' ? '#9CCB7A' : season === 'summer' ? '#2F7D32' : '#E8833A'} stroke={INK} strokeWidth="3" />
-          {season === 'spring' && (
-            <g fill="#F59AB0" stroke={INK} strokeWidth="1.5">
-              <circle cx="-18" cy="-16" r="6" />
-              <circle cx="10" cy="-26" r="6" />
-              <circle cx="20" cy="2" r="6" />
-              <circle cx="-8" cy="10" r="6" />
-            </g>
-          )}
-          {season === 'summer' && (
-            <g fill="#E5484D" stroke={INK} strokeWidth="1.5">
-              <circle cx="-16" cy="-12" r="6" />
-              <circle cx="14" cy="-22" r="6" />
-              <circle cx="18" cy="8" r="6" />
-            </g>
-          )}
-          {season === 'autumn' && (
-            <g fill="#C8553D" stroke={INK} strokeWidth="1.5">
-              <ellipse cx="34" cy="44" rx="7" ry="4" transform="rotate(30 34 44)" />
-              <ellipse cx="-36" cy="40" rx="7" ry="4" transform="rotate(-20 -36 40)" />
-              <circle cx="-12" cy="-10" r="5" fill="#FFC93C" />
-              <circle cx="14" cy="4" r="5" fill="#FFC93C" />
-            </g>
-          )}
-        </>
-      )}
+      <circle r="57" fill={SEASON_SKY[season]} />
+      {TREE_SEASON[season]}
+    </svg>
+  );
+}
+
+/**
+ * Each day of the week keeps one sign wherever it shows (the week row and its cards), so a child who can't read
+ * the day's name still finds it: a shape and a colour, the shapes all different so colour is never the only clue.
+ * Monday to Sunday: circle, square, triangle, star, heart, diamond, moon.
+ */
+const DAY_SIGN_FILL = ['#2E86DE', '#D9741A', '#2F7D32', '#C99A12', '#C2417A', '#0C6E6A', '#5B4B9A'];
+const DAY_SIGN_PATH = [
+  'M20 4 A16 16 0 1 1 19.99 4 Z',
+  'M6 6 H34 V34 H6 Z',
+  'M20 4 L36 34 H4 Z',
+  'M20 3 L24.5 15 L37 15 L27 23 L31 36 L20 28 L9 36 L13 23 L3 15 L15.5 15 Z',
+  'M20 36 C7 26 2 18 6 11 C10 4 18 6 20 12 C22 6 30 4 34 11 C38 18 33 26 20 36 Z',
+  'M20 3 L37 20 L20 37 L3 20 Z',
+  'M27 4 A16 16 0 1 0 36 28 A13 13 0 0 1 27 4 Z'
+];
+
+export function DaySign({ day, size = 40 }: { day: number; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+      <path d={DAY_SIGN_PATH[day]} fill={DAY_SIGN_FILL[day]} stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * How long something takes, drawn so a child needn't read it (Homokóra's last level, on screen and on paper):
+ * a blink for a moment, an hourglass running out for a few minutes, the sun crossing to the moon for hours.
+ * Each picture is longer than the one before; `size` is its width.
+ */
+export function SpanSign({ span, size }: { span: Span; size?: number }) {
+  if (span === 'pillanat') {
+    const w = size ?? 96;
+    return (
+      <svg width={w} height={(w * 44) / 56} viewBox="0 0 56 44" aria-hidden="true">
+        <path d="M4 22 Q28 2 52 22" fill="none" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+        <path d="M14 27 L10 35 M28 29 V39 M42 27 L46 35" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (span === 'perc') {
+    const w = size ? size * 0.6 : 56;
+    return (
+      <svg width={w} height={(w * 50) / 36} viewBox="0 0 36 50" aria-hidden="true">
+        <path d="M4 3h28M4 47h28" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+        <path d="M7 5 C7 18 18 21 18 25 C18 29 7 32 7 45 H29 C29 32 18 29 18 25 C18 21 29 18 29 5 Z" fill="#FFF8E1" stroke={INK} strokeWidth="3" />
+        <path d="M10 45 C12 38 16 37 18 35 C20 37 24 38 26 45 Z" fill="#D9A21A" stroke={INK} strokeWidth="1.5" />
+      </svg>
+    );
+  }
+  const w = size ?? 110;
+  return (
+    <svg width={w} height={(w * 44) / 64} viewBox="0 0 64 44" aria-hidden="true">
+      <path d="M6 38 A26 26 0 0 1 58 38" fill="none" stroke={INK} strokeWidth="2.5" strokeDasharray="3 6" />
+      <circle cx="8" cy="36" r="7" fill="#FFC93C" stroke={INK} strokeWidth="2" />
+      <path d="M58 26 A9 9 0 1 0 58 42 A7 7 0 0 1 58 26 Z" fill="#5B4B9A" stroke={INK} strokeWidth="1.5" />
     </svg>
   );
 }

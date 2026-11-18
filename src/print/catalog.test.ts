@@ -1,3 +1,4 @@
+import { save } from '../state/testSave';
 import { describe, expect, it } from 'vitest';
 import { GAME_IDS, type LadderGame } from '../state/games';
 import { LADDER_LEVELS, ladderOf, startAt, withLadder } from '../state/ladder';
@@ -126,7 +127,7 @@ describe('printable sheets', () => {
     }
     // Számmagok has no ladder: its sheets follow the round, Vegyesen after twenty.
     const learn = sheetFor('learn');
-    expect([0, 5, 10, 15, 19, 20, 24].map((learnRound) => learn.current({ ...DEFAULT_PROGRESS, learnRound }))).toEqual([0, 1, 2, 3, 3, 4, 4]);
+    expect([0, 5, 10, 15, 19, 20, 24].map((learnRound) => learn.current(save({ learnRound })))).toEqual([0, 1, 2, 3, 3, 4, 4]);
   });
 });
 

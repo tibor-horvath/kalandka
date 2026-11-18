@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Csepi } from '../components/Csepi';
 import { CmdIcon, Csavar, Rover } from '../worlds/robot/art';
+import { Kakukk } from '../worlds/tower/art';
 import { KalandkaIcon, KalandkaWordmark } from '../components/ui';
 import type { Cmd } from '../worlds/robot/games/path';
 import type { Mood } from '../lib/types';
@@ -43,14 +44,22 @@ function Head({ title, note }: { title?: string; note: string }) {
   );
 }
 
-function Guide({ who, mood }: { who: 'csepi' | 'csavar'; mood: Mood }) {
-  return who === 'csepi' ? <Csepi mood={mood} className="px-guide" /> : <Csavar mood={mood} className="px-guide" />;
+type Who = 'csepi' | 'csavar' | 'kakukk';
+
+/** The guides in the order they take turns on the badges. */
+const GUIDES: Who[] = ['csepi', 'csavar', 'kakukk'];
+
+function Guide({ who, mood }: { who: Who; mood: Mood }) {
+  if (who === 'csepi') return <Csepi mood={mood} className="px-guide" />;
+  if (who === 'csavar') return <Csavar mood={mood} className="px-guide" />;
+  // Kakukk is squat and his viewBox has room around him, so .px-guide--kakukk gives him a bigger box to match the others.
+  return <Kakukk mood={mood} className="px-guide px-guide--kakukk" />;
 }
 
-// ---------- Csepi és Csavar ----------
+// ---------- Csepi, Csavar és Kakukk ----------
 
 /** A tent card: the back half upside down, so the guide shows from both sides once folded. */
-function Tent({ who, name, world }: { who: 'csepi' | 'csavar'; name: string; world: string }) {
+function Tent({ who, name, world }: { who: Who; name: string; world: string }) {
   return (
     <div className="px-tent-wrap">
       <div className="px-tent">
@@ -76,10 +85,11 @@ const ICON = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinec
 function FiguresPage() {
   return (
     <section className="ps-sheet px-sheet">
-      <Head title="Csepi és Csavar – állítsd fel!" note="A figura a feladatlap mellett áll, és „ő mondja” a feladatot." />
+      <Head title="Csepi, Csavar és Kakukk – állítsd fel!" note="A figura a feladatlap mellett áll, és „ő mondja” a feladatot." />
       <div className="px-tents">
         <Tent who="csepi" name="Csepi" world="Számkert" />
         <Tent who="csavar" name="Csavar" world="Robotműhely" />
+        <Tent who="kakukk" name="Kakukk" world="Óratorony" />
       </div>
       <div className="px-steps">
         <div className="px-step">
@@ -135,9 +145,9 @@ function BadgesPage() {
           </div>
           <div className="px-badges">
             {Array.from({ length: b.count }, (_, i) => (
-              // Each row of six starts with the other guide, so the rows read as a checkerboard.
+              // The three guides take turns, each row of six starting one guide later, so no column repeats a guide.
               <div key={i} className="px-badge">
-                <Guide who={(i + Math.floor(i / 6)) % 2 === 0 ? 'csepi' : 'csavar'} mood={b.mood} />
+                <Guide who={GUIDES[(i + Math.floor(i / 6)) % GUIDES.length]} mood={b.mood} />
                 <b>{b.label}</b>
               </div>
             ))}
@@ -219,7 +229,7 @@ function RobotPage() {
 
 /** In the order they stand on the Nyomtatás page. */
 export const EXTRAS: ExtraSpec[] = [
-  { id: 'figures', title: 'Csepi és Csavar', lead: 'Kivágható, felállítható figurák: a feladatlap mellett állnak, és „ők mondják” a feladatot.', Page: FiguresPage },
+  { id: 'figures', title: 'Csepi, Csavar és Kakukk', lead: 'Kivágható, felállítható figurák: a feladatlap mellett állnak, és „ők mondják” a feladatot.', Page: FiguresPage },
   { id: 'badges', title: 'Jelvények', lead: 'Kész!, Kitartó! és Bátor! jelvények, hogy a kész lapra ragasszátok.', Page: BadgesPage },
   { id: 'robot', title: 'Kis robot és parancskártyák', lead: 'Kivágható robot és parancskártyák a Robotút lapokhoz: a gyerkőc kirakja a programot, aztán végiglépteti.', Page: RobotPage }
 ];

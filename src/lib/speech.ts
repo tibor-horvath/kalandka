@@ -147,6 +147,11 @@ export function speak(text: string, { queue = false, as = speaker, online }: Spe
   }
 }
 
+/** True while a line is still being said, so a hint can wait its turn instead of talking over it. */
+export function isSpeaking(): boolean {
+  return !!synth()?.speaking;
+}
+
 export function stopSpeaking(): void {
   synth()?.cancel();
 }

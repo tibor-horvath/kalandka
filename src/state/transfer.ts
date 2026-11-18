@@ -95,7 +95,7 @@ export interface Merge {
 /** The unnamed profile a new device starts with, never played: it makes way for the sent children. */
 function isBlank(s: Profiles, kid: Kid): boolean {
   const p = progressOf(s, kid.id);
-  return !kid.name.trim() && p.seeds === 0 && p.bolts === 0 && !Object.keys(p.playHistory).length;
+  return !kid.name.trim() && p.worlds.garden.earned === 0 && p.worlds.robot.earned === 0 && !Object.keys(p.playHistory).length;
 }
 
 /**

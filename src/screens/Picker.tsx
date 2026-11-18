@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Seed } from '../worlds/garden/art';
 import { AVATARS, Avatar } from '../components/avatars';
-import { PrintButton } from '../components/hub';
+import { PrintButton, ScanButton } from '../components/hub';
 import { Bolt } from '../worlds/robot/art';
+import { Bell } from '../worlds/tower/art';
 import { KalandkaIcon, KalandkaWordmark, LockIcon, RoundButton, SpeakerIcon } from '../components/ui';
 import { useForm, useWideStage } from '../components/Stage';
 import { speak, stopSpeaking } from '../lib/speech';
@@ -10,6 +11,7 @@ import { MAX_KIDS, kidName, progressOf, useProfiles } from '../state/profiles';
 import { remainingSeconds, today } from '../state/screenTime';
 import { seedBalance } from '../state/garden';
 import { boltBalance } from '../state/robotParts';
+import { bellBalance } from '../state/town';
 
 const SPEECH = 'Szia! Ki indul ma kalandra? Koppints a képedre!';
 
@@ -18,7 +20,19 @@ const PICK_MS = 650;
 const PICK_MS_STILL = 300;
 
 /** "Ki játszik?": each child taps their own figure, in Kalandka's harbour. Adding a child goes through the parents' gate. */
-export function Picker({ onPick, onAdd, onParents, onPrint }: { onPick: (id: string) => void; onAdd: () => void; onParents: () => void; onPrint: () => void }) {
+export function Picker({
+  onPick,
+  onAdd,
+  onParents,
+  onPrint,
+  onScan
+}: {
+  onPick: (id: string) => void;
+  onAdd: () => void;
+  onParents: () => void;
+  onPrint: () => void;
+  onScan: () => void;
+}) {
   const { profiles } = useProfiles();
   const phone = useForm() !== 'tablet';
   const extra = useWideStage();
@@ -48,6 +62,7 @@ export function Picker({ onPick, onAdd, onParents, onPrint }: { onPick: (id: str
         </div>
         <div className="topbar__right">
           <PrintButton onClick={onPrint} />
+          <ScanButton onClick={onScan} />
           <button type="button" className="parents-btn" onClick={onParents}>
             <LockIcon size={22} />
             <span className="parents-btn__label">Szülőknek</span>
@@ -81,6 +96,7 @@ export function Picker({ onPick, onAdd, onParents, onPrint }: { onPick: (id: str
           const name = kidName(kid);
           const seeds = seedBalance(p);
           const bolts = boltBalance(p);
+          const bells = bellBalance(p);
           const state = picked ? (picked === kid.id ? ' is-picked' : ' is-dimmed') : '';
           return (
             <button
@@ -88,7 +104,7 @@ export function Picker({ onPick, onAdd, onParents, onPrint }: { onPick: (id: str
               type="button"
               className={`kid-card${state}`}
               style={{ '--ring': AVATARS[kid.avatar].ring, '--i': i } as CSSProperties}
-              aria-label={`${name}, ${seeds} mag, ${bolts} csavar${resting ? ', mára pihen' : ''}`}
+              aria-label={`${name}, ${seeds} mag, ${bolts} csavar, ${bells} harang${resting ? ', mára pihen' : ''}`}
               onClick={() => choose(kid.id)}
             >
               {resting && <span className="kid-card__badge">Pihen</span>}
@@ -102,6 +118,10 @@ export function Picker({ onPick, onAdd, onParents, onPrint }: { onPick: (id: str
                 <span className="kid-card__seeds kid-card__seeds--bolts">
                   <Bolt size={22} />
                   {bolts}
+                </span>
+                <span className="kid-card__seeds kid-card__seeds--bells">
+                  <Bell size={22} />
+                  {bells}
                 </span>
               </span>
             </button>

@@ -1,8 +1,9 @@
 import { Modal } from '../../components/Modal';
-import { TASKS_PER_REWARD, TASKS_PER_SEED } from '../../state/pod';
+import { tasksPerReward } from '../../state/pod';
 import { readKey, writeKey } from '../../lib/storage';
 import { Seed } from '../../worlds/garden/art';
 import { Bolt } from '../../worlds/robot/art';
+import { Bell } from '../../worlds/tower/art';
 
 // The first time a grown-up opens the parents' corner on this device, one card explains seeds, bolts and
 // stickers in three lines, and points to the Jutalmak page for the rest. It belongs to the device, not to
@@ -40,10 +41,11 @@ export function RewardsIntro({ onClose, onMore }: { onClose: () => void; onMore:
             <span className="pa-intro__icons" aria-hidden="true">
               <Seed size={34} />
               <Bolt size={34} />
+              <Bell size={34} />
             </span>
-            <b>Feladatért mag vagy csavar</b>
+            <b>Feladatért mag, csavar vagy harang</b>
             <span>
-              A kertben {TASKS_PER_SEED} megoldott feladat 1 mag, a műhelyben {TASKS_PER_REWARD} kör 1 csavar. Ebből ültet és robotot épít.
+              A kertben {tasksPerReward('garden')} megoldott feladat 1 mag, a műhelyben {tasksPerReward('robot')} kör 1 csavar, az Óratoronyban {tasksPerReward('tower')} feladat 1 harang. Ebből ültet, robotot és várost épít.
             </span>
           </li>
           <li className="pa-intro__step pa-intro__step--sticker">

@@ -16,6 +16,8 @@ export interface PrintChoice {
   pages: number;
   /** Which set of tasks: kept, so the answers on the tablet match the sheet that was printed. */
   batch: number;
+  /** Print the level's magyarázó lap in front of the sheets: only when the grown-up asks for it. */
+  explain?: boolean;
 }
 
 export function sheetFor(id: PrintId): PrintSpec<unknown> {
@@ -81,7 +83,7 @@ export function savedChoice(kidId: string, id: PrintId): PrintChoice | null {
   const c = readAll()[kidId]?.[id];
   const s = sheetFor(id);
   if (!c || typeof c.batch !== 'number' || !(c.level >= 0 && c.level < s.levels.length)) return null;
-  return { level: c.level, density: ['big', 'normal', 'many'].includes(c.density) ? c.density : 'normal', pages: Math.min(MAX_PAGES, Math.max(1, c.pages || 1)), batch: c.batch };
+  return { level: c.level, density: ['big', 'normal', 'many'].includes(c.density) ? c.density : 'normal', pages: Math.min(MAX_PAGES, Math.max(1, c.pages || 1)), batch: c.batch, explain: c.explain === true };
 }
 
 export function saveChoice(kidId: string, id: PrintId, c: PrintChoice): void {

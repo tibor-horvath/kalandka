@@ -33,16 +33,23 @@ export function Drop({ size = 40, color = '#2E86DE' }: { size?: number; color?: 
   );
 }
 
-export function Cloud() {
+/** The rain cloud; `asleep` closes its eyes once the plant has bloomed and it has nothing more to give. */
+export function Cloud({ asleep = false }: { asleep?: boolean }) {
   return (
     <svg aria-hidden="true" width="250" height="120" viewBox="0 0 250 120">
       <circle cx="70" cy="70" r="40" fill="#FFFFFF" />
       <circle cx="125" cy="52" r="50" fill="#FFFFFF" />
       <circle cx="182" cy="72" r="38" fill="#FFFFFF" />
       <rect x="40" y="70" width="175" height="44" rx="22" fill="#FFFFFF" />
-      <circle cx="100" cy="72" r="5" fill="#1F3B2C" />
-      <circle cx="150" cy="72" r="5" fill="#1F3B2C" />
-      <path d="M112 88 Q125 98 138 88" stroke="#1F3B2C" strokeWidth="4" fill="none" strokeLinecap="round" />
+      {asleep ? (
+        <path d="M92 72 Q100 79 108 72 M142 72 Q150 79 158 72" stroke="#1F3B2C" strokeWidth="4" fill="none" strokeLinecap="round" />
+      ) : (
+        <>
+          <circle cx="100" cy="72" r="5" fill="#1F3B2C" />
+          <circle cx="150" cy="72" r="5" fill="#1F3B2C" />
+        </>
+      )}
+      <path d={asleep ? 'M116 90 Q125 94 134 90' : 'M112 88 Q125 98 138 88'} stroke="#1F3B2C" strokeWidth="4" fill="none" strokeLinecap="round" />
     </svg>
   );
 }

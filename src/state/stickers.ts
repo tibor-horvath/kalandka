@@ -1,10 +1,10 @@
 import { LEARN_MAX } from '../worlds/garden/games/learn/logic';
 import { GAMES, type GameId } from './games';
 import type { Progress } from './progress';
-import type { WorldId } from './worlds';
+import { WORLD_IDS, type WorldId } from './worlds';
 import { LADDER_RULES, clearedLevels, ladderOf, solvedLevels, tallyOf, type LadderGame } from './ladder';
 import { FRIENDS, FRIEND_GIFTS_EACH, boughtCount, friendGiftCount, friendGiftsOf, friendsOf, secondRobotOpen } from './robotParts';
-import { creditTasks, rewardFor } from './pod';
+import { creditTasks, paidFor } from './pod';
 import { today } from './screenTime';
 import { VISITORS, decorCount, gardenDone, giftsOf } from './garden';
 import { BUILDINGS, STAGES, builtCount, giftCount, giftsOf as townGiftsOf, stageOf, upgradeCount } from './town';
@@ -88,10 +88,9 @@ function pageWorld(key: string): WorldId | undefined {
 }
 
 /** What a finished page of `tasks` tasks pays now: its tasks fill the reward pod like solved tasks in its world's games. */
-export function pageReward(p: Progress, key: string, tasks: number): { seeds: number; bolts: number; bells: number } {
+export function pageReward(p: Progress, key: string, tasks: number): number {
   const world = pageWorld(key);
-  const pay = world ? rewardFor(p, world, tasks) : 0;
-  return { seeds: world === 'garden' ? pay : 0, bolts: world === 'robot' ? pay : 0, bells: world === 'tower' ? pay : 0 };
+  return world ? paidFor(p, world, tasks) : 0;
 }
 
 /**
@@ -394,9 +393,9 @@ const learnSheet =
  * The reward places count what was done.
  */
 const OTHER_STICKERS: Sticker[] = [
-  { id: 'learn-5', game: 'learn', mark: '1–5', label: 'Ismerem 5-ig', praise: 'Már ötig ismered a számokat!', earned: (p) => p.learnSolved >= 5 || learnSheet(0)(p) },
-  { id: 'learn-10', game: 'learn', mark: '1–10', label: 'Ismerem 10-ig', praise: 'Már tízig ismered a számokat!', earned: (p) => p.learnSolved >= 10 || learnSheet(1)(p) },
-  { id: 'learn-20', game: 'learn', mark: '1–20', label: 'Ismerem 20-ig', praise: 'Már húszig ismered a számokat!', earned: (p) => p.learnSolved >= LEARN_MAX || learnSheet(3, 4)(p) },
+  { id: 'learn-5', game: 'learn', mark: '1–5', label: 'Ismerem 5-ig', praise: 'Már ötig ismered a számokat!', earned: (p) => p.games.learn.solved >= 5 || learnSheet(0)(p) },
+  { id: 'learn-10', game: 'learn', mark: '1–10', label: 'Ismerem 10-ig', praise: 'Már tízig ismered a számokat!', earned: (p) => p.games.learn.solved >= 10 || learnSheet(1)(p) },
+  { id: 'learn-20', game: 'learn', mark: '1–20', label: 'Ismerem 20-ig', praise: 'Már húszig ismered a számokat!', earned: (p) => p.games.learn.solved >= LEARN_MAX || learnSheet(3, 4)(p) },
   { id: 'learn-mix', game: 'learn', mark: '?', label: 'Vegyesen is', praise: 'Összekeverve is felismered a számokat!', earned: (p) => p.learnMixSolved >= 1 },
   { id: 'kiskert-gift', game: 'kiskert', mark: '1', label: 'Első ajándék', praise: 'Megajándékoztad az első lakót a kertedben!', earned: (p) => decorCount(p) >= 1 },
   { id: 'kiskert-all', game: 'kiskert', mark: '12', label: 'Minden lakónak', praise: 'Mind a tizenkét lakó kapott tőled ajándékot!', earned: (p) => VISITORS.every((v) => giftsOf(p, v.id) >= 1) },
@@ -450,7 +449,7 @@ function pageStickers(world: WorldId): Sticker[] {
   });
 }
 
-const PAGE_STICKERS = [...pageStickers('garden'), ...pageStickers('robot'), ...pageStickers('tower')];
+const PAGE_STICKERS = WORLD_IDS.flatMap((w) => pageStickers(w));
 
 /** Every sticker, in album order. */
 export const STICKERS: Sticker[] = STICKER_GAMES.flatMap(({ id }) =>

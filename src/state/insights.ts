@@ -3,7 +3,7 @@ import { GAMES } from './games';
 import { LADDER_LEVELS, LADDER_RULES, ladderOf } from './ladder';
 import type { Progress } from './progress';
 import { recentMarks, type LoggedGame } from './taskLog';
-import type { WorldId } from './worlds';
+import { WORLD_IDS, type WorldId } from './worlds';
 
 // Plain-language notes for parents on the overview page, one per game: what is going well, where a little
 // help would pay off, or that there was too little play this week to say. Each comes with something to try
@@ -151,7 +151,7 @@ const GAME_TEXTS: GameText[] = [
 ];
 
 function learnNote(p: Progress): Insight {
-  const learned = Math.min(LEARN_MAX, p.learnSolved);
+  const learned = Math.min(LEARN_MAX, p.games.learn.solved);
   const base = { game: GAMES.learn.name, world: GAMES.learn.world };
   if (learned === 0) {
     return { ...base, tone: 'none', title: 'Még nem kezdte el.', short: 'Még nem kezdte el.', text: 'Itt ismerkedik meg a számokkal 1-től 20-ig, időnyomás nélkül.' };
@@ -222,7 +222,7 @@ export function insights(p: Progress, day: string, max = 4): Insight[] {
   const ordered = all.map((n, i) => ({ n, i })).sort((a, b) => rank(a.n) - rank(b.n) || a.i - b.i).map((x) => x.n);
 
   const picked: Insight[] = [];
-  for (const world of ['garden', 'robot', 'tower'] as WorldId[]) {
+  for (const world of WORLD_IDS) {
     const first = ordered.find((n) => n.world === world);
     if (first && picked.length < max) picked.push(first);
   }

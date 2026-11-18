@@ -73,6 +73,17 @@ export interface PrintSpec<T> {
   tasks: (req: TaskRequest) => T[];
   /** One task as an SVG; `answers` marks the solution (shown on the tablet only, never printed). */
   Task: (props: { task: T; answers: boolean }) => ReactNode;
+  /** What the game explains before this level, for a magyarázó lap the grown-up may print in front of the sheets. */
+  explain?: (level: number) => Explainer | null;
+}
+
+/** A magyarázó lap: the in-app explanation of a level's idea, slide by slide, on paper. */
+export interface Explainer {
+  /** The question it answers ("Mi a fél óra?"). */
+  title: string;
+  /** A line for the grown-up. */
+  note: string;
+  slides: { title: string; text: string; art: ReactNode }[];
 }
 
 /** Erases the task type so specs of different games share one list. */
@@ -286,6 +297,47 @@ export function Sheet({ spec, level, grid, tasks, answers, footer, link }: { spe
         </footer>
       </section>
     </TextureContext.Provider>
+  );
+}
+
+/**
+ * A magyarázó lap, printed (when the grown-up asks for it) in front of a level's sheets: the slides the game shows
+ * on the "?" button, big, to look at together. Nothing to solve on it, so no name line, star or QR code.
+ */
+export function ExplainSheet({ spec, level, explainer }: { spec: PrintSpec<unknown>; level: number; explainer: Explainer }) {
+  const n = explainer.slides.length;
+  const cols = n === 4 ? 2 : 1;
+  return (
+    <section className={`ps-sheet ps-sheet--${spec.world} ps-explain`}>
+      <header className="ps-head">
+        <div className="ps-head__text">
+          <span className="ps-world">{WORLDS.find((w) => w.id === spec.world)!.name} · magyarázó lap</span>
+          <h2 className="ps-title">{explainer.title}</h2>
+          <span className="ps-level">
+            <b>{spec.game}</b> · {level + 1}. szint: {spec.levels[level]}
+          </span>
+        </div>
+      </header>
+      <p className="ps-tip ps-explain__note">
+        <b>Szülőknek:</b> {explainer.note}
+      </p>
+      <div className="ps-explain__grid" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${Math.ceil(n / cols)}, minmax(0, 1fr))` }}>
+        {explainer.slides.map((s, i) => (
+          <div key={i} className="ps-explain__slide">
+            {n > 1 && <span className="ps-num">{i + 1}.</span>}
+            <div className="ps-pic">{s.art}</div>
+            <h3>{s.title}</h3>
+            <p>{s.text}</p>
+          </div>
+        ))}
+      </div>
+      <footer className="ps-foot">
+        <KalandkaIcon size={22} />
+        <KalandkaWordmark size={15} />
+        <span className="ps-foot__site">{siteAddress()}</span>
+        <span className="ps-foot__about">Gondolkodtató játékok 5–7 éveseknek</span>
+      </footer>
+    </section>
   );
 }
 

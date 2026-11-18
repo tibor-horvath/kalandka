@@ -1,13 +1,14 @@
+import { save, type SavePatch } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
 import { BEDS, PLOT_BEDS, VISITORS, basketBerries, basketPears, canMake, canPlant, emptyBeds, gardenFull, growAfter, grownCount, make, newVisitor, openBeds, pantryCount, plant, seedBalance, treatsOf, visitorProgress } from './garden';
 
-const withSeeds = (seeds: number, extra: Partial<Progress> = {}): Progress => ({ ...DEFAULT_PROGRESS, seeds, ...extra });
+const withSeeds = (seeds: number, extra: SavePatch = {}): Progress => save({ seeds, ...extra });
 
 describe('Kiskert', () => {
   it('spends seeds from the balance but never lowers the seeds earned', () => {
     const p = plant(withSeeds(7), 0, 'flower');
-    expect(p.seeds).toBe(7);
+    expect(p.worlds.garden.earned).toBe(7);
     expect(seedBalance(p)).toBe(4);
     expect(p.beds[0]).toEqual({ kind: 'flower', at: 0 });
     expect(p.beds).toHaveLength(BEDS);
@@ -25,17 +26,17 @@ describe('Kiskert', () => {
   it('grows a planting after a few more solved tasks', () => {
     const p = plant(withSeeds(3), 2, 'flower');
     expect(grownCount(p)).toBe(0);
-    expect(grownCount({ ...p, gardenTasks: p.gardenTasks + growAfter('flower') - 1 })).toBe(0);
-    expect(grownCount({ ...p, gardenTasks: p.gardenTasks + growAfter('flower') })).toBe(1);
+    expect(grownCount(save({ gardenTasks: p.worlds.garden.tasks + growAfter('flower') - 1 }, p))).toBe(0);
+    expect(grownCount(save({ gardenTasks: p.worlds.garden.tasks + growAfter('flower') }, p))).toBe(1);
   });
 
   it('grows bigger plants more slowly: flower, then bush, then tree', () => {
     expect(growAfter('flower')).toBeLessThan(growAfter('bush'));
     expect(growAfter('bush')).toBeLessThan(growAfter('tree'));
     let p = plant(plant(withSeeds(13), 0, 'flower'), 1, 'tree');
-    p = { ...p, gardenTasks: p.gardenTasks + growAfter('flower') };
+    p = save({ gardenTasks: p.worlds.garden.tasks + growAfter('flower') }, p);
     expect(grownCount(p)).toBe(1);
-    p = { ...p, gardenTasks: p.gardenTasks + growAfter('tree') - growAfter('flower') };
+    p = save({ gardenTasks: p.worlds.garden.tasks + growAfter('tree') - growAfter('flower') }, p);
     expect(grownCount(p)).toBe(2);
   });
 
@@ -43,7 +44,7 @@ describe('Kiskert', () => {
     let p = withSeeds(100);
     for (let i = 0; i < VISITORS[0].after; i++) p = plant(p, i, 'flower');
     expect(newVisitor(p)).toBeNull();
-    p = { ...p, gardenTasks: p.gardenTasks + growAfter('flower') };
+    p = save({ gardenTasks: p.worlds.garden.tasks + growAfter('flower') }, p);
     expect(newVisitor(p)?.id).toBe('hedgehog');
     p = { ...p, visitorsSeen: 1 };
     expect(newVisitor(p)).toBeNull();
@@ -54,10 +55,10 @@ describe('Kiskert', () => {
     expect(visitorProgress(p)).toEqual({ need: VISITORS[0].after, done: 0, coming: 0 });
     p = plant(plant(p, 0, 'flower'), 1, 'flower');
     expect(visitorProgress(p)).toEqual({ need: 3, done: 0, coming: 2 });
-    p = plant({ ...p, gardenTasks: p.gardenTasks + growAfter('flower') }, 2, 'flower');
+    p = plant(save({ gardenTasks: p.worlds.garden.tasks + growAfter('flower') }, p), 2, 'flower');
     expect(visitorProgress(p)).toEqual({ need: 3, done: 2, coming: 1 });
     // Süni came at 3 and was welcomed: the way to Katica (5) starts again from there.
-    p = { ...plant({ ...p, gardenTasks: p.gardenTasks + growAfter('flower') }, 3, 'flower'), visitorsSeen: 1 };
+    p = { ...plant(save({ gardenTasks: p.worlds.garden.tasks + growAfter('flower') }, p), 3, 'flower'), visitorsSeen: 1 };
     expect(visitorProgress(p)).toEqual({ need: VISITORS[1].after - VISITORS[0].after, done: 0, coming: 1 });
     expect(visitorProgress({ ...p, visitorsSeen: VISITORS.length })).toBeNull();
   });
@@ -90,7 +91,7 @@ describe('Kiskert plots', () => {
 });
 
 describe('Kamra', () => {
-  const basket = (pears: number, berries: number, extra: Partial<Progress> = {}): Progress => ({ ...DEFAULT_PROGRESS, pears, berries, ...extra });
+  const basket = (pears: number, berries: number, extra: SavePatch = {}): Progress => ({ ...DEFAULT_PROGRESS, pears, berries, ...extra });
 
   it('makes fruit from the basket into a treat, keeping the fruit ever picked', () => {
     const p = make(basket(4, 1), 'compote');

@@ -1,0 +1,124 @@
+/* The worlds' stores (components/StoreRack.tsx): packs of ten on a rack, the rest in a ten-place frame, five and five. */
+/* The rack and the frame sit side by side where there is room (so the store fits the dialog without scrolling),
+   and stack on narrow screens. */
+.store { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding: 12px 16px; border-radius: 22px; }
+.store__rack { flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.store__foot { flex: 0 1 auto; }
+.store__row { display: flex; flex-direction: column; }
+.store__places { display: flex; align-items: flex-end; gap: 4px; padding: 0 8px; }
+.store__place { flex: 1 1 0; min-width: 0; display: flex; align-items: flex-end; justify-content: center; }
+.store__place > svg, .store__place > .store__strap { width: 100%; height: auto; }
+.store__place.is-half { margin-right: 10px; }
+/* An empty place keeps its width (so the packs stand evenly) and shows a faint outline of the pack's size. */
+.store__place.is-empty::after { content: ''; width: min(100%, var(--ghost-w, 44px)); height: var(--ghost-h, 100%); border: 2px dashed rgba(110, 68, 38, 0.3); border-radius: 10px; box-sizing: border-box; }
+.store__ledge { display: block; height: 10px; border-radius: 3px; }
+.store__foot { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.is-phone .store__foot { flex-direction: row; align-items: center; }
+.store__frame { display: grid; grid-template-columns: repeat(5, 40px); gap: 4px; padding: 6px; border-radius: 8px; }
+.store__cell { width: 40px; height: 40px; border-radius: 4px; display: grid; place-items: center; }
+.store__cell > svg { width: 30px; height: 30px; }
+.store__sum { display: flex; flex-direction: column; gap: 2px; font-size: 22px; line-height: 1.15; }
+.store__sum > span { font-family: var(--body); font-size: 15px; font-weight: 800; opacity: 0.8; }
+
+/* Magtár: a barn loft, jute sacks on pallets, a wooden seed box. */
+.store--seeds { background: #efe3c9; color: #4f3019; }
+.store--seeds .store__place { height: 50px; }
+.store--seeds .store__place > svg { max-width: 38px; }
+.store--seeds { --ghost-w: 34px; --ghost-h: 44px; }
+.store--seeds .store__ledge { background: #a8743a; border-bottom: 4px solid #7a5228; }
+.store--seeds .store__frame { background: #8a5a3b; }
+.store--seeds .store__cell { background: #c99a6b; box-shadow: inset 0 3px 0 #a87b4f; }
+.store--seeds .store__cell > svg { width: 18px; }
+
+/* Raktár: a metal shelf of blue bins, a clear compartment box on the bench. */
+.store--bolts { background: radial-gradient(circle, #b9a37f 2px, transparent 2.6px) 0 0 / 22px 22px, #d9c6a2; color: #22313f; }
+.store--bolts .store__places { gap: 8px; border-inline: 10px solid #7d8a96; }
+.store--bolts .store__place { height: 74px; }
+.store--bolts .store__place > svg { max-width: 84px; }
+.store--bolts { --ghost-w: 80px; --ghost-h: 64px; }
+.store--bolts .store__ledge { background: #9aa8b5; border-bottom: 4px solid #5e6b77; }
+.store--bolts .store__frame { background: rgba(220, 235, 245, 0.7); border: 3px solid #7d8a96; }
+.store--bolts .store__cell { border: 2px solid #9fb2c2; background: rgba(255, 255, 255, 0.55); }
+
+/* Harangtár: a stone tower room, peg rails with straps of bells, a hook board. */
+.store--bells { background: linear-gradient(#cfc6b6 2px, transparent 2px) 0 0 / 100% 38px, linear-gradient(90deg, #cfc6b6 2px, transparent 2px) 0 0 / 76px 38px, #e6dfd2; color: #3b2f63; }
+.store--bells .store__rack { gap: 14px; }
+.store--bells .store__row { flex-direction: column-reverse; }
+.store--bells .store__ledge { background: #8a5a3b; border-bottom: 4px solid #6e4426; }
+.store--bells .store__place { height: 132px; align-items: flex-start; }
+.store--bells { --ghost-w: 18px; }
+.store__strap { display: flex; flex-direction: column; align-items: center; gap: 1px; max-width: 18px; margin-inline: auto; padding: 2px 0; border-radius: 6px; background: #8b5a2b; }
+.store__strap > svg { width: 12px; height: 12px; }
+.store--bells .store__frame { background: #8a5a3b; border: 4px solid #6e4426; }
+.store--bells .store__cell > svg { width: 26px; height: 28px; }
+
+.store-dialog .pantry__title { color: var(--ink); }
+.store-dialog--robot .pantry__title { color: #3f4f5e; }
+.store-dialog--tower .pantry__title { color: #5b4b9a; }
+.store-dialog__note { margin: 0; font-family: var(--body); font-size: 17px; font-weight: 700; color: var(--ink-soft); }
+
+/* Phones: smaller places, so twenty fit across. */
+.is-phone .store { padding: 10px; }
+.is-phone .store__places { gap: 2px; padding: 0 4px; }
+.is-phone .store__place.is-half { margin-right: 4px; }
+.is-phone .store--seeds .store__place { height: 40px; }
+.is-phone .store--seeds { --ghost-h: 36px; }
+.is-phone .store--bolts { --ghost-w: 48px; --ghost-h: 40px; }
+.is-phone .store--bolts .store__place { height: 52px; }
+.is-phone .store--bells .store__place { height: 100px; }
+.is-phone .store__strap > svg { width: 9px; height: 9px; }
+.is-phone .store__frame { grid-template-columns: repeat(5, 32px); }
+.is-phone .store__cell { width: 32px; height: 32px; }
+.is-phone .store__cell > svg { width: 24px; height: 24px; }
+
+/* Kamra: the pantry cupboard. One shelf per treat, ten places, five and five; the first free place cooks the next. */
+.cupboard { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px 6px; border: 10px solid #8a5a3b; border-top-width: 16px; border-radius: 14px 14px 6px 6px; background: repeating-linear-gradient(90deg, #c99a6b 0 58px, #bd8e60 58px 60px); }
+.cupboard__shelf { display: flex; flex-direction: column; }
+.cupboard__places { display: flex; align-items: flex-end; gap: 6px; min-height: 74px; padding: 0 4px; }
+.cupboard__place { flex: 0 1 66px; min-width: 0; height: 68px; display: flex; align-items: flex-end; justify-content: center; }
+.cupboard__place .treat-art { max-width: 100%; height: auto; }
+.cupboard__place.is-empty { height: 60px; border: 2px dashed rgba(79, 48, 25, 0.35); border-radius: 10px; }
+.cupboard__place.is-half, .cupboard__next.is-half { margin-right: 12px; }
+.cupboard__next { flex: 0 1 66px; min-width: 0; height: 68px; padding: 2px; border: 3px dashed #8a5a3b; border-radius: 12px; background: rgba(255, 250, 240, 0.85); color: var(--ink-soft); font: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; }
+.cupboard__next.is-ready { border: 3px solid var(--leaf); background: var(--good-tint); color: var(--leaf-deep); box-shadow: 0 3px 0 var(--grass-deep); }
+.cupboard__next.is-later { opacity: 0.6; }
+.cupboard__plus { font-size: 26px; font-weight: 800; line-height: 1; }
+.cupboard__next .pantry__things { min-height: 0; gap: 1px; }
+.cupboard__board { display: block; height: 12px; margin: 0 -16px; background: #8a5a3b; border-bottom: 4px solid #6e4426; }
+.cupboard__foot { display: flex; align-items: center; gap: 10px; min-height: 30px; margin: -2px 0 2px; }
+.cupboard__label { padding: 1px 10px; border: 1px solid #c7ab86; background: #fffaf0; color: #6e4426; font-family: var(--body); font-size: 14px; font-weight: 800; transform: rotate(-1.5deg); }
+.cupboard__full { min-height: 32px; padding: 0 14px; border: none; border-radius: 16px; background: var(--sun); color: var(--ink); font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; }
+.cupboard__need { display: none; }
+.is-phone .cupboard { padding: 8px 8px 4px; border-width: 6px; border-top-width: 10px; }
+.is-phone .cupboard__places { gap: 3px; min-height: 48px; }
+.is-phone .cupboard__place, .is-phone .cupboard__next { height: 44px; }
+.is-phone .cupboard__place.is-empty { height: 38px; }
+.is-phone .cupboard__place.is-half, .is-phone .cupboard__next.is-half { margin-right: 6px; }
+.is-phone .cupboard__plus { font-size: 18px; }
+.is-phone .cupboard__board { margin: 0 -8px; }
+/* The places are too small for the recipe on a phone: the "+" alone, and what it takes beside the label. */
+.is-phone .cupboard__next .pantry__things { display: none; }
+.is-phone .cupboard__need { display: inline-flex; padding: 2px 6px; border-radius: 10px; background: rgba(255, 250, 240, 0.85); }
+.is-phone .cupboard__need .pantry__things { min-height: 0; }
+.is-phone .cupboard__label { font-size: 12px; padding: 0 6px; }
+.is-phone .cupboard__full { min-height: 26px; padding: 0 10px; font-size: 13px; }
+/* The dialog header on a phone: the counts shrink so the title and the back button keep their room. */
+.is-phone .pantry__top { gap: 8px; }
+.is-phone .pantry__top .pill { flex-shrink: 1; min-width: 0; gap: 3px; padding: 0 8px; font-size: 17px; }
+.is-phone .pantry__top .pill svg { width: 18px; height: 18px; }
+
+/* Kosár: one wooden crate per fruit, a moulded tray of twenty hollows inside (two ten-frames). */
+.crates { list-style: none; margin: 0; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.crate { position: relative; padding: 6px 12px 8px; border: 3px solid #8a5a3b; border-radius: 6px; background: repeating-linear-gradient(180deg, #d9b07a 0 30px, #b88a55 30px 33px); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.crate__tag { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border: 1px solid #c7ab86; background: #fffaf0; color: #6e4426; font-size: 18px; font-weight: 800; }
+.crate__full { margin-left: 4px; padding: 0 8px; border-radius: 10px; background: var(--sun); color: var(--ink); font-size: 14px; }
+.crate__more { font-size: 14px; color: var(--ink-soft); }
+.crate__cups { order: 3; flex: 1 1 100%; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; padding: 6px 8px; border-radius: 8px; background: #d8cdb8; }
+.crate__cup { height: 26px; border-radius: 13px; background: #c6b89c; box-shadow: inset 0 3px 0 #b3a483; display: grid; place-items: center; }
+.crate__cup.is-half { margin-right: 8px; }
+.crate__cup > svg { width: 20px; height: 20px; }
+.crate .kbasket__goes { margin-left: auto; }
+.is-phone .crate__cups { gap: 2px; padding: 4px; }
+.is-phone .crate__cup { height: 24px; }
+.is-phone .crate__cup.is-half { margin-right: 3px; }
+.is-phone .crate__cup > svg { width: 18px; height: 18px; }

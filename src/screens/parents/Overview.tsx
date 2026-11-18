@@ -76,7 +76,7 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
     const idx = s.options.findIndex((o) => o.value === s.current(progress));
     return (idx + 1) / s.options.length;
   };
-  const learned = Math.min(LEARN_MAX, progress.learnSolved);
+  const learned = Math.min(LEARN_MAX, progress.games.learn.solved);
   /** "3. szint · Name", from the game's ladder. */
   const at = (game: LadderGame) => {
     const i = ladderOf(progress, game).level;
@@ -174,7 +174,7 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
           <h2 id="ov-notes" className="pa-h2">
             Mi megy jól, hol segíthetsz
           </h2>
-          <p className="pa-lead">Az elmúlt hét játékai alapján, mindkét világból, egy-egy otthoni ötlettel, képernyő nélkül.</p>
+          <p className="pa-lead">Az elmúlt hét játékai alapján, minden világból, egy-egy otthoni ötlettel, képernyő nélkül.</p>
         </div>
         <div className="pa-notes__grid">
           {notes.map((n) => (

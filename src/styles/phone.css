@@ -25,6 +25,9 @@
 .is-phone .topbar__right { gap: 8px; }
 .is-phone .round-btn { width: 48px; height: 48px; border-radius: 24px; }
 .is-phone .round-btn svg { width: 24px; height: 24px; }
+.is-phone .topbar__actions { gap: 8px; }
+.is-phone .peek-eye { width: 48px; height: 48px; border-radius: 24px; box-shadow: 0 4px 0 #d9a21a; }
+.is-phone .peek-eye svg { width: 24px; height: 24px; }
 .is-phone .pill { white-space: nowrap; height: 44px; padding: 0 14px 0 10px; gap: 6px; border-radius: 22px; font-size: 20px; }
 .is-phone .pill svg { width: 22px; height: 22px; }
 /* Home topbar holds seeds, mute and parents: the number alone carries the seed count. */
@@ -104,6 +107,24 @@
 /* The bleed layer would add 1000 px of empty scrolling; the stage already fills the phone screen. */
 .stage--portrait .screen--home::before { display: none; }
 .stage--portrait .screen--home .topbar { padding-top: 18px; }
+
+/* The play-time sign rides in the phone home topbar, clear of the island's names: button-high, the gauge and bars drawn small. */
+.is-phone .topbar .play-timer__sign { height: 44px; box-sizing: border-box; padding: 0 10px 0 7px; gap: 6px; border-radius: 22px; box-shadow: none; }
+.is-phone .topbar .play-timer__gauge { width: auto; height: 28px; }
+.is-phone .topbar .play-timer__bars { gap: 3px; }
+.is-phone .topbar .play-timer__bars i { width: 6px; height: 20px; border-width: 1.5px; border-radius: 3px; }
+.is-phone .topbar .play-timer__pause { right: -7px; top: -7px; width: 22px; height: 22px; border-width: 2px; gap: 3px; }
+.is-phone .topbar .play-timer__pause i { width: 3px; height: 8px; }
+
+/* Portrait bottom bar: Térkép, Kiskertem and Matricáim side by side, each its picture over its name, the count on a tag in the corner. */
+.stage--portrait .dock-item { flex-direction: column; justify-content: center; height: 80px; gap: 3px; padding: 6px 4px 4px; }
+.stage--portrait .dock-item--map { flex: 1 1 0; padding-right: 4px; }
+.stage--portrait .dock-item .spot__disc { width: 42px; height: 42px; }
+.stage--portrait .dock-item__text { flex: none; align-items: center; max-width: 100%; }
+.stage--portrait .dock-item__name { font-size: 15px; }
+.stage--portrait .dock-item__count { position: absolute; top: 4px; right: 6px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--paper); font-size: 14px; }
+.stage--portrait .dock-item__count svg { width: 13px; height: 13px; }
+.stage--portrait .dock-item .spot__badge--pic { left: 26px; }
 .stage--portrait .home-guide { margin-top: 14px; }
 /* Home topbar on a phone: the active child shows as their figure alone. */
 .is-phone .kid-chip { height: 44px; padding: 0; border-width: 3px; border-radius: 22px; }
@@ -122,7 +143,7 @@
 .is-phone .harbour__art { width: 100%; height: auto; }
 .stage--landscape .harbour { display: none; }
 .is-phone .kid-card__treasure { gap: 5px; }
-.is-phone .kid-card__seeds--bolts svg { width: 18px; height: 18px; }
+.is-phone .kid-card__seeds--bolts svg, .is-phone .kid-card__seeds--bells svg { width: 18px; height: 18px; }
 .is-phone .kids { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 26px 16px 24px; }
 .stage--landscape .kids { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 14px 0 12px; }
 .is-phone .kid-card,
@@ -167,9 +188,12 @@
 .stage--landscape .bubble__title { font-size: 18px; }
 .stage--landscape .home-guide .bubble__row { gap: 6px; }
 .stage--landscape .screen--home .island { grid-area: island; min-height: 0; margin: -14px 0 -8px; }
-/* Kincseim under Csepi: the reward place over the sticker album, at the bottom of the side column. */
-.stage--landscape .reward-dock { grid-area: dock; align-self: end; flex-direction: column; gap: 8px; padding: 0 0 12px; background: none; box-shadow: none; }
-.stage--landscape .dock-item { flex: none; height: 54px; }
+/* Under Csepi, at the bottom of the side column: Térkép as a tall narrow tile, beside it the reward place over the sticker album. */
+.stage--landscape .reward-dock { grid-area: dock; align-self: end; display: grid; grid-template-columns: 66px minmax(0, 1fr); grid-template-rows: auto auto; gap: 8px; padding: 0 0 12px; background: none; box-shadow: none; }
+.stage--landscape .dock-item { flex: none; height: 50px; }
+.stage--landscape .dock-item--map { grid-row: 1 / 3; height: auto; flex-direction: column; justify-content: center; gap: 4px; padding: 0 4px; }
+.stage--landscape .dock-item--map .dock-item__text { flex: none; align-items: center; }
+.stage--landscape .dock-item--map .dock-item__name { font-size: 14px; }
 
 /* ---------- Locsolás ---------- */
 .is-phone .screen--water { display: flex; flex-direction: column; }
@@ -215,7 +239,9 @@
 .is-phone .ten-frame--double .slot svg { width: 20px; }
 .is-phone .ten-frame--double .slot:nth-child(n + 11):nth-child(-n + 15) { margin-top: 6px; }
 /* The hint is for grown-ups reading along; on a phone the space goes to the game. */
-.is-phone .panel__hint { display: none; }
+.is-phone .panel__hint, .is-phone .slot-howto { display: none; }
+/* The cloud's label is a short picture now, so it stays inside the middle column instead of running under the panel. */
+.is-phone .cloud-btn__label { white-space: nowrap; }
 .is-phone .panel__foot { min-height: 0; }
 .is-phone .panel__foot:empty { display: none; }
 .is-phone .panel__foot .big-btn { flex: 1; margin-left: 0; }
@@ -541,34 +567,46 @@
 
 /* ---------- parents' gate ---------- */
 .is-phone .gate { padding: calc(1000px + var(--safe-t) + 12px) calc(1000px + 16px) calc(1000px + var(--safe-b) + 12px); }
-.is-phone .gate__card { width: 100%; max-width: 400px; padding: 22px 20px 14px; gap: 10px; border-radius: 24px; }
-.is-phone .gate__title { font-size: 26px; }
-.is-phone .gate__sum { font-size: 38px; }
-.is-phone .gate__answer { height: 56px; min-width: 84px; }
+.is-phone .gate__card { width: 100%; max-width: 400px; padding: 18px 18px 12px; gap: 12px; border-radius: 24px; }
+.is-phone .gate__title { font-size: 23px; }
+.is-phone .gate__lead { font-size: 14px; }
+.is-phone .gate__lock { width: 42px; height: 42px; border-radius: 14px; }
+.is-phone .gate__seg { font-size: 14px; gap: 6px; }
+.is-phone .gate__sum { padding: 16px 12px; gap: 12px; }
+.is-phone .gate__task { font-size: 38px; }
+.is-phone .gate__slot { width: 54px; height: 64px; font-size: 36px; }
 .is-phone .gate__key { height: 56px; }
-.is-phone .gate__cancel { min-height: 44px; }
+
 /* Landscape: the question on the left, the keypad on the right. */
 .stage--landscape .gate { padding: calc(1000px + 10px) calc(1000px + max(16px, var(--safe-r))) calc(1000px + max(8px, var(--safe-b))) calc(1000px + max(16px, var(--safe-l))); }
 .stage--landscape .gate__card {
-  max-width: 640px;
+  width: 680px;
+  max-width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-areas: 'lock keys' 'title keys' 'lead keys' 'sum keys' 'msg keys' 'switch keys' 'cancel keys';
+  grid-template-areas: 'head keys' 'dest keys' 'sum keys' 'msg keys' 'switch keys' 'cancel keys';
   column-gap: 24px;
-  row-gap: 8px;
-  justify-items: center;
+  row-gap: 10px;
   align-content: center;
   padding: 16px 22px;
 }
-.stage--landscape .gate__lock { grid-area: lock; width: 44px; height: 44px; }
-.stage--landscape .gate__title { grid-area: title; }
-.stage--landscape .gate__lead { grid-area: lead; text-align: center; }
-.stage--landscape .gate__sum { grid-area: sum; font-size: 34px; }
-.stage--landscape .gate__msg { grid-area: msg; text-align: center; }
-.stage--landscape .gate__cancel { grid-area: cancel; }
+.stage--landscape .gate__head { grid-area: head; gap: 10px; }
+.stage--landscape .gate__title { font-size: 22px; white-space: nowrap; }
+.stage--landscape .gate__lead { font-size: 14px; }
+.stage--landscape .gate__lock { width: 40px; height: 40px; border-radius: 14px; }
+.stage--landscape .gate__dest { grid-area: dest; }
+.stage--landscape .gate__sum { grid-area: sum; padding: 12px; }
+.stage--landscape .gate__task { font-size: 34px; }
+.stage--landscape .gate__slot { width: 50px; height: 58px; font-size: 32px; }
+.stage--landscape .gate__msg { grid-area: msg; margin: 0; }
 .stage--landscape .gate__switch { grid-area: switch; }
+.stage--landscape .gate__cancel { grid-area: cancel; }
 /* Fingerprint first: no keypad, so one column. */
-.stage--landscape .gate__card--bio { max-width: 420px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.stage--landscape .gate__card--bio { width: 440px; display: flex; flex-direction: column; gap: 8px; }
+.stage--landscape .gate__print { padding: 12px; flex-direction: row; }
+.stage--landscape .gate__print-ring { width: 64px; height: 64px; flex: none; }
+.stage--landscape .gate__print-ring svg { width: 36px; height: 36px; }
+.stage--landscape .gate__print-text { text-align: left; font-size: 15px; }
 .stage--landscape .gate__keys { grid-area: keys; align-self: center; gap: 8px; }
 .stage--landscape .gate__key { height: 52px; }
 

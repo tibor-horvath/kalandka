@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { GameShell } from '../../../components/GameShell';
 import { useLadderRound } from '../../../components/ladderRound';
 import { useProgress } from '../../../state/progress';
-import { ActivityPic, SandArt } from '../art';
+import { ActivityPic, SandArt, SpanSign } from '../art';
 import { ACTIVITIES, SPANS, capital } from '../games/activities';
 import { SPAN_WORDS, buildSandRound, sandSolved, sandStart, sandWrong } from '../games/sand';
 import { useLevelIntro } from './Intro';
@@ -13,7 +13,7 @@ export function Sand({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('sand');
   const intro = useLevelIntro('sand', level);
-  const [round] = useState(() => buildSandRound(level, progress.sandRound));
+  const [round] = useState(() => buildSandRound(level, progress.games.sand.round));
   const q = useQuestion(sandStart(round), intro.open);
   const solved = q.solved !== null;
   const right = round.mode === 'span' ? SPANS.indexOf(round.answer) : round.answer;
@@ -40,8 +40,17 @@ export function Sand({ onBack }: { onBack: () => void }) {
             q={q}
             right={right}
             onPick={pick}
-            className="tower-choices--short"
-            cards={SPANS.map((s) => ({ key: s, label: SPAN_WORDS[s], body: <span className="tower-card__word tower-card__word--big">{capital(SPAN_WORDS[s])}</span> }))}
+            className="tower-choices--spans"
+            cards={SPANS.map((s) => ({
+              key: s,
+              label: SPAN_WORDS[s],
+              body: (
+                <>
+                  <SpanSign span={s} />
+                  <span className="tower-card__word tower-card__word--small">{capital(SPAN_WORDS[s])}</span>
+                </>
+              )
+            }))}
           />
         </>
       ) : (

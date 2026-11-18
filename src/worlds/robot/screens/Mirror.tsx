@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { useLadderRound, WinCard } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
+import { PeekButton } from '../../../components/PeekButton';
 import { FitBox } from '../../../components/FitBox';
 import { Lamp, LampGrid } from '../art';
-import { DoneTick, GuideBubble } from '../../../components/ui';
+import { DoneTick } from '../../../components/ui';
 import {
   SHOW_AFTER,
   SHOW_FAULT_AFTER,
@@ -37,10 +38,9 @@ import {
   type PickTask,
 } from '../games/mirror';
 import { COLOR_NAMES, type Color } from '../games/sort';
-import { speak } from '../../../lib/speech';
-import { buzz, chime, fanfare, popBubble } from '../../../lib/sound';
+import { buzz, popBubble } from '../../../lib/sound';
 import { useProgress } from '../../../state/progress';
-import { ROUND_HELP_AFTER } from '../../../state/taskLog';
+import { CsavarSays, MissMark, useTaskRound } from './kit';
 
 /** After a board is finished, it stays a moment so the child sees the whole picture, then the next task comes. */
 const NEXT_TASK_MS = 3000;
@@ -60,65 +60,23 @@ const MAX_CELL = 112;
 
 type Say = (f: MirrorFeedback) => void;
 
-/** Orange badge on a wrong pick: a cross, the counterpart of the green tick. */
-function MissMark() {
-  return (
-    <span className="seq-miss" aria-hidden="true">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round">
-        <path d="M7 7l10 10M17 7L7 17" />
-      </svg>
-    </span>
-  );
-}
-
 /** Tükörgép: light the reflections, tell a reflection from a copy, or find where the machine went wrong. */
 export function Mirror({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('mirror');
-  const round = useMemo(() => buildMirrorRound(levelIndex, progress.mirrorRound), [levelIndex, progress.mirrorRound]);
-  const first = progress.mirrorSolved === 0;
-  const [taskIdx, setTaskIdx] = useState(0);
-  const [fb, setFb] = useState<MirrorFeedback>(() => startFeedback(round.level, first));
-  const [solved, setSolved] = useState(false);
-  const timers = useRef<number[]>([]);
-  const later = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms));
+  const round = useMemo(() => buildMirrorRound(levelIndex, progress.games.mirror.round), [levelIndex, progress.games.mirror.round]);
+  const first = progress.games.mirror.solved === 0;
+  const run = useTaskRound({
+    count: round.tasks.length,
+    first: startFeedback(round.level, first),
+    next: () => nextTaskFeedback(round.level),
+    won: () => solvedFeedback(round.level),
+    pause: NEXT_TASK_MS,
+    onWin: solve
+  });
 
-  /** Corrections Csavar gave this round; enough of them and the round needed help (parents' notes). */
-  const oops = useRef(0);
-  const say: Say = (f) => {
-    if (f.tone === 'oops') oops.current += 1;
-    setFb(f);
-    speak(f.speech);
-  };
-
-  useEffect(() => {
-    speak(startFeedback(round.level, first).speech);
-    const pending = timers.current;
-    return () => pending.forEach((t) => window.clearTimeout(t));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- One round per mount: App keys this screen by round.
-  }, []);
-
-  const done = (right: MirrorFeedback) => {
-    const last = taskIdx === round.tasks.length - 1;
-    if (!last) {
-      chime();
-      say(right);
-      later(() => {
-        setTaskIdx(taskIdx + 1);
-        say(nextTaskFeedback(round.level));
-      }, NEXT_TASK_MS);
-      return;
-    }
-    const win = solvedFeedback(round.level);
-    setSolved(true);
-    fanfare();
-    buzz(40);
-    say({ ...win, speech: `${right.speech} ${win.speech}` });
-    solve(oops.current >= ROUND_HELP_AFTER);
-  };
-
-  const task = round.tasks[taskIdx];
-  const props = { n: taskIdx, solved, say, onDone: done, later };
+  const task = round.tasks[run.taskIdx];
+  const props = { n: run.taskIdx, solved: run.solved, say: run.say, onDone: run.done, later: run.later };
 
   return (
     <GameShell
@@ -126,27 +84,16 @@ export function Mirror({ onBack }: { onBack: () => void }) {
       className="screen--mirror"
       title={round.level.kind === 'fix' ? 'Hibás tükör' : 'Tükörgép'}
       meter={meter}
-      justSolved={solved}
-      tasks={{ at: taskIdx, of: round.tasks.length, done: solved }}
+      justSolved={run.solved}
+      tasks={run.tasks}
       onBack={onBack}
-      onReplay={() => speak(fb.speech)}
+      onReplay={run.replay}
     >
-
-      <div className="seq-guide mirror-guide">
-        <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
-          {fb.text}
-        </GuideBubble>
-      </div>
-
-
-      {task.mode === 'light' && <LightBoard key={taskIdx} task={task} {...props} />}
-      {task.mode === 'pick' && <PickBoard key={taskIdx} task={task} {...props} />}
-      {task.mode === 'fix' && <FixBoard key={taskIdx} task={task} {...props} />}
-
-      {solved && (
-        <WinCard onNext={goNext} />
-      )}
-
+      <CsavarSays line={run.line} className="seq-guide mirror-guide" />
+      {task.mode === 'light' && <LightBoard key={run.taskIdx} task={task} {...props} />}
+      {task.mode === 'pick' && <PickBoard key={run.taskIdx} task={task} {...props} />}
+      {task.mode === 'fix' && <FixBoard key={run.taskIdx} task={task} {...props} />}
+      {run.solved && <WinCard onNext={goNext} />}
     </GameShell>
   );
 }
@@ -371,9 +318,7 @@ function LightBoard({ task, n, solved, say, onDone, later }: BoardProps & { task
           </div>
         )}
         {!finished && !solved && (
-          <button type="button" className="peek-btn peek-btn--robot" onClick={() => show(nearestTarget(task, lit, null))}>
-            Mutasd!
-          </button>
+          <PeekButton label="Mutasd, hova kerül a lámpa!" onClick={() => show(nearestTarget(task, lit, null))} />
         )}
       </div>
     </>

@@ -9,12 +9,35 @@ import { capital } from '../games/activities';
 import { useLevelIntro } from './Intro';
 import { Cards, KakukkSays, NextButton, useQuestion } from './kit';
 
+/**
+ * How long, drawn: one block an hour, half a block for the half hour, the number small under them.
+ * The blocks are the purple of the dial's tinted way, so the card and the clock's hint read alike.
+ */
+function HourBlocks({ minutes }: { minutes: number }) {
+  const whole = Math.floor(minutes / 60);
+  const half = minutes % 60 !== 0;
+  return (
+    <span className="hour-blocks" aria-hidden="true">
+      <span className="hour-blocks__row">
+        {Array.from({ length: whole }, (_, i) => (
+          <i key={i} className="hour-block" />
+        ))}
+        {half && <i className="hour-block hour-block--half" />}
+      </span>
+      <span className="hour-blocks__n">
+        {whole > 0 || !half ? whole : ''}
+        {half ? '½' : ''}
+      </span>
+    </span>
+  );
+}
+
 /** Kakukk alszik: two clocks, lying down and waking up; how long did Kakukk sleep? */
 export function Sleep({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('sleep');
   const intro = useLevelIntro('sleep', level);
-  const [round] = useState(() => buildSleepRound(level, progress.sleepRound));
+  const [round] = useState(() => buildSleepRound(level, progress.games.sleep.round));
   const q = useQuestion(sleepStart(round), intro.open);
   const solved = q.solved !== null;
   const from = handAngles(round.from);
@@ -66,15 +89,19 @@ export function Sleep({ onBack }: { onBack: () => void }) {
           </figcaption>
         </figure>
       </div>
+      {/* No words to read on the cards: how long is a row of hour blocks, when he woke is a clock. Kakukk says them. */}
       <Cards
         q={q}
         right={round.answer}
         onPick={pick}
-        className="tower-choices--short"
+        className={woke ? 'tower-choices--wake' : 'tower-choices--hours'}
         cards={
           woke
-            ? round.times.map((t) => ({ key: t, label: t, body: <span className="tower-card__word tower-card__word--big">{capital(t)}</span> }))
-            : round.choices.map((m) => ({ key: String(m), label: cardText(m), body: <span className="tower-card__word tower-card__word--big">{cardText(m)}</span> }))
+            ? round.wakeTimes.map((t, i) => {
+                const a = handAngles(t);
+                return { key: round.times[i], label: capital(round.times[i]), body: <ClockFace size={150} hour={a.hour} minute={a.minute} label="" aria-hidden="true" /> };
+              })
+            : round.choices.map((m) => ({ key: String(m), label: cardText(m), body: <HourBlocks minutes={m} /> }))
         }
       />
       <NextButton show={solved} onNext={goNext} />

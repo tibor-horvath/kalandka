@@ -1,3 +1,4 @@
+import { save } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { ADD_LEVELS } from '../worlds/garden/games/add/logic';
 import { SORT_LEVELS } from '../worlds/robot/games/sort';
@@ -28,7 +29,7 @@ describe('stickers', () => {
 
   it('keeps each world’s stickers to its own album page and home screen', () => {
     expect(STICKER_GAMES.filter((g) => g.world === 'robot').map((g) => g.id)).toEqual(['path', 'sort', 'scale', 'seq', 'mirror', 'code', 'fix', 'robotepito', 'paper-robot']);
-    const p = solvedUpTo('path', 0, { ...DEFAULT_PROGRESS, learnSolved: 5 });
+    const p = solvedUpTo('path', 0, save({ learnSolved: 5 }));
     expect(newStickers(p, 'garden').map((s) => s.id)).toEqual(['learn-5']);
     expect(newStickers(p, 'robot').map((s) => s.id)).toEqual(['path-szint-1']);
     expect(newStickers(p)).toHaveLength(2);
@@ -137,12 +138,12 @@ describe('stickers', () => {
   });
 
   it('leaves the stickers of a save from before the ladders in place', () => {
-    const old = { ...DEFAULT_PROGRESS, waterRound: 18, garden: Array<string>(18).fill('tulipan'), patternRound: 4, patternsSolved: 4, traceRound: 20, traceSolved: 20, traceFadedSolved: 10 };
+    const old = save({ waterRound: 18, garden: Array<string>(18).fill('tulipan'), patternRound: 4, patternsSolved: 4, traceRound: 20, traceSolved: 20, traceFadedSolved: 10 });
     expect(ids(old)).toEqual(expect.arrayContaining(['water-level-1', 'water-level-2', 'water-level-3', 'patterns-level-1', 'trace-level-1', 'trace-level-2']));
   });
 
   it('celebrates each new sticker once', () => {
-    let p: Progress = { ...DEFAULT_PROGRESS, learnSolved: 5 };
+    let p: Progress = save({ learnSolved: 5 });
     expect(newStickers(p).map((s) => s.id)).toEqual(['learn-5']);
     p = markStickerSeen(p, 'learn-5');
     expect(newStickers(p)).toEqual([]);
@@ -150,10 +151,10 @@ describe('stickers', () => {
   });
 
   it('lists the day’s stickers newest first, the uncelebrated ones before the rest', () => {
-    let p: Progress = { ...DEFAULT_PROGRESS, learnSolved: 5 };
+    let p: Progress = save({ learnSolved: 5 });
     p = markStickerSeen(p, 'learn-5', '2026-11-06');
     expect(todaysStickers(p, '2026-11-07')).toEqual([]);
-    p = solvedUpTo('path', 0, { ...p, learnSolved: 10 });
+    p = solvedUpTo('path', 0, save({ learnSolved: 10 }, p));
     p = markStickerSeen(p, 'learn-10', '2026-11-07');
     expect(todaysStickers(p, '2026-11-07').map((s) => s.id)).toEqual(['path-szint-1', 'learn-10']);
     p = markStickerSeen(p, 'path-szint-1', '2026-11-07');
@@ -162,7 +163,7 @@ describe('stickers', () => {
   });
 
   it('files away stickers from a jump in progress without a celebration', () => {
-    const p = markEarnedSeen({ ...DEFAULT_PROGRESS, potsSolved: 10 });
+    const p = markEarnedSeen(save({ potsSolved: 10 }));
     expect(earnedStickers(p)).toHaveLength(2);
     expect(newStickers(p)).toEqual([]);
   });
@@ -246,17 +247,17 @@ describe('stickers', () => {
     const once = markPageDone(DEFAULT_PROGRESS, 'learn.1.0.n.7.0', 9);
     expect(markPageDone(once, 'learn.1.0.n.7.0', 9)).toBe(once);
     expect(pagesDoneIn(once, 'garden')).toBe(1);
-    expect(once).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['learn.1.0.n.7.0'], gardenTasks: 9, seeds: 4 });
-    expect(markPageDone(DEFAULT_PROGRESS, 'code.1.0.b.3.1', 4)).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['code.1.0.b.3.1'], robotTasks: 4, bolts: 1 });
+    expect(once).toEqual(save({ pagesDone: ['learn.1.0.n.7.0'], gardenTasks: 9, seeds: 4 }));
+    expect(markPageDone(DEFAULT_PROGRESS, 'code.1.0.b.3.1', 4)).toEqual(save({ pagesDone: ['code.1.0.b.3.1'], robotTasks: 4, bolts: 1 }));
     // A part-filled pod: half of it full already, so a two-task page pays one.
-    const filled = { ...DEFAULT_PROGRESS, gardenTasks: 3 };
-    expect(pageReward(filled, 'water.1.0.n.7.0', 2)).toEqual({ seeds: 1, bolts: 0, bells: 0 });
-    expect(markPageDone(filled, 'water.1.0.n.7.0', 2)).toMatchObject({ gardenTasks: 5, seeds: 1 });
+    const filled = save({ gardenTasks: 3 });
+    expect(pageReward(filled, 'water.1.0.n.7.0', 2)).toBe(1);
+    expect(markPageDone(filled, 'water.1.0.n.7.0', 2)).toMatchObject({ worlds: { garden: { tasks: 5, earned: 1 } } });
   });
 
   it('starts the task clocks of older saves from the seeds and bolts they earned one per task', () => {
-    expect(readProgress({ seeds: 30, bolts: 12, stickersSeen: [] })).toMatchObject({ seeds: 30, gardenTasks: 30, bolts: 12, robotTasks: 12 });
-    expect(readProgress({ seeds: 30, gardenTasks: 41, stickersSeen: [] }).gardenTasks).toBe(41);
+    expect(readProgress({ seeds: 30, bolts: 12, stickersSeen: [] })).toMatchObject({ worlds: { garden: { earned: 30, tasks: 30 }, robot: { earned: 12, tasks: 12 } } });
+    expect(readProgress({ seeds: 30, gardenTasks: 41, stickersSeen: [] }).worlds.garden.tasks).toBe(41);
   });
 
   it('starts older saves with no pages done', () => {

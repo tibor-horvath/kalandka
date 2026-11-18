@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { markResume } from '../app/resume';
 import { restartApp } from '../lib/update';
 import { canSpeak, speak } from '../lib/speech';
 import { Csepi } from './Csepi';
@@ -39,7 +40,8 @@ function SavedIcon() {
 
 /**
  * Last resort when a screen throws while drawing: instead of a blank page, Csepi says (and reads aloud) that
- * they got lost, and one big button starts the app again on the home screen. After the tap the button stays
+ * they got lost, and one big button starts the app again, back on the home screen of the world the child was in
+ * (no "Ki játszik?" picker in between, see app/resume). After the tap the button stays
  * pressed and Csepi cheers, so the child sees the tap worked while the page reloads. Progress is saved as it
  * happens, so nothing is lost; a quiet line on the grass tells the grown-up so.
  * It stands outside the Stage, so it still shows if the Stage itself is what broke, and it sizes itself.
@@ -60,6 +62,7 @@ export class Oops extends Component<{ children: ReactNode }, { broken: boolean; 
     if (this.state.restarting) return;
     this.setState({ restarting: true });
     speak(SAY_GOING, { as: 'csepi' });
+    markResume();
     window.setTimeout(restartApp, RESTART_DELAY_MS);
   };
 

@@ -15,7 +15,7 @@ export function Day({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, step, win, meter, goNext } = useLadderRound('day');
   const intro = useLevelIntro('day', level);
-  const [round] = useState(() => buildDayRound(level, progress.dayRound));
+  const [round] = useState(() => buildDayRound(level, progress.games.day.round));
   const q = useQuestion(dayStart(round), intro.open);
   /** Cards placed in the row so far (beyond the ones given). */
   const [placed, setPlaced] = useState(0);
