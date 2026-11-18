@@ -9,8 +9,10 @@ const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'del', '0', 'ok'] as 
 /**
  * Parents' gate: a two-digit multiplication young children cannot do yet. When a parent turned on the
  * fingerprint unlock, the device's prompt comes first and the multiplication is one tap away.
+ * `scan`: it leads straight to Lap beolvasása instead of the parents' corner; with `onScan` the grown-up can switch
+ * between the two here, so a finished sheet is two taps from any screen with the lock.
  */
-export function Gate({ onPass, onCancel }: { onPass: () => void; onCancel: () => void }) {
+export function Gate({ onPass, onCancel, scan = false, onScan }: { onPass: () => void; onCancel: () => void; scan?: boolean; onScan?: (scan: boolean) => void }) {
   const [q] = useState(() => gateQuestion());
   const [input, setInput] = useState('');
   const [wrong, setWrong] = useState(false);
@@ -82,6 +84,13 @@ export function Gate({ onPass, onCancel }: { onPass: () => void; onCancel: () =>
     </svg>
   );
 
+  const heading = scan ? 'Lap beolvasása' : 'Szülői sarok';
+  const toggle = onScan && (
+    <button type="button" className="gate__switch" onClick={() => onScan(!scan)}>
+      {scan ? 'Inkább a Szülői sarokba' : 'Kész lap beolvasása helyette'}
+    </button>
+  );
+
   if (bioMode) {
     return (
       <div className="gate" ref={modal}>
@@ -90,9 +99,9 @@ export function Gate({ onPass, onCancel }: { onPass: () => void; onCancel: () =>
             <LockIcon size={28} />
           </span>
           <h1 id="gate-title" className="gate__title">
-            Szülői sarok
+            {heading}
           </h1>
-          <p className="gate__lead">Csak felnőtteknek. Oldd fel ujjlenyomattal vagy arcfelismeréssel.</p>
+          <p className="gate__lead">Csak felnőtteknek. Oldd fel ujjlenyomattal vagy arcfelismeréssel{scan ? ', utána rögtön nyílik a kamera.' : '.'}</p>
           <button type="button" className="gate__bio gate__bio--main" disabled={bioBusy} onClick={() => void unlock()}>
             {fingerprint}
             Feloldás ujjlenyomattal
@@ -103,6 +112,7 @@ export function Gate({ onPass, onCancel }: { onPass: () => void; onCancel: () =>
           <button type="button" className="gate__switch" onClick={() => setUseMath(true)}>
             Szorzásos kérdés helyette
           </button>
+          {toggle}
           <button type="button" className="gate__cancel" onClick={onCancel}>
             Mégse, vissza a játékhoz
           </button>
@@ -118,9 +128,9 @@ export function Gate({ onPass, onCancel }: { onPass: () => void; onCancel: () =>
           <LockIcon size={28} />
         </span>
         <h1 id="gate-title" className="gate__title">
-          Szülői sarok
+          {heading}
         </h1>
-        <p className="gate__lead">Csak felnőtteknek. Írd be az eredményt:</p>
+        <p className="gate__lead">{scan ? 'Csak felnőtteknek. Írd be az eredményt, utána rögtön nyílik a kamera:' : 'Csak felnőtteknek. Írd be az eredményt:'}</p>
         <div className="gate__sum">
           <span>
             {q.a} × {q.b} =
@@ -162,6 +172,7 @@ export function Gate({ onPass, onCancel }: { onPass: () => void; onCancel: () =>
             Inkább ujjlenyomattal
           </button>
         )}
+        {toggle}
         <button type="button" className="gate__cancel" onClick={onCancel}>
           Mégse, vissza a játékhoz
         </button>

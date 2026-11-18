@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Seed } from '../worlds/garden/art';
 import { AVATARS, Avatar } from '../components/avatars';
-import { PrintButton } from '../components/hub';
+import { PrintButton, ScanButton } from '../components/hub';
 import { Bolt } from '../worlds/robot/art';
 import { Bell } from '../worlds/tower/art';
 import { KalandkaIcon, KalandkaWordmark, LockIcon, RoundButton, SpeakerIcon } from '../components/ui';
@@ -20,7 +20,19 @@ const PICK_MS = 650;
 const PICK_MS_STILL = 300;
 
 /** "Ki játszik?": each child taps their own figure, in Kalandka's harbour. Adding a child goes through the parents' gate. */
-export function Picker({ onPick, onAdd, onParents, onPrint }: { onPick: (id: string) => void; onAdd: () => void; onParents: () => void; onPrint: () => void }) {
+export function Picker({
+  onPick,
+  onAdd,
+  onParents,
+  onPrint,
+  onScan
+}: {
+  onPick: (id: string) => void;
+  onAdd: () => void;
+  onParents: () => void;
+  onPrint: () => void;
+  onScan: () => void;
+}) {
   const { profiles } = useProfiles();
   const phone = useForm() !== 'tablet';
   const extra = useWideStage();
@@ -50,6 +62,7 @@ export function Picker({ onPick, onAdd, onParents, onPrint }: { onPick: (id: str
         </div>
         <div className="topbar__right">
           <PrintButton onClick={onPrint} />
+          <ScanButton onClick={onScan} />
           <button type="button" className="parents-btn" onClick={onParents}>
             <LockIcon size={22} />
             <span className="parents-btn__label">Szülőknek</span>

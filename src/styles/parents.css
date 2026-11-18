@@ -408,3 +408,61 @@
   .pa-intro__card { padding: 22px 18px; gap: 18px; }
   .pa-intro__title { font-size: 28px; }
 }
+
+/* Lap beolvasása: the camera fills the window and keeps watching; a scanned sheet comes up in a panel over it, and the
+   next code replaces the panel (see ScanSheet.tsx). Over the parents' corner when opened from Nyomtatás. */
+.sc { position: fixed; inset: 0; z-index: 30; display: block; background: #1d2126; color: #ffffff; overflow: hidden; }
+.sc__camera { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #1d2126; }
+.sc > .pa-muted { position: absolute; left: 50%; top: 50%; width: min(440px, calc(100% - 48px)); transform: translate(-50%, -50%); color: #ffffff; font-size: 18px; text-align: center; }
+.sc__frame { position: absolute; left: 50%; top: 46%; width: min(300px, 60vw, 44vh); aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; }
+.sc__frame span { position: absolute; width: 22%; height: 22%; border: 0 solid #ffffff; }
+.sc__frame span:nth-child(1) { left: 0; top: 0; border-left-width: 6px; border-top-width: 6px; border-top-left-radius: 22px; }
+.sc__frame span:nth-child(2) { right: 0; top: 0; border-right-width: 6px; border-top-width: 6px; border-top-right-radius: 22px; }
+.sc__frame span:nth-child(3) { left: 0; bottom: 0; border-left-width: 6px; border-bottom-width: 6px; border-bottom-left-radius: 22px; }
+.sc__frame span:nth-child(4) { right: 0; bottom: 0; border-right-width: 6px; border-bottom-width: 6px; border-bottom-right-radius: 22px; }
+.sc__top { position: absolute; left: 0; top: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: calc(16px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) 28px max(20px, env(safe-area-inset-left, 0px)); background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0)); }
+.sc__title { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; padding: 6px 18px; border-radius: 20px; background: rgba(0, 0, 0, 0.5); text-align: center; }
+.sc__title h1 { margin: 0; font: 800 24px/1.1 var(--display); }
+.sc__title span { font-size: 15px; font-weight: 700; color: #d6e4ee; }
+.sc .sc__pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 20px; border: none; border-radius: 26px; background: rgba(255, 255, 255, 0.2); color: #ffffff; font-size: 17px; font-weight: 800; cursor: pointer; flex: none; }
+.sc__pill--round { width: 52px; padding: 0 !important; flex: none; }
+.sc .sc__pill.is-on { background: #ffc93c; color: var(--pa-ink); }
+.sc .sc__pill:focus-visible { outline-color: #ffffff; }
+.sc__bottom { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 48px max(20px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px)); background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.72) 40%); }
+.sc__hint { margin: 0; max-width: 60ch; font-size: 19px; font-weight: 700; text-align: center; }
+.sc__kids .sc-kids { background: rgba(255, 255, 255, 0.14); }
+.sc__kids .sc-kids__label { color: #d6e4ee; }
+.sc .sc__kids .sc-kid { background: rgba(255, 255, 255, 0.2); color: #ffffff; border-color: transparent; }
+.sc .sc__kids .sc-kid.is-on { background: #ffffff; color: var(--pa-ink); }
+.sc-kids { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 6px; border-radius: 34px; }
+.sc-kids__label { padding: 0 6px 0 10px; font-size: 15px; font-weight: 700; color: var(--pa-muted); }
+.sc .sc-kid { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px 0 6px; border: 2px solid var(--pa-line); border-radius: 26px; background: #ffffff; color: var(--pa-ink); font-size: 17px; font-weight: 800; cursor: pointer; }
+.sc .sc-kid.is-on { border-color: var(--pa-accent); background: #e3f1fc; }
+.sc__sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: min(72%, calc(100% - 110px)); overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 16px; padding: 24px max(28px, env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) max(28px, env(safe-area-inset-left, 0px)); box-sizing: border-box; background: var(--pa-card); color: var(--pa-ink); border-radius: 28px 28px 0 0; animation: sc-up 0.25s ease-out; }
+.sc__head { position: relative; display: flex; align-items: flex-start; gap: 12px 20px; flex-wrap: wrap; padding-right: 60px; }
+.sc__head > div:first-child { flex: 1 1 260px; min-width: 0; }
+.sc__head .pa-h1 { font-size: 32px; }
+.sc__head .sc-kids { padding: 0; }
+.sc .sc__x { position: absolute; right: 0; top: 0; width: 48px; height: 48px; display: grid; place-items: center; border: none; border-radius: 24px; background: var(--pa-bg); color: var(--pa-muted); cursor: pointer; flex: none; }
+.sc .sc__mark { justify-content: center; height: auto; min-height: 76px; border-radius: 22px; font-family: var(--display); font-size: 26px; }
+.sc .sc__mark:not(.pa-btn--go) { background: var(--pa-accent); color: #ffffff; }
+.sc .sc__mark:disabled { opacity: 1; }
+.sc .sc__answers { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; padding: 0 20px; border: 2px solid var(--pa-line); border-radius: 16px; background: #ffffff; color: var(--pa-ink); font-size: 18px; font-weight: 800; cursor: pointer; text-align: left; }
+.sc__answers span { font-size: 15px; font-weight: 700; color: var(--pa-muted); white-space: nowrap; }
+.sc__list { display: flex; flex-direction: column; gap: 16px; }
+@keyframes sc-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sc__sheet { animation: none; } }
+@media (max-width: 600px) {
+  .sc__top { gap: 10px; }
+  .sc__title { flex: 1; padding: 6px 12px; }
+  .sc .sc__pill:not(.sc__pill--round) { width: 52px; padding: 0; }
+  .sc__pill-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .sc-kids { justify-content: center; }
+  .sc-kids__label { flex-basis: 100%; padding: 2px 0 0; text-align: center; }
+  .sc__hint { font-size: 17px; }
+  .sc__title h1 { font-size: 20px; }
+  .sc__title span { font-size: 13px; }
+  .sc .sc__pill { padding: 0 14px; }
+  .sc__head .pa-h1 { font-size: 26px; }
+  .sc .sc__mark { min-height: 64px; font-size: 22px; }
+}
