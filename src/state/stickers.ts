@@ -93,25 +93,68 @@ export function pageReward(p: Progress, key: string, tasks: number): number {
   return world ? paidFor(p, world, tasks) : 0;
 }
 
+/** Where a page's right answers are counted: its game's sheets of one level (`id.rev.level`), page after page. */
+const levelKey = (key: string) => key.split('.').slice(0, 3).join('.');
+
 /**
- * A grown-up saw the page finished. It counts once, for finishing, never for how many answers were right,
- * and it changes no level. Its `tasks` fill the reward pod (see `pageReward`). There is no taking it back: a sticker that has been stuck in stays.
+ * Right answers on a sheet level's pages that earn its sticker: STICKER_TASKS, as tasks solved on a level do in the game.
+ * Null for a game with no ladder (Számmagok): there, as in the game, every number done counts, so finishing the page is enough.
  */
-export function markPageDone(p: Progress, key: string, tasks: number): Progress {
+export function sheetNeed(key: string): number | null {
+  return isLadderGame(key.split('.')[0] as StickerGameId) ? STICKER_TASKS : null;
+}
+
+/** What a page's answers do: the right answers on its level so far (with the earlier pages'), and whether that is enough. */
+export interface PageTally {
+  need: number | null;
+  /** Right answers on the level's pages before this one. */
+  from: number;
+  /** With this page's right answers. */
+  to: number;
+  /** Enough right answers for the level's sticker. Always true where none are needed. */
+  cleared: boolean;
+}
+
+/**
+ * Counts a page's right answers onto its level's, as the game counts tasks solved on a level. Wrong ones count for
+ * nothing (on paper there was no help to finish them), and unchecked ones (null) are never guessed.
+ */
+export function pageTally(p: Progress, key: string, right: (boolean | null)[]): PageTally {
+  const need = sheetNeed(key);
+  if (need === null) return { need, from: 0, to: 0, cleared: true };
+  const from = p.sheetRight[levelKey(key)] ?? 0;
+  const to = from + right.filter((r) => r === true).length;
+  return { need, from, to, cleared: to >= need };
+}
+
+/**
+ * A grown-up checked a finished page, answer by answer (`right`). It counts once and changes no level. All its tasks
+ * fill the reward pod (see `pageReward`), as every task done does in the game, and it counts towards the Feladatlapok
+ * stickers. Its level's own sticker comes as in the game: once STICKER_TASKS answers on that level's pages were right,
+ * on this page or with the earlier ones. Until then the page goes into `pagesPractised`. There is no taking it back:
+ * a sticker that has been stuck in stays.
+ */
+export function markPageDone(p: Progress, key: string, right: boolean[]): Progress {
   if (p.pagesDone.includes(key)) return p;
   const world = pageWorld(key);
-  const done = { ...p, pagesDone: [...p.pagesDone, key] };
-  return world ? creditTasks(done, world, tasks) : done;
+  const tally = pageTally(p, key, right);
+  const done: Progress = {
+    ...p,
+    pagesDone: [...p.pagesDone, key],
+    pagesPractised: tally.cleared ? p.pagesPractised : [...p.pagesPractised, key],
+    sheetRight: tally.need === null ? p.sheetRight : { ...p.sheetRight, [levelKey(key)]: tally.to }
+  };
+  return world ? creditTasks(done, world, right.length) : done;
 }
 
 /** Feladatlapok stickers: pages done in a world. */
 const pagesIn = (world: WorldId, count: number) => (p: Progress) => pagesDoneIn(p, world) >= count;
 
 /** The sheet levels (0-based, as in the page key) of this game with a page marked done, with the revision each was printed from. */
-function sheetsDone(p: Progress, game: GameId): { rev: number; level: number }[] {
+function sheetsDone(p: Progress, game: GameId): { key: string; rev: number; level: number }[] {
   return p.pagesDone.flatMap((key) => {
     const [id, rev, level] = key.split('.');
-    return id === game ? [{ rev: Number(rev), level: Number(level) }] : [];
+    return id === game ? [{ key, rev: Number(rev), level: Number(level) }] : [];
   });
 }
 
@@ -132,10 +175,20 @@ export const SHEET_LADDER: Partial<Record<LadderGame, number[][]>> = {
   patterns: [[0], [1], [2], [2], [3], [4], [5], [6], [7], [8], [9]]
 };
 
-/** The ladder levels a finished sheet of this game stands for, each done explicitly on paper. */
-function sheetLevels(p: Progress, game: LadderGame): number[] {
+/** The ladder levels one printed sheet level stands for, on the revision it was printed from. */
+function ladderLevelsOf(game: LadderGame, rev: number, level: number): number[] {
   const old = OLD_SHEET_LADDER[game];
-  return sheetsDone(p, game).flatMap(({ rev, level }) => (old && rev < old.before ? old.levels : SHEET_LADDER[game])?.[level] ?? [level]);
+  return (old && rev < old.before ? old.levels : SHEET_LADDER[game])?.[level] ?? [level];
+}
+
+/**
+ * The ladder levels done on paper: those of the pages that brought enough right answers (see `markPageDone`). Pages
+ * marked before the answers were checked are not in `pagesPractised`, so they keep the stickers they earned then.
+ */
+function sheetLevels(p: Progress, game: LadderGame): number[] {
+  return sheetsDone(p, game)
+    .filter(({ key }) => !p.pagesPractised.includes(key))
+    .flatMap(({ rev, level }) => ladderLevelsOf(game, rev, level));
 }
 
 /**

@@ -6,9 +6,10 @@ import { MAX_PAGES, PRINT_SHEETS, buildPages, nextPrintout, pageRef, saveChoice,
 import { EXTRAS, extraFor, type ExtraId } from '../../print/extras';
 import { linkUrl, pageKey } from '../../print/link';
 import { DENSITIES, ExplainSheet, OtherAnswers, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
-import { useProfiles, type AgeBand } from '../../state/profiles';
+import { kidName, useProfiles, type AgeBand } from '../../state/profiles';
 import { useProgress, type Progress } from '../../state/progress';
-import { PAGE_STEPS, markPageDone, pagesDoneIn } from '../../state/stickers';
+import { PAGE_STEPS, pagesDoneIn } from '../../state/stickers';
+import { PageCheck } from './PageCheck';
 import { WORLDS, currentWorld, type WorldId } from '../../state/worlds';
 import { ScanSheet } from './ScanSheet';
 import { Check } from './controls';
@@ -132,30 +133,62 @@ function Stepper({ label, value, dots, onStep, atMin, atMax }: { label: string; 
   );
 }
 
-/** The grown-up marks the pages the child finished: the pages of the printout chosen here. Each counts once, towards the Feladatlapok stickers and the game's own sticker for its level. */
-function DonePages({ s, choice }: { s: PrintSpec<unknown>; choice: PrintChoice }) {
-  const { progress, update } = useProgress();
+/**
+ * The grown-up checks the pages the child finished: the pages of the printout chosen here. A page picked opens its
+ * answers to mark right or wrong (see PageCheck). Each counts once, towards the Feladatlapok stickers, and its
+ * level's own sticker once enough answers in a row were right, as in the game.
+ */
+function DonePages({ s, choice, name }: { s: PrintSpec<unknown>; choice: PrintChoice; name: string }) {
+  const { progress } = useProgress();
+  const [open, setOpen] = useState<number | null>(null);
+  const world = WORLDS.find((w) => w.id === s.world)!;
+  // A new printout (level, size, batch) closes the page being checked: its tasks would no longer be on the paper.
+  const printout = `${choice.level}.${choice.density}.${choice.batch}.${choice.pages}`;
+  const [seen, setSeen] = useState(printout);
+  if (seen !== printout) {
+    setSeen(printout);
+    setOpen(null);
+  }
+  const ref = open === null ? null : pageRef(s, choice, open);
   return (
     <section className="pa-card ps-done">
       <h2 className="pa-h2">Kész lapok</h2>
-      <p className="pa-muted">Ha a gyerkőc befejezett egy lapot, jelöld meg itt. A feladatai úgy töltik a jutalomtartót, mint a játékban ({WORLDS.map((w) => `${w.name}: ${w.reward.tasksPer} feladat 1 ${w.reward.unit}`).join(', ')}), és minden világban matrica jár a kész lapokért ({PAGE_STEPS.slice(0, 5).join(', ')}… lapnál), valamint a lap szintjéért a játék saját matricája.</p>
+      <p className="pa-muted">
+        Ha a gyerkőc befejezett egy lapot, válaszd ki, és jelöld a válaszait jónak vagy hibásnak. A feladatai úgy töltik a jutalomtartót, mint a játékban (
+        {WORLDS.map((w) => `${w.name}: ${w.reward.tasksPer} feladat 1 ${w.reward.unit}`).join(', ')}), minden világban matrica jár a kész lapokért ({PAGE_STEPS.slice(0, 5).join(', ')}…
+        lapnál), a lap szintjéért pedig akkor jár a játék saját matricája, ha egymás után elég válasz lett jó, mint a játékban.
+      </p>
       <div className="pa-row">
         {Array.from({ length: choice.pages }, (_, i) => {
           const key = pageKey(pageRef(s, choice, i));
           const done = progress.pagesDone.includes(key);
-          const name = choice.pages > 1 ? `${i + 1}. lap` : 'A lap';
+          const label = choice.pages > 1 ? `${i + 1}. lap` : 'A lap';
           return (
-            <button key={key} type="button" className={`pa-btn${done ? ' pa-btn--go' : ''}`} disabled={done} onClick={() => update((p) => markPageDone(p, key, tasksPerPage(s, choice.level, choice.density)))}>
+            <button key={key} type="button" className={`pa-btn${done ? ' pa-btn--go' : ''}${open === i ? ' is-open' : ''}`} aria-expanded={open === i} onClick={() => setOpen(open === i ? null : i)}>
               {done && (
                 <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12.5l4.5 4.5L19 7.5" />
                 </svg>
               )}
-              {name} {done ? 'kész' : 'megjelölése'}
+              {label} {done ? 'kész' : 'ellenőrzése'}
             </button>
           );
         })}
       </div>
+      {ref && (
+        <div className="pc-panel">
+          <PageCheck
+            key={pageKey(ref)}
+            spec={s}
+            pageKey={pageKey(ref)}
+            level={choice.level}
+            tasks={buildPages(s, { ...choice, pages: ref.page + 1 })[ref.page].tasks}
+            world={s.world}
+            worldName={world.name}
+            name={name}
+          />
+        </div>
+      )}
       <p className="pa-muted" aria-live="polite">
         Ebben a világban eddig <b>{pagesDoneIn(progress, s.world)}</b> kész lap.
       </p>
@@ -384,7 +417,7 @@ function GameSheet({ id, kidId, guestAge, canMark, onBack, onExtra }: { id: Prin
               </button>
             </p>
           )}
-          {canMark && <DonePages s={s} choice={choice} />}
+          {canMark && <DonePages s={s} choice={choice} name={kidName(profiles.kids.find((k) => k.id === kidId) ?? profiles.kids[0])} />}
         </div>
 
         <div className="ps-side">
