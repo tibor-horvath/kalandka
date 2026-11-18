@@ -28,12 +28,17 @@ import { WORLDS, currentWorld, worldInfo, type WorldId } from './state/worlds';
  * map and the sticker album, which shows every world, sit beside them: no task runs there.
  */
 type Screen = 'home' | 'map' | 'reward' | 'album' | GameId;
-/** 'print' is the printable sheets, opened without the gate; like the parents' corner it pauses the play clock. */
-type Parents = 'closed' | 'gate' | 'open' | 'print';
+/**
+ * 'print' is the printable sheets, opened without the gate; like the parents' corner it pauses the play clock.
+ * 'scan' is Lap beolvasása on its own, straight from the gate.
+ */
+type Parents = 'closed' | 'gate' | 'open' | 'print' | 'scan';
 
 // Only grown-ups open it, so it loads on its own; the gate starts the download, so it is usually there before the answer is.
 const loadParentArea = () => import('./screens/parents/ParentArea');
 const ParentArea = lazy(async () => ({ default: (await loadParentArea()).ParentArea }));
+const loadScanSheet = () => import('./screens/parents/ScanSheet');
+const ScanSheet = lazy(async () => ({ default: (await loadScanSheet()).ScanSheet }));
 const PrintArea = lazy(async () => ({ default: (await import('./screens/PrintArea')).PrintArea }));
 const Answers = lazy(async () => ({ default: (await import('./screens/Answers')).Answers }));
 
@@ -74,6 +79,8 @@ function Game() {
   /** The world whose island opened the sticker album, and so which page it opens on. */
   const [albumWorld, setAlbumWorld] = useState<WorldId>(WORLDS[0].id);
   const [parentStart, setParentStart] = useState<ParentStart>('overview');
+  /** The gate leads to Lap beolvasása instead of the parents' corner. */
+  const [scanGate, setScanGate] = useState(false);
   const showPicker = picking && profiles.kids.length > 1;
   const inParents = parents !== 'closed';
   const world = currentWorld(progress);
@@ -150,7 +157,7 @@ function Game() {
     if (place && !settling) backLayers.push({ key: place, close: () => leavePlace(place) });
     if (screen === 'album') backLayers.push({ key: 'album', close: () => go('home') });
   }
-  if (!route.landing && inParents) backLayers.push({ key: parents === 'print' ? 'print' : 'parents', close: () => setParents('closed') });
+  if (!route.landing && inParents) backLayers.push({ key: parents === 'print' || parents === 'scan' ? parents : 'parents', close: () => setParents('closed') });
   useBackLayers(backLayers);
 
   // Each guide speaks in their world's voice (see the manifests); on the map Csepi talks.
@@ -177,8 +184,17 @@ function Game() {
 
   const openGate = (start: ParentStart = 'overview') => {
     setParentStart(start);
+    setScanGate(false);
     setParents('gate');
     void loadParentArea();
+  };
+  const pickScan = (on: boolean) => {
+    setScanGate(on);
+    if (on) void loadScanSheet();
+  };
+  const openScan = () => {
+    openGate();
+    pickScan(true);
   };
   const closeParents = () => setParents('closed');
   const openPrint = () => {
@@ -234,7 +250,7 @@ function Game() {
       >
         {/* The workshop's screens wait for their chunk, which is loaded as soon as the app starts (see robot/lazy.ts). */}
         <Suspense fallback={null}>
-        {screen === 'home' && showPicker && <Picker onPick={pick} onAdd={() => openGate('add')} onParents={() => openGate()} onPrint={openPrint} />}
+        {screen === 'home' && showPicker && <Picker onPick={pick} onAdd={() => openGate('add')} onParents={() => openGate()} onPrint={openPrint} onScan={openScan} />}
         {screen === 'home' && !showPicker && (
           <Hub
             key={profiles.activeId}
@@ -261,13 +277,29 @@ function Game() {
           <Rest evening={evening && remaining > 0} onParents={() => openGate()} onSwitchTo={profiles.kids.length > 1 && !evening ? pick : undefined} />
         )}
       </Suspense>
-      {parents === 'gate' && <Gate onPass={() => setParents('open')} onCancel={closeParents} />}
+      {parents === 'gate' && (
+        <Gate
+          scan={scanGate}
+          onScan={parentStart === 'add' ? undefined : pickScan}
+          onPass={() => setParents(scanGate ? 'scan' : 'open')}
+          onCancel={closeParents}
+        />
+      )}
       {/* Adult pages, at the window's own size: outside the scaled stage, like the landing page's sheets. */}
       {parents === 'open' &&
         createPortal(
           <div className="pa-layer">
             <Suspense fallback={null}>
               <ParentArea start={parentStart} onClose={closeParents} onAbout={openLanding} />
+            </Suspense>
+          </div>,
+          document.body
+        )}
+      {parents === 'scan' &&
+        createPortal(
+          <div className="pa-layer">
+            <Suspense fallback={null}>
+              <ScanSheet kidId={profiles.activeId} onBack={closeParents} />
             </Suspense>
           </div>,
           document.body
