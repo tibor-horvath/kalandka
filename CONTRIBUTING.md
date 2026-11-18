@@ -41,7 +41,14 @@ Each game is its own rules plus a screen. Everything the games share — the lev
 
 1. **Rules** — `src/worlds/<world>/games/` (a garden game in `games/<id>/logic.ts`, a workshop game in `games/<id>.ts`) with its test beside it: the levels (an array of `{ name, … }`, easiest first, with an easy first level for five-year-olds), a pure function that builds round `n` on level `l`, and Csepi's or Csavar's lines.
 2. **The game list** — add `{ id, name }` to `games` in the world's manifest (`src/worlds/<world>/manifest.ts`). Its order is the order on the island. The game's round and solved count are in the save from then on (`progress.games.<id>`, read with `roundOf` and `solvedOf`); no save field or migration is needed.
-3. **The ladder** — the game's levels in `LADDER_LEVELS` and how many tasks step up and down in `LADDER_RULES` (`src/state/ladder.ts`). The parents' level settings and their hint text are made from these.
+3. **The definition** — an entry in the world's `src/worlds/<world>/defs.ts`. `look` holds the game's tile and glyph, its skill line and its sticker colours. A levelled game also has a `ladder`:
+   - `levels`, and how many tasks step up (`up`, or `upAt` for a longer row on some levels) and down (`down`);
+   - `stepWords` and `notes`, the parents' words for the game;
+   - `counted`, what the overview counts, if anything;
+   - `ageStart`, the starting level for a 6- or 7-year-old;
+   - `stickers`, one per level, easiest first.
+
+   The ladder rules, the parents' level settings and hints, the notes, the tiles, the album row and the level stickers are all built from this entry; `src/state/ladder.ts`, `levels.ts`, `insights.ts`, `stickers.ts` and the parents' pages need no change.
 4. **The screen** — `src/worlds/<world>/screens/<Name>.tsx`, registered under `games` in the world's `ui.tsx` (a workshop or Óratorony screen also goes in its `screens/world.ts`, as those worlds load on their own). App keys the screen by round, so each task starts fresh:
 
    ```tsx
@@ -64,12 +71,10 @@ Each game is its own rules plus a screen. Everything the games share — the lev
    `win` counts the task once: the seed or bolt, the parents' task log and the ladder step. `GameShell` draws the back button, title, level meter, replay button and level-up card in the world's look.
 
    Don't write the parts around the play again: `src/components/round.tsx` has the guide's bubble (`GuideSays`), the "Következő" button (`NextButton`), timers that stop when the child leaves (`useLater`) and the first line on opening (`useSayOnOpen`). Each world also has a kit in `screens/kit.tsx`. In the workshop, `useCsavar` holds Csavar's line and the corrections that make a round "needed help", and `useTaskRound` runs a round of several tasks to its win; `CsavarSays` and `MissMark` are there too. In the Óratorony, `useQuestion`, `Cards` and `KakukkSays` do the same.
-5. **The island** — the game's place in `TILES` in `src/worlds/garden/screens/Home.tsx` or `src/worlds/robot/screens/RobotHome.tsx` (label and picture). Each island has room for seven games: an eighth needs a new spot and trail in every island shape in `src/components/island.tsx`.
-6. **The parents' corner** — `STEP_WORDS` in `src/state/levels.ts`, `ABOUT` in `src/screens/parents/LevelsPage.tsx`, the game's note texts in `GAME_TEXTS` (`src/state/insights.ts`), and what it counts in `COUNTED` (`src/screens/parents/Overview.tsx`), if anything.
-7. **Stickers** — an album row in `STICKER_GAMES` and the game's stickers in `STICKERS` (`src/state/stickers.ts`).
-8. **Printable sheets** — a `spec({ … })` in the game's own print file (garden: `games/<game>/print.tsx`, robot: `games/<game>.print.tsx`), added to the world's sheet list in `print.tsx`. Its tasks' fingerprint goes in `src/print/revisions.json` as `"<id>@1"`: the failing test in `src/print/catalog.test.ts` prints the value.
-9. **Opening later** (garden only, optional) — an entry in `UNLOCKS` (`src/state/unlocks.ts`), a flag in `Progress`, and Csepi's lines in `UNLOCK_TEXT` (`Home.tsx`). Remember the rule above: worlds stay open to every child.
-10. **Docs** — the game's row in `docs/garden-games.md` or `docs/robot-games.md` and its ladder numbers in `docs/levels.md`.
+5. **The island** — the game's place in `TILES` in the world's home screen (`src/worlds/garden/screens/Home.tsx`, `src/worlds/robot/screens/RobotHome.tsx` or `src/worlds/tower/screens/TowerHome.tsx`: label and picture). Each island has room for seven games: an eighth needs a new spot and trail in every island shape in `src/components/island.tsx`.
+6. **Printable sheets** — a `spec({ … })` in the game's own print file (garden: `games/<game>/print.tsx`, robot: `games/<game>.print.tsx`), added to the world's sheet list in `print.tsx`. Its tasks' fingerprint goes in `src/print/revisions.json` as `"<id>@1"`: the failing test in `src/print/catalog.test.ts` prints the value.
+7. **Opening later** (garden only, optional) — an entry in `UNLOCKS` (`src/state/unlocks.ts`), a flag in `Progress`, and Csepi's lines in `UNLOCK_TEXT` (`Home.tsx`). Remember the rule above: worlds stay open to every child.
+8. **Docs** — the game's row in `docs/garden-games.md`, `docs/robot-games.md` or `docs/tower-games.md` and its ladder numbers in `docs/levels.md`.
 
 ## Adding a world
 
@@ -79,13 +84,13 @@ A world is a folder in `src/worlds/<world>/` with the same parts as the garden a
 2. **Screens and marks** — `ui.tsx` (its home, its reward place, its games, and a `preload` if it loads as its own chunk) in `WORLD_SCREENS` (`src/worlds/screens.ts`); `marks.tsx` (its reward icon and its sign on paper stickers) in `WORLD_MARKS` (`src/worlds/marks.ts`). For a chunk of its own, add a `world.ts` that exports its screens and a `lazy.ts` beside it (see `src/worlds/robot/screens/`).
 3. **What the type checker then asks for** — every `Record<WorldId, …>`: its look (`WORLD_LOOK` in `src/components/worldLook.ts`, `LOOK` in `WorldHub.tsx`), its play-time gauge (`GAUGES` in `PlayTimer.tsx`), and its island and boat route on the map (`WorldMap.tsx`).
 4. **What it does not see** — art and wording that still ask for a world by name: the island art in `island.tsx`, the map's mist in `WorldMap.tsx`, the robot's wish chip in `LevelMeter.tsx`, and per-world text in the parents' pages (`controls.tsx`, `PrintPage.tsx`, `LevelsPage.tsx`, `RewardsPage.tsx`). `git grep -nE "=== '(robot|garden|tower)'" -- src` lists them.
-5. **Its games** — each one as in *Adding a game* above.
+5. **Its games** — each one as in *Adding a game* above, with the world's `defs.ts` added to `GAME_DEFS` in `src/worlds/defs.ts`.
 
 ## Changing the save
 
 A child's progress carries the version it was written at (`version`). A change to its shape adds a step to `MIGRATIONS` in `src/state/migrations.ts`, working on the raw saved object, and a test with a save from before the change in `src/state/migrations.test.ts`. Never edit an old step: a save from any release must still read. A new field that only needs its default needs no step; `readProgress` fills the gaps. In tests, `save({ seeds: 5, pathSolved: 3 })` from `src/state/testSave.ts` builds a save from the short flat names.
 
-The world's parts in steps 1–3, and each game's `STEP_WORDS` and `ABOUT`, are checked by the type checker; `src/state/gameCoverage.test.ts` checks stickers, sheets, notes and the island's room. The hub tiles are not checked: open both worlds in `npm run dev` before sending the PR.
+The world's parts in steps 1–3, and each game's definition (a levelled game must have a ladder), are checked by the type checker; `src/state/gameCoverage.test.ts` checks every game's definition, screen, stickers, sheets and notes, every world's screens, look, marks and album rows, and the island's room. The hub tiles are not checked: open both worlds in `npm run dev` before sending the PR.
 
 ## License
 

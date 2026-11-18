@@ -1,10 +1,9 @@
 import type { ComponentType } from 'react';
 import type { HubActions } from '../components/WorldHub';
 import { gardenScreens } from './garden/ui';
-import type { GameId, WorldId } from './index';
+import type { GameId, GameIdOf, WorldId } from './index';
 import { robotScreens } from './robot/ui';
 import { towerScreens } from './tower/ui';
-import type { WORLD_MANIFESTS } from './index';
 
 // Each world's screens, for App: its home screen, its reward place and its games. Only App reads this list, so the
 // shared screens and components never pull a world's screens in with them.
@@ -12,7 +11,7 @@ import type { WORLD_MANIFESTS } from './index';
 export type HubProps = HubActions & { onOpen: (game: GameId) => void; onReward: () => void };
 export type PlaceProps = { onBack: () => void };
 
-type GamesOf<W extends WorldId> = Extract<(typeof WORLD_MANIFESTS)[number], { id: W }>['games'][number]['id'];
+type GamesOf<W extends WorldId> = GameIdOf<W>;
 
 export interface WorldScreens<W extends WorldId> {
   hub: ComponentType<HubProps>;

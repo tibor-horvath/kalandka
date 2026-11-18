@@ -1,34 +1,11 @@
-import { isLadderGame, type GameId } from '../../state/games';
+import { isLadderGame } from '../../state/games';
 import { LEVEL_SETTINGS, ladderStepLine } from '../../state/levels';
 import { markEarnedSeen } from '../../state/stickers';
 import { useProgress } from '../../state/progress';
 import { WORLDS } from '../../state/worlds';
+import { GAME_DEFS } from '../../worlds/defs';
 import { Check, WorldGroup } from './controls';
 
-/** Short skill per game, shown under its name; `mode` only where the game has no ladder. */
-const ABOUT: Record<GameId, { skill: string; mode?: string; glyph: string; tile: string }> = {
-  learn: { skill: 'számok 1–20', mode: 'Sorban halad 20-ig', glyph: '12', tile: 'pa-tile--blue' },
-  water: { skill: 'számolás', glyph: '10', tile: 'pa-tile--sky' },
-  patterns: { skill: 'mintázatok', glyph: 'AB', tile: 'pa-tile--pink' },
-  trace: { skill: 'számírás', glyph: '1–5', tile: 'pa-tile--sun' },
-  flash: { skill: 'mennyiség ránézésre', glyph: '5', tile: 'pa-tile--sand' },
-  add: { skill: 'összeadás és kivonás', glyph: '+', tile: 'pa-tile--sun' },
-  pots: { skill: 'számbarátok 5–20', glyph: '3+7', tile: 'pa-tile--pink' },
-  path: { skill: 'programozás', glyph: '↑→', tile: 'pa-tile--sky' },
-  sort: { skill: 'csoportosítás, szabályok', glyph: '●▲', tile: 'pa-tile--sand' },
-  scale: { skill: 'több, kevesebb, egyenlő', glyph: '=', tile: 'pa-tile--sun' },
-  seq: { skill: 'mintázatok, szabályok', glyph: 'AB?', tile: 'pa-tile--blue' },
-  mirror: { skill: 'tükrözés, szimmetria', glyph: '•|•', tile: 'pa-tile--sky' },
-  code: { skill: 'jelek és kódok', glyph: '●→?', tile: 'pa-tile--sand' },
-  fix: { skill: 'hibakeresés a programban', glyph: '↑✗', tile: 'pa-tile--pink' },
-  day: { skill: 'napirend, napszakok', glyph: '☀→☾', tile: 'pa-tile--sun' },
-  season: { skill: 'évszakok, a hét napjai, hónapok', glyph: '❀', tile: 'pa-tile--pink' },
-  set: { skill: 'óra beállítása', glyph: '3:00', tile: 'pa-tile--blue' },
-  read: { skill: 'óra leolvasása', glyph: '?:30', tile: 'pa-tile--sky' },
-  digi: { skill: 'mutatós és digitális óra', glyph: '7:15', tile: 'pa-tile--sand' },
-  sleep: { skill: 'eltelt idő', glyph: '+2', tile: 'pa-tile--pink' },
-  sand: { skill: 'időtartamok', glyph: '⧗', tile: 'pa-tile--sun' }
-};
 
 export function LevelsPage() {
   const { progress, update } = useProgress();
@@ -57,7 +34,7 @@ export function LevelsPage() {
           )}
           <div className="pa-levels">
             {LEVEL_SETTINGS.filter((s) => s.world === w.id).map((s) => {
-              const about = ABOUT[s.id];
+              const about = GAME_DEFS[s.id].look;
               const idx = Math.max(0, s.options.findIndex((o) => o.value === s.current(progress)));
               const atMin = idx === 0;
               const atMax = idx === s.options.length - 1;

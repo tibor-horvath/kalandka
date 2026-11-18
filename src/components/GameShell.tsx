@@ -5,16 +5,14 @@ import type { LevelMeterState } from '../state/levelMeter';
 import { LevelMeter, type RoundTasks } from './LevelMeter';
 import { BackIcon, RoundButton, SpeakerIcon } from './ui';
 import { WORLD_LOOK } from './worldLook';
-
-/** Games drawn on another backdrop than their world's own (Locsolás's lawn). */
-const OWN_BACKDROP: Partial<Record<GameId, string>> = { water: 'lawn' };
+import { GAME_DEFS } from '../worlds/defs';
 
 /** A game's empty screen, without its play: what a place on the island opens into, and closes back from. */
 export function GameBackdrop({ game }: { game: GameId }) {
   const look = WORLD_LOOK[GAMES[game].world];
   return (
     <div className={`screen${look.className}`}>
-      <div className={OWN_BACKDROP[game] ?? look.gameGround} />
+      <div className={GAME_DEFS[game].look.backdrop ?? look.gameGround} />
     </div>
   );
 }
@@ -78,7 +76,7 @@ export function GameShell({
 
   return (
     <div className={`screen ${className}${look.className}`}>
-      <div className={OWN_BACKDROP[game] ?? look.gameGround} aria-hidden="true" />
+      <div className={GAME_DEFS[game].look.backdrop ?? look.gameGround} aria-hidden="true" />
 
       <header className={title !== undefined || aside !== undefined ? 'topbar topbar--meter' : 'topbar'}>
         <RoundButton label={look.back} onClick={onBack}>
