@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.0](https://github.com/tibor-horvath/kalandka/compare/v1.15.0...v1.16.0) (2026-11-18)
+
+
+### Added
+
+* Refactor garden and workshop screens to enhance store functionality and improve user experience ([#87](https://github.com/tibor-horvath/kalandka/issues/87)) ([ca5a62d](https://github.com/tibor-horvath/kalandka/commit/ca5a62d56c4715ac4a72322aa79c264c380468e8))
+
 ## [1.15.0](https://github.com/tibor-horvath/kalandka/compare/v1.14.0...v1.15.0) (2026-11-18)
 
 
