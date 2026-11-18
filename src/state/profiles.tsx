@@ -1,4 +1,5 @@
-import { withRound } from './games';
+import { LADDER_GAMES, withRound } from './games';
+import { LADDER_DEFS } from '../worlds/defs';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ladderOf, placeAt, withLadder, type LadderGame } from './ladder';
 import { announceAll } from './unlocks';
@@ -89,10 +90,9 @@ export function progressOf(s: Profiles, id: string): Progress {
  * Where a child of this age starts on each ladder (0-based; a game left out starts at the bottom). On the low
  * side on purpose: a level too easy is climbed in a few tasks, while starting too high means failing first.
  */
-export const AGE_LEVELS: Record<Exclude<AgeBand, '5'>, Partial<Record<LadderGame, number>>> = {
-  '6': { water: 1, patterns: 1, flash: 1, add: 2, sort: 1, scale: 1 },
-  '7+': { water: 2, patterns: 2, trace: 2, flash: 2, add: 5, pots: 1, path: 2, sort: 3, scale: 2, seq: 2, mirror: 1, code: 2, fix: 1 }
-};
+export const AGE_LEVELS = Object.fromEntries(
+  (['6', '7+'] as const).map((age) => [age, Object.fromEntries(LADDER_GAMES.flatMap((g) => (LADDER_DEFS[g].ageStart?.[age] === undefined ? [] : [[g, LADDER_DEFS[g].ageStart![age]!]])))])
+) as Record<Exclude<AgeBand, '5'>, Partial<Record<LadderGame, number>>>;
 
 function placed(p: Progress, levels: Partial<Record<LadderGame, number>>): Progress {
   const games = Object.entries(levels) as [LadderGame, number][];

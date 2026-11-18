@@ -5,23 +5,11 @@ import { LEVEL_SETTINGS } from '../../state/levels';
 import { useProgress } from '../../state/progress';
 import { BONUS_OPTIONS, addBonus, lastSevenDays, playedToday, remainingSeconds, restNow, today } from '../../state/screenTime';
 import { LEARN_MAX } from '../../worlds/garden/games/learn/logic';
+import { GAME_DEFS } from '../../worlds/defs';
 import { WORLDS, type WorldId } from '../../state/worlds';
 import type { ParentPage } from './ParentArea';
 import { WorldGroup } from './controls';
 
-/** What each game counts on its line; the others show their level alone. */
-const COUNTED: Partial<Record<GameId, string>> = {
-  water: 'virág',
-  patterns: 'sor',
-  trace: 'leírt szám',
-  path: 'pálya',
-  sort: 'kör',
-  scale: 'kör',
-  seq: 'kör',
-  mirror: 'kör',
-  code: 'kör',
-  fix: 'kör'
-};
 
 /** Minutes ring for today. With no limit it shows the minutes alone. */
 function TodayRing({ played, limit }: { played: number; limit: number }) {
@@ -87,7 +75,8 @@ export function Overview({ onGo }: { onGo: (page: ParentPage) => void }) {
   const detail = (game: GameId): string => {
     if (game === 'learn') return `${learned} / ${LEARN_MAX} szám`;
     if (game === 'add') return `${at('add')} · ${add.streak}/${upNeed(add, LADDER_RULES.add)} csillag`;
-    const unit = COUNTED[game];
+    /** What the game counts on its line (its definition says); the others show their level alone. */
+    const unit = GAME_DEFS[game].ladder?.counted;
     return unit ? `${solvedOf(progress, game)} ${unit} · ${at(game)}` : at(game);
   };
   const games = GAME_IDS.map((id) => ({

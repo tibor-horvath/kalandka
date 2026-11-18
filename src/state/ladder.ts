@@ -1,21 +1,17 @@
-import { ADD_LEVELS, clampLevel } from '../worlds/garden/games/add/logic';
-import { FLASH_ROUNDS_PER_LEVEL, LEVELS as FLASH_LEVELS } from '../worlds/garden/games/flash/logic';
-import { MIXED_SHAPES, PATTERN_LEVELS, SHAPE_ORDER } from '../worlds/garden/games/patterns/logic';
-import { POTS_LEVELS, POTS_ROUNDS_PER_LEVEL } from '../worlds/garden/games/pots/logic';
-import { CODE_LEVELS, CODE_ROUNDS_PER_LEVEL } from '../worlds/robot/games/code';
-import { FIX_LEVELS, FIX_ROUNDS_PER_LEVEL } from '../worlds/robot/games/fix';
-import { MIRROR_LEVELS, MIRROR_ROUNDS_PER_LEVEL } from '../worlds/robot/games/mirror';
-import { PATH_LEVELS, PATH_ROUNDS_PER_LEVEL } from '../worlds/robot/games/path';
-import { SCALE_LEVELS, SCALE_ROUNDS_PER_LEVEL } from '../worlds/robot/games/scale';
-import { SEQ_LEVELS, SEQ_ROUNDS_PER_LEVEL } from '../worlds/robot/games/seq';
-import { SORT_LEVELS, SORT_ROUNDS_PER_LEVEL } from '../worlds/robot/games/sort';
-import { TRACE_LEVELS, TRACE_ORDER } from '../worlds/garden/games/trace/logic';
-import { PLANTS, WATER_LEVELS } from '../worlds/garden/games/water/logic';
-import { DIGI_LEVELS, READ_LEVELS, SET_LEVELS } from '../worlds/tower/games/clock';
-import { DAY_LEVELS } from '../worlds/tower/games/day';
-import { SAND_LEVELS } from '../worlds/tower/games/sand';
-import { SEASON_LEVELS } from '../worlds/tower/games/season';
-import { SLEEP_LEVELS } from '../worlds/tower/games/sleep';
+import { clampLevel } from '../worlds/garden/games/add/logic';
+import { FLASH_ROUNDS_PER_LEVEL } from '../worlds/garden/games/flash/logic';
+import { SHAPE_ORDER } from '../worlds/garden/games/patterns/logic';
+import { POTS_ROUNDS_PER_LEVEL } from '../worlds/garden/games/pots/logic';
+import { CODE_ROUNDS_PER_LEVEL } from '../worlds/robot/games/code';
+import { FIX_ROUNDS_PER_LEVEL } from '../worlds/robot/games/fix';
+import { MIRROR_ROUNDS_PER_LEVEL } from '../worlds/robot/games/mirror';
+import { PATH_ROUNDS_PER_LEVEL } from '../worlds/robot/games/path';
+import { SCALE_ROUNDS_PER_LEVEL } from '../worlds/robot/games/scale';
+import { SEQ_ROUNDS_PER_LEVEL } from '../worlds/robot/games/seq';
+import { SORT_ROUNDS_PER_LEVEL } from '../worlds/robot/games/sort';
+import { TRACE_ORDER } from '../worlds/garden/games/trace/logic';
+import { PLANTS } from '../worlds/garden/games/water/logic';
+import { LADDER_DEFS } from '../worlds/defs';
 import { rng } from '../lib/rng';
 import { roundOf, solvedOf, type LadderGame } from './games';
 import type { LevelMeterState } from './levelMeter';
@@ -40,65 +36,16 @@ export interface LadderRule {
   cooldown: number;
 }
 
-/** Each levelled game's levels, easiest first; only their names are read here. */
-export const LADDER_LEVELS: Record<LadderGame, readonly { name: string }[]> = {
-  water: WATER_LEVELS,
-  patterns: PATTERN_LEVELS,
-  trace: TRACE_LEVELS,
-  flash: FLASH_LEVELS,
-  add: ADD_LEVELS,
-  pots: POTS_LEVELS,
-  path: PATH_LEVELS,
-  sort: SORT_LEVELS,
-  scale: SCALE_LEVELS,
-  seq: SEQ_LEVELS,
-  mirror: MIRROR_LEVELS,
-  code: CODE_LEVELS,
-  fix: FIX_LEVELS,
-  day: DAY_LEVELS,
-  season: SEASON_LEVELS,
-  set: SET_LEVELS,
-  read: READ_LEVELS,
-  digi: DIGI_LEVELS,
-  sleep: SLEEP_LEVELS,
-  sand: SAND_LEVELS
-};
-
-const rule = (game: LadderGame, up: number, down: number): LadderRule => ({ levels: LADDER_LEVELS[game].length, up, down, cooldown: 3 });
+/** Each levelled game's levels, easiest first (from its definition); only their names are read here. */
+export const LADDER_LEVELS = Object.fromEntries(Object.entries(LADDER_DEFS).map(([g, d]) => [g, d.levels])) as Record<LadderGame, readonly { name: string }[]>;
 
 /**
- * One task is one answer in the garden games and one round in the workshop, where a round holds two
- * to four tasks and the level can only change between rounds. Mézút's row is five digits: a whole level's
- * digits on its first four levels, half a lap of ten on the mixed ones.
+ * Each levelled game's rule, from its definition. One task is one answer in the garden and the Óratorony, and one
+ * round in the workshop, where a round holds two to four tasks and the level can only change between rounds.
  */
-/** Virágsor's mixed levels draw from every shape: the row that steps up shows each shape once. */
-const PATTERN_MIXED_UP = Object.fromEntries(
-  PATTERN_LEVELS.flatMap((l, i) => (l.shapes === MIXED_SHAPES ? [[i, MIXED_SHAPES.length]] : []))
-);
-
-export const LADDER_RULES: Record<LadderGame, LadderRule> = {
-  water: rule('water', 4, 3),
-  patterns: { ...rule('patterns', 4, 3), upAt: PATTERN_MIXED_UP },
-  trace: rule('trace', TRACE_LEVELS[0].digits.length, 3),
-  flash: rule('flash', 4, 3),
-  add: rule('add', 5, 3),
-  pots: rule('pots', 5, 3),
-  path: rule('path', 4, 2),
-  sort: rule('sort', 4, 2),
-  scale: rule('scale', 4, 2),
-  seq: rule('seq', 4, 2),
-  mirror: rule('mirror', 4, 2),
-  code: rule('code', 4, 2),
-  fix: rule('fix', 4, 2),
-  // The Óratorony asks one question a task, like the garden.
-  day: rule('day', 4, 3),
-  season: rule('season', 4, 3),
-  set: rule('set', 4, 3),
-  read: rule('read', 4, 3),
-  digi: rule('digi', 4, 3),
-  sleep: rule('sleep', 4, 3),
-  sand: rule('sand', 4, 3)
-};
+export const LADDER_RULES = Object.fromEntries(
+  Object.entries(LADDER_DEFS).map(([g, d]) => [g, { levels: d.levels.length, up: d.up, down: d.down, cooldown: 3, ...(d.upAt ? { upAt: d.upAt } : {}) }])
+) as Record<LadderGame, LadderRule>;
 
 export interface Ladder {
   /** The level the next task is on (0-based). */

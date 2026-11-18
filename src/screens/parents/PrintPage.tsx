@@ -12,6 +12,8 @@ import { useProgress, type Progress } from '../../state/progress';
 import { PAGE_STEPS, pagesDoneIn } from '../../state/stickers';
 import { PageCheck } from './PageCheck';
 import { WORLDS, currentWorld, type WorldId } from '../../state/worlds';
+import { GAME_IDS, type GameId } from '../../state/games';
+import { GAME_DEFS } from '../../worlds/defs';
 import { ScanSheet } from './ScanSheet';
 import { Check } from './controls';
 
@@ -19,31 +21,12 @@ import { Check } from './controls';
 const SHEET_PX = 793.7;
 const SHEET_RATIO = 297 / 210;
 
+/** Each sheet's tile on the shelf: a game's from its definition, a mixed round's with its guide. */
 const TILES: Record<PrintId, { glyph: ReactNode; tile: string }> = {
   mixgarden: { glyph: <MixArt guide="csepi" size={44} />, tile: 'pa-tile--sun' },
   mixrobot: { glyph: <MixArt guide="csavar" size={44} />, tile: 'pa-tile--sun' },
   mixtower: { glyph: <MixArt guide="kakukk" size={44} />, tile: 'pa-tile--sun' },
-  learn: { glyph: '12', tile: 'pa-tile--blue' },
-  water: { glyph: '10', tile: 'pa-tile--sky' },
-  patterns: { glyph: 'AB', tile: 'pa-tile--pink' },
-  flash: { glyph: '5', tile: 'pa-tile--sand' },
-  add: { glyph: '+', tile: 'pa-tile--sun' },
-  trace: { glyph: '3', tile: 'pa-tile--sun' },
-  pots: { glyph: '3+7', tile: 'pa-tile--pink' },
-  path: { glyph: '↑→', tile: 'pa-tile--sky' },
-  sort: { glyph: '●▲', tile: 'pa-tile--sand' },
-  scale: { glyph: '=', tile: 'pa-tile--sun' },
-  seq: { glyph: 'AB?', tile: 'pa-tile--blue' },
-  mirror: { glyph: '•|•', tile: 'pa-tile--sky' },
-  code: { glyph: '●→?', tile: 'pa-tile--sand' },
-  fix: { glyph: '↑✗', tile: 'pa-tile--pink' },
-  day: { glyph: '☀→☾', tile: 'pa-tile--sun' },
-  season: { glyph: '❀', tile: 'pa-tile--pink' },
-  set: { glyph: '3:00', tile: 'pa-tile--blue' },
-  read: { glyph: '?:30', tile: 'pa-tile--sky' },
-  digi: { glyph: '7:15', tile: 'pa-tile--sand' },
-  sleep: { glyph: '+2', tile: 'pa-tile--pink' },
-  sand: { glyph: '⧗', tile: 'pa-tile--sun' }
+  ...(Object.fromEntries(GAME_IDS.map((id) => [id, { glyph: GAME_DEFS[id].look.sheetGlyph ?? GAME_DEFS[id].look.glyph, tile: GAME_DEFS[id].look.tile }])) as Record<GameId, { glyph: string; tile: string }>)
 };
 
 const EXTRA_TILES: Record<ExtraId, { glyph: ReactNode; tile: string }> = {

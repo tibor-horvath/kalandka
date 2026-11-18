@@ -16,3 +16,6 @@ export const WORLD_IDS: WorldId[] = WORLD_MANIFESTS.map((w) => w.id);
 
 /** Every game, in hub order: the garden's, then the workshop's, then the Óratorony's. */
 export const GAME_IDS: GameId[] = WORLD_MANIFESTS.flatMap((w) => w.games.map((g) => g.id));
+
+/** The ids of one world's games. */
+export type GameIdOf<W extends WorldId> = Extract<Manifests[number], { id: W }>['games'][number]['id'];
