@@ -14,7 +14,7 @@ permissions: {}
 jobs:
   audit:
     name: npm audit
-    uses: tibor-horvath/ci-toolkit/.github/workflows/node-audit.yml@v1
+    uses: tibor-horvath/ci-toolkit/.github/workflows/node-audit.yml@v2
     with:
       node-version: "22.x"
     permissions:
