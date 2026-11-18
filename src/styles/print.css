@@ -309,3 +309,9 @@
   .ps-print .ps-sheet { break-after: page; }
   .ps-print .ps-sheet:last-child { break-after: auto; }
 }
+
+/* Vegyes kör sheets (src/print/mix.tsx): each cell carries its game's name and question above its picture. */
+.ps-mix { height: 100%; display: flex; flex-direction: column; gap: 1.5mm; }
+.ps-mix__ask { margin: 0; font-family: var(--body); font-size: 3.1mm; line-height: 1.25; color: #10233a; }
+.ps-mix__pic { flex: 1; min-height: 0; }
+.ps-answer .ps-mix__ask { font-size: 14px; margin-bottom: 6px; }

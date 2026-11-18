@@ -95,8 +95,9 @@ state/screenTime.ts       daily limit, play clock and 14-day history, bonus, res
 state/taskLog.ts          the last few solved tasks per game, for the parents' notes
 state/insights.ts         plain-language notes for parents; the multiplication gate
 state/levels.ts           per-game level settings for the parents' corner (read current, apply new start)
+state/review.ts           Vegyes kör: when it opens (two of the world's games played), five tasks from the games played, each on a level already solved there
 
-print/                    the worksheet frame and the catalog of every world's sheets, the cut-out pages (extras.tsx), QR links
+print/                    the worksheet frame and the catalog of every world's sheets, each world's Vegyes kör sheet (mix.tsx), the cut-out pages (extras.tsx), QR links
 components/               the guides, the islands, sticker art, buttons, speech bubble, game frame and level meter, what every game screen shares around its play (round.tsx: the guide's line, "Következő", timers), home-screen top-bar controls (hub), scaling stage (1180×820 tablet, 390 px phone)
-screens/                  screens of no one world: Landing, WorldMap, Picker (Ki játszik?), Album (Matricáim), PrintArea, Rest; parents/ (Gate, ParentArea and its pages)
+screens/                  screens of no one world: Landing, WorldMap, Picker (Ki játszik?), Album (Matricáim), PrintArea, Rest, ReviewDone (Vegyes kör's closing card); parents/ (Gate, ParentArea and its pages)
 ```

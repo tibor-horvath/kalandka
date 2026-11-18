@@ -3,10 +3,20 @@ import { pageKey, type PageRef, type ReadLink } from './link';
 import { readJson, removeKeys, writeKey } from '../lib/storage';
 import { ROBOT_SHEETS } from '../worlds/robot/print';
 import { TOWER_SHEETS } from '../worlds/tower/print';
+import { mixSheet } from './mix';
 import { MAX_PAGES, type Density, type Grid, type PrintId, type PrintSpec } from './sheet';
 
-/** Every game's sheet, in the order the games stand in the parents' corner. */
-export const PRINT_SHEETS: PrintSpec<unknown>[] = [...GARDEN_SHEETS, ...ROBOT_SHEETS, ...TOWER_SHEETS];
+const GAME_SHEETS = [...GARDEN_SHEETS, ...ROBOT_SHEETS, ...TOWER_SHEETS];
+
+/** Every sheet, in the order the places stand on the islands: each world's Vegyes kör first, then its games. */
+export const PRINT_SHEETS: PrintSpec<unknown>[] = [
+  mixSheet('garden', GAME_SHEETS),
+  ...GARDEN_SHEETS,
+  mixSheet('robot', GAME_SHEETS),
+  ...ROBOT_SHEETS,
+  mixSheet('tower', GAME_SHEETS),
+  ...TOWER_SHEETS
+];
 
 export { MAX_PAGES } from './sheet';
 

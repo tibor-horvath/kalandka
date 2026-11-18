@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Door, type DoorPlace } from './Door';
 import { KidChip, MapButton, ParentsButton, VoiceButton } from './hub';
-import { Island, RewardDock, useEnter, useLeave, type Place, type RewardPlace } from './island';
+import { Island, MixArt, RewardDock, useEnter, useLeave, type Place, type RewardPlace } from './island';
 import { PlayTimer, pausedLabel, useTimeLeft } from './PlayTimer';
 import { useForm } from './Stage';
 import { StickerPop } from './StickerPop';
@@ -10,7 +10,13 @@ import type { Mood, Tone } from '../lib/types';
 import { useProfiles } from '../state/profiles';
 import { useProgress } from '../state/progress';
 import { earnedStickers, gameOf, markStickerSeen, type Sticker } from '../state/stickers';
+import { REVIEW_NEEDS, reviewOpen, reviewPlayed } from '../state/review';
 import { WORLDS, type WorldId } from '../state/worlds';
+import { speak } from '../lib/speech';
+
+/** What the guide says when the sleeping Vegyes kör is tapped. */
+const MIX_ASLEEP = 'A vegyes kör még alszik. Játssz két játékkal a szigeten, és felébred!';
+const MIX_ONE_MORE = 'Már csak egy másik játék kell, és felébred a vegyes kör!';
 
 /** The place the child just left (a game, or the reward place), and whether they solved a task there this time. */
 export interface PlaceReturn {
@@ -24,6 +30,8 @@ export interface HubActions {
   onSwitch: () => void;
   onMap: () => void;
   onAlbum: () => void;
+  /** Vegyes kör: a short round of tasks from this world's games (see state/review.ts). */
+  onReview: () => void;
   back: PlaceReturn | null;
 }
 
@@ -55,6 +63,7 @@ export function WorldHub({
   onSwitch,
   onMap,
   onAlbum,
+  onReview,
   back
 }: HubActions & {
   world: WorldId;
@@ -75,6 +84,18 @@ export function WorldHub({
   const look = LOOK[world];
   const doors = places.map((p) => (p.onOpen ? { ...p, onOpen: () => enter(p.id, p.onOpen!) } : p));
   const rewardDoor = { ...reward, id: 'reward', onClick: () => enter('reward', reward.onClick) };
+  // Vegyes kör opens its first game straight away; that game's own door plays as it opens. Until two of the island's
+  // games were played it sleeps, and a tap has the guide say what wakes it.
+  const played = reviewPlayed(progress, world).length;
+  const mix: Place = reviewOpen(progress, world)
+    ? { id: 'review', name: 'Vegyes kör', label: 'Vegyes kör: öt feladat a sziget játékaiból, egymás után', art: <MixArt guide={look.guide} />, onOpen: onReview }
+    : {
+        id: 'review',
+        name: 'Vegyes kör',
+        label: 'Vegyes kör: még alszik. Játssz két játékkal, és felébred.',
+        art: <MixArt guide={look.guide} />,
+        locked: { progress: played / REVIEW_NEEDS, onTap: () => speak(played === 0 ? MIX_ASLEEP : MIX_ONE_MORE) }
+      };
   const info = WORLDS.find((w) => w.id === world)!;
   // With a daily limit, the island shows today's time left in this world's gauge; the clock stands at home.
   const time = useTimeLeft();
@@ -123,6 +144,7 @@ export function WorldHub({
         <Island
           world={world}
           places={doors}
+          mix={mix}
           reward={rewardDoor}
           book={book}
           leaving={leaving}
@@ -140,3 +162,4 @@ export function WorldHub({
     </>
   );
 }
+

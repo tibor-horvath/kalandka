@@ -96,6 +96,12 @@ export function RoundButton({ label, onClick, children, tint = 'white' }: { labe
 export type GuideId = 'csepi' | 'csavar' | 'kakukk';
 
 /** The world's guide next to a speech bubble whose colour follows the tone. */
+/** A world's guide on their own: Csepi, Csavar or Kakukk. */
+export function GuideFigure({ guide, mood = 'smile', width, className }: { guide: GuideId; mood?: Mood; width: number; className?: string }) {
+  const Guide = guide === 'csavar' ? Csavar : guide === 'kakukk' ? Kakukk : Csepi;
+  return <Guide mood={mood} width={width} className={className} />;
+}
+
 export function GuideBubble({
   mood,
   tone = 'plain',
@@ -111,10 +117,9 @@ export function GuideBubble({
   children: ReactNode;
   live?: boolean;
 }) {
-  const Guide = guide === 'csavar' ? Csavar : guide === 'kakukk' ? Kakukk : Csepi;
   return (
     <div className="guide">
-      <Guide mood={mood} width={csepiWidth} className="guide__csepi" />
+      <GuideFigure guide={guide} mood={mood} width={csepiWidth} className="guide__csepi" />
       <div className={`bubble bubble--${tone}`} aria-live={live ? 'polite' : undefined}>
         {children}
       </div>
