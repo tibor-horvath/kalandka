@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.18.0](https://github.com/tibor-horvath/kalandka/compare/v1.17.0...v1.18.0) (2026-11-18)
+
+
+### Added
+
+* add game definitions ([#93](https://github.com/tibor-horvath/kalandka/issues/93)) ([af9301e](https://github.com/tibor-horvath/kalandka/commit/af9301e058f13d2eb86c95c678ca0ad569639677))
+* add Vegyes kör feature with mixed tasks and review functionality ([#91](https://github.com/tibor-horvath/kalandka/issues/91)) ([2908663](https://github.com/tibor-horvath/kalandka/commit/2908663d73440879f16ba9a25411cdf6008b09af))
+
 ## [1.17.0](https://github.com/tibor-horvath/kalandka/compare/v1.16.0...v1.17.0) (2026-11-18)
 
 
