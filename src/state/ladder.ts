@@ -264,6 +264,35 @@ export function afterSolve(l: Ladder, rule: LadderRule, helped: boolean): Ladder
   return { ladder: next, change: null, helped };
 }
 
+/** What a checked paper page did to its game's ladder: nothing, a step up, or the top level mastered. */
+export interface PageStep {
+  ladder: Ladder;
+  change: 'up' | 'mastered' | null;
+}
+
+/**
+ * A grown-up checked a paper page printed on ladder level `level`, answer by answer (`right`, in page order). The
+ * answers count like tasks in the game, a right one as solved without help and a wrong one as needing help, but paper
+ * only ever moves the child up: there was no help to give on paper, so a wrong answer only breaks the row.
+ * - A page below the child's level, or a finished game, changes nothing.
+ * - A page on the child's level carries on the child's row, and a full row steps up as in the game.
+ * - A page above it moves the child only if it holds a full row of its own: then they step up from the page's level.
+ * The page's answers are not tasks solved in the game: tallies (and so stickers) stay the paper's own (see `markPageDone`).
+ */
+export function afterPage(l: Ladder, rule: LadderRule, level: number, right: boolean[]): PageStep {
+  if (isFinished(l, rule) || level < l.level || level >= rule.levels) return { ladder: l, change: null };
+  const ahead = level > l.level;
+  // Its floor at the page's level: no answer on paper can step the walk down.
+  let walk: Ladder = ahead ? { ...l, level, floor: level, streak: 0, helpRun: 0, sinceChange: 0, lastChange: null } : { ...l, floor: level };
+  const keep = (w: Ladder): Ladder => ({ ...w, floor: l.floor, helpRun: l.helpRun, solvedTop: l.solvedTop, solved: l.solved, tally: l.tally });
+  for (const r of right) {
+    const s = afterSolve(walk, rule, !r);
+    walk = s.ladder;
+    if (s.change === 'up' || s.change === 'mastered') return { ladder: { ...keep(walk), helpRun: 0 }, change: s.change };
+  }
+  return ahead ? { ladder: l, change: null } : { ladder: keep(walk), change: null };
+}
+
 /**
  * A parent's starting level: the child plays from here and never drops below it. Earlier levels count as done
  * for the ladder, but not for stickers: those want each level played (see `cleared` and `tally`).

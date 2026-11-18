@@ -246,3 +246,15 @@
 .world--robot .dock-item--reward .spot__disc { border-color: #4f5f72; background: #eef3f8; }
 .world--robot .dock-item--reward .spot__art { zoom: 0.24; }
 .world--robot .dock-item--reward .dock-item__count { color: #3e5872; }
+
+/* Vegyes kör: the trail's first stop. Sun-gold instead of the games' green, no step number; asleep like a locked game until two games were played. */
+.spot--mix { --disc-w: 112px; --disc-h: 112px; }
+.island .spot--mix .spot__disc { border-radius: 50%; background: #fff4d1; border-color: #f2b33d; box-shadow: 0 7px 0 #b98512, 0 0 0 7px rgba(255, 201, 60, 0.35); }
+.spot--mix:active .spot__disc { box-shadow: 0 2px 0 #b98512, 0 0 0 7px rgba(255, 201, 60, 0.35); }
+.spot--mix .spot__art { zoom: 0.82; }
+.spot--mix .spot__name { padding: 0 16px; background: var(--sun); color: var(--ink); box-shadow: 0 3px 0 #b98512; }
+.island .spot--mix.spot--locked .spot__disc { background: #f1f4f2; border-color: #9fb3a4; box-shadow: 0 7px 0 #7f948a; }
+.spot--mix.spot--locked .spot__name { background: var(--paper); color: #34495e; box-shadow: 0 3px 0 rgba(16, 35, 58, 0.12); }
+.mix-art { position: relative; display: grid; place-items: center; }
+.mix-art > svg { position: absolute; inset: 0; }
+.mix-art__guide { position: relative; display: grid; place-items: center; line-height: 0; }

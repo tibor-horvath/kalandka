@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Csepi } from '../../components/Csepi';
+import { MixArt } from '../../components/island';
 import { Csavar, Rover } from '../../worlds/robot/art';
 import { MAX_PAGES, PRINT_SHEETS, buildPages, nextPrintout, pageRef, saveChoice, savedChoice, sheetFor, tasksPerPage, type PrintChoice } from '../../print/catalog';
 import { EXTRAS, extraFor, type ExtraId } from '../../print/extras';
@@ -18,7 +19,10 @@ import { Check } from './controls';
 const SHEET_PX = 793.7;
 const SHEET_RATIO = 297 / 210;
 
-const TILES: Record<PrintId, { glyph: string; tile: string }> = {
+const TILES: Record<PrintId, { glyph: ReactNode; tile: string }> = {
+  mixgarden: { glyph: <MixArt guide="csepi" size={44} />, tile: 'pa-tile--sun' },
+  mixrobot: { glyph: <MixArt guide="csavar" size={44} />, tile: 'pa-tile--sun' },
+  mixtower: { glyph: <MixArt guide="kakukk" size={44} />, tile: 'pa-tile--sun' },
   learn: { glyph: '12', tile: 'pa-tile--blue' },
   water: { glyph: '10', tile: 'pa-tile--sky' },
   patterns: { glyph: 'AB', tile: 'pa-tile--pink' },
@@ -580,7 +584,7 @@ export function PrintPage({ kidId, guestAge, canMark }: { kidId: string; guestAg
       <div className="ps-tabs" role="radiogroup" aria-label="Világok">
         {SHELVES.map((x) => {
           const on = x.id === shelf;
-          const count = x.id === 'extras' ? `${EXTRAS.length} kivágós lap` : `${PRINT_SHEETS.filter((s) => s.world === x.id).length} játék`;
+          const count = x.id === 'extras' ? `${EXTRAS.length} kivágós lap` : `${PRINT_SHEETS.filter((s) => s.world === x.id && !s.id.startsWith('mix')).length} játék + vegyes`;
           return (
             <button key={x.id} type="button" role="radio" aria-checked={on} className={`ps-tab ps-w--${x.id}${on ? ' is-on' : ''}`} onClick={() => setShelf(x.id)}>
               <span className="ps-tab__badge" aria-hidden="true">

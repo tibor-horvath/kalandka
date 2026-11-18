@@ -2,7 +2,7 @@ import { save } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { buildTraceRound } from '../worlds/garden/games/trace/logic';
 import { MIXED_SHAPES, PATTERN_LEVELS, buildLevelRound } from '../worlds/garden/games/patterns/logic';
-import { LADDER_RULES, afterSolve, isFinished, ladderMeter, ladderOf, placeAt, practiceLevel, startAt, upNeed, type Ladder, type LadderRule } from './ladder';
+import { LADDER_RULES, afterPage, afterSolve, isFinished, ladderMeter, ladderOf, placeAt, practiceLevel, startAt, upNeed, type Ladder, type LadderRule } from './ladder';
 import { DEFAULT_PROGRESS } from './progress';
 
 const rule: LadderRule = { levels: 4, up: 4, down: 2, cooldown: 3 };
@@ -179,5 +179,51 @@ describe('placing a new child by age', () => {
     let set = startAt(ladderOf(DEFAULT_PROGRESS, 'sort'), 3);
     for (let i = 0; i < 3; i++) set = afterSolve(set, rule, true).ladder;
     expect(set.level).toBe(3);
+  });
+});
+
+describe('checked paper pages on the ladder', () => {
+  const ok = (n: number) => Array.from({ length: n }, () => true);
+
+  it("steps up from the child's own level after a full row of right answers, and stops there", () => {
+    const { ladder, change } = afterPage(at(1), rule, 1, ok(10));
+    expect(change).toBe('up');
+    expect(ladder).toMatchObject({ level: 2, streak: 0, lastChange: 'up', reached: 2 });
+    expect(ladder.cleared).toContain(1);
+  });
+
+  it("carries on the child's row without a step, and a wrong answer only breaks it", () => {
+    expect(afterPage(at(1, { streak: 2 }), rule, 1, [true]).ladder).toMatchObject({ level: 1, streak: 3 });
+    expect(afterPage(at(1, { streak: 3 }), rule, 1, [true]).change).toBe('up');
+    const wrong = afterPage(at(1, { streak: 2, helpRun: 0 }), rule, 1, [false, false, false]);
+    expect(wrong.change).toBeNull();
+    expect(wrong.ladder).toMatchObject({ level: 1, streak: 0, helpRun: 0 });
+  });
+
+  it('never steps down, however many answers were wrong', () => {
+    const { ladder, change } = afterPage(at(2, { lastChange: 'up', sinceChange: 9 }), rule, 2, Array.from({ length: 8 }, () => false));
+    expect(change).toBeNull();
+    expect(ladder.level).toBe(2);
+  });
+
+  it('moves the child up from a harder page only with a full row on it', () => {
+    expect(afterPage(at(0), rule, 2, [true, true, true, false, true])).toMatchObject({ change: null, ladder: at(0) });
+    const { ladder, change } = afterPage(at(0), rule, 2, [false, true, true, true, true]);
+    expect(change).toBe('up');
+    expect(ladder).toMatchObject({ level: 3, floor: 0, reached: 3 });
+  });
+
+  it('leaves the ladder alone for easier pages and finished games', () => {
+    expect(afterPage(at(2), rule, 1, ok(8)).ladder).toEqual(at(2));
+    const done = at(3, { reached: 4 });
+    expect(afterPage(done, rule, 3, ok(8))).toEqual({ ladder: done, change: null });
+  });
+
+  it("masters the top level from paper, and keeps the parent's floor and the game's own tallies", () => {
+    const top = at(3, { floor: 1, tally: { 3: 2 }, solved: [1, 2, 3], solvedTop: 3 });
+    const { ladder, change } = afterPage(top, rule, 3, ok(4));
+    expect(change).toBe('mastered');
+    expect(isFinished(ladder, rule)).toBe(true);
+    expect(ladder).toMatchObject({ floor: 1, tally: { 3: 2 }, solved: [1, 2, 3], solvedTop: 3 });
   });
 });

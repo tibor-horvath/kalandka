@@ -11,8 +11,15 @@ import { WORLDS, type WorldId } from '../state/worlds';
 // The tasks come from the games' own generators, so a sheet matches the child's level in the app;
 // tapping becomes circling, colouring, drawing a line or crossing out.
 
-/** Every game has its sheets. */
-export type PrintId = GameId;
+/** Each world's Vegyes kör sheet, mixing its games' tasks (see mix.tsx). Letters only, as page links want. */
+export type MixId = `mix${WorldId}`;
+
+/** Every game has its sheets, and every world a Vegyes kör sheet. */
+export type PrintId = GameId | MixId;
+
+export function mixIdOf(world: WorldId): MixId {
+  return `mix${world}`;
+}
 
 /** Fewer, bigger tasks for the little ones, or more, smaller ones on a page. */
 export type Density = 'big' | 'normal' | 'many';
@@ -88,7 +95,7 @@ export interface Explainer {
 
 /** Erases the task type so specs of different games share one list. */
 /** A game's sheets; its world and name come from the game list. */
-export function spec<T>(s: Omit<PrintSpec<T>, 'world' | 'game'>): PrintSpec<unknown> {
+export function spec<T>(s: Omit<PrintSpec<T>, 'world' | 'game' | 'id'> & { id: GameId }): PrintSpec<unknown> {
   const { world, name } = GAMES[s.id];
   return { ...s, world, game: name } as unknown as PrintSpec<unknown>;
 }

@@ -3,7 +3,8 @@ import { podArcs } from '../../components/LevelMeter';
 import { WORLD_MARKS } from '../../worlds/marks';
 import { worldInfo } from '../../state/worlds';
 import { tasksPerReward } from '../../state/pod';
-import { gameOf, type PageTally, type Sticker } from '../../state/stickers';
+import { gameName } from '../../state/games';
+import { gameOf, type PageLevelStep, type PageTally, type Sticker } from '../../state/stickers';
 import type { WorldId } from '../../state/worlds';
 
 /** What marking a page done did, kept from the moment it was marked. */
@@ -16,6 +17,8 @@ export interface PageWin {
   stickers: Sticker[];
   /** The page's right answers towards its level's sticker (see `pageTally`). */
   tally?: PageTally;
+  /** The step up the page brought in its game, if any (see `pageLevelStep`). */
+  level?: PageLevelStep | null;
 }
 
 interface Frame {
@@ -141,6 +144,16 @@ export function PageReceipt({ win, world, worldName, name }: { win: PageWin; wor
           {win.tally && win.tally.need !== null && !win.tally.cleared && (
             <p className="pa-muted ps-result__run">
               A szint matricájához {win.tally.need} jó válasz kell ezen a szinten. Most {win.tally.to} van meg, a következő lap hozzáadódik.
+            </p>
+          )}
+          {win.level && (
+            <p className="pa-muted ps-result__level">
+              <b>
+                {win.level.change === 'mastered'
+                  ? `${gameName(win.level.game)}: ${name} minden szintet teljesített.`
+                  : `${gameName(win.level.game)}: ${name} szintet lépett, innen folytatja: ${win.level.to + 1}. szint, ${win.level.name}.`}
+              </b>{' '}
+              A lapon a jó válaszok sora ugyanúgy léptet, mint a játékban; a lap sosem lépteti vissza.
             </p>
           )}
           {win.stickers.map((s) => {

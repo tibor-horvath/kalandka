@@ -2,7 +2,7 @@ import { LEARN_MAX } from '../worlds/garden/games/learn/logic';
 import { GAMES, type GameId } from './games';
 import type { Progress } from './progress';
 import { WORLD_IDS, type WorldId } from './worlds';
-import { LADDER_RULES, clearedLevels, ladderOf, solvedLevels, tallyOf, type LadderGame } from './ladder';
+import { LADDER_LEVELS, LADDER_RULES, afterPage, type Ladder, type PageStep, clearedLevels, ladderOf, solvedLevels, tallyOf, withLadder, type LadderGame } from './ladder';
 import { FRIENDS, FRIEND_GIFTS_EACH, boughtCount, friendGiftCount, friendGiftsOf, friendsOf, secondRobotOpen } from './robotParts';
 import { creditTasks, paidFor } from './pod';
 import { today } from './screenTime';
@@ -80,11 +80,16 @@ export const STICKER_GAMES: StickerGame[] = [
 
 /** Pages done from this world's games: a sticker waits on the page's own world, like the game's. */
 export function pagesDoneIn(p: Progress, world: WorldId): number {
-  return p.pagesDone.filter((key) => STICKER_GAMES.find((g) => g.id === key.split('.')[0])?.world === world).length;
+  return p.pagesDone.filter((key) => pageWorld(key) === world).length;
+}
+
+/** A sheet's world: its game's, or the world named in a Vegyes kör sheet's id (mixgarden). */
+function sheetWorld(id: string): WorldId | undefined {
+  return STICKER_GAMES.find((g) => g.id === id)?.world ?? WORLD_IDS.find((w) => id === `mix${w}`);
 }
 
 function pageWorld(key: string): WorldId | undefined {
-  return STICKER_GAMES.find((g) => g.id === key.split('.')[0])?.world;
+  return sheetWorld(key.split('.')[0]);
 }
 
 /** What a finished page of `tasks` tasks pays now: its tasks fill the reward pod like solved tasks in its world's games. */
@@ -128,7 +133,8 @@ export function pageTally(p: Progress, key: string, right: (boolean | null)[]): 
 }
 
 /**
- * A grown-up checked a finished page, answer by answer (`right`). It counts once and changes no level. All its tasks
+ * A grown-up checked a finished page, answer by answer (`right`). It counts once, and its answers count on the game's
+ * ladder, where paper only ever moves the child up (see `pageLevelStep`). All its tasks
  * fill the reward pod (see `pageReward`), as every task done does in the game, and it counts towards the Feladatlapok
  * stickers. Its level's own sticker comes as in the game: once STICKER_TASKS answers on that level's pages were right,
  * on this page or with the earlier ones. Until then the page goes into `pagesPractised`. There is no taking it back:
@@ -144,7 +150,42 @@ export function markPageDone(p: Progress, key: string, right: boolean[]): Progre
     pagesPractised: tally.cleared ? p.pagesPractised : [...p.pagesPractised, key],
     sheetRight: tally.need === null ? p.sheetRight : { ...p.sheetRight, [levelKey(key)]: tally.to }
   };
-  return world ? creditTasks(done, world, right.length) : done;
+  const page = pageLadder(p, key, right);
+  const leveled = page ? withLadder(done, page.game, page.step.ladder) : done;
+  return world ? creditTasks(leveled, world, right.length) : leveled;
+}
+
+/** A page's step up on its game's ladder: the game, the levels before and after, and the new level's name. */
+export interface PageLevelStep {
+  game: LadderGame;
+  change: 'up' | 'mastered';
+  /** 0-based levels, before and after the page. */
+  from: number;
+  to: number;
+  /** The level's name the child plays on now, for the grown-up; on mastering, the top level's. */
+  name: string;
+}
+
+/** A page's game and what its answers do on that game's ladder (see `afterPage`); null for Számmagok and old joined sheets. */
+function pageLadder(p: Progress, key: string, right: boolean[]): { game: LadderGame; before: Ladder; step: PageStep } | null {
+  const [id, rev, sheet] = key.split('.');
+  if (!isLadderGame(id as StickerGameId)) return null;
+  const game = id as LadderGame;
+  // Only a page printed on one ladder level counts; old sheets that joined several levels never move the child.
+  const levels = ladderLevelsOf(game, Number(rev), Number(sheet));
+  if (levels.length !== 1) return null;
+  const before = ladderOf(p, game);
+  return { game, before, step: afterPage(before, LADDER_RULES[game], levels[0], right) };
+}
+
+/** The step up a checked page brings on its game's ladder, for the grown-up's summary; null when it brings none. */
+export function pageLevelStep(p: Progress, key: string, right: boolean[]): PageLevelStep | null {
+  const page = pageLadder(p, key, right);
+  const change = page?.step.change;
+  if (!page || !change) return null;
+  const { game, before, step } = page;
+  const names = LADDER_LEVELS[game];
+  return { game, change, from: before.level, to: step.ladder.level, name: names[step.ladder.level].name };
 }
 
 /** Feladatlapok stickers: pages done in a world. */

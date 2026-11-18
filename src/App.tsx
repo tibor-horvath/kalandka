@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { resumed } from './app/resume';
 import { useBackLayers, useLandingRoute, type BackLayer } from './app/route';
@@ -15,9 +15,11 @@ import { readLink } from './print/link';
 import { Landing } from './screens/Landing';
 import { Gate } from './screens/parents/Gate';
 import type { ParentStart } from './screens/parents/ParentArea';
-import { Album, Picker, Rest, TimeBanner, WorldMap, loadPlayScreens } from './screens/play';
+import { Album, Picker, Rest, ReviewDone, TimeBanner, WorldMap, loadPlayScreens } from './screens/play';
+import { ReviewContext } from './components/ladderRound';
+import { buildReview, type ReviewTask } from './state/review';
 import { GAME_SCREENS, WORLD_SCREENS } from './worlds/screens';
-import { GAMES, isGameId, roundOf, solvedOf, type GameId } from './state/games';
+import { GAMES, isGameId, nextRound, roundOf, solvedOf, type GameId } from './state/games';
 import { ProfilesProvider, editKid, firstKid, hasSave, progressOf, setActive, useProfiles } from './state/profiles';
 import { useProgress } from './state/progress';
 import { WARN_SECONDS } from './state/screenTime';
@@ -27,7 +29,7 @@ import { WORLDS, currentWorld, worldInfo, type WorldId } from './state/worlds';
  * 'home' is the current world's home screen and 'reward' its reward place (the Kiskert, Robotépítő). The Kalandka
  * map and the sticker album, which shows every world, sit beside them: no task runs there.
  */
-type Screen = 'home' | 'map' | 'reward' | 'album' | GameId;
+type Screen = 'home' | 'map' | 'reward' | 'album' | 'review-done' | GameId;
 /**
  * 'print' is the printable sheets, opened without the gate; like the parents' corner it pauses the play clock.
  * 'scan' is Lap beolvasása on its own, straight from the gate.
@@ -51,7 +53,7 @@ function isHub(s: Screen): boolean {
 function worldOfScreen(s: Screen, home: WorldId, album: WorldId): WorldId | null {
   if (isGameId(s)) return GAMES[s].world;
   if (s === 'album') return album;
-  return s === 'home' || s === 'reward' ? home : null;
+  return s === 'home' || s === 'reward' || s === 'review-done' ? home : null;
 }
 
 /** Leaving a place (ms): its play sinks away before the island's door closes back into the place. */
@@ -109,6 +111,8 @@ function Game() {
 
   /** The place just opened from the island, and a game's solved count then, so coming back knows if a task was solved. */
   const [door, setDoor] = useState<{ place: DoorPlace; solved: number } | null>(null);
+  /** A Vegyes kör under way: its tasks and the one on screen; kept on its closing card, cleared on the way home. */
+  const [review, setReview] = useState<{ world: WorldId; tasks: ReviewTask[]; index: number } | null>(null);
   /** Coming back from a place: the island closes its door into it. */
   const [back, setBack] = useState<PlaceReturn | null>(null);
   const [settling, setSettling] = useState(false);
@@ -126,6 +130,8 @@ function Game() {
     setSettling(false);
     setDoor(null);
     setBack(null);
+    // Only the round's own games and its closing card keep a Vegyes kör going.
+    if (!isGameId(s) && s !== 'review-done') setReview(null);
     setScreen(s);
   };
   const openPlace = (place: DoorPlace) => {
@@ -135,6 +141,7 @@ function Game() {
   const leavePlace = (place: DoorPlace) => {
     if (settling) return;
     const solved = isGameId(place) && door?.place === place && solvedOf(progress, place) > door.solved;
+    setReview(null);
     const finish = () => {
       go('home');
       setBack({ place, solved });
@@ -156,6 +163,7 @@ function Game() {
     if (screen === 'map' && progress.world) backLayers.push({ key: 'map', close: () => go('home') });
     if (place && !settling) backLayers.push({ key: place, close: () => leavePlace(place) });
     if (screen === 'album') backLayers.push({ key: 'album', close: () => go('home') });
+    if (screen === 'review-done') backLayers.push({ key: 'review-done', close: () => go('home') });
   }
   if (!route.landing && inParents) backLayers.push({ key: parents === 'print' || parents === 'scan' ? parents : 'parents', close: () => setParents('closed') });
   useBackLayers(backLayers);
@@ -228,6 +236,29 @@ function Game() {
     setAlbumWorld(from);
     go('album');
   };
+  /** Vegyes kör: five tasks from this world's games, one game after another, then the closing card. */
+  const startReview = () => {
+    const tasks = buildReview(progress, world, Date.now() % 1_000_000_007);
+    if (tasks.length === 0) return;
+    setReview({ world, tasks, index: 0 });
+    openPlace(tasks[0].game);
+  };
+  const nextReview = () => {
+    if (!review) return;
+    const { tasks, index } = review;
+    // A transition: the solved task stays on screen until the next game's screen is ready, instead of the Suspense
+    // fallback (an empty page) showing while a game not yet opened this visit loads. One commit swaps them.
+    startTransition(() => {
+      // The game moves on to fresh tasks, so the next time it comes up (in the round or on its own) it is a new one.
+      update((p) => nextRound(p, tasks[index].game));
+      if (index + 1 >= tasks.length) {
+        go('review-done');
+        return;
+      }
+      setReview({ ...review, index: index + 1 });
+      go(tasks[index + 1].game);
+    });
+  };
   const pickWorld = (w: WorldId) => {
     update((p) => ({ ...p, world: w }));
     go('home');
@@ -243,7 +274,9 @@ function Game() {
   return (
     <Stage>
       <PageMotion
-        page={screen === 'home' ? (showPicker ? 'picker' : `home-${world}`) : screen}
+        // A Vegyes kör is one page from its first task to its closing card: a new page would remount the Suspense inside
+        // it, and a new boundary shows its fallback (an empty page) while the next game loads, even in a transition.
+        page={screen === 'home' ? (showPicker ? 'picker' : `home-${world}`) : review && (isGameId(screen) || screen === 'review-done') ? 'review' : screen}
         depth={showPicker ? 0 : depthOf(screen)}
         door={door?.place === screen || (screen === 'home' && back !== null)}
         settling={settling}
@@ -260,13 +293,21 @@ function Game() {
             onSwitch={switchKid}
             onMap={() => go('map')}
             onAlbum={() => openAlbum(world)}
+            onReview={startReview}
             back={back}
           />
         )}
         {screen === 'map' && !showPicker && <WorldMap onPick={pickWorld} onParents={() => openGate()} />}
         {screen === 'reward' && <Reward onBack={() => leavePlace('reward')} />}
         {screen === 'album' && <Album key={albumWorld} world={albumWorld} onBack={() => go('home')} />}
-        {game && GameScreen && <GameScreen key={roundOf(progress, game)} onBack={() => leavePlace(game)} />}
+        {game && GameScreen && review?.tasks[review.index]?.game === game ? (
+          <ReviewContext.Provider value={{ task: review.tasks[review.index], index: review.index, count: review.tasks.length, onNext: nextReview }}>
+            <GameScreen key={`review-${review.index}`} onBack={() => leavePlace(game)} />
+          </ReviewContext.Provider>
+        ) : (
+          game && GameScreen && <GameScreen key={roundOf(progress, game)} onBack={() => leavePlace(game)} />
+        )}
+        {screen === 'review-done' && review && <ReviewDone world={review.world} tasks={review.tasks} onBack={() => go('home')} />}
         </Suspense>
       </PageMotion>
       {/* Their chunk (see screens/play.ts) is usually in long before the play clock runs out. */}
