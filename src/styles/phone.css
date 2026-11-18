@@ -567,34 +567,46 @@
 
 /* ---------- parents' gate ---------- */
 .is-phone .gate { padding: calc(1000px + var(--safe-t) + 12px) calc(1000px + 16px) calc(1000px + var(--safe-b) + 12px); }
-.is-phone .gate__card { width: 100%; max-width: 400px; padding: 22px 20px 14px; gap: 10px; border-radius: 24px; }
-.is-phone .gate__title { font-size: 26px; }
-.is-phone .gate__sum { font-size: 38px; }
-.is-phone .gate__answer { height: 56px; min-width: 84px; }
+.is-phone .gate__card { width: 100%; max-width: 400px; padding: 18px 18px 12px; gap: 12px; border-radius: 24px; }
+.is-phone .gate__title { font-size: 23px; }
+.is-phone .gate__lead { font-size: 14px; }
+.is-phone .gate__lock { width: 42px; height: 42px; border-radius: 14px; }
+.is-phone .gate__seg { font-size: 14px; gap: 6px; }
+.is-phone .gate__sum { padding: 16px 12px; gap: 12px; }
+.is-phone .gate__task { font-size: 38px; }
+.is-phone .gate__slot { width: 54px; height: 64px; font-size: 36px; }
 .is-phone .gate__key { height: 56px; }
-.is-phone .gate__cancel { min-height: 44px; }
+
 /* Landscape: the question on the left, the keypad on the right. */
 .stage--landscape .gate { padding: calc(1000px + 10px) calc(1000px + max(16px, var(--safe-r))) calc(1000px + max(8px, var(--safe-b))) calc(1000px + max(16px, var(--safe-l))); }
 .stage--landscape .gate__card {
-  max-width: 640px;
+  width: 680px;
+  max-width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-areas: 'lock keys' 'title keys' 'lead keys' 'sum keys' 'msg keys' 'switch keys' 'cancel keys';
+  grid-template-areas: 'head keys' 'dest keys' 'sum keys' 'msg keys' 'switch keys' 'cancel keys';
   column-gap: 24px;
-  row-gap: 8px;
-  justify-items: center;
+  row-gap: 10px;
   align-content: center;
   padding: 16px 22px;
 }
-.stage--landscape .gate__lock { grid-area: lock; width: 44px; height: 44px; }
-.stage--landscape .gate__title { grid-area: title; }
-.stage--landscape .gate__lead { grid-area: lead; text-align: center; }
-.stage--landscape .gate__sum { grid-area: sum; font-size: 34px; }
-.stage--landscape .gate__msg { grid-area: msg; text-align: center; }
-.stage--landscape .gate__cancel { grid-area: cancel; }
+.stage--landscape .gate__head { grid-area: head; gap: 10px; }
+.stage--landscape .gate__title { font-size: 22px; white-space: nowrap; }
+.stage--landscape .gate__lead { font-size: 14px; }
+.stage--landscape .gate__lock { width: 40px; height: 40px; border-radius: 14px; }
+.stage--landscape .gate__dest { grid-area: dest; }
+.stage--landscape .gate__sum { grid-area: sum; padding: 12px; }
+.stage--landscape .gate__task { font-size: 34px; }
+.stage--landscape .gate__slot { width: 50px; height: 58px; font-size: 32px; }
+.stage--landscape .gate__msg { grid-area: msg; margin: 0; }
 .stage--landscape .gate__switch { grid-area: switch; }
+.stage--landscape .gate__cancel { grid-area: cancel; }
 /* Fingerprint first: no keypad, so one column. */
-.stage--landscape .gate__card--bio { max-width: 420px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.stage--landscape .gate__card--bio { width: 440px; display: flex; flex-direction: column; gap: 8px; }
+.stage--landscape .gate__print { padding: 12px; flex-direction: row; }
+.stage--landscape .gate__print-ring { width: 64px; height: 64px; flex: none; }
+.stage--landscape .gate__print-ring svg { width: 36px; height: 36px; }
+.stage--landscape .gate__print-text { text-align: left; font-size: 15px; }
 .stage--landscape .gate__keys { grid-area: keys; align-self: center; gap: 8px; }
 .stage--landscape .gate__key { height: 52px; }
 

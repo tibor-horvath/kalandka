@@ -1,5 +1,6 @@
 import type { LadderGame } from './games';
 import type { Progress } from './progress';
+import { roomIn } from './balance';
 import { today } from './screenTime';
 import { worldInfo, type WorldId } from './worlds';
 
@@ -28,9 +29,14 @@ export function rewardFor(p: Progress, world: WorldId, n: number): number {
   return Math.floor((podFill(p, world) + Math.max(0, n)) / tasksPerReward(world));
 }
 
-/** `n` solved tasks in a world: the clock moves on, and every full pod pays a reward (unless `pays` is false). */
+/** Rewards that `n` more solved tasks really pay: what the pod fills, as far as the store has room (see STORE_MAX). */
+export function paidFor(p: Progress, world: WorldId, n: number): number {
+  return Math.min(rewardFor(p, world, n), roomIn(p, world));
+}
+
+/** `n` solved tasks in a world: the clock moves on, and every full pod pays a reward (unless `pays` is false, or the store is full). */
 export function creditTasks(p: Progress, world: WorldId, n = 1, pays = true): Progress {
-  const pay = pays ? rewardFor(p, world, n) : 0;
+  const pay = pays ? paidFor(p, world, n) : 0;
   const w = p.worlds[world];
   return { ...p, worlds: { ...p.worlds, [world]: { ...w, tasks: w.tasks + n, earned: w.earned + pay } } };
 }
@@ -61,7 +67,7 @@ export function practiceRested(p: Progress, game: LadderGame, day = today()): bo
 export function creditPractice(p: Progress, game: LadderGame, world: WorldId, day = today()): Progress {
   const paid = practicePaid(p, game, day);
   const pays = paid < PRACTICE_PAY_PER_DAY;
-  const pay = pays ? rewardFor(p, world, 1) : 0;
+  const pay = pays ? paidFor(p, world, 1) : 0;
   const credited = creditTasks(p, world, 1, pays);
   if (!pay) return credited;
   const sameDay = p.practicePay.day === day ? p.practicePay.paid : {};

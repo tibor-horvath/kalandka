@@ -54,8 +54,8 @@ export interface RewardPlace {
   onClick: () => void;
 }
 
-/** What waits at the reward place: a visitor, something to plant, cook or build, or a new robot. Drawn as a picture; `text` is read out. */
-export type RewardBadgeKind = 'visitor' | 'plant' | 'cook' | 'build' | 'new';
+/** What waits at the reward place: a visitor, a gift ready to give, something to plant, cook or build, or a new robot. Drawn as a picture; `text` is read out. */
+export type RewardBadgeKind = 'visitor' | 'gift' | 'plant' | 'cook' | 'build' | 'new';
 
 export interface RewardBadge {
   text: string;
@@ -698,6 +698,15 @@ const REWARD_ICON: Record<Exclude<RewardBadgeKind, 'new'>, ReactNode> = {
       <circle cx="12" cy="12" r="9" fill="currentColor" fillOpacity="0.18" />
       <path d="M8.5 14.5c1 1.4 2.1 2 3.5 2s2.5-.6 3.5-2" />
       <path d="M9 9.5v.5M15 9.5v.5" />
+    </svg>
+  ),
+  // a wrapped present: a visitor's gift is ready to give
+  gift: (
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" />
+      <path d="M3 7h18v3H3z" />
+      <path d="M11 7h2v14h-2z" fill="#7b4fc9" />
+      <path d="M12 7c-1.5-3-5-3.5-5-1.5S10 7 12 7zM12 7c1.5-3 5-3.5 5-1.5S14 7 12 7z" />
     </svg>
   ),
   // a sprout: seeds to plant

@@ -4,7 +4,8 @@ import { LADDER_LEVELS } from '../../state/ladder';
 import { PRACTICE_PAY_PER_DAY, podFill, tasksPerReward } from '../../state/pod';
 import { useProgress } from '../../state/progress';
 import { FRIENDS, FRIEND_GIFTS_EACH, PARTS, SECOND_ROBOT_AFTER, boltBalance } from '../../state/robotParts';
-import { FLOWERS, PLANT_OPTIONS, RECIPES, VEG_COST, seedBalance } from '../../state/garden';
+import { BASKET_MAX, FLOWERS, PLANT_OPTIONS, RECIPES, SHELF_MAX, VEG_COST, seedBalance } from '../../state/garden';
+import { STORE_MAX } from '../../state/balance';
 import { PAGE_STEPS, STICKER_GAMES, stickerRow, type StickerGameId } from '../../state/stickers';
 import { WORLDS, worldInfo, type WorldId } from '../../state/worlds';
 import { Seed } from '../../worlds/garden/art';
@@ -268,6 +269,11 @@ export function RewardsPage() {
           />
         </div>
         <div className="pa-rw-note">
+          <p>
+            <b>Látható tárolók, felső határral.</b> A magok a Magtárban, a csavarok a Raktárban, a harangok a Harangtárban gyűlnek: tízesével zsákba, dobozba,
+            szíjra kerülnek, a maradék egy tízes keretben vár. Mindegyikbe legfeljebb {STORE_MAX} fér; tele tárolónál a gyűjtőkör pihen, amíg a gyerek nem
+            költ belőle. A kosárba gyümölcsfajtánként {BASKET_MAX}, a Kamra polcaira finomságonként {SHELF_MAX} fér; ami nem fér be, a fán vár. Semmi nem vész el.
+          </p>
           <p>
             <b>Papíron is számít.</b> A kinyomtatott és késznek jelölt feladatlap minden feladata ugyanúgy tölti a gyűjtőkört, mint a játékban – egyszer, a
             befejezésért, nem a hibátlanságért.

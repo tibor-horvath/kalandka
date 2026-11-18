@@ -87,10 +87,31 @@ export function basketTotal(p: Progress): number {
   return basketPears(p) + basketBerries(p) + basketOf(p, 'apple') + basketOf(p, 'cherry') + basketOf(p, 'nut');
 }
 
-/** Picks one ripe fruit into the basket; unchanged when there is none. */
+// The basket is a crate of twenty hollows per fruit (two ten-frames). With a kind's hollows full, its fruit waits on
+// the tree (which already holds no more than a few) until the child cooks it or gives it away. Nothing is taken away:
+// a save carried over with more in the basket keeps all of it, and picking that kind just waits.
+
+/** Hollows for each kind of fruit in the basket. */
+export const BASKET_MAX = 20;
+
+/** Fruit of one kind in the basket. */
+export function basketHolds(p: Progress, f: FruitKind): number {
+  if (f === 'pear') return basketPears(p);
+  if (f === 'berry') return basketBerries(p);
+  return basketOf(p, f);
+}
+
+/** No hollow is free for this kind of fruit. */
+export function basketFullFor(p: Progress, f: FruitKind): boolean {
+  return basketHolds(p, f) >= BASKET_MAX;
+}
+
+/** Picks one ripe fruit into the basket; unchanged when there is none, or its kind's hollows are full. */
 export function pickFruit(p: Progress, i: number): Progress {
   const bed = bedAt(p, i);
   if (!bed || ripeFruit(bed, p.worlds.garden.tasks) === 0) return p;
+  const f = fruitOf(bed);
+  if (f && basketFullFor(p, f)) return p;
   return addFruit({ ...p, beds: withBed(p, i, { ...bed, picked: pickedFruit(bed) + 1 }) }, bed, 1);
 }
 
@@ -147,9 +168,17 @@ export function recipeOpen(p: Progress, id: TreatId): boolean {
   return id !== 'loaf' || gardenFull(p);
 }
 
+/** Places on each of the Kamra's shelves: ten, five and five. */
+export const SHELF_MAX = 10;
+
+/** The treat's shelf has no free place; it can be cooked again once a visitor has taken some. */
+export function shelfFull(p: Progress, id: TreatId): boolean {
+  return treatsOf(p, id) >= SHELF_MAX;
+}
+
 export function canMake(p: Progress, id: TreatId): boolean {
   const r = recipeOf(id);
-  return recipeOpen(p, id) && basketPears(p) >= r.pears && basketBerries(p) >= r.berries && seedBalance(p) >= r.seeds;
+  return recipeOpen(p, id) && !shelfFull(p, id) && basketPears(p) >= r.pears && basketBerries(p) >= r.berries && seedBalance(p) >= r.seeds;
 }
 
 /** Makes a treat for the shelf; unchanged when the basket (or the seeds) are not enough. */
