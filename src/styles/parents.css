@@ -460,20 +460,84 @@
 .sc-kids__label { padding: 0 6px 0 10px; font-size: 15px; font-weight: 700; color: var(--pa-muted); }
 .sc .sc-kid { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px 0 6px; border: 2px solid var(--pa-line); border-radius: 26px; background: #ffffff; color: var(--pa-ink); font-size: 17px; font-weight: 800; cursor: pointer; }
 .sc .sc-kid.is-on { border-color: var(--pa-accent); background: #e3f1fc; }
-.sc__sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: min(72%, calc(100% - 110px)); overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 16px; padding: 24px max(28px, env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) max(28px, env(safe-area-inset-left, 0px)); box-sizing: border-box; background: var(--pa-card); color: var(--pa-ink); border-radius: 28px 28px 0 0; animation: sc-up 0.25s ease-out; }
-.sc__head { position: relative; display: flex; align-items: flex-start; gap: 12px 20px; flex-wrap: wrap; padding-right: 60px; }
-.sc__head > div:first-child { flex: 1 1 260px; min-width: 0; }
-.sc__head .pa-h1 { font-size: 32px; }
-.sc__head .sc-kids { padding: 0; }
-.sc .sc__x { position: absolute; right: 0; top: 0; width: 48px; height: 48px; display: grid; place-items: center; border: none; border-radius: 24px; background: var(--pa-bg); color: var(--pa-muted); cursor: pointer; flex: none; }
-.sc .sc__mark { justify-content: center; height: auto; min-height: 76px; border-radius: 22px; font-family: var(--display); font-size: 26px; }
-.sc .sc__mark:not(.pa-btn--go) { background: var(--pa-accent); color: #ffffff; }
-.sc .sc__mark:disabled { opacity: 1; }
 .sc .sc__answers { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; padding: 0 20px; border: 2px solid var(--pa-line); border-radius: 16px; background: #ffffff; color: var(--pa-ink); font-size: 18px; font-weight: 800; cursor: pointer; text-align: left; }
 .sc__answers span { font-size: 15px; font-weight: 700; color: var(--pa-muted); white-space: nowrap; }
 .sc__list { display: flex; flex-direction: column; gap: 16px; }
+.pc-panel .sc__answers { display: flex; align-items: center; min-height: 52px; padding: 0 18px; border: 2px solid var(--pa-line); border-radius: 14px; background: #ffffff; color: var(--pa-ink); font-size: 17px; font-weight: 800; cursor: pointer; }
+/* Checking a page (PageCheck): the run of right answers its level wants, as slots like the game's level meter. */
+.pc-panel { display: flex; flex-direction: column; gap: 14px; padding-top: 6px; }
+.pc-run { display: flex; flex-direction: column; gap: 8px; padding: 14px 18px; border-radius: 18px; background: var(--pa-soft); }
+.pc-run__top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.pc-run__label { font-size: 17px; font-weight: 800; }
+.pc-run__count { font-family: var(--display); font-size: 22px; font-weight: 800; }
+.pc-run__slots { display: flex; gap: 6px; }
+.pc-run__slots i { flex: 1; height: 14px; border-radius: 7px; background: #ffffff; box-shadow: inset 0 0 0 2px var(--pa-line); transition: background 0.2s; }
+.pc-run__slots i.is-on { background: var(--pa-accent); box-shadow: none; }
+.pc-run__slots i.is-before { background: #8fb6dd; }
+.pc-run.is-full { background: #edf7e8; }
+.pc-run.is-full .pc-run__slots i { background: var(--pa-good); box-shadow: none; }
+.pc-run__hint { margin: 0; font-size: 15px; color: var(--pa-muted); }
+.pc-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 16px; font-weight: 800; color: var(--pa-muted); }
+.pc-tools .pc-tools__all { min-height: 48px; }
+.pc-foot .pa-btn { width: 100%; justify-content: center; }
+.pc-foot .pa-btn:disabled:not(.pa-btn--go) { background: var(--pa-soft); color: var(--pa-muted); opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .pc-run__slots i { transition: none; } }
+/* A sheet's code read: a card over the camera that opens the sheet's own page. */
+.sc .sc-found { display: flex; align-items: center; gap: 16px; width: min(760px, 100%); box-sizing: border-box; padding: 16px 18px; border: none; border-radius: 24px; background: #ffffff; color: var(--pa-ink); font: inherit; text-align: left; cursor: pointer; animation: sc-up 0.25s ease-out; }
+.sc-found__tick { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--pa-good); color: #ffffff; }
+.sc-found__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sc-found__text b { font: 800 24px/1.15 var(--display); }
+.sc-found__text span { font-size: 15px; font-weight: 700; color: var(--pa-muted); }
+.sc-found__go { display: inline-flex; align-items: center; gap: 6px; min-height: 52px; padding: 0 14px 0 20px; border-radius: 16px; background: var(--pa-accent); color: #ffffff; font-size: 18px; font-weight: 800; flex: none; }
+/* The sheet's own page: the camera is off and the page is light, like the parents' corner, so the answers get the whole screen. */
+.sc.sc--page { display: flex; flex-direction: column; background: var(--pa-bg); color: var(--pa-ink); }
+.sc-page__top { flex: none; display: flex; align-items: center; gap: 16px; padding: calc(12px + env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-right, 0px)) 12px max(24px, env(safe-area-inset-left, 0px)); background: #ffffff; border-bottom: 1px solid var(--pa-line); }
+.sc .sc-page__back { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 18px 0 12px; border: none; border-radius: 24px; background: var(--pa-soft); color: var(--pa-ink); font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; flex: none; }
+.sc-page__side { width: 120px; flex: none; }
+.sc-page__title { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.sc-page__title h1 { margin: 0; font: 800 26px/1.1 var(--display); }
+.sc-page__title span { font-size: 14px; font-weight: 700; color: var(--pa-muted); }
+.sc-page__kid { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 120px; font-size: 16px; font-weight: 800; flex: none; }
+.sc-page__meter { flex: none; display: flex; justify-content: center; padding: 14px 24px 2px; }
+.sc-page__meter .pc-run { width: min(640px, 100%); box-sizing: border-box; background: #ffffff; }
+.sc-page__meter .pc-run.is-full { background: #edf7e8; }
+.sc-page__body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px; padding: 12px max(24px, env(safe-area-inset-right, 0px)) 24px max(24px, env(safe-area-inset-left, 0px)); }
+/* Small cards, several a row, so a whole sheet's answers fit on a tablet without scrolling far. */
+.sc-page__body .ps-answers { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.sc-page__body--done { align-items: center; }
+.sc-page__body--done > * { width: min(860px, 100%); box-sizing: border-box; }
+.sc-page__done { display: flex; align-items: center; justify-content: center; gap: 14px; padding-top: 16px; }
+.sc-page__done .pa-h1 { margin: 0; }
+.sc-page__body--done > .pa-lead { max-width: none; margin: 0; text-align: center; }
+.sc-page__receipt { display: flex; flex-direction: column; gap: 14px; padding: 18px 20px; border-radius: 22px; background: #ffffff; }
+.sc .sc-page__body .sc__answers { flex: none; }
+.sc-page__foot { flex: none; display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; padding: 12px max(24px, env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px)); background: #ffffff; border-top: 1px solid var(--pa-line); font-size: 17px; font-weight: 800; color: var(--pa-muted); }
+.sc .sc-page__rest { min-height: 52px; height: auto; border-radius: 16px; }
+.sc .sc-page__main { margin-left: auto; justify-content: center; min-width: min(420px, 100%); min-height: 64px; height: auto; border-radius: 20px; background: var(--pa-accent); color: #ffffff; font-family: var(--display); font-size: 24px; }
+.sc .sc-page__main:disabled { border-color: var(--pa-soft); background: var(--pa-soft); color: var(--pa-muted); cursor: default; }
+.sc-page__foot--done { justify-content: center; }
+.sc .sc-page__foot--done .sc-page__main { margin-left: 0; }
 @keyframes sc-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .sc__sheet { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .sc .sc-found { animation: none; } }
+@media (max-width: 600px) {
+  .sc .sc-found { flex-wrap: wrap; gap: 12px; }
+  .sc-found__tick { width: 40px; height: 40px; }
+  .sc-found__text { flex-basis: calc(100% - 56px); }
+  .sc-found__text b { font-size: 20px; }
+  .sc-found__go { flex: 1 1 100%; justify-content: center; }
+  .sc-page__top { gap: 10px; padding-left: 12px; padding-right: 12px; }
+  .sc .sc-page__back { padding: 0 12px 0 8px; }
+  .sc-page__side, .sc-page__kid { width: auto; min-width: 0; }
+  .sc-page__title h1 { font-size: 20px; }
+  .sc-page__title span { font-size: 12px; }
+  .sc-page__kid { font-size: 0; }
+  .sc-page__meter { padding: 10px 12px 0; }
+  .sc-page__body { padding: 10px 12px 18px; }
+  .sc-page__foot { gap: 10px; padding-left: 12px; padding-right: 12px; font-size: 15px; }
+  .sc-page__meter .pc-run__hint { font-size: 13px; }
+  .sc .sc-page__main { flex: 1 1 100%; min-width: 0; min-height: 56px; margin-left: 0; font-size: 20px; }
+}
+@media (max-width: 600px) { .sc__list .ps-answers { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 600px) {
   .sc__top { gap: 10px; }
   .sc__title { flex: 1; padding: 6px 12px; }
@@ -485,6 +549,4 @@
   .sc__title h1 { font-size: 20px; }
   .sc__title span { font-size: 13px; }
   .sc .sc__pill { padding: 0 14px; }
-  .sc__head .pa-h1 { font-size: 26px; }
-  .sc .sc__mark { min-height: 64px; font-size: 22px; }
 }

@@ -352,7 +352,37 @@ export function OtherAnswers({ spec, level }: { spec: PrintSpec<unknown>; level:
   ) : null;
 }
 
-export function AnswerList({ spec, tasks, ticked, onTick }: { spec: PrintSpec<unknown>; tasks: unknown[]; ticked?: boolean[]; onTick?: (i: number) => void }) {
+const MARK_RIGHT = (
+  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
+  </svg>
+);
+
+const MARK_WRONG = (
+  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+    <path d="M6 6l12 12M18 6L6 18" />
+  </svg>
+);
+
+/**
+ * The page's tasks with their answers. `onTick` makes each a plain checklist tick (the phone's answer page);
+ * `onJudge` asks for each one whether the child got it right (the parents' corner, where it counts for stickers).
+ */
+export function AnswerList({
+  spec,
+  tasks,
+  ticked,
+  onTick,
+  judged,
+  onJudge
+}: {
+  spec: PrintSpec<unknown>;
+  tasks: unknown[];
+  ticked?: boolean[];
+  onTick?: (i: number) => void;
+  judged?: (boolean | null)[];
+  onJudge?: (i: number, right: boolean) => void;
+}) {
   const { Task } = spec;
   const textures = useTextures();
   return (
@@ -360,8 +390,23 @@ export function AnswerList({ spec, tasks, ticked, onTick }: { spec: PrintSpec<un
       <Textures {...textures.ids} />
       <ol className="ps-answers">
         {tasks.map((t, i) => (
-          <li key={i} className={`ps-answer${onTick ? ' ps-answer--tick' : ''}${ticked?.[i] ? ' is-ticked' : ''}`}>
+          <li
+            key={i}
+            className={`ps-answer${onTick || onJudge ? ' ps-answer--tick' : ''}${onJudge ? ' ps-answer--judge' : ''}${ticked?.[i] || judged?.[i] === true ? ' is-ticked' : ''}${judged?.[i] === false ? ' is-wrong' : ''}`}
+          >
             <span className="ps-num">{i + 1}.</span>
+            {onJudge && (
+              <span className="ps-judge" role="group" aria-label={`${i + 1}. feladat`}>
+                <button type="button" className="ps-judge__btn ps-judge__btn--right" aria-pressed={judged?.[i] === true} onClick={() => onJudge(i, true)}>
+                  {MARK_RIGHT}
+                  Jó
+                </button>
+                <button type="button" className="ps-judge__btn ps-judge__btn--wrong" aria-pressed={judged?.[i] === false} onClick={() => onJudge(i, false)}>
+                  {MARK_WRONG}
+                  Hibás
+                </button>
+              </span>
+            )}
             {onTick && (
               <button type="button" className="ps-answer__tick" aria-pressed={!!ticked?.[i]} aria-label={`${i + 1}. feladat ellenőrizve`} onClick={() => onTick(i)}>
                 <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

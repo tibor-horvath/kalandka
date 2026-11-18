@@ -3,7 +3,7 @@ import { podArcs } from '../../components/LevelMeter';
 import { WORLD_MARKS } from '../../worlds/marks';
 import { worldInfo } from '../../state/worlds';
 import { tasksPerReward } from '../../state/pod';
-import { gameOf, type Sticker } from '../../state/stickers';
+import { gameOf, type PageTally, type Sticker } from '../../state/stickers';
 import type { WorldId } from '../../state/worlds';
 
 /** What marking a page done did, kept from the moment it was marked. */
@@ -14,6 +14,8 @@ export interface PageWin {
   total: number;
   pay: number;
   stickers: Sticker[];
+  /** The page's right answers towards its level's sticker (see `pageTally`). */
+  tally?: PageTally;
 }
 
 interface Frame {
@@ -136,6 +138,11 @@ export function PageReceipt({ win, world, worldName, name }: { win: PageWin; wor
             <b>{win.pay > 0 ? `${name} ${win.pay} ${object} kapott` : `${name} jutalomtartója telt`}</b>
             {' · '}még {left} feladat a következő {unit}ig.
           </p>
+          {win.tally && win.tally.need !== null && !win.tally.cleared && (
+            <p className="pa-muted ps-result__run">
+              A szint matricájához {win.tally.need} jó válasz kell ezen a szinten. Most {win.tally.to} van meg, a következő lap hozzáadódik.
+            </p>
+          )}
           {win.stickers.map((s) => {
             const game = gameOf(s);
             return (

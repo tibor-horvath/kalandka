@@ -69,6 +69,13 @@ export interface Progress {
   stickersToday: string[];
   /** Printed pages a grown-up marked done, each once (see pageKey in print/link.ts); they earn the Feladatlapok stickers and each game's level stickers (see sheetLevels in stickers.ts). */
   pagesDone: string[];
+  /**
+   * Pages marked done before their level had enough right answers: finished, but not their level
+   * (see markPageDone in stickers.ts). Pages marked before answers were checked are never in it.
+   */
+  pagesPractised: string[];
+  /** Right answers so far on each game level's sheets (`id.rev.level`), added up page by page like the game's tally of tasks a level. */
+  sheetRight: Record<string, number>;
   /** Plant ids grown in the watering game, oldest first. */
   garden: string[];
   /** Számmagok's Vegyesen rounds solved: mixed numbers whose numeral the child found. */
@@ -177,6 +184,8 @@ export const DEFAULT_PROGRESS: Progress = {
   stickersDay: '',
   stickersToday: [],
   pagesDone: [],
+  pagesPractised: [],
+  sheetRight: {},
   garden: [],
   learnMixSolved: 0,
   addLevel: 0,
