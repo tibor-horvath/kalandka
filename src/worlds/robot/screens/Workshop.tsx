@@ -5,6 +5,9 @@ import { GuideSay, type Say } from '../../../components/GuideSay';
 import { Modal, useModal } from '../../../components/Modal';
 import { PlaceShell } from '../../../components/PlaceShell';
 import { BackIcon, RoundButton } from '../../../components/ui';
+import { BoltStore } from '../../../components/StoreRack';
+import { StoreDialog, packsAndOnes } from '../../../components/StoreDialog';
+import { STORE_MAX } from '../../../state/balance';
 import { Bolt } from '../art';
 import { BoltBox, FriendArt, GiftArt, RobotFigure, SlotIcon, type PartMotion } from '../parts';
 import { chime, fanfare, popBubble, robotChirp } from '../../../lib/sound';
@@ -62,6 +65,35 @@ import {
 
 const ROBOT_NAMES: Record<RobotIdx, string> = { 0: 'Első robot', 1: 'Második robot' };
 
+/** Raktár: the bolts as they lie in the workshop, blue bins of ten and the rest in the compartment box. */
+function Storeroom({ balance, onClose }: { balance: number; onClose: () => void }) {
+  const full = balance >= STORE_MAX;
+  const tens = packsAndOnes(balance, 'doboz', 'csavar');
+  const line = full ? 'Tele a raktár! Építsünk valamit, és újra lesz hely.' : `${capitalize(tens)}.`;
+  const speech = full
+    ? `Tele a raktár: húsz doboz, kétszáz csavar. Amíg nem építünk valamit, nem fér be több csavar.`
+    : `A raktárban ${tens} van. Egy kék dobozba tíz csavar fér. A többi a rekeszes dobozban van, amíg össze nem gyűlik tíz.`;
+  return (
+    <StoreDialog
+      world="robot"
+      title="Raktár"
+      back="Vissza a műhelybe"
+      pill={
+        <div className="pill" aria-label={`${balance} csavar`}>
+          <Bolt />
+          <span>{balance}</span>
+        </div>
+      }
+      line={line}
+      speech={speech}
+      note="Tíz csavar egy kék dobozba kerül. Ha valamihez több kell, mint ami a rekeszes dobozban van, Csavar kinyit egy kék dobozt. A raktárba húsz doboz, kétszáz csavar fér."
+      onClose={onClose}
+    >
+      <BoltStore n={balance} />
+    </StoreDialog>
+  );
+}
+
 /** "egy csavar", "három csavar" for the speech; the bubble shows the digit. */
 function boltsWord(n: number): string {
   return n === 1 ? 'egy csavar' : `${n} csavar`;
@@ -99,6 +131,7 @@ export function Workshop({ onBack }: { onBack: () => void }) {
   const [motion, setMotion] = useState<PartMotion | null>(null);
   /** The last card answer: a bump for a purchase (with the bolts spent), a shake when bolts are short. */
   const [answer, setAnswer] = useState<{ id: string; kind: 'got' | 'wish'; n: number; cost: number } | null>(null);
+  const [storeOpen, setStoreOpen] = useState(false);
   const taps = useRef(0);
 
   function opening(): Say {
@@ -346,7 +379,15 @@ export function Workshop({ onBack }: { onBack: () => void }) {
       title="Robotépítő"
       onBack={onBack}
       counters={
-        <div className="pill workshop__bolts" aria-label={`${balance} csavar`}>
+        <button
+          type="button"
+          className="pill workshop__bolts"
+          aria-label={`${balance} csavar. Koppints, és megmutatom a Raktárt.`}
+          onClick={() => {
+            popBubble(1);
+            setStoreOpen(true);
+          }}
+        >
           <Bolt />
           <span>
             {balance}
@@ -357,7 +398,7 @@ export function Workshop({ onBack }: { onBack: () => void }) {
               −{answer.cost}
             </span>
           )}
-        </div>
+        </button>
       }
     >
 
@@ -553,6 +594,8 @@ export function Workshop({ onBack }: { onBack: () => void }) {
       )}
 
       {counting && <BoltCountCard part={counting} look={look} balance={balance} onDone={() => fitted(counting)} onClose={() => setCounting(null)} />}
+
+      {storeOpen && <Storeroom balance={balance} onClose={() => setStoreOpen(false)} />}
 
       {giftFor && (
         <FriendGiftCard

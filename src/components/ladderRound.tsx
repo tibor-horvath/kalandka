@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { speak } from '../lib/speech';
 import { GAMES, creditSolve, nextRound, roundOf, type LadderGame } from '../state/games';
 import { EASIER_SPEECH, LADDER_RULES, afterSolve, isFinished, ladderMeter, ladderOf, practiceLevel, withLadder, type LadderStep } from '../state/ladder';
-import { PRACTICE_PAY_PER_DAY, practicePaid, practiceRested, rewardFor } from '../state/pod';
+import { PRACTICE_PAY_PER_DAY, paidFor, practicePaid, practiceRested } from '../state/pod';
 import { useProgress, type Progress } from '../state/progress';
 import { logTask } from '../state/taskLog';
 import { StuckHint } from './StuckHint';
@@ -57,7 +57,7 @@ export function useLadderRound(game: LadderGame, { showStep = true, missed = fal
       setStep(s);
       const world = GAMES[game].world;
       const paid = practicePaid(progress, game);
-      if (paid < PRACTICE_PAY_PER_DAY && paid + rewardFor(progress, world, 1) >= PRACTICE_PAY_PER_DAY) speak(restedSpeech(game), { queue: true });
+      if (paid < PRACTICE_PAY_PER_DAY && paid + paidFor(progress, world, 1) >= PRACTICE_PAY_PER_DAY) speak(restedSpeech(game), { queue: true });
       update((p) => logTask(creditSolve(extra ? extra(p) : p, game, true), game, helped));
       return s;
     }

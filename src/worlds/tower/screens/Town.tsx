@@ -4,6 +4,9 @@ import { FitBox } from "../../../components/FitBox";
 import { useForm } from "../../../components/Stage";
 import { GuideSay } from "../../../components/GuideSay";
 import { Modal } from "../../../components/Modal";
+import { BellStore } from "../../../components/StoreRack";
+import { StoreDialog, packsAndOnes } from "../../../components/StoreDialog";
+import { STORE_MAX } from "../../../state/balance";
 import { PlaceShell } from "../../../components/PlaceShell";
 import { numberAttr } from "../../../lib/numbers";
 import { fanfare, popBubble } from "../../../lib/sound";
@@ -315,6 +318,7 @@ export function Town({ onBack }: { onBack: () => void }) {
   const [card, setCard] = useState<Building | null>(null);
   const [counting, setCounting] = useState<Counting | null>(null);
   const [counted, setCounted] = useState(0);
+  const [storeOpen, setStoreOpen] = useState(false);
   const newcomer = counting ? null : residentToWelcome(progress);
   const tower = BUILDINGS.find((b) => b.id === "clock")!;
   const tall = useForm() === "portrait";
@@ -430,13 +434,21 @@ export function Town({ onBack }: { onBack: () => void }) {
       title="Kisváros"
       onBack={onBack}
       counters={
-        <div className="pill" aria-label={`${balance} harang`}>
+        <button
+          type="button"
+          className="pill"
+          aria-label={`${balance} harang. Koppints, és megmutatom a Harangtárat.`}
+          onClick={() => {
+            popBubble(1);
+            setStoreOpen(true);
+          }}
+        >
           <Bell />
           <span>
             {balance}
             <span className="pill__unit"> harang</span>
           </span>
-        </div>
+        </button>
       }
     >
       {/* Kakukk and the clock's buttons share one row, so the map below gets the height. */}
@@ -703,7 +715,38 @@ export function Town({ onBack }: { onBack: () => void }) {
           </div>
         </Modal>
       )}
+
+      {storeOpen && <BellRoom balance={balance} onClose={() => setStoreOpen(false)} />}
     </PlaceShell>
+  );
+}
+
+/** Harangtár: the bells as they hang in the tower room, straps of ten on the peg rails and the rest on the hook board. */
+function BellRoom({ balance, onClose }: { balance: number; onClose: () => void }) {
+  const full = balance >= STORE_MAX;
+  const tens = packsAndOnes(balance, "szíj", "harang");
+  const line = full ? "Tele a Harangtár! Építsünk valamit, és újra lesz hely." : `${capital(tens)}.`;
+  const speech = full
+    ? "Tele a Harangtár: húsz szíj, kétszáz harang. Amíg nem építünk valamit, nem fér be több harang."
+    : `A Harangtárban ${tens} van. Egy szíjra tíz harang kerül. A többi a kampós táblán lóg, amíg össze nem gyűlik tíz.`;
+  return (
+    <StoreDialog
+      world="tower"
+      title="Harangtár"
+      back="Vissza a városba"
+      pill={
+        <div className="pill" aria-label={`${balance} harang`}>
+          <Bell />
+          <span>{balance}</span>
+        </div>
+      }
+      line={line}
+      speech={speech}
+      note="Tíz harang egy szíjra kerül. Ha valamihez több kell, mint ami a kampós táblán lóg, Kakukk lefűz tíz harangot egy szíjról. A Harangtárba húsz szíj, kétszáz harang fér."
+      onClose={onClose}
+    >
+      <BellStore n={balance} />
+    </StoreDialog>
   );
 }
 

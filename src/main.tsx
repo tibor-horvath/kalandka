@@ -6,6 +6,7 @@ import './styles/global.css';
 import './styles/rewards.css';
 import './styles/seeds.css';
 import './styles/kiskert.css';
+import './styles/stores.css';
 import './worlds/robot/robot.css';
 import './worlds/tower/tower.css';
 import './styles/island.css';

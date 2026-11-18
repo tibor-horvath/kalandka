@@ -12,7 +12,7 @@ import { gamesIn, solvedOf, type GameId } from '../../../state/games';
 import { ladderOf } from '../../../state/ladder';
 import { kidName, useActiveKid, useProfiles } from '../../../state/profiles';
 import { useProgress, type Progress } from '../../../state/progress';
-import { PLANT_OPTIONS, canMakeAnything, emptyBeds, newVisitor, seedBalance } from '../../../state/garden';
+import { PLANT_OPTIONS, canMakeAnything, emptyBeds, giftsReady, newVisitor, seedBalance } from '../../../state/garden';
 import { newStickers } from '../../../state/stickers';
 import { isOpen, markAnnounced, nextToAnnounce, numbersLeft, unlockOf, type Unlock } from '../../../state/unlocks';
 
@@ -163,6 +163,8 @@ export function Home({ onOpen, onReward, ...actions }: HubActions & { onOpen: (g
   const balance = seedBalance(progress);
   const canPlantNow = balance >= Math.min(...PLANT_OPTIONS.map((o) => o.cost)) && emptyBeds(progress).length > 0;
   const visitorWaiting = newVisitor(progress) !== null;
+  // A welcomed visitor's next gift is on the shelf, in the garden or in the seed bag (daily snacks are never badged).
+  const giftReady = giftsReady(progress).length > 0;
 
   // On a shared device Csepi greets each child by name, except aloud with an online voice (the name would leave the device).
   const hello = shared ? `Szia, ${kidName(kid)}! De jó, hogy itt vagy!` : HELLO;
@@ -232,7 +234,11 @@ export function Home({ onOpen, onReward, ...actions }: HubActions & { onOpen: (g
     icon: <Seed size={30} />,
     count: balance,
     unit: 'mag',
-    badge: visitorWaiting ? { text: 'Vendég jött!', kind: 'visitor' } : canPlantNow ? { text: 'Ültethetsz!', kind: 'plant' } : canMakeAnything(progress) ? { text: 'Főzhetsz!', kind: 'cook' } : null,
+    badge: visitorWaiting
+      ? { text: 'Vendég jött!', kind: 'visitor' }
+      : giftReady
+        ? { text: 'Ajándékot vár!', kind: 'gift' }
+        : canPlantNow ? { text: 'Ültethetsz!', kind: 'plant' } : canMakeAnything(progress) ? { text: 'Főzhetsz!', kind: 'cook' } : null,
     onClick: openGarden
   };
 

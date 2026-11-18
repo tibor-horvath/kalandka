@@ -4,7 +4,7 @@ import type { Progress } from './progress';
 import { WORLD_IDS, type WorldId } from './worlds';
 import { LADDER_RULES, clearedLevels, ladderOf, solvedLevels, tallyOf, type LadderGame } from './ladder';
 import { FRIENDS, FRIEND_GIFTS_EACH, boughtCount, friendGiftCount, friendGiftsOf, friendsOf, secondRobotOpen } from './robotParts';
-import { creditTasks, rewardFor } from './pod';
+import { creditTasks, paidFor } from './pod';
 import { today } from './screenTime';
 import { VISITORS, decorCount, gardenDone, giftsOf } from './garden';
 import { BUILDINGS, STAGES, builtCount, giftCount, giftsOf as townGiftsOf, stageOf, upgradeCount } from './town';
@@ -90,7 +90,7 @@ function pageWorld(key: string): WorldId | undefined {
 /** What a finished page of `tasks` tasks pays now: its tasks fill the reward pod like solved tasks in its world's games. */
 export function pageReward(p: Progress, key: string, tasks: number): number {
   const world = pageWorld(key);
-  return world ? rewardFor(p, world, tasks) : 0;
+  return world ? paidFor(p, world, tasks) : 0;
 }
 
 /**

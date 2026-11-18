@@ -36,8 +36,9 @@
 .spot__badge--pic { min-width: 38px; height: 38px; padding: 0; border-radius: 19px; justify-content: center; gap: 2px; font-size: 20px; line-height: 1; }
 .spot__badge--pic.spot__badge--new { background: var(--sun); }
 .spot__badge--pic.spot__badge--level { padding: 0 10px 0 7px; color: var(--ink); }
-/* What waits at the reward place, each its own picture and shade: a visitor, seeds to plant, something to cook or build. */
+/* What waits at the reward place, each its own picture and shade: a visitor, a gift to give, seeds to plant, something to cook or build. */
 .spot__badge--visitor { background: #c2417a; color: #ffffff; }
+.spot__badge--gift { background: #7b4fc9; color: #ffffff; }
 .spot__badge--plant { background: var(--leaf); color: #ffffff; }
 .spot__badge--cook { background: var(--oops); color: #ffffff; }
 .spot__badge--build { background: var(--ink); color: var(--sun); }
