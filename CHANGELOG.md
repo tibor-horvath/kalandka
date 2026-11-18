@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.0](https://github.com/tibor-horvath/kalandka/compare/v1.16.0...v1.17.0) (2026-11-18)
+
+
+### Added
+
+* enhance progress tracking and page checking functionality ([#89](https://github.com/tibor-horvath/kalandka/issues/89)) ([8e6a3d1](https://github.com/tibor-horvath/kalandka/commit/8e6a3d1e6ad7b4d6169f6ecedfbe7c6dbb5ad890))
+
 ## [1.16.0](https://github.com/tibor-horvath/kalandka/compare/v1.15.0...v1.16.0) (2026-11-18)
 
 
