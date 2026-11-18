@@ -4,7 +4,7 @@ import { useForm, useWideStage, type Form } from './Stage';
 import { StickerBookArt } from './stickers';
 import { BoatArt } from './boat';
 import { MiniMap } from './hub';
-import { DoneTick } from './ui';
+import { DoneTick, GuideFigure, type GuideId } from './ui';
 
 // A world's home: its island, every game a place along one trail from the boat's dock.
 // The tablet draws the island on the whole stage; phones draw a tall (portrait) or wide (landscape)
@@ -109,7 +109,10 @@ interface Geometry {
   waves: Pt[];
   waveK: number;
   tile: number;
-  /** Where each place's picture is centred, in trail order: the seven games, then the reward. */
+  /**
+   * Where each place's picture is centred, in trail order: Vegyes kör where the walk from the dock meets the trail,
+   * the seven games, then (on the tablet) the reward on Kincseim. Phones keep the reward in the bar under the island.
+   */
   spots: Pt[];
   /** Where the sticker album's picture is centred, on the grass beside the trail. */
   book: Pt;
@@ -150,7 +153,7 @@ const GARDEN_TABLET: Geometry = {
   dotR: 7,
   pier: { planks: ['M150 735 L230 690', 'M160 752 L240 707'], deck: 'M195 712 L265 672', plankW: 10, deckW: 30 },
   walk: 'M265 672 C260 640 265 600 280 560',
-  trail: 'M280 540 C330 450 360 380 430 360 S560 280 630 295 S780 280 840 300 S970 390 990 480 S880 560 800 540 S680 540 590 540',
+  trail: 'M280 540 C330 450 360 380 430 360 S560 280 630 295 S780 280 840 300 S970 390 990 480 S880 560 815 555 S700 545 630 548 S520 600 450 600',
   trailW: 26,
   dotW: 5,
   dotGap: 16,
@@ -170,16 +173,17 @@ const GARDEN_TABLET: Geometry = {
     { x: 630, y: 295 },
     { x: 840, y: 300 },
     { x: 990, y: 480 },
-    { x: 800, y: 540 },
-    { x: 590, y: 540 },
+    { x: 815, y: 555 },
+    { x: 630, y: 548 },
+    { x: 450, y: 600 },
     { x: 995, y: 700 }
   ],
   book: { x: 1105, y: 712 },
   timer: { x: 1050, y: 366, scale: 1 },
   critters: [
-    { x: 700, y: 452, role: 0 },
-    { x: 420, y: 712, role: 1 },
-    { x: 462, y: 724, role: 2 }
+    { x: 700, y: 470, role: 0 },
+    { x: 640, y: 730, role: 1 },
+    { x: 690, y: 740, role: 2 }
   ],
   islet: { shore: ISLET_TABLET, sign: { x: 1100, y: 632 } }
 };
@@ -202,7 +206,7 @@ const ROBOT_TABLET: Geometry = {
   dotR: 6,
   pier: { planks: ['M1030 735 L950 690', 'M1020 752 L940 707'], deck: 'M985 712 L915 672', plankW: 10, deckW: 30 },
   walk: 'M915 672 C915 630 920 590 930 560',
-  trail: 'M930 540 S800 430 760 380 S640 290 560 300 S420 300 350 320 S230 400 230 480 S330 570 400 560 S520 540 600 540',
+  trail: 'M930 540 S800 430 760 380 S640 290 560 300 S420 300 350 320 S230 400 230 480 S330 590 400 590 S510 550 575 548 S680 600 750 600',
   boat: 'translate(1088 748) rotate(28) scale(-1 1)',
   waves: [
     { x: 1040, y: 300 },
@@ -217,16 +221,17 @@ const ROBOT_TABLET: Geometry = {
     { x: 560, y: 300 },
     { x: 350, y: 320 },
     { x: 230, y: 480 },
-    { x: 400, y: 560 },
-    { x: 600, y: 540 },
+    { x: 400, y: 590 },
+    { x: 575, y: 548 },
+    { x: 750, y: 600 },
     { x: 185, y: 700 }
   ],
   book: { x: 75, y: 712 },
   timer: { x: 1000, y: 386, scale: 1 },
   critters: [
-    { x: 480, y: 452, role: 0 },
-    { x: 770, y: 712, role: 1 },
-    { x: 822, y: 652, role: 2 }
+    { x: 480, y: 470, role: 0 },
+    { x: 600, y: 735, role: 1 },
+    { x: 880, y: 750, role: 2 }
   ],
   islet: { shore: ISLET_TABLET, sign: { x: 80, y: 632 } }
 };
@@ -252,7 +257,7 @@ const GARDEN_PORTRAIT: Geometry = {
   dotR: 5,
   pier: { planks: ['M70 636 L96 600', 'M84 644 L108 606'], deck: 'M78 630 L104 592', plankW: 7, deckW: 20 },
   walk: 'M104 592 C105 580 105 572 105 566',
-  trail: 'M105 545 L285 545 C342 545 342 385 285 385 L105 385 C48 385 48 225 105 225 L285 225 C342 225 342 65 285 65',
+  trail: 'M105 545 L285 545 C342 545 342 385 285 385 L105 385 C48 385 48 225 105 225 L285 225 C342 225 342 65 285 65 L105 65',
   trailW: 18,
   dotW: 4,
   dotGap: 12,
@@ -279,7 +284,7 @@ const GARDEN_PORTRAIT: Geometry = {
   critters: [
     { x: 195, y: 312, role: 0 },
     { x: 195, y: 478, role: 1 },
-    { x: 105, y: 82, role: 2 }
+    { x: 195, y: 148, role: 2 }
   ]
 };
 
@@ -303,7 +308,7 @@ const GARDEN_LANDSCAPE: Geometry = {
   dotR: 4,
   pier: { planks: ['M32 372 L50 340', 'M44 378 L62 346'], deck: 'M40 366 L60 334', plankW: 6, deckW: 16 },
   walk: 'M60 334 C66 322 70 314 76 304',
-  trail: 'M76 268 L496 268 C568 268 568 104 496 104 L216 104',
+  trail: 'M76 268 L496 268 C568 268 568 104 496 104 L76 104',
   trailW: 15,
   dotW: 3.5,
   dotGap: 11,
@@ -329,8 +334,8 @@ const GARDEN_LANDSCAPE: Geometry = {
   timer: { x: 286, y: 216, scale: 0.55 },
   critters: [
     { x: 426, y: 196, role: 0 },
-    { x: 540, y: 322, role: 1 },
-    { x: 570, y: 328, role: 2 }
+    { x: 556, y: 322, role: 1 },
+    { x: 584, y: 330, role: 2 }
   ]
 };
 
@@ -348,8 +353,8 @@ const TOWER_TABLET: Geometry = {
   ],
   critters: [
     { x: 700, y: 452, role: 0 },
-    { x: 420, y: 712, role: 1 },
-    { x: 960, y: 590, role: 2 }
+    { x: 640, y: 730, role: 1 },
+    { x: 690, y: 740, role: 2 }
   ]
 };
 
@@ -744,7 +749,59 @@ function RewardPlaceBadge({ badge }: { badge: RewardBadge }) {
 
 const rewardLabel = (reward: RewardPlace) => `${reward.label} · ${reward.count} ${reward.unit}${reward.badge ? ` · ${reward.badge.text}` : ''}`;
 
-function IslandSpot({ place, at, i, chosen, landed }: { place: Place; at: Pt; i: number; chosen: boolean; landed: Return | null }) {
+/**
+ * Vegyes kör's place: the trail's first stop, where the walk from the dock comes in, so it has no step number. A
+ * sun-gold disc with a loop of three colours round a star (a round of the island's games), and a gold name tag. Until
+ * the child has played enough of the island's games it sleeps like a locked game, its ring filling with each one.
+ */
+function MixSpot({ place, at, i }: { place: Place; at: Pt; i: number }) {
+  const { locked } = place;
+  return (
+    <button
+      type="button"
+      className={`spot spot--mix${locked ? ' spot--locked' : ''}`}
+      style={spotStyle(at, i)}
+      onClick={locked ? locked.onTap : place.onOpen}
+      aria-label={place.label}
+      data-place={place.id}
+    >
+      {locked && (
+        <span className="spot__badge spot__badge--pic spot__badge--sleep" aria-hidden="true">
+          <MoonIcon />
+        </span>
+      )}
+      <span className="spot__disc">
+        {locked && <span className="spot__ring" style={{ '--p': Math.min(1, Math.max(0, locked.progress)) } as CSSProperties} aria-hidden="true" />}
+        <span className="spot__art">{place.art}</span>
+      </span>
+      <span className="spot__name">{place.name}</span>
+    </button>
+  );
+}
+
+/** Vegyes kör's emblem: three arcs in the games' colours closing into one loop round the world's guide. */
+export function MixArt({ guide, size = 104 }: { guide: GuideId; size?: number }) {
+  const arc = (from: number, to: number) => {
+    const p = (a: number) => `${48 + 40 * Math.cos((a * Math.PI) / 180)} ${48 + 40 * Math.sin((a * Math.PI) / 180)}`;
+    return `M${p(from)} A40 40 0 0 1 ${p(to)}`;
+  };
+  return (
+    <span className="mix-art" style={{ width: size, height: size }}>
+      <svg aria-hidden="true" width={size} height={size} viewBox="0 0 96 96">
+        <g fill="none" strokeWidth="8" strokeLinecap="round">
+          <path d={arc(-78, 26)} stroke="#2E86DE" />
+          <path d={arc(42, 146)} stroke="#D9741A" />
+          <path d={arc(162, 266)} stroke="#2F7D32" />
+        </g>
+      </svg>
+      <span className="mix-art__guide" aria-hidden="true">
+        <GuideFigure guide={guide} mood="cheer" width={Math.round(size * 0.58)} />
+      </span>
+    </span>
+  );
+}
+
+function IslandSpot({ place, at, i, step, chosen, landed }: { place: Place; at: Pt; i: number; step: number; chosen: boolean; landed: Return | null }) {
   const { locked, badge } = place;
   const label = !locked && badge ? `${place.label} · ${badge.text}` : place.label;
   return (
@@ -770,7 +827,7 @@ function IslandSpot({ place, at, i, chosen, landed }: { place: Place; at: Pt; i:
       </span>
       <span className="spot__name">
         <span className="spot__step" aria-hidden="true">
-          {i + 1}
+          {step}
         </span>
         {place.name}
       </span>
@@ -869,6 +926,7 @@ export function RewardDock({ reward, book, onMap }: { reward: RewardPlace; book:
 export function Island({
   world,
   places,
+  mix,
   reward,
   book,
   leaving,
@@ -878,6 +936,8 @@ export function Island({
 }: {
   world: IslandWorld;
   places: Place[];
+  /** Vegyes kör, drawn apart from the trail's places (see MixSpot). */
+  mix?: Place;
   reward: RewardPlace;
   book: BookPlace;
   leaving: boolean;
@@ -889,8 +949,12 @@ export function Island({
   const form = useForm();
   const extra = useWideStage();
   const g = form === 'tablet' ? widen(GEOMETRY[world].tablet, extra) : GEOMETRY[world][form];
-  const last = g.spots.length - 1;
   const phone = form !== 'tablet';
+  // The trail's stops; the tablet's last spot is the reward's, on Kincseim.
+  const route = phone ? g.spots : g.spots.slice(0, -1);
+  const last = g.spots.length - 1;
+  /** Vegyes kör takes the trail's first stop; the games follow it. */
+  const first = mix ? 1 : 0;
   const board = useRef<HTMLDivElement>(null);
   const landed = back?.landed ? back : null;
 
@@ -907,8 +971,9 @@ export function Island({
       <FitBox width={g.w} height={g.h} className="island__fit">
         <div className="island__board" ref={board} style={{ width: g.w, height: g.h }}>
           <Scene world={world} g={g} />
-          {places.slice(0, last).map((p, i) => (
-            <IslandSpot key={p.id} place={p} at={g.spots[i]} i={i} chosen={opening === p.id} landed={landed?.id === p.id ? landed : null} />
+          {mix && <MixSpot place={mix} at={route[0]} i={0} />}
+          {places.slice(0, route.length - first).map((p, i) => (
+            <IslandSpot key={p.id} place={p} at={route[i + first]} i={i + first} step={i + 1} chosen={opening === p.id} landed={landed?.id === p.id ? landed : null} />
           ))}
           {g.islet && (
             <div className="island__sign" style={{ left: g.islet.sign.x, top: g.islet.sign.y }} aria-hidden="true">

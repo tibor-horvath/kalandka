@@ -14,3 +14,4 @@ export const Picker = playScreen('Picker');
 export const Album = playScreen('Album');
 export const Rest = playScreen('Rest');
 export const TimeBanner = playScreen('TimeBanner');
+export const ReviewDone = playScreen('ReviewDone');

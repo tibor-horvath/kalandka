@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AnswerList, OtherAnswers, type PrintSpec } from '../../print/sheet';
 import { useProgress } from '../../state/progress';
 import { podFill } from '../../state/pod';
-import { earnedStickers, markPageDone, pageReward, pageTally, topFirst, type PageTally } from '../../state/stickers';
+import { earnedStickers, markPageDone, pageLevelStep, pageReward, pageTally, topFirst, type PageTally } from '../../state/stickers';
 import { balanceIn } from '../../state/balance';
 import type { WorldId } from '../../state/worlds';
 import { PageReceipt, type PageWin } from './PageReceipt';
@@ -27,7 +27,7 @@ export function usePageCheck({ pageKey: key, tasks, world, onMarked }: { pageKey
     const had = new Set(earnedStickers(progress).map((s) => s.id));
     const after = markPageDone(progress, key, right);
     const stickers = topFirst(earnedStickers(after).filter((s) => !had.has(s.id)));
-    setWon({ tasks: tasks.length, fill: podFill(progress, world), total: balanceIn(progress, world), pay: pageReward(progress, key, tasks.length), stickers, tally: pageTally(progress, key, right) });
+    setWon({ tasks: tasks.length, fill: podFill(progress, world), total: balanceIn(progress, world), pay: pageReward(progress, key, tasks.length), stickers, tally: pageTally(progress, key, right), level: pageLevelStep(progress, key, right) });
     update((p) => markPageDone(p, key, right));
     onMarked?.();
   };

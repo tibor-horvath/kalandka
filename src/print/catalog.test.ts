@@ -13,7 +13,7 @@ import { DENSITIES, MAX_PAGES } from './sheet';
 
 describe('printable sheets', () => {
   it('has a sheet for every game', () => {
-    expect(PRINT_SHEETS.map((s) => s.id).sort()).toEqual([...GAME_IDS].sort());
+    expect(PRINT_SHEETS.map((s) => s.id).sort()).toEqual([...GAME_IDS, 'mixgarden', 'mixrobot', 'mixtower'].sort());
   });
 
   it('fills every page of every level and size', () => {

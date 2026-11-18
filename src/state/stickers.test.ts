@@ -6,7 +6,7 @@ import { LADDER_LEVELS, LADDER_RULES, afterSolve, ladderOf, startAt, withLadder,
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
 import { FRIENDS, PARTS } from './robotParts';
 import { seedBalance } from './garden';
-import { LEVEL_STICKERS, STICKERS, STICKER_TASKS, STICKER_GAMES, carryOverStickers, earnedStickers, markEarnedSeen, markPageDone, markStickerSeen, newStickers, pageReward, pageTally, pagesDoneIn, sheetNeed, stickerRow, todaysStickers } from './stickers';
+import { LEVEL_STICKERS, STICKERS, STICKER_TASKS, STICKER_GAMES, carryOverStickers, earnedStickers, markEarnedSeen, markPageDone, markStickerSeen, newStickers, pageLevelStep, pageReward, pageTally, pagesDoneIn, sheetNeed, stickerRow, todaysStickers } from './stickers';
 
 /** A checked page's answers: `n` right ones. */
 const right = (n: number): boolean[] => Array.from({ length: n }, () => true);
@@ -281,7 +281,10 @@ describe('stickers', () => {
     expect(markPageDone(once, 'learn.1.0.n.7.0', right(9))).toBe(once);
     expect(pagesDoneIn(once, 'garden')).toBe(1);
     expect(once).toEqual(save({ pagesDone: ['learn.1.0.n.7.0'], gardenTasks: 9, seeds: 4 }));
-    expect(markPageDone(DEFAULT_PROGRESS, 'code.1.0.b.3.1', right(4))).toEqual(save({ pagesDone: ['code.1.0.b.3.1'], sheetRight: { 'code.1.0': 4 }, robotTasks: 4, bolts: 1 }));
+    const code = markPageDone(DEFAULT_PROGRESS, 'code.1.0.b.3.1', right(4));
+    expect({ ...code, ladders: DEFAULT_PROGRESS.ladders }).toEqual(save({ pagesDone: ['code.1.0.b.3.1'], sheetRight: { 'code.1.0': 4 }, robotTasks: 4, bolts: 1 }));
+    // Four right answers in a row on the child's level: a step up, as in the game.
+    expect(ladderOf(code, 'code').level).toBe(1);
     // A part-filled pod: half of it full already, so a two-task page pays one.
     const filled = save({ gardenTasks: 3 });
     expect(pageReward(filled, 'water.1.0.n.7.0', 2)).toBe(1);
@@ -322,5 +325,24 @@ describe('stickerRow (the Jutalmak page)', () => {
   it('has no next sticker once the row is full', () => {
     const p = { ...DEFAULT_PROGRESS, stickersSeen: STICKERS.filter((s) => s.game === 'kiskert').map((s) => s.id) };
     expect(stickerRow(p, 'kiskert')).toMatchObject({ earned: 3, total: 3, next: null });
+  });
+});
+
+describe('checked pages and the level', () => {
+  it("step the child up in the page's game, and say so for the receipt", () => {
+    const key = 'sort.1.0.n.3.0';
+    expect(pageLevelStep(DEFAULT_PROGRESS, key, right(6))).toMatchObject({ game: 'sort', change: 'up', from: 0, to: 1, name: SORT_LEVELS[1].name });
+    expect(ladderOf(markPageDone(DEFAULT_PROGRESS, key, right(6)), 'sort').level).toBe(1);
+  });
+
+  it("keep a short page's row for the next page or task", () => {
+    const p = markPageDone(DEFAULT_PROGRESS, 'sort.1.0.n.3.0', [true, true]);
+    expect(ladderOf(p, 'sort')).toMatchObject({ level: 0, streak: 2 });
+    expect(pageLevelStep(p, 'sort.1.0.n.3.1', [true, true])).toMatchObject({ to: 1 });
+  });
+
+  it('never move Számmagok or old sheets that joined levels', () => {
+    expect(pageLevelStep(DEFAULT_PROGRESS, 'learn.1.0.n.0.0', right(8))).toBeNull();
+    expect(pageLevelStep(DEFAULT_PROGRESS, 'water.1.0.n.0.0', right(8))).toBeNull();
   });
 });

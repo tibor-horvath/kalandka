@@ -678,6 +678,6 @@ function explainerFor(game: GameId, level: number): Explainer | null {
 }
 
 /** Every Óratorony sheet can bring its level's magyarázó lap. */
-const withExplainer = (s: PrintSpec<unknown>): PrintSpec<unknown> => ({ ...s, explain: (level) => explainerFor(s.id, level) });
+const withExplainer = (s: PrintSpec<unknown>): PrintSpec<unknown> => ({ ...s, explain: (level) => explainerFor(s.id as GameId, level) });
 
 export const TOWER_SHEETS = [daySheet, seasonSheet, setSheet, readSheet, digiSheet, sleepSheet, sandSheet].map(withExplainer);
