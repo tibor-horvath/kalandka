@@ -1,7 +1,7 @@
 import { save, type SavePatch } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
-import { BEDS, BORDER_SPOTS, GIFTS_EACH, PILE_OF, PLOT_BEDS, POLLEN_REST, SNACK_PILE, SNACK_SIZE, VEG_COST, VEG_GROWS, VEG_SPOTS, VISITORS, bedAt, bedTree, basketOf, basketTotal, broughtBy, canGiveFood, canPlantVeg, canSnack, canSnackWith, carryOverBeds, decorOf, foodGiftSize, fruitName, giftsOf, giveFood, giveSeeds, grownCount, openBeds, openBorder, openVeg, ownsTree, ownsVeg, pickFruit, plant, plantVeg, pollenFlowers, ripeVeg, seedBalance, seedGiftSize, snack, snackPile, takesSeeds, treatOutOfReach, vegAt, visitorsOf, wishOf, type Bed } from './garden';
+import { BEDS, BORDER_SPOTS, GIFTS_EACH, PLOT_BEDS, POLLEN_REST, SNACK_SIZE, VEG_COST, VEG_GROWS, VEG_SPOTS, VISITORS, bedAt, bedTree, basketOf, basketTotal, broughtBy, canGiveFood, canPlantVeg, canSnack, canSnackWith, carryOverBeds, decorOf, foodGiftSize, fruitName, giftsOf, giveFood, giveSeeds, grownCount, openBeds, openBorder, openVeg, ownsTree, ownsVeg, pickFruit, plant, plantVeg, pollenFlowers, ripeVeg, seedBalance, seedGiftSize, snack, snackedToday, takesSeeds, treatOutOfReach, vegAt, visitorsOf, type Bed } from './garden';
 
 const flower = (at = 0): Bed => ({ kind: 'flower', at });
 /** A garden with `grown` flowers grown in the first beds and these visitors welcomed. */
@@ -160,7 +160,7 @@ describe('the snack after the five gifts', () => {
     expect(canSnackWith(p, 'rabbit', 'food', '2026-11-08')).toBe(true);
     p = snack(p, 'rabbit', 'food', '2026-11-08');
     expect(ripeVeg(p, 'carrot')).toBe(3);
-    expect(snackPile(p, 'rabbit')).toBe(1);
+    expect(snackedToday(p, 'rabbit', '2026-11-08')).toBe(true);
     expect(canSnack(p, 'rabbit', '2026-11-08')).toBe(false);
     expect(canSnack(p, 'rabbit', '2026-11-09')).toBe(true);
     expect(canSnack(p, 'hedgehog', '2026-11-09')).toBe(false);
@@ -172,7 +172,6 @@ describe('the snack after the five gifts', () => {
     expect(snack(p, 'frog', 'food', 'd')).toBe(p);
     const frog = snack(p, 'frog', 'treat', 'd');
     expect(frog.pantry.compote).toBe(0);
-    expect(snackPile(frog, 'frog')).toBe(1);
     const hedgehog = snack(p, 'hedgehog', 'food', 'd');
     expect(basketOf(hedgehog, 'apple')).toBe(0);
     const bird = snack(p, 'blackbird', 'seeds', 'd');
@@ -181,13 +180,12 @@ describe('the snack after the five gifts', () => {
     expect(canSnackWith(p, 'frog', 'seeds', 'd')).toBe(false);
   });
 
-  it('grows the pile one thing per day up to ten, and keeps snacking after it is full', () => {
+  it('is not collected: a snack only marks the visitor full for the day', () => {
     let p = garden(3, seen('hedgehog'), { gifts: { hedgehog: GIFTS_EACH }, pantry: { jam: 20 } });
     for (let day = 1; day <= 12; day++) p = snack(p, 'hedgehog', 'treat', `day-${day}`);
-    expect(p.snacks.hedgehog).toBe(12);
-    expect(snackPile(p, 'hedgehog')).toBe(SNACK_PILE);
-    expect(PILE_OF.hedgehog).toBe('mushroom');
-    for (const v of VISITORS) expect(wishOf(v.id).decor.map((d) => d.id)).toContain(PILE_OF[v.id]);
+    expect(p.pantry.jam).toBe(8);
+    expect(p.snacked).toEqual({ hedgehog: 'day-12' });
+    expect('snacks' in p).toBe(false);
   });
 });
 
@@ -213,7 +211,9 @@ describe('a garden planted full without the fruit a treat needs', () => {
     expect(takesSeeds(garden(29, VISITORS.length), 'frog')).toBe(false);
   });
 
-  it('reads older saves without a snack pile', () => {
-    expect(snackPile(readProgress({ snacked: { rabbit: '2026-11-01' } }), 'rabbit')).toBe(0);
+  it('drops the old snack pile count from older saves', () => {
+    const p = readProgress({ version: 2, snacked: { rabbit: '2026-11-01' }, snacks: { rabbit: 4 } });
+    expect('snacks' in p).toBe(false);
+    expect(p.snacked.rabbit).toBe('2026-11-01');
   });
 });

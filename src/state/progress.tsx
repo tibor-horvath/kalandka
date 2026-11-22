@@ -48,8 +48,6 @@ export interface Progress {
   pollen: Record<string, number>;
   /** The day (local YYYY-MM-DD) each visitor last had a snack (after its five gifts). */
   snacked: Partial<Record<VisitorId, string>>;
-  /** Snacks each visitor has had: its snack pile grows by one per snack (see snackPile in garden/visitors.ts). */
-  snacks: Partial<Record<VisitorId, number>>;
   /** Fruit picked in the Kiskert, kept for good (see garden/harvest.ts). */
   pears: number;
   berries: number;
@@ -172,7 +170,6 @@ export const DEFAULT_PROGRESS: Progress = {
   basket: {},
   pollen: {},
   snacked: {},
-  snacks: {},
   pears: 0,
   berries: 0,
   pearsUsed: 0,
