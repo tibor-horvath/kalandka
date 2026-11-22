@@ -15,9 +15,11 @@ permissions: {}
 jobs:
   node:
     name: Node
-    uses: tibor-horvath/ci-toolkit/.github/workflows/node-build-test.yml@v1
+    uses: tibor-horvath/ci-toolkit/.github/workflows/node-build-test.yml@v2
     with:
       node-version: "22.x"
+      # Small app: fail a hung job fast instead of after the 60-minute default.
+      timeout-minutes: 15
       # `npm run lint`: the React hooks rules (eslint.config.js).
       lint-script: lint
       # `npm run build` already type-checks with `tsc -b`.
@@ -32,7 +34,9 @@ jobs:
 
   secrets:
     name: Secret scan
-    uses: tibor-horvath/ci-toolkit/.github/workflows/secret-scan.yml@v1
+    uses: tibor-horvath/ci-toolkit/.github/workflows/secret-scan.yml@v2
+    with:
+      timeout-minutes: 10
     permissions:
       contents: read
 

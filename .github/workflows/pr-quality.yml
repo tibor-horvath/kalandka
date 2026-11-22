@@ -13,6 +13,10 @@ jobs:
     uses: tibor-horvath/ci-toolkit/.github/workflows/lighthouse-ci.yml@v2
     with:
       node-version: "22.x"
+      timeout-minutes: 15
+      # Same build-time config as the CI build, so the audited build matches what ships.
+      build-env: |
+        SITE_URL=${{ vars.SITE_URL }}
       # Local baseline (Oct 2026): performance 0.94, accessibility 0.93, best practices 0.82.
       # Minimums leave room for runner noise.
       min-performance: "0.8"
