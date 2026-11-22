@@ -1,9 +1,10 @@
 import { LEARN_MAX } from '../worlds/garden/games/learn/logic';
-import { GAMES } from './games';
+import { LADDER_DEFS } from '../worlds/defs';
+import { GAMES, LADDER_GAMES } from './games';
 import { LADDER_LEVELS, LADDER_RULES, ladderOf } from './ladder';
 import type { Progress } from './progress';
 import { recentMarks, type LoggedGame } from './taskLog';
-import type { WorldId } from './worlds';
+import { WORLD_IDS, type WorldId } from './worlds';
 
 // Plain-language notes for parents on the overview page, one per game: what is going well, where a little
 // help would pay off, or that there was too little play this week to say. Each comes with something to try
@@ -47,111 +48,11 @@ export function article(word: string): 'a' | 'az' {
 
 const levelName = (levels: readonly { name: string }[], i: number) => levels[Math.min(levels.length - 1, i)].name;
 
-const GAME_TEXTS: GameText[] = [
-  {
-    id: 'water', where: 'A Locsolásban', unit: 'növény',
-    hard: 'Többször is túlöntözte a növényt, mielőtt kijött a pontos szám.',
-    home: 'Töltsetek egy pohárba pontosan annyi kanál vizet, amennyit kitaláltok.'
-  },
-  {
-    id: 'patterns', where: 'A Virágsorban', unit: 'sor',
-    hard: 'A legutóbbi soroknál többször is mellényúlt, mielőtt megtalálta a jó virágot.',
-    home: 'Rakjatok sort kanálból és villából, és kérdezd meg, mi jön ezután.'
-  },
-  {
-    id: 'flash', where: 'A Villámszemben', unit: 'feladat',
-    hard: 'Gyakran kéri újra a magokat, vagy egyenként számolja meg őket.',
-    home: 'Dobókockával: mondja meg, hány pötty van, számolás nélkül.'
-  },
-  {
-    id: 'trace', where: 'A Mézútban', unit: 'számjegy',
-    hard: 'Több számjegynél letért az útról, vagy megkérte Csepit, hogy mutassa meg.',
-    home: 'Írjatok számokat ujjal lisztbe, homokba vagy a párás ablakra.'
-  },
-  {
-    id: 'add', where: 'A Méhkasban', unit: 'feladat',
-    hard: 'Az utolsó feladatoknál többször kért segítséget.',
-    home: 'Közös számolás az ujjakon vagy kanalakkal sokat segít.'
-  },
-  {
-    id: 'pots', where: 'A Cserépbarátokban', unit: 'kör',
-    hard: 'Gyakran kellett, hogy Csepi együtt számolja vele az üres cserepeket.',
-    home: 'Két kéz, tíz ujj: mutass fel néhányat, hány hiányzik a tízhez?'
-  },
-  {
-    id: 'path', where: 'A Robotútban', unit: 'pálya',
-    hard: 'A legutóbbi pályákon többször nekiment valaminek, vagy megnézte az utat.',
-    home: 'Legyél te a robot: ő mondja el lépésenként, hogyan jutsz el az ajtótól a konyháig.'
-  },
-  {
-    id: 'sort', where: 'A Válogatógépben', unit: 'kör',
-    hard: 'A legutóbbi körökben többször is rossz dobozba tette az alkatrészt.',
-    home: 'Válogassátok szét a zoknikat előbb szín, aztán méret szerint.'
-  },
-  {
-    id: 'scale', where: 'A Mérlegnél', unit: 'kör',
-    hard: 'Többször is Csavar segített megszámolni a két oldalt.',
-    home: 'Egy vállfa két végére akasszatok zacskót, és tegyetek bele ugyanannyi kupakot.'
-  },
-  {
-    id: 'seq', where: 'A Mintagépben', unit: 'kör',
-    hard: 'A legutóbbi körökben többször is rossz kártyát választott a hézagba.',
-    home: 'Tapsoljatok mintát: taps, taps, dobbantás – és ő folytatja.'
-  },
-  {
-    id: 'mirror', where: 'A Tükörgépben', unit: 'kör',
-    hard: 'A legutóbbi körökben többször is rossz helyre tette a lámpát.',
-    home: 'Tegyetek egy kézitükröt a rajz mellé: mi kerül a másik oldalra?'
-  },
-  {
-    id: 'code', where: 'A Kódzárnál', unit: 'kör',
-    hard: 'A legutóbbi körökben többször is rossz gombot nyomott, vagy Csavar mutatta meg a kódot.',
-    home: 'Találjatok ki titkos jeleket: a piros kocka azt jelenti, ugorj, a kék, hogy guggolj. Ő olvassa a kódot!'
-  },
-  {
-    id: 'fix', where: 'A Hibavadásznál', unit: 'kör',
-    hard: 'A legutóbbi körökben többször is jó kártyára koppintott, vagy Csavar mutatta meg a hibát.',
-    home: 'Adj neki rossz utasítást az ajtóig, például egy lépéssel többet: ő keresse meg, hol csúszott el!'
-  },
-  {
-    id: 'day', where: 'A Napirendben', unit: 'feladat',
-    hard: 'A legutóbbi feladatokban többször is rossz kártyát választott.',
-    home: 'Este meséljétek el együtt a napot sorban: mi volt reggel, délben, délután?'
-  },
-  {
-    id: 'season', where: 'Az Évszakokban', unit: 'feladat',
-    hard: 'A legutóbbi feladatokban többször is rosszul választott.',
-    home: 'Reggelente mondjátok ki: ma kedd van, tegnap hétfő volt, holnap szerda lesz.'
-  },
-  {
-    id: 'set', where: 'Az Óraállítóban', unit: 'feladat',
-    hard: 'A legutóbbi feladatokban többször is rossz helyre állította a mutatót.',
-    home: 'Egész órakor kérdezd meg: hova mutat most a kis mutató? Egy papíróra is sokat segít.'
-  },
-  {
-    id: 'read', where: 'A Hány óra? játékban', unit: 'feladat',
-    hard: 'A legutóbbi feladatokban többször is rossz időt választott.',
-    home: 'Nézzétek meg együtt a falióra mutatóit: melyik a kicsi, merre tart?'
-  },
-  {
-    id: 'digi', where: 'A Digitórában', unit: 'feladat',
-    hard: 'A legutóbbi feladatokban többször is rossz kijelzőt választott.',
-    home: 'Ha digitális órát láttok, olvassátok le, és mondjátok el úgy is: negyed nyolc.'
-  },
-  {
-    id: 'sleep', where: 'A Kakukk alszik játékban', unit: 'feladat',
-    hard: 'A legutóbbi feladatokban többször is rosszul számolta az eltelt időt.',
-    home: 'Számoljátok ki együtt: ha háromkor indulunk és ötkor érünk haza, mennyi ideig voltunk oda?'
-  },
-  {
-    id: 'sand', where: 'A Homokórában', unit: 'feladat',
-    hard: 'A legutóbbi feladatokban többször is rosszul becsülte, mi tart tovább.',
-    home: 'Mérjétek le egy homokórával vagy a telefonnal, meddig tart a fogmosás!'
-  }
-];
+/** Each levelled game's note texts, from its definition, in the order of the games on the home screens. */
+const GAME_TEXTS: GameText[] = LADDER_GAMES.map((id) => ({ id, ...LADDER_DEFS[id].notes }));
 
 function learnNote(p: Progress): Insight {
-  const learned = Math.min(LEARN_MAX, p.learnSolved);
+  const learned = Math.min(LEARN_MAX, p.games.learn.solved);
   const base = { game: GAMES.learn.name, world: GAMES.learn.world };
   if (learned === 0) {
     return { ...base, tone: 'none', title: 'Még nem kezdte el.', short: 'Még nem kezdte el.', text: 'Itt ismerkedik meg a számokkal 1-től 20-ig, időnyomás nélkül.' };
@@ -222,7 +123,7 @@ export function insights(p: Progress, day: string, max = 4): Insight[] {
   const ordered = all.map((n, i) => ({ n, i })).sort((a, b) => rank(a.n) - rank(b.n) || a.i - b.i).map((x) => x.n);
 
   const picked: Insight[] = [];
-  for (const world of ['garden', 'robot', 'tower'] as WorldId[]) {
+  for (const world of WORLD_IDS) {
     const first = ordered.find((n) => n.world === world);
     if (first && picked.length < max) picked.push(first);
   }

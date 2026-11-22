@@ -1,15 +1,16 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { RoundFlower, SmallPot } from '../art';
 import { FitBox } from '../../../components/FitBox';
 import { useLadderRound } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
 import { DotFace, MiniSprout } from '../seeds';
-import { DoneTick, GuideBubble, NextIcon } from '../../../components/ui';
+import { DoneTick } from '../../../components/ui';
 import { askFeedback, boxSize, buildPotsRound, countedFeedback, potCells, revealFeedback, rightFeedback } from '../games/pots/logic';
 import { numberCount } from '../../../lib/numbers';
 import { fanfare, popBubble } from '../../../lib/sound';
 import { speak } from '../../../lib/speech';
 import { useProgress } from '../../../state/progress';
+import { GuideSays, NextButton, useSayOnOpen } from '../../../components/round';
 
 type Phase = 'ask' | 'reveal' | 'solved';
 
@@ -22,7 +23,7 @@ const MAX_BOX_W = 1080;
 export function Pots({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level, win, meter, goNext } = useLadderRound('pots');
-  const [round] = useState(() => buildPotsRound(progress.potsRound, level));
+  const [round] = useState(() => buildPotsRound(progress.games.pots.round, level));
   const box = boxSize(round.total);
   const shrink = Math.min(1, MAX_BOX_W / box.width);
   const cells = potCells(round.total);
@@ -32,10 +33,7 @@ export function Pots({ onBack }: { onBack: () => void }) {
   const [tappedByChild, setTappedByChild] = useState(0);
   const [wrong, setWrong] = useState<number | null>(null);
 
-  useEffect(() => {
-    speak(askFeedback(round).speech);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- One round per mount: App keys this screen by round.
-  }, []);
+  useSayOnOpen(askFeedback(round).speech);
 
   const fb =
     phase === 'solved'
@@ -71,7 +69,6 @@ export function Pots({ onBack }: { onBack: () => void }) {
       speak(revealFeedback(round).speech);
     }
   };
-
 
   return (
     <GameShell
@@ -161,11 +158,7 @@ export function Pots({ onBack }: { onBack: () => void }) {
         </div>
       </FitBox>
 
-      <div className="flash-guide">
-        <GuideBubble mood={fb.mood} tone={fb.tone}>
-          {fb.text}
-        </GuideBubble>
-      </div>
+      <GuideSays line={fb} className="flash-guide" />
 
       <div className="choices">
         {round.choices.map((n) => {
@@ -178,11 +171,7 @@ export function Pots({ onBack }: { onBack: () => void }) {
             </button>
           );
         })}
-        {phase === 'solved' && (
-          <button type="button" className="big-btn" onClick={goNext}>
-            Következő <NextIcon />
-          </button>
-        )}
+        <NextButton show={phase === 'solved'} onNext={goNext} />
       </div>
 
     </GameShell>

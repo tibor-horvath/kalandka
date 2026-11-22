@@ -3,10 +3,20 @@ import { pageKey, type PageRef, type ReadLink } from './link';
 import { readJson, removeKeys, writeKey } from '../lib/storage';
 import { ROBOT_SHEETS } from '../worlds/robot/print';
 import { TOWER_SHEETS } from '../worlds/tower/print';
+import { mixSheet } from './mix';
 import { MAX_PAGES, type Density, type Grid, type PrintId, type PrintSpec } from './sheet';
 
-/** Every game's sheet, in the order the games stand in the parents' corner. */
-export const PRINT_SHEETS: PrintSpec<unknown>[] = [...GARDEN_SHEETS, ...ROBOT_SHEETS, ...TOWER_SHEETS];
+const GAME_SHEETS = [...GARDEN_SHEETS, ...ROBOT_SHEETS, ...TOWER_SHEETS];
+
+/** Every sheet, in the order the places stand on the islands: each world's Vegyes kör first, then its games. */
+export const PRINT_SHEETS: PrintSpec<unknown>[] = [
+  mixSheet('garden', GAME_SHEETS),
+  ...GARDEN_SHEETS,
+  mixSheet('robot', GAME_SHEETS),
+  ...ROBOT_SHEETS,
+  mixSheet('tower', GAME_SHEETS),
+  ...TOWER_SHEETS
+];
 
 export { MAX_PAGES } from './sheet';
 
@@ -16,6 +26,8 @@ export interface PrintChoice {
   pages: number;
   /** Which set of tasks: kept, so the answers on the tablet match the sheet that was printed. */
   batch: number;
+  /** Print the level's magyarázó lap in front of the sheets: only when the grown-up asks for it. */
+  explain?: boolean;
 }
 
 export function sheetFor(id: PrintId): PrintSpec<unknown> {
@@ -81,7 +93,7 @@ export function savedChoice(kidId: string, id: PrintId): PrintChoice | null {
   const c = readAll()[kidId]?.[id];
   const s = sheetFor(id);
   if (!c || typeof c.batch !== 'number' || !(c.level >= 0 && c.level < s.levels.length)) return null;
-  return { level: c.level, density: ['big', 'normal', 'many'].includes(c.density) ? c.density : 'normal', pages: Math.min(MAX_PAGES, Math.max(1, c.pages || 1)), batch: c.batch };
+  return { level: c.level, density: ['big', 'normal', 'many'].includes(c.density) ? c.density : 'normal', pages: Math.min(MAX_PAGES, Math.max(1, c.pages || 1)), batch: c.batch, explain: c.explain === true };
 }
 
 export function saveChoice(kidId: string, id: PrintId, c: PrintChoice): void {

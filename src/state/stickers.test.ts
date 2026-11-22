@@ -1,3 +1,4 @@
+import { save } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { ADD_LEVELS } from '../worlds/garden/games/add/logic';
 import { SORT_LEVELS } from '../worlds/robot/games/sort';
@@ -5,7 +6,10 @@ import { LADDER_LEVELS, LADDER_RULES, afterSolve, ladderOf, startAt, withLadder,
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
 import { FRIENDS, PARTS } from './robotParts';
 import { seedBalance } from './garden';
-import { LEVEL_STICKERS, STICKERS, STICKER_TASKS, STICKER_GAMES, carryOverStickers, earnedStickers, markEarnedSeen, markPageDone, markStickerSeen, newStickers, pageReward, pagesDoneIn, stickerRow, todaysStickers } from './stickers';
+import { LEVEL_STICKERS, STICKERS, STICKER_TASKS, STICKER_GAMES, carryOverStickers, earnedStickers, markEarnedSeen, markPageDone, markStickerSeen, newStickers, pageLevelStep, pageReward, pageTally, pagesDoneIn, sheetNeed, stickerRow, todaysStickers } from './stickers';
+
+/** A checked page's answers: `n` right ones. */
+const right = (n: number): boolean[] => Array.from({ length: n }, () => true);
 
 describe('stickers', () => {
   const solvedUpTo = (game: LadderGame, solvedTop: number, p: Progress = DEFAULT_PROGRESS): Progress =>
@@ -28,7 +32,7 @@ describe('stickers', () => {
 
   it('keeps each world’s stickers to its own album page and home screen', () => {
     expect(STICKER_GAMES.filter((g) => g.world === 'robot').map((g) => g.id)).toEqual(['path', 'sort', 'scale', 'seq', 'mirror', 'code', 'fix', 'robotepito', 'paper-robot']);
-    const p = solvedUpTo('path', 0, { ...DEFAULT_PROGRESS, learnSolved: 5 });
+    const p = solvedUpTo('path', 0, save({ learnSolved: 5 }));
     expect(newStickers(p, 'garden').map((s) => s.id)).toEqual(['learn-5']);
     expect(newStickers(p, 'robot').map((s) => s.id)).toEqual(['path-szint-1']);
     expect(newStickers(p)).toHaveLength(2);
@@ -137,12 +141,12 @@ describe('stickers', () => {
   });
 
   it('leaves the stickers of a save from before the ladders in place', () => {
-    const old = { ...DEFAULT_PROGRESS, waterRound: 18, garden: Array<string>(18).fill('tulipan'), patternRound: 4, patternsSolved: 4, traceRound: 20, traceSolved: 20, traceFadedSolved: 10 };
+    const old = save({ waterRound: 18, garden: Array<string>(18).fill('tulipan'), patternRound: 4, patternsSolved: 4, traceRound: 20, traceSolved: 20, traceFadedSolved: 10 });
     expect(ids(old)).toEqual(expect.arrayContaining(['water-level-1', 'water-level-2', 'water-level-3', 'patterns-level-1', 'trace-level-1', 'trace-level-2']));
   });
 
   it('celebrates each new sticker once', () => {
-    let p: Progress = { ...DEFAULT_PROGRESS, learnSolved: 5 };
+    let p: Progress = save({ learnSolved: 5 });
     expect(newStickers(p).map((s) => s.id)).toEqual(['learn-5']);
     p = markStickerSeen(p, 'learn-5');
     expect(newStickers(p)).toEqual([]);
@@ -150,10 +154,10 @@ describe('stickers', () => {
   });
 
   it('lists the day’s stickers newest first, the uncelebrated ones before the rest', () => {
-    let p: Progress = { ...DEFAULT_PROGRESS, learnSolved: 5 };
+    let p: Progress = save({ learnSolved: 5 });
     p = markStickerSeen(p, 'learn-5', '2026-11-06');
     expect(todaysStickers(p, '2026-11-07')).toEqual([]);
-    p = solvedUpTo('path', 0, { ...p, learnSolved: 10 });
+    p = solvedUpTo('path', 0, save({ learnSolved: 10 }, p));
     p = markStickerSeen(p, 'learn-10', '2026-11-07');
     expect(todaysStickers(p, '2026-11-07').map((s) => s.id)).toEqual(['path-szint-1', 'learn-10']);
     p = markStickerSeen(p, 'path-szint-1', '2026-11-07');
@@ -162,7 +166,7 @@ describe('stickers', () => {
   });
 
   it('files away stickers from a jump in progress without a celebration', () => {
-    const p = markEarnedSeen({ ...DEFAULT_PROGRESS, potsSolved: 10 });
+    const p = markEarnedSeen(save({ potsSolved: 10 }));
     expect(earnedStickers(p)).toHaveLength(2);
     expect(newStickers(p)).toEqual([]);
   });
@@ -177,7 +181,7 @@ describe('stickers', () => {
 
   it('gives Feladatlapok stickers for pages marked done, on the page’s own world', () => {
     const pages = (game: string, n: number) => Array.from({ length: n }, (_, i) => `${game}.1.0.n.7.${i}`);
-    const mark = (keys: string[]) => keys.reduce((p, key) => markPageDone(p, key, 1), DEFAULT_PROGRESS);
+    const mark = (keys: string[]) => keys.reduce((p, key) => markPageDone(p, key, [true]), DEFAULT_PROGRESS);
     const isPaper = (s: { game: string }) => s.game.startsWith('paper-');
     const paper = (keys: string[]) => earnedStickers(mark(keys)).filter(isPaper).map((s) => s.id);
     expect(paper(pages('learn', 1))).toEqual(['paper-garden-1']);
@@ -191,7 +195,7 @@ describe('stickers', () => {
   });
 
   it('gives a finished sheet the game’s own sticker for the level it was printed on', () => {
-    const game = (key: string, g: string) => earnedStickers(markPageDone(DEFAULT_PROGRESS, key, 1)).filter((s) => s.game === g).map((s) => s.id);
+    const game = (key: string, g: string) => earnedStickers(markPageDone(DEFAULT_PROGRESS, key, right(STICKER_TASKS))).filter((s) => s.game === g).map((s) => s.id);
     // Level as printed: the third part of the page key.
     expect(game('code.1.0.n.7.0', 'code')).toEqual(['code-level-1']);
     // Only its own level: a higher sheet does not earn the stickers below it.
@@ -224,10 +228,40 @@ describe('stickers', () => {
     expect(game('learn.1.2.n.7.0', 'learn')).toEqual([]);
     expect(game('learn.1.3.n.7.0', 'learn')).toEqual(['learn-20']);
     // It pops on the game's own world, with the Feladatlapok sticker.
-    expect(newStickers(markPageDone(DEFAULT_PROGRESS, 'path.1.0.n.7.0', 1), 'robot').map((s) => s.id)).toEqual(['path-szint-1', 'paper-robot-1']);
+    expect(newStickers(markPageDone(DEFAULT_PROGRESS, 'path.1.0.n.7.0', right(4)), 'robot').map((s) => s.id)).toEqual(['path-szint-1', 'paper-robot-1']);
     // Sheets done in any order: each earns its own, and the row's top new one pops first.
-    const both = markPageDone(markPageDone(DEFAULT_PROGRESS, 'patterns.1.4.n.7.0', 1), 'patterns.1.0.n.7.0', 1);
+    const both = markPageDone(markPageDone(DEFAULT_PROGRESS, 'patterns.1.4.n.7.0', right(STICKER_TASKS)), 'patterns.1.0.n.7.0', right(STICKER_TASKS));
     expect(newStickers(both, 'garden').map((s) => s.id)).toEqual(['patterns-level-4', 'patterns-level-1', 'paper-garden-2', 'paper-garden-1']);
+  });
+
+  it('wants as many right answers on a level’s sheets for its sticker as tasks solved in the game, page after page', () => {
+    const level = (p: Progress) => earnedStickers(p).filter((s) => s.game === 'code').map((s) => s.id);
+    expect(sheetNeed('code.1.0.n.7.0')).toBe(STICKER_TASKS);
+    // Three right of six: not enough yet, though the page counts as finished.
+    const short = markPageDone(DEFAULT_PROGRESS, 'code.1.0.n.7.0', [true, false, true, false, true, false]);
+    expect(level(short)).toEqual([]);
+    expect(short.pagesDone).toEqual(['code.1.0.n.7.0']);
+    expect(short.pagesPractised).toEqual(['code.1.0.n.7.0']);
+    expect(earnedStickers(short).map((s) => s.id)).toContain('paper-robot-1');
+    // Right answers need not be in a row: four on one page earn it.
+    expect(level(markPageDone(DEFAULT_PROGRESS, 'code.1.0.n.7.0', [true, false, true, false, true, true]))).toEqual(['code-level-1']);
+    // The three carry over to the level's next page: one more right there earns it.
+    expect(pageTally(short, 'code.1.0.n.7.1', [false, true])).toEqual({ need: STICKER_TASKS, from: 3, to: 4, cleared: true });
+    const next = markPageDone(short, 'code.1.0.n.7.1', [false, true]);
+    expect(level(next)).toEqual(['code-level-1']);
+    expect(next.pagesPractised).toEqual(['code.1.0.n.7.0']);
+    // Another level counts on its own.
+    expect(pageTally(short, 'code.1.1.n.7.0', [true]).from).toBe(0);
+    // Unchecked answers are never counted.
+    expect(pageTally(DEFAULT_PROGRESS, 'code.1.0.n.7.0', [true, null, true, null])).toMatchObject({ to: 2, cleared: false });
+    // Számmagok has no ladder: as in the game, the numbers done count, so finishing the page is enough.
+    expect(sheetNeed('learn.1.0.n.7.0')).toBeNull();
+    expect(earnedStickers(markPageDone(DEFAULT_PROGRESS, 'learn.1.0.n.7.0', [false, false])).map((s) => s.id)).toContain('learn-5');
+  });
+
+  it('keeps the level stickers of pages marked before their answers were checked', () => {
+    const old = { ...DEFAULT_PROGRESS, pagesDone: ['code.1.2.n.7.0'] };
+    expect(earnedStickers(old).map((s) => s.id)).toContain('code-level-3');
   });
 
   it('wants each level solved in the game for its sticker, in any order', () => {
@@ -243,20 +277,23 @@ describe('stickers', () => {
   });
 
   it('counts a marked page once, and fills only its own world’s reward pod with its tasks', () => {
-    const once = markPageDone(DEFAULT_PROGRESS, 'learn.1.0.n.7.0', 9);
-    expect(markPageDone(once, 'learn.1.0.n.7.0', 9)).toBe(once);
+    const once = markPageDone(DEFAULT_PROGRESS, 'learn.1.0.n.7.0', right(9));
+    expect(markPageDone(once, 'learn.1.0.n.7.0', right(9))).toBe(once);
     expect(pagesDoneIn(once, 'garden')).toBe(1);
-    expect(once).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['learn.1.0.n.7.0'], gardenTasks: 9, seeds: 4 });
-    expect(markPageDone(DEFAULT_PROGRESS, 'code.1.0.b.3.1', 4)).toEqual({ ...DEFAULT_PROGRESS, pagesDone: ['code.1.0.b.3.1'], robotTasks: 4, bolts: 1 });
+    expect(once).toEqual(save({ pagesDone: ['learn.1.0.n.7.0'], gardenTasks: 9, seeds: 4 }));
+    const code = markPageDone(DEFAULT_PROGRESS, 'code.1.0.b.3.1', right(4));
+    expect({ ...code, ladders: DEFAULT_PROGRESS.ladders }).toEqual(save({ pagesDone: ['code.1.0.b.3.1'], sheetRight: { 'code.1.0': 4 }, robotTasks: 4, bolts: 1 }));
+    // Four right answers in a row on the child's level: a step up, as in the game.
+    expect(ladderOf(code, 'code').level).toBe(1);
     // A part-filled pod: half of it full already, so a two-task page pays one.
-    const filled = { ...DEFAULT_PROGRESS, gardenTasks: 3 };
-    expect(pageReward(filled, 'water.1.0.n.7.0', 2)).toEqual({ seeds: 1, bolts: 0, bells: 0 });
-    expect(markPageDone(filled, 'water.1.0.n.7.0', 2)).toMatchObject({ gardenTasks: 5, seeds: 1 });
+    const filled = save({ gardenTasks: 3 });
+    expect(pageReward(filled, 'water.1.0.n.7.0', 2)).toBe(1);
+    expect(markPageDone(filled, 'water.1.0.n.7.0', right(2))).toMatchObject({ worlds: { garden: { tasks: 5, earned: 1 } } });
   });
 
   it('starts the task clocks of older saves from the seeds and bolts they earned one per task', () => {
-    expect(readProgress({ seeds: 30, bolts: 12, stickersSeen: [] })).toMatchObject({ seeds: 30, gardenTasks: 30, bolts: 12, robotTasks: 12 });
-    expect(readProgress({ seeds: 30, gardenTasks: 41, stickersSeen: [] }).gardenTasks).toBe(41);
+    expect(readProgress({ seeds: 30, bolts: 12, stickersSeen: [] })).toMatchObject({ worlds: { garden: { earned: 30, tasks: 30 }, robot: { earned: 12, tasks: 12 } } });
+    expect(readProgress({ seeds: 30, gardenTasks: 41, stickersSeen: [] }).worlds.garden.tasks).toBe(41);
   });
 
   it('starts older saves with no pages done', () => {
@@ -288,5 +325,24 @@ describe('stickerRow (the Jutalmak page)', () => {
   it('has no next sticker once the row is full', () => {
     const p = { ...DEFAULT_PROGRESS, stickersSeen: STICKERS.filter((s) => s.game === 'kiskert').map((s) => s.id) };
     expect(stickerRow(p, 'kiskert')).toMatchObject({ earned: 3, total: 3, next: null });
+  });
+});
+
+describe('checked pages and the level', () => {
+  it("step the child up in the page's game, and say so for the receipt", () => {
+    const key = 'sort.1.0.n.3.0';
+    expect(pageLevelStep(DEFAULT_PROGRESS, key, right(6))).toMatchObject({ game: 'sort', change: 'up', from: 0, to: 1, name: SORT_LEVELS[1].name });
+    expect(ladderOf(markPageDone(DEFAULT_PROGRESS, key, right(6)), 'sort').level).toBe(1);
+  });
+
+  it("keep a short page's row for the next page or task", () => {
+    const p = markPageDone(DEFAULT_PROGRESS, 'sort.1.0.n.3.0', [true, true]);
+    expect(ladderOf(p, 'sort')).toMatchObject({ level: 0, streak: 2 });
+    expect(pageLevelStep(p, 'sort.1.0.n.3.1', [true, true])).toMatchObject({ to: 1 });
+  });
+
+  it('never move Számmagok or old sheets that joined levels', () => {
+    expect(pageLevelStep(DEFAULT_PROGRESS, 'learn.1.0.n.0.0', right(8))).toBeNull();
+    expect(pageLevelStep(DEFAULT_PROGRESS, 'water.1.0.n.0.0', right(8))).toBeNull();
   });
 });

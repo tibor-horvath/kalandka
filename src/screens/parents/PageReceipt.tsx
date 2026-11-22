@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Seed } from '../../worlds/garden/art';
 import { podArcs } from '../../components/LevelMeter';
-import { Bolt } from '../../worlds/robot/art';
-import { Bell } from '../../worlds/tower/art';
-import { REWARD_UNIT } from '../../state/balance';
+import { WORLD_MARKS } from '../../worlds/marks';
+import { worldInfo } from '../../state/worlds';
 import { tasksPerReward } from '../../state/pod';
-import { gameOf, type Sticker } from '../../state/stickers';
+import { gameName } from '../../state/games';
+import { gameOf, type PageLevelStep, type PageTally, type Sticker } from '../../state/stickers';
 import type { WorldId } from '../../state/worlds';
 
 /** What marking a page done did, kept from the moment it was marked. */
@@ -16,6 +15,10 @@ export interface PageWin {
   total: number;
   pay: number;
   stickers: Sticker[];
+  /** The page's right answers towards its level's sticker (see `pageTally`). */
+  tally?: PageTally;
+  /** The step up the page brought in its game, if any (see `pageLevelStep`). */
+  level?: PageLevelStep | null;
 }
 
 interface Frame {
@@ -82,8 +85,9 @@ export function PageReceipt({ win, world, worldName, name }: { win: PageWin; wor
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [win, parts]);
 
-  const icon = world === 'robot' ? <Bolt size={24} /> : world === 'tower' ? <Bell size={24} /> : <Seed size={24} />;
-  const unit = REWARD_UNIT[world];
+  const { RewardIcon } = WORLD_MARKS[world];
+  const icon = <RewardIcon size={24} />;
+  const { unit, object, theirs } = worldInfo(world).reward;
   const left = parts - endFrame(win, parts).fill;
 
   return (
@@ -127,16 +131,31 @@ export function PageReceipt({ win, world, worldName, name }: { win: PageWin; wor
             </span>
           </span>
           <span className="ps-receipt__label">
-            {name} {unit === 'mag' ? 'magjai' : 'csavarjai'}
+            {name} {theirs}
           </span>
         </div>
       </div>
       {frame.finished && (
         <div className="ps-result" role="status">
           <p className="pa-muted">
-            <b>{win.pay > 0 ? `${name} ${win.pay} ${unit === 'mag' ? 'magot' : 'csavart'} kapott` : `${name} jutalomtartója telt`}</b>
-            {' · '}még {left} feladat a következő {unit === 'mag' ? 'magig' : 'csavarig'}.
+            <b>{win.pay > 0 ? `${name} ${win.pay} ${object} kapott` : `${name} jutalomtartója telt`}</b>
+            {' · '}még {left} feladat a következő {unit}ig.
           </p>
+          {win.tally && win.tally.need !== null && !win.tally.cleared && (
+            <p className="pa-muted ps-result__run">
+              A szint matricájához {win.tally.need} jó válasz kell ezen a szinten. Most {win.tally.to} van meg, a következő lap hozzáadódik.
+            </p>
+          )}
+          {win.level && (
+            <p className="pa-muted ps-result__level">
+              <b>
+                {win.level.change === 'mastered'
+                  ? `${gameName(win.level.game)}: ${name} minden szintet teljesített.`
+                  : `${gameName(win.level.game)}: ${name} szintet lépett, innen folytatja: ${win.level.to + 1}. szint, ${win.level.name}.`}
+              </b>{' '}
+              A lapon a jó válaszok sora ugyanúgy léptet, mint a játékban; a lap sosem lépteti vissza.
+            </p>
+          )}
           {win.stickers.map((s) => {
             const game = gameOf(s);
             return (

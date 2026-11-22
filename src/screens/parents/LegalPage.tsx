@@ -78,9 +78,9 @@ export function LegalPage() {
 
         <h3 className="pa-h3">4. Felolvasás</h3>
         <p className="pa-legal">
-          Csepi és Csavar hangja a készülék beépített szövegfelolvasóját használja. Ha a készüléken nincs telepített magyar hang, és a böngésző
+          Csepi, Csavar és Kakukk hangja a készülék beépített szövegfelolvasóját használja. Ha a készüléken nincs telepített magyar hang, és a böngésző
           internetes hangot használ (a Beállításokban „internetes” jelöléssel), a böngésző a felolvasandó játékszöveget elküldheti a gyártójának
-          (például a Google-nek vagy a Microsoftnak). Ez csak a játék saját mondatait jelenti: internetes hanggal Csepi és Csavar a gyerek nevét nem mondja ki, így az nem kerül ki az eszközről. A felolvasás a
+          (például a Google-nek vagy a Microsoftnak). Ez csak a játék saját mondatait jelenti: internetes hanggal Csepi, Csavar és Kakukk a gyerek nevét nem mondja ki, így az nem kerül ki az eszközről. A felolvasás a
           Beállításokban kikapcsolható.
         </p>
 

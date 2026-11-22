@@ -59,22 +59,28 @@ export function useTimeLeft(): { remaining: number; allowance: number } | null {
   return { remaining, allowance: allowanceSeconds(progress, day) };
 }
 
+/** How many of the sign's bars stand for today's time: five, the last one stays until the time is up. */
+export const TIMER_BARS = 5;
+export const barsLeft = (left: number) => (left <= 0 ? 0 : Math.max(1, Math.ceil(left * TIMER_BARS - 1e-9)));
+
 /**
- * Today's play time left, on a sign in the world: the world's gauge empties and the minutes stand beside it,
- * so it reads without reading. `paused` adds the pause badge: the clock stands here (it runs only in games and reward places).
+ * Today's play time left, on a sign in the world: the world's gauge empties and five bars beside it go out one by one,
+ * so it reads without reading or knowing what a minute is (the minutes are in the label, for adults and screen readers).
+ * `paused` adds the pause badge: the clock stands here (it runs only in games and reward places).
  * In the last two minutes it turns warm orange, like the spoken warning. Without a `label` it is hidden from screen readers.
  */
 export function PlayTimer({ world, remaining, total, paused, label }: { world: WorldId; remaining: number; total: number; paused: boolean; label?: string }) {
-  const minutes = Math.max(1, Math.ceil(remaining / 60));
   const left = Math.min(1, Math.max(0, remaining / Math.max(1, total)));
   const low = remaining <= WARN_SECONDS;
+  const on = barsLeft(left);
   return (
     <div className={`play-timer play-timer--${world}${low ? ' is-low' : ''}`} {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}>
       <div className="play-timer__sign">
         {GAUGES[world](left)}
-        <span className="play-timer__text">
-          <span className="play-timer__minutes">{minutes}</span>
-          <span className="play-timer__unit">perc</span>
+        <span className="play-timer__bars" aria-hidden="true">
+          {Array.from({ length: TIMER_BARS }, (_, i) => (
+            <i key={i} className={i < on ? 'is-on' : undefined} />
+          ))}
         </span>
         {paused && (
           <span className="play-timer__pause">

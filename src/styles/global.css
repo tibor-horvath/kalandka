@@ -59,11 +59,43 @@ h1, h2, p { margin: 0; }
 .round-btn--blue { background: var(--drop-tint); color: var(--drop-deep); }
 .round-btn:active { transform: scale(0.94); }
 
+/* A game's top-bar buttons on the right: the help (eye) beside the replay speaker. */
+.topbar__actions { display: flex; align-items: center; gap: 12px; flex: none; }
+.peek-slot { display: contents; }
+/* The one "show me" help in every game: a sun-yellow eye, the same picture wherever it is pressed. */
+.peek-eye { width: 64px; height: 64px; border-radius: 32px; border: none; padding: 0; display: grid; place-items: center; flex: none; cursor: pointer; background: var(--sun); color: #5b3d00; box-shadow: 0 5px 0 #d9a21a; }
+.peek-eye:active { transform: translateY(3px); box-shadow: 0 2px 0 #d9a21a; }
+.peek-eye:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: 0 5px 0 #d9a21a; }
+
 .pill { display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 22px 0 14px; background: var(--paper); border-radius: 28px; font-size: 26px; font-weight: 800; }
 
 .big-btn { height: 68px; padding: 0 34px; border: none; border-radius: 34px; background: var(--leaf); color: var(--paper); font-size: 26px; font-weight: 800; display: flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 6px 0 var(--leaf-deep); flex: none; }
 .big-btn { transition: transform 70ms ease-out, box-shadow 70ms ease-out; }
 .big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--leaf-deep); }
+.big-btn { position: relative; }
+
+/* Stuck hint: a hand that taps the way-on button once, then leaves (StuckHint). The fingertip sits near the arrow. */
+.tap-hint { position: absolute; left: calc(100% - 50px); top: calc(50% - 4px); width: 64px; height: 64px; pointer-events: none; z-index: 2; animation: tap-hint 2.4s ease-in-out both; filter: drop-shadow(0 3px 4px rgb(16 35 58 / 0.25)); }
+.tap-hint svg { display: block; }
+.tap-hint__ring { position: absolute; left: -3px; top: -19px; width: 48px; height: 48px; border-radius: 50%; border: 5px solid var(--sun); box-sizing: border-box; opacity: 0; animation: tap-ring 2.4s ease-out both; }
+@keyframes tap-hint {
+  0% { opacity: 0; transform: translate(18px, 22px); }
+  25% { opacity: 1; transform: translate(0, 0); }
+  38% { transform: translate(0, 0) scale(0.88); }
+  48% { transform: translate(0, 0) scale(1); }
+  80% { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+@keyframes tap-ring {
+  0%, 36% { opacity: 0; transform: scale(0.3); }
+  42% { opacity: 1; transform: scale(0.6); }
+  70%, 100% { opacity: 0; transform: scale(1.4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tap-hint { animation-name: tap-hint-still; }
+  .tap-hint__ring { animation: none; }
+  @keyframes tap-hint-still { 0% { opacity: 0; } 15%, 80% { opacity: 1; } 100% { opacity: 0; } }
+}
 
 .kalandka-mark { display: inline-flex; font-family: var(--display); font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: var(--ink); }
 .kalandka-mark span { display: inline-block; }
@@ -90,6 +122,10 @@ h1, h2, p { margin: 0; }
 /* ---------- home ---------- */
 .hill { position: absolute; left: -400px; right: -400px; bottom: -1000px; height: 1600px; background: var(--grass); border-top-left-radius: 50% 70px; border-top-right-radius: 50% 70px; }
 .brand { display: flex; align-items: center; gap: 14px; }
+/* Térkép, top-left on a world's home (tablets): the map's own picture and its name, where every game keeps its back button. */
+.topbar__left { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.map-btn { height: 72px; padding: 0 22px 0 8px; border: 0; background: var(--paper); border-radius: 36px; box-shadow: 0 5px 0 #b9d8f2; color: var(--drop-deep); font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 10px; cursor: pointer; flex: none; }
+.map-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #b9d8f2; }
 .brand__text { display: flex; flex-direction: column; gap: 2px; }
 .brand__world { font-size: 38px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; }
 
@@ -146,6 +182,25 @@ h1, h2, p { margin: 0; }
 .panel__foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 68px; }
 .panel__foot .big-btn { margin-left: auto; }
 .panel__hint { font-family: var(--body); font-size: 17px; font-weight: 600; color: var(--ink-soft); line-height: 1.3; max-width: 320px; }
+/* How the slots work, drawn: empty → drop, drop → empty. */
+.slot-howto { display: flex; gap: 12px; color: var(--ink-soft); }
+.slot-howto__pair { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 16px; background: #f3f7f4; }
+.slot-howto__slot { width: 34px; height: 34px; box-sizing: border-box; border-radius: 10px; display: grid; place-items: center; }
+.slot-howto__slot--empty { border: 3px dashed #6fa8dc; background: var(--paper); }
+.slot-howto__slot--drop { border: 3px solid var(--drop); background: var(--drop-tint); }
+.slot-howto__slot--gone { background: #e3e9e5; }
+.slot-howto__slot { position: relative; }
+.slot-howto__slot svg { animation: none; }
+/* The hand on the slot you press, its fingertip on the slot's corner. */
+.slot-howto__tap { position: absolute; right: -12px; bottom: -14px; color: var(--ink); line-height: 0; }
+.slot-howto__tap svg { width: 20px; height: 20px; filter: drop-shadow(0 0 2px var(--paper)) drop-shadow(0 0 1px var(--paper)); }
+.slot-howto__n { margin-left: 4px; font-size: 20px; font-weight: 800; color: var(--drop-deep); min-width: 28px; }
+/* After the bloom: the cloud sleeps and the frame is still, nothing left to tap but the way on. */
+.cloud-btn:disabled { cursor: default; }
+.cloud-btn.is-asleep .cloud-btn__label { opacity: 0.45; }
+.cloud-btn:disabled:active svg { transform: none; }
+.slot:disabled { cursor: default; }
+.slot--target:disabled, .slot--empty:disabled { background: #f1f4f2; border-color: #e3e9e5; border-style: solid; }
 
 /* ---------- patterns ---------- */
 .meadow { position: absolute; left: -1000px; right: -1000px; bottom: -1000px; height: 1330px; background: var(--grass); }
@@ -474,13 +529,13 @@ h1, h2, p { margin: 0; }
 .play-timer__fill { fill: var(--gauge); }
 .play-timer__outline { stroke: var(--gauge-deep); }
 .play-timer__cap { fill: var(--gauge-deep); }
-.play-timer__text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
-.play-timer__minutes { font-size: 32px; font-weight: 800; line-height: 0.95; }
-.play-timer__unit { font-size: 19px; font-weight: 800; line-height: 1; color: var(--ink-soft); }
+/* Five bars for the time left: lit ones in the gauge's colour, spent ones pale with a ring, so they differ in lightness too. */
+.play-timer__bars { display: flex; align-items: center; gap: 5px; }
+.play-timer__bars i { width: 11px; height: 34px; box-sizing: border-box; border-radius: 6px; background: var(--gauge-empty); border: 2px solid var(--gauge-deep); opacity: 0.45; }
+.play-timer__bars i.is-on { background: var(--gauge); opacity: 1; }
 .play-timer__pause { position: absolute; right: -13px; top: -13px; width: 38px; height: 38px; box-sizing: border-box; border-radius: 19px; border: 4px solid var(--paper); background: var(--ink); display: flex; align-items: center; justify-content: center; gap: 5px; }
 .play-timer__pause i { width: 5px; height: 13px; border-radius: 2px; background: var(--paper); }
 .play-timer.is-low .play-timer__sign { background: var(--oops-tint); }
-.play-timer.is-low .play-timer__minutes, .play-timer.is-low .play-timer__unit { color: var(--oops-ink); }
 /*
  * Rest: the guide of the world played last rests on the left (Csepi on a leaf, Csavar on his dock), the day's haul and
  * "sleep, then play" on the right. A light sky by day, the night sky in the evening; nothing moves.
@@ -683,8 +738,9 @@ h1, h2, p { margin: 0; }
 .harbour__art { display: block; overflow: visible; }
 /* Five or more cards fill two rows down to the water: no dock under them then. */
 .screen--picker:has(.kid-card:nth-child(5)) .harbour__dock { display: none; }
-.kid-card__treasure { display: flex; gap: 8px; }
+.kid-card__treasure { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .kid-card__seeds--bolts { background: #eaeff4; }
+.kid-card__seeds--bells { background: #ece8f8; }
 
 /* Motion plays once on arrival, and once more for the chosen card; nothing loops. */
 @keyframes picker-rise { from { opacity: 0; transform: translateY(48px) scale(0.94); } }
@@ -757,3 +813,10 @@ h1, h2, p { margin: 0; }
   .oops__note { font-size: 15px; padding: 10px 16px 10px 14px; }
 }
 @media (prefers-reduced-motion: reduce) { .oops__btn { transition: none; } }
+
+/* Vegyes kör's closing card (src/screens/ReviewDone.tsx); its place on the island is in island.css. */
+.review-done__body { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px; padding: 24px; }
+.review-done__title { font-size: 40px; font-weight: 800; line-height: 1.1; }
+.review-done__tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.review-done__task { display: flex; align-items: center; gap: 10px; padding: 10px 20px 10px 10px; border-radius: 22px; background: var(--paper); font-size: 22px; font-weight: 800; box-shadow: 0 4px 0 rgba(16, 35, 58, 0.15); }
+.review-done__task .done-tick { position: static; width: 40px; height: 40px; }

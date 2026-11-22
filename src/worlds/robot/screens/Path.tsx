@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useMemo, useRef, useState, type CSSProperties } from 'react';
 import { CELL, FRAME_H, FRAME_W, FloorCrates, FloorRobot, FloorTiles, useRover } from '../floor';
 import { useLadderRound, WinCard } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
+import { PeekButton } from '../../../components/PeekButton';
 import { FitBox } from '../../../components/FitBox';
 import { Battery, CmdIcon } from '../art';
-import { GuideBubble, PlayIcon } from '../../../components/ui';
+import { PlayIcon } from '../../../components/ui';
 import {
   ARROWS,
   CMD_LABELS,
@@ -30,13 +31,12 @@ import {
   stepCount,
   type Card,
   type Cell,
-  type Cmd,
-  type PathFeedback,
+  type Cmd
 } from '../games/path';
-import { speak } from '../../../lib/speech';
-import { buzz, chime, fanfare, popBubble, powerDown } from '../../../lib/sound';
+import { buzz, chime, popBubble, powerDown } from '../../../lib/sound';
 import { useProgress } from '../../../state/progress';
 import { ROUND_HELP_AFTER } from '../../../state/taskLog';
+import { CsavarSays, useCsavar } from './kit';
 
 /** Time per robot step while a program runs: room to turn first, then drive. */
 const STEP_MS = 600;
@@ -70,7 +70,7 @@ function Charge() {
 export function Path({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('path');
-  const puzzle = useMemo(() => buildPuzzle(levelIndex, progress.pathRound), [levelIndex, progress.pathRound]);
+  const puzzle = useMemo(() => buildPuzzle(levelIndex, progress.games.path.round), [levelIndex, progress.games.path.round]);
   const { level } = puzzle;
   const plan = level.mode === 'plan';
 
@@ -87,36 +87,20 @@ export function Path({ onBack }: { onBack: () => void }) {
   const [missingCells, setMissingCells] = useState<Cell[] | null>(null);
   /** Batteries the robot has reached so far (indices into puzzle.goals). */
   const [collected, setCollected] = useState<number[]>([]);
-  const [fb, setFb] = useState<PathFeedback>(() => startFeedback(level));
+  const csavar = useCsavar(startFeedback(level));
+  const { line: fb, show: setFb, say, later } = csavar;
 
   const live = useRef({ tries: 0, collected: [] as number[] });
-  const timers = useRef<number[]>([]);
   /** The child asked for the way (parents' notes). */
   const askedWay = useRef(false);
 
-  const later = (fn: () => void, ms: number) => {
-    timers.current.push(window.setTimeout(fn, ms));
-  };
   const rover = useRover(puzzle.start, later);
   const { pose, moveTo, bump } = rover;
-  const say = (f: PathFeedback) => {
-    setFb(f);
-    speak(f.speech);
-  };
-
-  useEffect(() => {
-    speak(startFeedback(level).speech);
-    const pending = timers.current;
-    return () => pending.forEach((t) => window.clearTimeout(t));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- One course per mount: App keys this screen by round.
-  }, []);
 
   const win = () => {
     setSolved(true);
     setRoute(null);
-    fanfare();
-    buzz(40);
-    say(solvedFeedback(level));
+    csavar.cheer(solvedFeedback(level));
     solve(askedWay.current || live.current.tries >= ROUND_HELP_AFTER);
   };
 
@@ -284,7 +268,6 @@ export function Path({ onBack }: { onBack: () => void }) {
     later(() => setRoute(null), ROUTE_MS);
   };
 
-
   const boardW = puzzle.cols * CELL;
   const boardH = puzzle.rows * CELL;
   const palette = level.moves === 'absolute' ? ARROWS : TURNS;
@@ -301,7 +284,7 @@ export function Path({ onBack }: { onBack: () => void }) {
       meter={meter}
       justSolved={solved}
       onBack={onBack}
-      onReplay={() => speak(fb.speech)}
+      onReplay={csavar.replay}
     >
 
       <div className={`path-body${plan ? ' is-plan' : ''}`}>
@@ -390,9 +373,7 @@ export function Path({ onBack }: { onBack: () => void }) {
         </div>
 
         <div className="path-side">
-          <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
-            {fb.text}
-          </GuideBubble>
+          <CsavarSays line={fb} />
 
           {plan && (
             <ol className={`path-program${level.slots > 8 ? ' is-long' : ''}`} aria-label={`Program: ${cards.length} / ${level.slots} kártya`} style={{ '--slots': level.slots } as CSSProperties}>
@@ -446,14 +427,14 @@ export function Path({ onBack }: { onBack: () => void }) {
 
           <div className="path-actions">
             {!solved && (
-              <button type="button" className="peek-btn peek-btn--robot" onClick={() => {
+              <PeekButton
+                label="Mutasd az utat!"
+                onClick={() => {
                   askedWay.current = true;
                   showRoute();
                 }}
                 disabled={running}
-              >
-                Mutasd az utat!
-              </button>
+              />
             )}
             {plan && !solved && (
               <button type="button" className="big-btn big-btn--robot" onClick={play} disabled={running}>

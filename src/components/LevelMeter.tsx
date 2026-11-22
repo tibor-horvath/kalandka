@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { speak } from '../lib/speech';
 import type { LevelMeterState } from '../state/levelMeter';
+import { storeFull } from '../state/balance';
 import { podFill, tasksIn, tasksPerReward } from '../state/pod';
 import { useProgress, type Progress } from '../state/progress';
 import { seedBalance } from '../state/garden';
@@ -42,10 +43,10 @@ function MeterBell() {
 }
 
 /** Each world's reward in the meter: its icon, its balance, and the words for it. */
-const REWARD: Record<World, { icon: () => ReactNode; balance: (p: Progress) => number; have: string; next: string; its: string }> = {
-  garden: { icon: MeterSeed, balance: (p) => seedBalance(p), have: 'magod', next: 'magig', its: 'magja' },
-  robot: { icon: MeterBolt, balance: (p) => boltBalance(p), have: 'csavarod', next: 'csavarig', its: 'csavarja' },
-  tower: { icon: MeterBell, balance: (p) => bellBalance(p), have: 'harangod', next: 'harangig', its: 'harangja' }
+const REWARD: Record<World, { icon: () => ReactNode; balance: (p: Progress) => number; have: string; next: string; its: string; store: string }> = {
+  garden: { icon: MeterSeed, balance: (p) => seedBalance(p), have: 'magod', next: 'magig', its: 'magja', store: 'a Magtár' },
+  robot: { icon: MeterBolt, balance: (p) => boltBalance(p), have: 'csavarod', next: 'csavarig', its: 'csavarja', store: 'a raktár' },
+  tower: { icon: MeterBell, balance: (p) => bellBalance(p), have: 'harangod', next: 'harangig', its: 'harangja', store: 'a Harangtár' }
 };
 
 /** A resting pod: today's practice seeds or bolts are all paid. */
@@ -308,7 +309,13 @@ export function LevelMeter({ meter, world, justSolved = false, tasks }: { meter:
         : `${level + 1}. szint, ${rounds} körből ${done} kész`;
   const wish = world === 'robot' ? wishOf(progress) : null;
   const wishLine = wish ? (wish.need === 0 ? ` Megvan a csavar erre: ${wish.part.name.toLowerCase()}.` : ` Erre gyűjtesz: ${wish.part.name.toLowerCase()}, még ${wish.need} csavar.`) : '';
-  const next = rested ? `mára megvan a gyakorlás öt ${REWARD[world].its}` : `még ${left} feladat a következő ${reward}`;
+  // A full store (Magtár, Raktár, Harangtár) pays nothing until the child spends; the pod rests like after practice.
+  const full = storeFull(progress, world);
+  const next = full
+    ? `tele ${REWARD[world].store}, költs belőle, és újra gyűlik`
+    : rested
+      ? `mára megvan a gyakorlás öt ${REWARD[world].its}`
+      : `még ${left} feladat a következő ${reward}`;
   const pips = tasks && tasks.of > 1 ? tasks : null;
   const inRound = pips ? `${pips.at + 1}. ${pips.unit ?? 'feladat'} a ${pips.of}-ből. ` : '';
 
@@ -326,7 +333,7 @@ export function LevelMeter({ meter, world, justSolved = false, tasks }: { meter:
       )}
       <Stairs level={level} levels={levels} fill={done / rounds} fresh={justSolved && !levelUp} climbing={levelUp} mastering={mastered} finished={finished} />
       <span className="level-meter__rule" aria-hidden="true" />
-      <RewardBank world={world} wait={levelUp || mastered ? LEVEL_UP_MS : 0} rested={rested} />
+      <RewardBank world={world} wait={levelUp || mastered ? LEVEL_UP_MS : 0} rested={rested || full} />
       {world === 'robot' && <WishChip wait={levelUp || mastered ? LEVEL_UP_MS : 0} />}
       {(levelUp || mastered) && (
         <span className="level-meter__chip" aria-hidden="true">

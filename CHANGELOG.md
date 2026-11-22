@@ -1,5 +1,63 @@
 # Changelog
 
+## [1.18.0](https://github.com/tibor-horvath/kalandka/compare/v1.17.0...v1.18.0) (2026-11-18)
+
+
+### Added
+
+* add game definitions ([#93](https://github.com/tibor-horvath/kalandka/issues/93)) ([af9301e](https://github.com/tibor-horvath/kalandka/commit/af9301e058f13d2eb86c95c678ca0ad569639677))
+* add Vegyes kör feature with mixed tasks and review functionality ([#91](https://github.com/tibor-horvath/kalandka/issues/91)) ([2908663](https://github.com/tibor-horvath/kalandka/commit/2908663d73440879f16ba9a25411cdf6008b09af))
+
+## [1.17.0](https://github.com/tibor-horvath/kalandka/compare/v1.16.0...v1.17.0) (2026-11-18)
+
+
+### Added
+
+* enhance progress tracking and page checking functionality ([#89](https://github.com/tibor-horvath/kalandka/issues/89)) ([8e6a3d1](https://github.com/tibor-horvath/kalandka/commit/8e6a3d1e6ad7b4d6169f6ecedfbe7c6dbb5ad890))
+
+## [1.16.0](https://github.com/tibor-horvath/kalandka/compare/v1.15.0...v1.16.0) (2026-11-18)
+
+
+### Added
+
+* Refactor garden and workshop screens to enhance store functionality and improve user experience ([#87](https://github.com/tibor-horvath/kalandka/issues/87)) ([ca5a62d](https://github.com/tibor-horvath/kalandka/commit/ca5a62d56c4715ac4a72322aa79c264c380468e8))
+
+## [1.15.0](https://github.com/tibor-horvath/kalandka/compare/v1.14.0...v1.15.0) (2026-11-18)
+
+
+### Added
+
+* add ScanButton component and integrate scanning functionality ([#85](https://github.com/tibor-horvath/kalandka/issues/85)) ([7a02ace](https://github.com/tibor-horvath/kalandka/commit/7a02ace18ea6868acb5a242c0fea022b3c3dd963))
+
+## [1.14.0](https://github.com/tibor-horvath/kalandka/compare/v1.13.0...v1.14.0) (2026-11-17)
+
+
+### Added
+
+* design enhancements ([#84](https://github.com/tibor-horvath/kalandka/issues/84)) ([faac692](https://github.com/tibor-horvath/kalandka/commit/faac69221d8090df92e354b5083fe90bff821b7f))
+
+
+### Fixed
+
+* enhance rewards system with new tower world mechanics ([#82](https://github.com/tibor-horvath/kalandka/issues/82)) ([aea7a45](https://github.com/tibor-horvath/kalandka/commit/aea7a45a69591d7110b018c4e5e3aa6fdf2cc8e7))
+
+## [1.13.0](https://github.com/tibor-horvath/kalandka/compare/v1.12.0...v1.13.0) (2026-11-16)
+
+
+### Added
+
+* print page redesign ([#81](https://github.com/tibor-horvath/kalandka/issues/81)) ([2a65e5b](https://github.com/tibor-horvath/kalandka/commit/2a65e5b8f6ccbde5974b7fe0049e7de913bf0bad))
+
+
+### Fixed
+
+* tower explainer sheet ([#80](https://github.com/tibor-horvath/kalandka/issues/80)) ([0510d45](https://github.com/tibor-horvath/kalandka/commit/0510d45a895a8b971cb0cce6ce46704c836e2539))
+
+
+### Changed
+
+* world manifests and kits ([#78](https://github.com/tibor-horvath/kalandka/issues/78)) ([ddb302e](https://github.com/tibor-horvath/kalandka/commit/ddb302e00fccdfaf325ae4eb39607f275a4e03fc))
+
 ## [1.12.0](https://github.com/tibor-horvath/kalandka/compare/v1.11.0...v1.12.0) (2026-11-16)
 
 

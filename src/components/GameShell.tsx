@@ -1,19 +1,18 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { GAMES, type GameId } from '../state/games';
+import { PeekSlot } from './PeekButton';
 import type { LevelMeterState } from '../state/levelMeter';
 import { LevelMeter, type RoundTasks } from './LevelMeter';
 import { BackIcon, RoundButton, SpeakerIcon } from './ui';
 import { WORLD_LOOK } from './worldLook';
-
-/** Games drawn on another backdrop than their world's own (Locsolás's lawn). */
-const OWN_BACKDROP: Partial<Record<GameId, string>> = { water: 'lawn' };
+import { GAME_DEFS } from '../worlds/defs';
 
 /** A game's empty screen, without its play: what a place on the island opens into, and closes back from. */
 export function GameBackdrop({ game }: { game: GameId }) {
   const look = WORLD_LOOK[GAMES[game].world];
   return (
     <div className={`screen${look.className}`}>
-      <div className={OWN_BACKDROP[game] ?? look.gameGround} />
+      <div className={GAME_DEFS[game].look.backdrop ?? look.gameGround} />
     </div>
   );
 }
@@ -56,28 +55,28 @@ export function GameShell({
   const { world } = GAMES[game];
   const look = WORLD_LOOK[world];
   const levelMeter = <LevelMeter meter={meter} world={world} justSolved={justSolved} tasks={tasks} />;
-  const speaker = (
-    <RoundButton label="Meghallgatom újra" onClick={onReplay}>
-      <SpeakerIcon />
-    </RoundButton>
-  );
-  const replay = help ? (
+  // The slot a game's PeekButton renders into: the same place, beside the speaker, in every game.
+  const [peekSlot, setPeekSlot] = useState<HTMLElement | null>(null);
+  const replay = (
     <div className="topbar__actions">
-      <button type="button" className="help-pill" onClick={help.onClick} aria-label={`${help.label} Kakukk újra megmutatja.`}>
-        <span className="help-pill__mark" aria-hidden="true">
-          ?
-        </span>
-        <span className="help-pill__label">{help.label}</span>
-      </button>
-      {speaker}
+      {help && (
+        <button type="button" className="help-pill" onClick={help.onClick} aria-label={`${help.label} Kakukk újra megmutatja.`}>
+          <span className="help-pill__mark" aria-hidden="true">
+            ?
+          </span>
+          <span className="help-pill__label">{help.label}</span>
+        </button>
+      )}
+      <span className="peek-slot" ref={setPeekSlot} />
+      <RoundButton label="Meghallgatom újra" onClick={onReplay}>
+        <SpeakerIcon />
+      </RoundButton>
     </div>
-  ) : (
-    speaker
   );
 
   return (
     <div className={`screen ${className}${look.className}`}>
-      <div className={OWN_BACKDROP[game] ?? look.gameGround} aria-hidden="true" />
+      <div className={GAME_DEFS[game].look.backdrop ?? look.gameGround} aria-hidden="true" />
 
       <header className={title !== undefined || aside !== undefined ? 'topbar topbar--meter' : 'topbar'}>
         <RoundButton label={look.back} onClick={onBack}>
@@ -100,7 +99,7 @@ export function GameShell({
         )}
       </header>
 
-      {children}
+      <PeekSlot.Provider value={peekSlot}>{children}</PeekSlot.Provider>
 
     </div>
   );

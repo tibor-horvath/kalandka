@@ -1,10 +1,13 @@
-import { useRef, useState } from 'react';
+import { worldInfo } from '../state/worlds';
+import { createContext, useContext, useRef, useState } from 'react';
 import { speak } from '../lib/speech';
 import { GAMES, creditSolve, nextRound, roundOf, type LadderGame } from '../state/games';
 import { EASIER_SPEECH, LADDER_RULES, afterSolve, isFinished, ladderMeter, ladderOf, practiceLevel, withLadder, type LadderStep } from '../state/ladder';
-import { PRACTICE_PAY_PER_DAY, practicePaid, practiceRested, rewardFor } from '../state/pod';
+import { PRACTICE_PAY_PER_DAY, paidFor, practicePaid, practiceRested } from '../state/pod';
 import { useProgress, type Progress } from '../state/progress';
+import type { ReviewTask } from '../state/review';
 import { logTask } from '../state/taskLog';
+import { StuckHint } from './StuckHint';
 import { NextIcon } from './ui';
 
 interface RoundOptions {
@@ -24,8 +27,20 @@ interface WinOptions {
 /** Said when practice pays the day's last seed or bolt; the tasks go on, the pod rests till tomorrow. */
 export function restedSpeech(game: LadderGame): string {
   const world = GAMES[game].world;
-  return `Mára megvan az öt ${world === 'robot' ? 'csavarod' : world === 'tower' ? 'harangod' : 'magod'}! Gyakorolhatsz tovább, holnap újra gyűjthetsz.`;
+  return `Mára megvan az öt ${worldInfo(world).reward.yours}! Gyakorolhatsz tovább, holnap újra gyűjthetsz.`;
 }
+
+/** A Vegyes kör under way: the task this screen plays, where it stands in the round, and the way on (see App). */
+export interface ReviewRun {
+  task: ReviewTask;
+  /** This task's place in the round (from 0), and the round's length. */
+  index: number;
+  count: number;
+  onNext: () => void;
+}
+
+/** Set around a game screen while it plays a task of a Vegyes kör; null in the game itself. */
+export const ReviewContext = createContext<ReviewRun | null>(null);
 
 /**
  * One task of a levelled game. The task keeps the level its ladder had when it started, even after its
@@ -36,6 +51,9 @@ export function restedSpeech(game: LadderGame): string {
  */
 export function useLadderRound(game: LadderGame, { showStep = true, missed = false }: RoundOptions = {}) {
   const { progress, update } = useProgress();
+  const shared = useContext(ReviewContext);
+  /** A Vegyes kör task: on the round's level, it pays and is logged as usual, but the ladder stays as it is. */
+  const review = shared?.task.game === game ? shared : null;
   const rule = LADDER_RULES[game];
   const [start] = useState(() => ladderOf(progress, game));
   const practice = isFinished(start, rule);
@@ -49,14 +67,16 @@ export function useLadderRound(game: LadderGame, { showStep = true, missed = fal
 
   const win = (helped: boolean, { extra, quiet = false }: WinOptions = {}): LadderStep => {
     if (won.current) return won.current;
-    if (practice) {
+    if (practice || review) {
       const s: LadderStep = { ladder: start, change: null, helped };
       won.current = s;
       setStep(s);
       const world = GAMES[game].world;
       const paid = practicePaid(progress, game);
-      if (paid < PRACTICE_PAY_PER_DAY && paid + rewardFor(progress, world, 1) >= PRACTICE_PAY_PER_DAY) speak(restedSpeech(game), { queue: true });
-      update((p) => logTask(creditSolve(extra ? extra(p) : p, game, true), game, helped));
+      if (practice && paid < PRACTICE_PAY_PER_DAY && paid + paidFor(progress, world, 1) >= PRACTICE_PAY_PER_DAY) speak(restedSpeech(game), { queue: true });
+      // A finished game's practice pays its capped day's worth, in a Vegyes kör too; any other task pays as usual.
+      // The ladder is saved as it was: a save without one would read the new solved count as levels done (see legacyLadder).
+      update((p) => withLadder(logTask(creditSolve(extra ? extra(p) : p, game, practice), game, helped), game, start));
       return s;
     }
     const s = afterSolve(start, rule, helped);
@@ -68,11 +88,14 @@ export function useLadderRound(game: LadderGame, { showStep = true, missed = fal
   };
 
   /** "Következő": the next round (a level-up already played in the meter when the win came). */
-  const goNext = () => update((p) => nextRound(p, game));
-  const meter = ladderMeter(missed && !step ? { ...start, streak: 0 } : start, rule, showStep ? step : null, rested);
-  const level = practice ? practiceLevel(rule.levels, round) : start.level;
+  const goNext = review ? review.onNext : () => update((p) => nextRound(p, game));
+  const meter = review
+    ? // The round's tasks fill the meter's row, one slot each, on the task's own level.
+      { level: review.task.level, levels: rule.levels, done: review.index + (step && showStep ? 1 : 0), rounds: review.count, levelUp: false }
+    : ladderMeter(missed && !step ? { ...start, streak: 0 } : start, rule, showStep ? step : null, rested);
+  const level = review ? review.task.level : practice ? practiceLevel(rule.levels, round) : start.level;
   /** Which of the level's tasks: Mézút's digit. On the ladder it counts the tasks since the last step. */
-  const index = practice ? round : start.sinceChange;
+  const index = practice || review ? round : start.sinceChange;
 
   return { level, index, practice, start, step, win, meter, goNext };
 }
@@ -85,6 +108,7 @@ export function WinCard({ title = 'Kész!', next = 'Következő kör', className
       <span className="path-win__title">{title}</span>
       <button type="button" className="big-btn big-btn--robot" onClick={onNext}>
         {next} <NextIcon />
+        <StuckHint />
       </button>
     </div>
   );

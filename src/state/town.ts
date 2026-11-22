@@ -1,3 +1,4 @@
+import { spentIn } from './balance';
 import type { Progress } from './progress';
 
 // The Kisváros: Óratorony's reward place, a little town square under the clock tower. Bells earned in the games
@@ -124,7 +125,7 @@ export function buildingOf(id: string): Building | undefined {
 }
 
 export function bellBalance(p: Progress): number {
-  return Math.max(0, p.bells - p.bellsSpent);
+  return Math.max(0, p.worlds.tower.earned - p.worlds.tower.spent);
 }
 
 export function isBuilt(p: Progress, id: string): boolean {
@@ -141,7 +142,7 @@ export function builtCount(p: Progress): number {
 export function build(p: Progress, id: string): Progress {
   const b = buildingOf(id);
   if (!b || isBuilt(p, id) || bellBalance(p) < b.cost) return p;
-  return { ...p, town: [...p.town, id], bellsSpent: p.bellsSpent + b.cost };
+  return { ...p, town: [...p.town, id], worlds: spentIn(p, 'tower', b.cost) };
 }
 
 // ---------- stages ----------
@@ -162,7 +163,7 @@ export function upgradeCost(p: Progress, id: string): number | null {
 export function upgrade(p: Progress, id: string): Progress {
   const cost = upgradeCost(p, id);
   if (cost === null || bellBalance(p) < cost) return p;
-  return { ...p, townStages: { ...p.townStages, [id]: (p.townStages[id] ?? 0) + 1 }, bellsSpent: p.bellsSpent + cost };
+  return { ...p, townStages: { ...p.townStages, [id]: (p.townStages[id] ?? 0) + 1 }, worlds: spentIn(p, 'tower', cost) };
 }
 
 export function upgradeCount(p: Progress): number {
@@ -187,7 +188,7 @@ export function nextGift(p: Progress, id: string): (Gift & { cost: number }) | n
 export function give(p: Progress, id: string): Progress {
   const g = nextGift(p, id);
   if (!g || bellBalance(p) < g.cost) return p;
-  return { ...p, townGifts: { ...p.townGifts, [id]: giftsOf(p, id) + 1 }, bellsSpent: p.bellsSpent + g.cost };
+  return { ...p, townGifts: { ...p.townGifts, [id]: giftsOf(p, id) + 1 }, worlds: spentIn(p, 'tower', g.cost) };
 }
 
 export function giftCount(p: Progress): number {

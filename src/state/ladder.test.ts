@@ -1,7 +1,8 @@
+import { save } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { buildTraceRound } from '../worlds/garden/games/trace/logic';
 import { MIXED_SHAPES, PATTERN_LEVELS, buildLevelRound } from '../worlds/garden/games/patterns/logic';
-import { LADDER_RULES, afterSolve, isFinished, ladderMeter, ladderOf, placeAt, practiceLevel, startAt, upNeed, type Ladder, type LadderRule } from './ladder';
+import { LADDER_RULES, afterPage, afterSolve, isFinished, ladderMeter, ladderOf, placeAt, practiceLevel, startAt, upNeed, type Ladder, type LadderRule } from './ladder';
 import { DEFAULT_PROGRESS } from './progress';
 
 const rule: LadderRule = { levels: 4, up: 4, down: 2, cooldown: 3 };
@@ -130,24 +131,24 @@ describe('a finished game', () => {
 
 describe('saves from before the ladders', () => {
   it('keeps a workshop game on the level its solved rounds gave', () => {
-    const l = ladderOf({ ...DEFAULT_PROGRESS, sortSolved: 12 }, 'sort');
+    const l = ladderOf(save({ sortSolved: 12 }), 'sort');
     expect(l).toMatchObject({ level: 2, streak: 2, solvedTop: 2, floor: 0 });
   });
 
   it('counts a whole top level as mastered', () => {
     const top = LADDER_RULES.pots.levels;
-    expect(ladderOf({ ...DEFAULT_PROGRESS, potsSolved: 5 * top }, 'pots')).toMatchObject({ level: top - 1, reached: top });
+    expect(ladderOf(save({ potsSolved: 5 * top }), 'pots')).toMatchObject({ level: top - 1, reached: top });
   });
 
   it('takes Méhkas’s own level and counters', () => {
-    expect(ladderOf({ ...DEFAULT_PROGRESS, addLevel: 4, addStreak: 2, addMisses: 1, addSolved: 9 }, 'add')).toMatchObject({
+    expect(ladderOf(save({ addLevel: 4, addStreak: 2, addMisses: 1, addSolved: 9 }), 'add')).toMatchObject({
       level: 4, streak: 2, helpRun: 1, solvedTop: 4
     });
     expect(ladderOf(DEFAULT_PROGRESS, 'add').solvedTop).toBe(-1);
   });
 
   it('keeps Locsolás on the drops its plants had reached', () => {
-    const at = (waterRound: number) => ladderOf({ ...DEFAULT_PROGRESS, waterRound }, 'water');
+    const at = (waterRound: number) => ladderOf(save({ waterRound }), 'water');
     expect(at(0)).toMatchObject({ level: 0, solvedTop: -1 });
     expect(at(5)).toMatchObject({ level: 1, solvedTop: 1 });
     expect(at(9)).toMatchObject({ level: 2, reached: 2, solvedTop: 1 });
@@ -155,12 +156,12 @@ describe('saves from before the ladders', () => {
   });
 
   it('keeps Virágsor on the shape it had reached, and in the row once the first lap was done', () => {
-    const at = (patternRound: number) => ladderOf({ ...DEFAULT_PROGRESS, patternRound }, 'patterns').level;
+    const at = (patternRound: number) => ladderOf(save({ patternRound }), 'patterns').level;
     expect([0, 1, 2, 3, 4, 30].map(at)).toEqual([0, 1, 2, 2, 3, 3]);
   });
 
   it('keeps Mézút on the same half of the digits and the same trail, at the same digit', () => {
-    const at = (traceRound: number) => ladderOf({ ...DEFAULT_PROGRESS, traceRound }, 'trace');
+    const at = (traceRound: number) => ladderOf(save({ traceRound }), 'trace');
     expect([0, 4, 5, 9, 10, 15, 22].map((r) => at(r).level)).toEqual([0, 0, 1, 1, 2, 3, 2]);
     expect(buildTraceRound(at(7).level, at(7).sinceChange).digit).toBe(8);
   });
@@ -178,5 +179,51 @@ describe('placing a new child by age', () => {
     let set = startAt(ladderOf(DEFAULT_PROGRESS, 'sort'), 3);
     for (let i = 0; i < 3; i++) set = afterSolve(set, rule, true).ladder;
     expect(set.level).toBe(3);
+  });
+});
+
+describe('checked paper pages on the ladder', () => {
+  const ok = (n: number) => Array.from({ length: n }, () => true);
+
+  it("steps up from the child's own level after a full row of right answers, and stops there", () => {
+    const { ladder, change } = afterPage(at(1), rule, 1, ok(10));
+    expect(change).toBe('up');
+    expect(ladder).toMatchObject({ level: 2, streak: 0, lastChange: 'up', reached: 2 });
+    expect(ladder.cleared).toContain(1);
+  });
+
+  it("carries on the child's row without a step, and a wrong answer only breaks it", () => {
+    expect(afterPage(at(1, { streak: 2 }), rule, 1, [true]).ladder).toMatchObject({ level: 1, streak: 3 });
+    expect(afterPage(at(1, { streak: 3 }), rule, 1, [true]).change).toBe('up');
+    const wrong = afterPage(at(1, { streak: 2, helpRun: 0 }), rule, 1, [false, false, false]);
+    expect(wrong.change).toBeNull();
+    expect(wrong.ladder).toMatchObject({ level: 1, streak: 0, helpRun: 0 });
+  });
+
+  it('never steps down, however many answers were wrong', () => {
+    const { ladder, change } = afterPage(at(2, { lastChange: 'up', sinceChange: 9 }), rule, 2, Array.from({ length: 8 }, () => false));
+    expect(change).toBeNull();
+    expect(ladder.level).toBe(2);
+  });
+
+  it('moves the child up from a harder page only with a full row on it', () => {
+    expect(afterPage(at(0), rule, 2, [true, true, true, false, true])).toMatchObject({ change: null, ladder: at(0) });
+    const { ladder, change } = afterPage(at(0), rule, 2, [false, true, true, true, true]);
+    expect(change).toBe('up');
+    expect(ladder).toMatchObject({ level: 3, floor: 0, reached: 3 });
+  });
+
+  it('leaves the ladder alone for easier pages and finished games', () => {
+    expect(afterPage(at(2), rule, 1, ok(8)).ladder).toEqual(at(2));
+    const done = at(3, { reached: 4 });
+    expect(afterPage(done, rule, 3, ok(8))).toEqual({ ladder: done, change: null });
+  });
+
+  it("masters the top level from paper, and keeps the parent's floor and the game's own tallies", () => {
+    const top = at(3, { floor: 1, tally: { 3: 2 }, solved: [1, 2, 3], solvedTop: 3 });
+    const { ladder, change } = afterPage(top, rule, 3, ok(4));
+    expect(change).toBe('mastered');
+    expect(isFinished(ladder, rule)).toBe(true);
+    expect(ladder).toMatchObject({ floor: 1, tally: { 3: 2 }, solved: [1, 2, 3], solvedTop: 3 });
   });
 });

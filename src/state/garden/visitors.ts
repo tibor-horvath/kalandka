@@ -1,3 +1,4 @@
+import { spentIn } from '../balance';
 import type { Progress } from '../progress';
 import { today } from '../screenTime';
 import { TREES, gardenFull, grownCount, isGrown, isWelcomed, seedBalance, type TreeKind } from './beds';
@@ -77,7 +78,7 @@ export function visitorProgress(p: Progress): ArrivalProgress | null {
   const from = VISITORS[p.visitorsSeen - 1]?.after ?? 0;
   const need = next.after - from;
   const done = Math.min(need, Math.max(0, grownCount(p) - from));
-  const growing = p.beds.filter((b) => !!b && !isGrown(b, p.gardenTasks)).length;
+  const growing = p.beds.filter((b) => !!b && !isGrown(b, p.worlds.garden.tasks)).length;
   return { need, done, coming: Math.min(growing, need - done) };
 }
 
@@ -374,7 +375,7 @@ export function canGiveSeeds(p: Progress, id: VisitorId): boolean {
 /** Gives the visitor their next gift as a handful of seeds; it leaves the same decoration a treat would. */
 export function giveSeeds(p: Progress, id: VisitorId): Progress {
   if (!canGiveSeeds(p, id)) return p;
-  return { ...p, seedsSpent: p.seedsSpent + seedGiftSize(p, id), gifts: { ...p.gifts, [id]: giftsOf(p, id) + 1 } };
+  return { ...p, worlds: spentIn(p, 'garden', seedGiftSize(p, id)), gifts: { ...p.gifts, [id]: giftsOf(p, id) + 1 } };
 }
 
 /** Welcomed visitors whose next gift is ready: on the shelf, in the garden, or (for the birds) in the seed bag. */
@@ -383,37 +384,18 @@ export function giftsReady(p: Progress): Visitor[] {
 }
 
 // After its five gifts, every visitor still has a snack, once a day: the smallest gift there is, in any form it
-// takes (one treat from the shelf, three of its garden food, or three seeds). Each snack adds one small thing to
-// the visitor's pile beside it (Süni's mushrooms, Mókus's pinecones …), up to ten in rows of five, so the corner
-// keeps growing. Snacks go on after the pile is full; it just stays full. A snack is only ever offered on a tap,
-// never as a reminder.
+// takes (one treat from the shelf, three of its garden food, or three seeds). A snack is a daily kindness, not a
+// collection: nothing is counted or kept, the visitor is simply full until tomorrow. A snack is only ever offered on
+// a tap, never as a reminder.
 
 /** Garden food or seeds in one snack: one Veteményes spot, three fruit, three flowers' pollen, a small handful. */
 export const SNACK_SIZE = FOOD_PER_TREAT;
-/** Things in a full snack pile: two rows of five. */
-export const SNACK_PILE = 10;
-
-/** What each visitor's snack pile is made of: the first of its own decorations that is small enough to heap. */
-export const PILE_OF: Record<VisitorId, DecorId> = {
-  hedgehog: 'mushroom',
-  ladybug: 'poppies',
-  butterfly: 'lavender',
-  blackbird: 'cherry-branch',
-  frog: 'waterlily',
-  squirrel: 'pinecone',
-  snail: 'mossy-stone',
-  bee: 'honey-pot',
-  rabbit: 'clover',
-  mole: 'molehill',
-  lizard: 'fern',
-  owl: 'feather'
-};
 
 export type SnackHow = 'treat' | 'food' | 'seeds';
 
-/** Things in the visitor's snack pile, 0 … SNACK_PILE. */
-export function snackPile(p: Progress, id: VisitorId): number {
-  return Math.min(SNACK_PILE, p.snacks[id] ?? 0);
+/** The visitor has had its snack today. */
+export function snackedToday(p: Progress, id: VisitorId, day = today()): boolean {
+  return p.snacked[id] === day;
 }
 
 /** The visitor has had all five gifts and no snack yet today. */
@@ -435,7 +417,7 @@ export function canSnack(p: Progress, id: VisitorId, day = today()): boolean {
   return (['food', 'treat', 'seeds'] as SnackHow[]).some((how) => canSnackWith(p, id, how, day));
 }
 
-/** The visitor has its snack; one more thing goes on its pile. Unchanged when it cannot have it that way today. */
+/** The visitor has its snack and is full until tomorrow. Unchanged when it cannot have it that way today. */
 export function snack(p: Progress, id: VisitorId, how: SnackHow, day = today()): Progress {
   if (!canSnackWith(p, id, how, day)) return p;
   const { food, treat } = wishOf(id);
@@ -444,8 +426,8 @@ export function snack(p: Progress, id: VisitorId, how: SnackHow, day = today()):
       ? { ...p, pantry: { ...p.pantry, [treat]: treatsOf(p, treat) - 1 } }
       : how === 'food'
         ? spendFood(p, food!, SNACK_SIZE)
-        : { ...p, seedsSpent: p.seedsSpent + SNACK_SIZE };
-  return { ...spent, snacked: { ...p.snacked, [id]: day }, snacks: { ...p.snacks, [id]: (p.snacks[id] ?? 0) + 1 } };
+        : { ...p, worlds: spentIn(p, 'garden', SNACK_SIZE) };
+  return { ...spent, snacked: { ...p.snacked, [id]: day } };
 }
 
 export function decorCount(p: Progress): number {

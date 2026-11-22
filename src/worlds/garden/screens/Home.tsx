@@ -12,7 +12,7 @@ import { gamesIn, solvedOf, type GameId } from '../../../state/games';
 import { ladderOf } from '../../../state/ladder';
 import { kidName, useActiveKid, useProfiles } from '../../../state/profiles';
 import { useProgress, type Progress } from '../../../state/progress';
-import { PLANT_OPTIONS, canMakeAnything, emptyBeds, newVisitor, seedBalance } from '../../../state/garden';
+import { PLANT_OPTIONS, canMakeAnything, emptyBeds, giftsReady, newVisitor, seedBalance } from '../../../state/garden';
 import { newStickers } from '../../../state/stickers';
 import { isOpen, markAnnounced, nextToAnnounce, numbersLeft, unlockOf, type Unlock } from '../../../state/unlocks';
 
@@ -113,7 +113,7 @@ const TILES: Partial<Record<GameId, Tile>> = {
     badge: isNew('patterns')
   },
   flash: { label: 'Villámszem – hány darab játék', art: <SeedTrio />, badge: isNew('flash') },
-  add: { label: 'Méhkas – összeadós játék', art: <BeeArt />, badge: (p) => (solvedOf(p, 'add') === 0 ? { text: 'Új!', kind: 'new' } : { text: `${ladderOf(p, 'add').level + 1}. szint`, kind: 'level' }) },
+  add: { label: 'Méhkas – összeadós játék', art: <BeeArt />, badge: (p) => (solvedOf(p, 'add') === 0 ? { text: 'Új!', kind: 'new' } : { text: `${ladderOf(p, 'add').level + 1}. szint`, kind: 'level', level: ladderOf(p, 'add').level + 1 }) },
   trace: { label: 'Mézút – számírás a méhecskével', art: <TrailArt />, badge: isNew('trace') },
   pots: { label: 'Cserépbarátok – számbarátok játék', art: <PotsArt />, badge: isNew('pots') }
 };
@@ -123,7 +123,7 @@ interface UnlockText {
   opened: string;
   openedSpeech: string;
   asleep: string;
-  /** The skill named on the sleeping place; none says when it opens instead. */
+  /** The skill named in the sleeping place's spoken label. */
   skill?: string;
   lockedSpeech: (learned: number) => string;
 }
@@ -163,6 +163,8 @@ export function Home({ onOpen, onReward, ...actions }: HubActions & { onOpen: (g
   const balance = seedBalance(progress);
   const canPlantNow = balance >= Math.min(...PLANT_OPTIONS.map((o) => o.cost)) && emptyBeds(progress).length > 0;
   const visitorWaiting = newVisitor(progress) !== null;
+  // A welcomed visitor's next gift is on the shelf, in the garden or in the seed bag (daily snacks are never badged).
+  const giftReady = giftsReady(progress).length > 0;
 
   // On a shared device Csepi greets each child by name, except aloud with an online voice (the name would leave the device).
   const hello = shared ? `Szia, ${kidName(kid)}! De jó, hogy itt vagy!` : HELLO;
@@ -210,16 +212,19 @@ export function Home({ onOpen, onReward, ...actions }: HubActions & { onOpen: (g
     const text = UNLOCK_TEXT[u.game]!;
     const left = numbersLeft(progress, u);
     return {
-      skill: text.skill ? `${text.skill} · még ${left} szám` : `Még ${left} szám, és kinyílik`,
-      hint: `még ${left} szám`,
-      onTap: () => showNotice({ kicker: text.asleep, title: `Ismerj meg még ${left} számot!`, mood: 'think' }, text.lockedSpeech(progress.learnSolved))
+      progress: u.after > 0 ? 1 - left / u.after : 1,
+      onTap: () => showNotice({ kicker: text.asleep, title: `Ismerj meg még ${left} számot!`, mood: 'think' }, text.lockedSpeech(progress.games.learn.solved))
     };
   };
 
   const places: Place[] = gamesIn('garden').map(({ id, name }) => {
     const tile = TILES[id]!;
     const u = unlockOf(id);
-    if (u && !isOpen(progress, id)) return { id, name, label: `${name}: még zárva`, art: tile.art, locked: asleep(u) };
+    if (u && !isOpen(progress, id)) {
+      const left = numbersLeft(progress, u);
+      const skill = UNLOCK_TEXT[u.game]?.skill;
+      return { id, name, label: `${name}: még zárva${skill ? ` · ${skill}` : ''} · még ${left} szám, és kinyílik`, art: tile.art, locked: asleep(u) };
+    }
     return { id, name, label: tile.label, badge: tile.badge(progress), start: id === 'learn' && solvedOf(progress, id) === 0, art: tile.art, onOpen: () => open(id) };
   });
   const reward: RewardPlace = {
@@ -229,7 +234,11 @@ export function Home({ onOpen, onReward, ...actions }: HubActions & { onOpen: (g
     icon: <Seed size={30} />,
     count: balance,
     unit: 'mag',
-    badge: visitorWaiting ? 'Vendég jött!' : canPlantNow ? 'Ültethetsz!' : canMakeAnything(progress) ? 'Főzhetsz!' : null,
+    badge: visitorWaiting
+      ? { text: 'Vendég jött!', kind: 'visitor' }
+      : giftReady
+        ? { text: 'Ajándékot vár!', kind: 'gift' }
+        : canPlantNow ? { text: 'Ültethetsz!', kind: 'plant' } : canMakeAnything(progress) ? { text: 'Főzhetsz!', kind: 'cook' } : null,
     onClick: openGarden
   };
 

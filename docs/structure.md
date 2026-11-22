@@ -4,7 +4,25 @@ Where things live in `src/`. A world imports only shared code (everything outsid
 
 ## Worlds
 
-Each world has its own folder: its games, screens, art, printable sheets and styles.
+Each world has its own folder: its games, screens, art, printable sheets and styles. Each also has four small files that tell the rest of the app about it:
+
+```
+worlds/<id>/manifest.ts   plain data: name, guide and voice, badge colour, the reward (word, tasks per reward), the games in hub order
+worlds/<id>/ui.tsx        its screens: home, reward place, games, and a preload for a world in its own chunk
+worlds/<id>/marks.tsx     small art shared screens draw: the reward icon, the sign on paper stickers
+worlds/<id>/defs.ts       each game's definition: its tile, skill and sticker colours; a levelled game's ladder (levels, step-up
+                          and step-down rows), the parents' words and notes, its counted unit, age starting levels, level stickers
+
+worlds/index.ts           every manifest, in map order; WorldId, GameId, WORLD_IDS and GAME_IDS come from here
+worlds/screens.ts         every world's screens (WORLD_SCREENS, GAME_SCREENS); only App reads it
+worlds/marks.ts           every world's marks (WORLD_MARKS)
+worlds/defs.ts            every game's definition (GAME_DEFS, LADDER_DEFS); a levelled game without a ladder does not type-check
+worlds/types.ts           the manifest's and the game definition's shapes
+```
+
+Shared code reads worlds and games from these lists instead of naming them. Manifests import nothing at run time, so any module in `state/` may read them without an import loop. Game definitions import their games' level lists, so they are read only by the modules that build tables from them: the ladder rules, level stickers and album rows, the parents' notes, hints and tiles, the age starting levels and the game backdrop.
+
+A new game is its files in the world's folder, an entry in the world's manifest, `defs.ts` and `ui.tsx`, and its sheets in the world's `print.tsx`; `state/gameCoverage.test.ts` names anything still missing.
 
 ```
 worlds/garden/            Számkertész, Csepi's world
@@ -29,7 +47,7 @@ worlds/robot/             Robotműhely, Csavar's world
   games/scale.ts            Mérleg levels and tasks, tilt, weights on a pan, Csavar's lines
   games/code.ts             Kódzár levels, codes and code keys, the covered row and its note, Csavar's lines
   games/fix.ts              Hibavadász levels, programs with a mistake put in, the check that only one change fixes them, Csavar's lines
-  screens/                  RobotHome, Workshop (Robotépítő), Path, Sort, Scale, Seq, Mirror, Code, Fix; a chunk of their own (lazy.ts)
+  screens/                  RobotHome, Workshop (Robotépítő), Path, Sort, Scale, Seq, Mirror, Code, Fix, and the machines' kit (Csavar's line, a round of tasks); a chunk of their own (lazy.ts)
   art.tsx, parts.tsx        Csavar, the robot parts and the workshop art
   floor.tsx                 the workshop floor (Robotút, Hibavadász)
   print.tsx                 the workshop's sheet list; each game's sheets are in games/<game>.print.tsx, shared helpers in printKit.ts
@@ -59,29 +77,32 @@ lib/speech.ts             the guides' voices via browser hu-HU text-to-speech (p
 lib/sound.ts              synthesised pops and chimes (Web Audio) and light vibration
 app/                      routing, device (tablet or phone) and the screen-time hook
 
-state/games.ts            every game in one list: id, world, name and the save fields that count its rounds
-state/worlds.ts           the Kalandka worlds and which one the child is in
-state/progress.tsx        rewards, task clocks, gardens, towns and rounds, saved to localStorage
+state/games.ts            every game in one list (from the manifests): id, world, name; each game's round and solved count
+state/worlds.ts           the Kalandka worlds (from the manifests), which one the child is in, each world's part of the save
+state/progress.tsx        a child's save: games and worlds (rounds, task clocks, rewards), gardens, towns, settings; read from localStorage
+state/migrations.ts       the save's numbered versions: each step brings an older save up to the next
+state/testSave.ts         for tests: a save written with the short flat names (seeds, pathSolved)
 state/profiles.tsx        several children on one device, each with their own progress
 state/transfer.ts         moving every profile to a new device by QR codes
-state/ladder.ts           the shared difficulty ladder: levels per game, when to step up and down
+state/ladder.ts           the shared difficulty ladder (each game's levels and rule come from its definition), stepping up and down
 state/levelMeter.ts       what the in-game level meter shows
 state/unlocks.ts          which garden games open after Számmagok progress (inside the garden only)
 state/pod.ts              the reward pod: solved tasks pay a seed, a bolt or a bell; the task clock per world
-state/balance.ts          each world's reward to spend, and its name
+state/balance.ts          each world's reward to spend, its word, and spending it
 state/garden/beds.ts      Kiskert seeds, beds and plots, tree and flower kinds (Magtár), the border
 state/garden/harvest.ts   care (thirst and fruit), the basket and Kamra recipes
 state/garden/veg.ts       the Veteményes and the bee's pollen
 state/garden/visitors.ts  visitors and the way to the next one, gifts, decorations and snacks
 state/robotParts.ts       Robotépítő parts, buying and wearing them, robot friends and the way to the next one, battery and oil
 state/town.ts             the Kisváros: buildings, bells, the square's time of day
-state/stickers.ts         the album: sticker rows, level stickers, worksheet pages, which stickers are new
+state/stickers.ts         the album: sticker rows and level stickers (from the game definitions), worksheet pages, which stickers are new
 state/screenTime.ts       daily limit, play clock and 14-day history, bonus, rest now, evening rest
 state/taskLog.ts          the last few solved tasks per game, for the parents' notes
 state/insights.ts         plain-language notes for parents; the multiplication gate
 state/levels.ts           per-game level settings for the parents' corner (read current, apply new start)
+state/review.ts           Vegyes kör: when it opens (two of the world's games played), five tasks from the games played, each on a level already solved there
 
-print/                    the worksheet frame and the catalog of every world's sheets, the cut-out pages (extras.tsx), QR links
-components/               the guides, the islands, sticker art, buttons, speech bubble, game frame and level meter, home-screen top-bar controls (hub), scaling stage (1180×820 tablet, 390 px phone)
-screens/                  screens of no one world: Landing, WorldMap, Picker (Ki játszik?), Album (Matricáim), PrintArea, Rest, the list of game screens (gameScreens.ts); parents/ (Gate, ParentArea and its pages)
+print/                    the worksheet frame and the catalog of every world's sheets, each world's Vegyes kör sheet (mix.tsx), the cut-out pages (extras.tsx), QR links
+components/               the guides, the islands, sticker art, buttons, speech bubble, game frame and level meter, what every game screen shares around its play (round.tsx: the guide's line, "Következő", timers), home-screen top-bar controls (hub), scaling stage (1180×820 tablet, 390 px phone)
+screens/                  screens of no one world: Landing, WorldMap, Picker (Ki játszik?), Album (Matricáim), PrintArea, Rest, ReviewDone (Vegyes kör's closing card); parents/ (Gate, ParentArea and its pages)
 ```

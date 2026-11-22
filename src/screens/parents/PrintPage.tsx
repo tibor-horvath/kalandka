@@ -1,43 +1,32 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Csepi } from '../../components/Csepi';
+import { MixArt } from '../../components/island';
 import { Csavar, Rover } from '../../worlds/robot/art';
 import { MAX_PAGES, PRINT_SHEETS, buildPages, nextPrintout, pageRef, saveChoice, savedChoice, sheetFor, tasksPerPage, type PrintChoice } from '../../print/catalog';
 import { EXTRAS, extraFor, type ExtraId } from '../../print/extras';
 import { linkUrl, pageKey } from '../../print/link';
-import { DENSITIES, OtherAnswers, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
-import { useProfiles, type AgeBand } from '../../state/profiles';
-import { useProgress } from '../../state/progress';
-import { PAGE_STEPS, markPageDone, pagesDoneIn } from '../../state/stickers';
+import { DENSITIES, ExplainSheet, OtherAnswers, Sheet, type PrintId, type PrintSpec } from '../../print/sheet';
+import { kidName, useProfiles, type AgeBand } from '../../state/profiles';
+import { useProgress, type Progress } from '../../state/progress';
+import { PAGE_STEPS, pagesDoneIn } from '../../state/stickers';
+import { PageCheck } from './PageCheck';
 import { WORLDS, currentWorld, type WorldId } from '../../state/worlds';
+import { GAME_IDS, type GameId } from '../../state/games';
+import { GAME_DEFS } from '../../worlds/defs';
 import { ScanSheet } from './ScanSheet';
+import { Check } from './controls';
 
 /** Width of an A4 sheet in CSS pixels (210 mm); the preview scales it to its column. */
 const SHEET_PX = 793.7;
 const SHEET_RATIO = 297 / 210;
 
-const TILES: Record<PrintId, { glyph: string; tile: string }> = {
-  learn: { glyph: '12', tile: 'pa-tile--blue' },
-  water: { glyph: '10', tile: 'pa-tile--sky' },
-  patterns: { glyph: 'AB', tile: 'pa-tile--pink' },
-  flash: { glyph: '5', tile: 'pa-tile--sand' },
-  add: { glyph: '+', tile: 'pa-tile--sun' },
-  trace: { glyph: '3', tile: 'pa-tile--sun' },
-  pots: { glyph: '3+7', tile: 'pa-tile--pink' },
-  path: { glyph: '↑→', tile: 'pa-tile--sky' },
-  sort: { glyph: '●▲', tile: 'pa-tile--sand' },
-  scale: { glyph: '=', tile: 'pa-tile--sun' },
-  seq: { glyph: 'AB?', tile: 'pa-tile--blue' },
-  mirror: { glyph: '•|•', tile: 'pa-tile--sky' },
-  code: { glyph: '●→?', tile: 'pa-tile--sand' },
-  fix: { glyph: '↑✗', tile: 'pa-tile--pink' },
-  day: { glyph: '☀→☾', tile: 'pa-tile--sun' },
-  season: { glyph: '❀', tile: 'pa-tile--pink' },
-  set: { glyph: '3:00', tile: 'pa-tile--blue' },
-  read: { glyph: '?:30', tile: 'pa-tile--sky' },
-  digi: { glyph: '7:15', tile: 'pa-tile--sand' },
-  sleep: { glyph: '+2', tile: 'pa-tile--pink' },
-  sand: { glyph: '⧗', tile: 'pa-tile--sun' }
+/** Each sheet's tile on the shelf: a game's from its definition, a mixed round's with its guide. */
+const TILES: Record<PrintId, { glyph: ReactNode; tile: string }> = {
+  mixgarden: { glyph: <MixArt guide="csepi" size={44} />, tile: 'pa-tile--sun' },
+  mixrobot: { glyph: <MixArt guide="csavar" size={44} />, tile: 'pa-tile--sun' },
+  mixtower: { glyph: <MixArt guide="kakukk" size={44} />, tile: 'pa-tile--sun' },
+  ...(Object.fromEntries(GAME_IDS.map((id) => [id, { glyph: GAME_DEFS[id].look.sheetGlyph ?? GAME_DEFS[id].look.glyph, tile: GAME_DEFS[id].look.tile }])) as Record<GameId, { glyph: string; tile: string }>)
 };
 
 const EXTRA_TILES: Record<ExtraId, { glyph: ReactNode; tile: string }> = {
@@ -58,10 +47,25 @@ function theAge(age: AgeBand): string {
   return age === '5' ? 'az 5 éves' : `a ${age === '7+' ? '7' : age} éves`;
 }
 
+/**
+ * The printout a game's sheet opens with, and what its card's quick print prints: the one kept for this child,
+ * or a first one at the child's level. A printout marked done gives way to new tasks, kept so the answers match the sheet printed next.
+ */
+function startChoice(s: PrintSpec<unknown>, kidId: string, progress: Progress, young: boolean): PrintChoice {
+  const saved = savedChoice(kidId, s.id);
+  if (!saved) return { level: s.current(progress), density: young ? 'big' : 'normal', pages: 1, batch: Math.floor(Math.random() * 10_000) };
+  const next = nextPrintout(s, saved, progress.pagesDone);
+  if (next !== saved) saveChoice(kidId, s.id, next);
+  return next;
+}
+
 function pagesOf(s: PrintSpec<unknown>, c: PrintChoice, answers: boolean): ReactNode[] {
-  return buildPages(s, c).map((p, i) => (
+  const sheets = buildPages(s, c).map((p, i) => (
     <Sheet key={i} spec={s} level={c.level} grid={p.grid} tasks={p.tasks} answers={answers} footer={c.pages > 1 ? `${i + 1}/${c.pages}. lap` : ''} link={linkUrl(pageRef(s, c, i))} />
   ));
+  // The magyarázó lap goes in front, outside the sheets' numbering: it has no tasks, answers or QR code.
+  const explainer = c.explain ? s.explain?.(c.level) : null;
+  return explainer ? [<ExplainSheet key="explain" spec={s} level={c.level} explainer={explainer} />, ...sheets] : sheets;
 }
 
 /** The sheets at the width of their column. */
@@ -116,30 +120,62 @@ function Stepper({ label, value, dots, onStep, atMin, atMax }: { label: string; 
   );
 }
 
-/** The grown-up marks the pages the child finished: the pages of the printout chosen here. Each counts once, towards the Feladatlapok stickers and the game's own sticker for its level. */
-function DonePages({ s, choice }: { s: PrintSpec<unknown>; choice: PrintChoice }) {
-  const { progress, update } = useProgress();
+/**
+ * The grown-up checks the pages the child finished: the pages of the printout chosen here. A page picked opens its
+ * answers to mark right or wrong (see PageCheck). Each counts once, towards the Feladatlapok stickers, and its
+ * level's own sticker once enough answers in a row were right, as in the game.
+ */
+function DonePages({ s, choice, name }: { s: PrintSpec<unknown>; choice: PrintChoice; name: string }) {
+  const { progress } = useProgress();
+  const [open, setOpen] = useState<number | null>(null);
+  const world = WORLDS.find((w) => w.id === s.world)!;
+  // A new printout (level, size, batch) closes the page being checked: its tasks would no longer be on the paper.
+  const printout = `${choice.level}.${choice.density}.${choice.batch}.${choice.pages}`;
+  const [seen, setSeen] = useState(printout);
+  if (seen !== printout) {
+    setSeen(printout);
+    setOpen(null);
+  }
+  const ref = open === null ? null : pageRef(s, choice, open);
   return (
     <section className="pa-card ps-done">
       <h2 className="pa-h2">Kész lapok</h2>
-      <p className="pa-muted">Ha a gyerkőc befejezett egy lapot, jelöld meg itt. A feladatai úgy töltik a jutalomtartót, mint a játékban: minden négy feladatért egy mag (a Robotműhelyben csavar) jár, és mindkét világban matrica jár a kész lapokért ({PAGE_STEPS.slice(0, 5).join(', ')}… lapnál), valamint a lap szintjéért a játék saját matricája.</p>
+      <p className="pa-muted">
+        Ha a gyerkőc befejezett egy lapot, válaszd ki, és jelöld a válaszait jónak vagy hibásnak. A feladatai úgy töltik a jutalomtartót, mint a játékban (
+        {WORLDS.map((w) => `${w.name}: ${w.reward.tasksPer} feladat 1 ${w.reward.unit}`).join(', ')}), minden világban matrica jár a kész lapokért ({PAGE_STEPS.slice(0, 5).join(', ')}…
+        lapnál), a lap szintjéért pedig akkor jár a játék saját matricája, ha egymás után elég válasz lett jó, mint a játékban.
+      </p>
       <div className="pa-row">
         {Array.from({ length: choice.pages }, (_, i) => {
           const key = pageKey(pageRef(s, choice, i));
           const done = progress.pagesDone.includes(key);
-          const name = choice.pages > 1 ? `${i + 1}. lap` : 'A lap';
+          const label = choice.pages > 1 ? `${i + 1}. lap` : 'A lap';
           return (
-            <button key={key} type="button" className={`pa-btn${done ? ' pa-btn--go' : ''}`} disabled={done} onClick={() => update((p) => markPageDone(p, key, tasksPerPage(s, choice.level, choice.density)))}>
+            <button key={key} type="button" className={`pa-btn${done ? ' pa-btn--go' : ''}${open === i ? ' is-open' : ''}`} aria-expanded={open === i} onClick={() => setOpen(open === i ? null : i)}>
               {done && (
                 <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12.5l4.5 4.5L19 7.5" />
                 </svg>
               )}
-              {name} {done ? 'kész' : 'megjelölése'}
+              {label} {done ? 'kész' : 'ellenőrzése'}
             </button>
           );
         })}
       </div>
+      {ref && (
+        <div className="pc-panel">
+          <PageCheck
+            key={pageKey(ref)}
+            spec={s}
+            pageKey={pageKey(ref)}
+            level={choice.level}
+            tasks={buildPages(s, { ...choice, pages: ref.page + 1 })[ref.page].tasks}
+            world={s.world}
+            worldName={world.name}
+            name={name}
+          />
+        </div>
+      )}
       <p className="pa-muted" aria-live="polite">
         Ebben a világban eddig <b>{pagesDoneIn(progress, s.world)}</b> kész lap.
       </p>
@@ -228,15 +264,9 @@ function GameSheet({ id, kidId, guestAge, canMark, onBack, onExtra }: { id: Prin
   const { profiles } = useProfiles();
   const s = sheetFor(id);
   const young = (guestAge ?? profiles.kids.find((k) => k.id === kidId)?.age) === '5';
-  const [choice, setChoice] = useState<PrintChoice>(() => {
-    const saved = savedChoice(kidId, id);
-    if (!saved) return { level: s.current(progress), density: young ? 'big' : 'normal', pages: 1, batch: Math.floor(Math.random() * 10_000) };
-    // A printout marked done gives way to new tasks, kept so the answers match the sheet printed next.
-    const next = nextPrintout(s, saved, progress.pagesDone);
-    if (next !== saved) saveChoice(kidId, id, next);
-    return next;
-  });
+  const [choice, setChoice] = useState<PrintChoice>(() => startChoice(s, kidId, progress, young));
   const [answers, setAnswers] = useState(false);
+  const [shown, setShown] = useState(0);
   const [printing, setPrinting] = usePrinting(s.game);
 
   const change = (patch: Partial<PrintChoice>) => {
@@ -246,95 +276,165 @@ function GameSheet({ id, kidId, guestAge, canMark, onBack, onExtra }: { id: Prin
   };
 
   const perPage = tasksPerPage(s, choice.level, choice.density);
+  const explainer = s.explain?.(choice.level) ?? null;
+  const world = WORLDS.find((w) => w.id === s.world);
+  const now = s.current(progress);
+  const pages = pagesOf(s, choice, answers);
+  const page = Math.min(shown, pages.length - 1);
 
   return (
-    <div className="pa-page">
-      <BackLink label="Minden lap" onBack={onBack} />
-      <header className="pa-head">
-        <div>
-          <h1 className="pa-h1">{s.game}</h1>
-          <p className="pa-lead">{s.ask(choice.level)}</p>
-        </div>
-      </header>
+    <div className={`pa-page ps-sheetpage ps-w--${s.world}`}>
+      <nav className="ps-crumbs" aria-label="Hol vagy">
+        <button type="button" className="pa-link ps-back" onClick={onBack}>
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 5l-7 7 7 7" />
+          </svg>
+          Minden lap
+        </button>
+        <span aria-hidden="true">/</span>
+        <span className="ps-crumbs__world">{world?.name}</span>
+      </nav>
 
       <div className="ps-layout">
         <div className="ps-controls">
-          <section className="pa-card">
-            <h2 className="pa-h2">Szint</h2>
-            <Stepper
-              label="Szint"
-              value={`${choice.level + 1}. ${s.levels[choice.level]}`}
-              dots={[choice.level, s.levels.length]}
-              atMin={choice.level === 0}
-              atMax={choice.level === s.levels.length - 1}
-              onStep={(by) => change({ level: choice.level + by })}
-            />
-            {guestAge ? (
-              <p className="pa-muted">{choice.level === s.current(progress) ? `Ezzel a szinttel indulnak ${theAge(guestAge)} gyerkőcök.` : `${theAge(guestAge).replace('a', 'A')} gyerkőcök a(z) ${s.current(progress) + 1}. szinttel indulnak.`}</p>
-            ) : choice.level === s.current(progress) ? (
-              <p className="pa-muted">Ezen a szinten tart most a játékban.</p>
-            ) : (
-              <p className="pa-muted">A játékban most a(z) {s.current(progress) + 1}. szinten tart.</p>
+          <header className="ps-heading">
+            <span className={`pa-tile ${TILES[id].tile}`} aria-hidden="true">
+              {TILES[id].glyph}
+            </span>
+            <div>
+              <h1 className="pa-h1">{s.game}</h1>
+              <p className="pa-lead">{s.ask(choice.level)}</p>
+            </div>
+          </header>
+
+          <section className="ps-settings" aria-label="Beállítások">
+            <div className="ps-settings__part">
+              <div className="ps-settings__head">
+                <h2 className="pa-h2">Szint</h2>
+                <span className={`ps-settings__note${choice.level === now ? ' is-now' : ''}`}>
+                  {guestAge
+                    ? choice.level === now
+                      ? `Ezzel indulnak ${theAge(guestAge)}k`
+                      : `${theAge(guestAge).replace('a', 'A')}k: ${now + 1}. szint`
+                    : choice.level === now
+                      ? 'Itt tart most a játékban'
+                      : `A játékban: ${now + 1}. szint`}
+                </span>
+              </div>
+              <Stepper
+                label="Szint"
+                value={`${choice.level + 1}. ${s.levels[choice.level]}`}
+                dots={[choice.level, s.levels.length]}
+                atMin={choice.level === 0}
+                atMax={choice.level === s.levels.length - 1}
+                onStep={(by) => change({ level: choice.level + by })}
+              />
+            </div>
+
+            <div className="ps-settings__part">
+              <h2 className="pa-h2" id="ps-size">
+                Feladatok egy lapon
+              </h2>
+              <div className="pa-seg ps-seg" role="radiogroup" aria-labelledby="ps-size">
+                {DENSITIES.map((d, i) => (
+                  <button key={d.id} type="button" role="radio" aria-checked={choice.density === d.id} className={`pa-seg__btn${choice.density === d.id ? ' is-on' : ''}`} onClick={() => change({ density: d.id })}>
+                    <span className={`ps-bars ps-bars--${i}`} aria-hidden="true">
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                    {d.label}
+                    <small>{tasksPerPage(s, choice.level, d.id)} feladat</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="ps-settings__part ps-settings__pages">
+              <span className="pa-stack">
+                <h2 className="pa-h2">Lapok</h2>
+                <small>Minden lapon új feladatok.</small>
+              </span>
+              <Stepper label="Lapok" value={String(choice.pages)} atMin={choice.pages <= 1} atMax={choice.pages >= MAX_PAGES} onStep={(by) => change({ pages: choice.pages + by })} />
+            </div>
+
+            {explainer && (
+              <div className="ps-settings__part">
+                <Check
+                  id="ps-explain"
+                  checked={!!choice.explain}
+                  onChange={(on) => change({ explain: on })}
+                  title="Magyarázó lap az elejére"
+                  hint={`„${explainer.title}” – amit a játék a „?” gombra elmagyaráz, egy külön lapon, feladatok nélkül.`}
+                />
+              </div>
             )}
           </section>
 
-          <section className="pa-card">
-            <h2 className="pa-h2" id="ps-size">
-              Feladatok egy lapon
-            </h2>
-            <div className="pa-seg ps-seg" role="radiogroup" aria-labelledby="ps-size">
-              {DENSITIES.map((d) => (
-                <button key={d.id} type="button" role="radio" aria-checked={choice.density === d.id} className={`pa-seg__btn${choice.density === d.id ? ' is-on' : ''}`} onClick={() => change({ density: d.id })}>
-                  {d.label}
-                  <small>{tasksPerPage(s, choice.level, d.id)} feladat</small>
-                </button>
-              ))}
+          <div className="ps-go">
+            <div className="ps-go__sum">
+              <b aria-live="polite">
+                {choice.pages} lap · {choice.pages * perPage} feladat
+              </b>
+              <small>A4{choice.explain && explainer ? ' · magyarázó lappal' : ''} · megoldás nélkül</small>
             </div>
-            <div className="pa-spread">
-              <span className="pa-stack">
-                <b>Lapok</b>
-                <small>Minden lapon új feladatok vannak.</small>
-              </span>
-              <Stepper label="Lapok" value={`${choice.pages} lap · ${choice.pages * perPage} feladat`} atMin={choice.pages <= 1} atMax={choice.pages >= MAX_PAGES} onStep={(by) => change({ pages: choice.pages + by })} />
-            </div>
-          </section>
-
-          <div className="pa-row">
-            <button type="button" className="pa-btn pa-btn--go" onClick={() => setPrinting(true)}>
-              <PrintIcon />
-              Nyomtatás
-            </button>
             {(s.reshuffles?.(choice.level) ?? true) && (
-              <button type="button" className="pa-btn pa-btn--quiet" onClick={() => change({ batch: choice.batch + 1 })}>
+              <button type="button" className="pa-link ps-go__new" onClick={() => change({ batch: choice.batch + 1 })}>
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4v5h5M20 20v-5h-5" />
+                  <path d="M5.5 15a7 7 0 0 0 12.4 2M18.5 9A7 7 0 0 0 6.1 7" />
+                </svg>
                 Új feladatok
               </button>
             )}
+            <button type="button" className="pa-btn pa-btn--go ps-go__print" onClick={() => setPrinting(true)}>
+              <PrintIcon />
+              Nyomtatás
+            </button>
           </div>
-          <p className="pa-muted">
+
+          <p className="pa-muted ps-note">
             A megoldások a kinyomtatott lapon nincsenek, csak a képernyőn látszanak: a lap QR-kódját telefonnal beolvasva bármikor megnézhetitek őket.
           </p>
           {id === 'path' && (
-            <p className="pa-muted">
+            <p className="pa-muted ps-note">
               Papíron is léptetnétek a robotot?{' '}
               <button type="button" className="pa-link ps-inline" onClick={() => onExtra('robot')}>
                 Kis robot és parancskártyák
               </button>
             </p>
           )}
-          {canMark && <DonePages s={s} choice={choice} />}
+          {canMark && <DonePages s={s} choice={choice} name={kidName(profiles.kids.find((k) => k.id === kidId) ?? profiles.kids[0])} />}
         </div>
 
         <div className="ps-side">
-          <div className="pa-seg pa-seg--pill" role="radiogroup" aria-label="Mit mutasson?">
-            <button type="button" role="radio" aria-checked={!answers} className={`pa-seg__btn${!answers ? ' is-on' : ''}`} onClick={() => setAnswers(false)}>
-              Feladatlap
-            </button>
-            <button type="button" role="radio" aria-checked={answers} className={`pa-seg__btn${answers ? ' is-on' : ''}`} onClick={() => setAnswers(true)}>
-              Megoldások
-            </button>
+          <div className="ps-side__bar">
+            <div className="pa-seg pa-seg--pill" role="radiogroup" aria-label="Mit mutasson?">
+              <button type="button" role="radio" aria-checked={!answers} className={`pa-seg__btn${!answers ? ' is-on' : ''}`} onClick={() => setAnswers(false)}>
+                Feladatlap
+              </button>
+              <button type="button" role="radio" aria-checked={answers} className={`pa-seg__btn${answers ? ' is-on' : ''}`} onClick={() => setAnswers(true)}>
+                Megoldások
+              </button>
+            </div>
+            {pages.length > 1 && (
+              <div className="ps-pager">
+                <button type="button" className="ps-pager__btn" aria-label="Előző lap" disabled={page === 0} onClick={() => setShown(page - 1)}>
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 5l-7 7 7 7" />
+                  </svg>
+                </button>
+                <span aria-live="polite">
+                  {page + 1} / {pages.length}
+                </span>
+                <button type="button" className="ps-pager__btn" aria-label="Következő lap" disabled={page >= pages.length - 1} onClick={() => setShown(page + 1)}>
+                  <GoIcon />
+                </button>
+              </div>
+            )}
           </div>
           {answers && <OtherAnswers spec={s} level={choice.level} />}
-          <Preview>{pagesOf(s, choice, answers)}</Preview>
+          <Preview>{[pages[page]]}</Preview>
         </div>
       </div>
 
@@ -405,131 +505,177 @@ function GoIcon() {
  */
 export function PrintPage({ kidId, guestAge, canMark }: { kidId: string; guestAge?: AgeBand; canMark?: boolean }) {
   const { progress } = useProgress();
+  const { profiles } = useProfiles();
   const [open, setOpen] = useState<PrintId | null>(null);
   const [scanning, setScanning] = useState(false);
   // Opened over a game's sheet, the way back leads to that sheet again.
   const [extra, setExtra] = useState<ExtraId | null>(null);
-  // The world comes first, then only its games: the one the child plays now, until the grown-up picks another.
+  // The world the child plays now, until the grown-up picks another.
   const [shelf, setShelf] = useState<Shelf>(() => currentWorld(progress));
+  // A card's own print button: the sheet as it would open, printed without opening it.
+  const [quick, setQuick] = useState<{ title: string; pages: ReactNode[] } | null>(null);
+  const [printing, setPrinting] = usePrinting(quick?.title ?? 'Nyomtatás');
 
   if (scanning && canMark) return <ScanSheet kidId={kidId} onBack={() => setScanning(false)} />;
   if (extra) return <ExtraSheet id={extra} onBack={() => setExtra(null)} />;
   if (open) return <GameSheet key={`${kidId}-${open}`} id={open} kidId={kidId} guestAge={guestAge} canMark={canMark} onBack={() => setOpen(null)} onExtra={setExtra} />;
 
+  const young = (guestAge ?? profiles.kids.find((k) => k.id === kidId)?.age) === '5';
   const games = shelf === 'extras' ? [] : PRINT_SHEETS.filter((s) => s.world === shelf);
   const shown = SHELVES.find((x) => x.id === shelf)!;
+  const print = (title: string, pages: ReactNode[]) => {
+    setQuick({ title, pages });
+    setPrinting(true);
+  };
+  const printGame = (s: PrintSpec<unknown>) => {
+    const choice = startChoice(s, kidId, progress, young);
+    // Kept, so the sheet opened later shows these same tasks and its pages can be marked done.
+    saveChoice(kidId, s.id, choice);
+    print(s.game, pagesOf(s, choice, false));
+  };
 
   return (
-    <div className="pa-page">
+    <div className={`pa-page ps-w--${shelf}`}>
       <header className="pa-head ps-top">
         <div>
           <h1 className="pa-h1">Nyomtatás</h1>
           <p className="pa-lead">
             {guestAge
-              ? `Feladatlapok papírra, eszköz nélküli játékhoz. Válassz világot, aztán játékot: a lap ${theAge(guestAge)} gyerkőcöknek való kezdőszinten készül; ceruza és zsírkréta kell hozzá.`
-              : 'Feladatlapok papírra, eszköz nélküli játékhoz. Válassz világot, aztán játékot: a lap a gyerkőc mostani szintjén készül; ceruza és zsírkréta kell hozzá.'}
+              ? `Feladatlapok papírra, eszköz nélküli játékhoz. A lap ${theAge(guestAge)} gyerkőcöknek való kezdőszinten készül – ceruza és zsírkréta kell hozzá.`
+              : 'Feladatlapok papírra, eszköz nélküli játékhoz. A lap a gyerkőc mostani szintjén készül – ceruza és zsírkréta kell hozzá.'}
           </p>
         </div>
         {canMark && (
           <section className="ps-scan" aria-labelledby="ps-scan">
+            <span className="ps-scan__icon" aria-hidden="true">
+              <ScanIcon />
+            </span>
             <span className="pa-stack">
               <b id="ps-scan">Kész a lap?</b>
-              <small>Olvasd be a QR-kódját: a kész lapért matrica jár.</small>
+              <small>Olvasd be a QR-kódját: matrica jár érte.</small>
               <button type="button" className="pa-link ps-inline" onClick={() => setExtra('badges')}>
                 Jelvények a kész lapokra
               </button>
             </span>
             <button type="button" className="pa-btn" onClick={() => setScanning(true)}>
-              <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" />
-                <path d="M8 12h8" />
-              </svg>
-              Lap beolvasása
+              Beolvasás
             </button>
           </section>
         )}
       </header>
 
-      <section className="ps-step" aria-labelledby="ps-step-world">
-        <h2 className="ps-step__title" id="ps-step-world">
-          <span className="ps-step__num" aria-hidden="true">1</span>
-          Melyik világ?
-        </h2>
-        <div className="ps-shelves" role="radiogroup" aria-labelledby="ps-step-world">
-          {SHELVES.map((x) => {
-            const on = x.id === shelf;
-            const count = x.id === 'extras' ? `${EXTRAS.length} kivágós lap` : `${PRINT_SHEETS.filter((s) => s.world === x.id).length} játék`;
-            return (
-              <button key={x.id} type="button" role="radio" aria-checked={on} className={`ps-shelf ps-shelf--${x.id}${on ? ' is-on' : ''}`} onClick={() => setShelf(x.id)}>
-                <span className="ps-shelf__badge" aria-hidden="true">
-                  <ShelfIcon id={x.id} />
-                </span>
-                <span className="ps-shelf__text">
-                  <span className="ps-shelf__name">{x.name}</span>
-                  <span className="ps-shelf__about">{x.about}</span>
-                  <span className="ps-shelf__count">{count}</span>
-                </span>
-                <span className="ps-shelf__check" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12.5l4.5 4.5L19 7.5" />
-                  </svg>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
+      <div className="ps-tabs" role="radiogroup" aria-label="Világok">
+        {SHELVES.map((x) => {
+          const on = x.id === shelf;
+          const count = x.id === 'extras' ? `${EXTRAS.length} kivágós lap` : `${PRINT_SHEETS.filter((s) => s.world === x.id && !s.id.startsWith('mix')).length} játék + vegyes`;
+          return (
+            <button key={x.id} type="button" role="radio" aria-checked={on} className={`ps-tab ps-w--${x.id}${on ? ' is-on' : ''}`} onClick={() => setShelf(x.id)}>
+              <span className="ps-tab__badge" aria-hidden="true">
+                <ShelfIcon id={x.id} />
+              </span>
+              <span className="ps-tab__text">
+                <span className="ps-tab__name">{x.name}</span>
+                <span className="ps-tab__count">{count}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-      <section className={`ps-step ps-games ps-games--${shelf}`} aria-labelledby="ps-step-game">
+      <section className="ps-games" aria-labelledby="ps-games">
         <div className="ps-games__head">
-          <h2 className="ps-step__title" id="ps-step-game">
-            <span className="ps-step__num" aria-hidden="true">2</span>
-            {shelf === 'extras' ? `${shown.name} – mit vágtok ki?` : `${shown.name} – melyik játék?`}
+          <h2 className="ps-games__title" id="ps-games">
+            {shelf === 'extras' ? 'Mit vágtok ki?' : `${shown.name} játékai`}
           </h2>
-          <span className="ps-games__hint">{shelf === 'extras' ? 'Minden gyerkőcnek ugyanazok.' : 'A szintet a lapon még átállíthatod.'}</span>
+          <span className="ps-games__hint">{shelf === 'extras' ? 'Minden gyerkőcnek ugyanazok.' : 'A Nyomtatás a legutóbbi beállítással nyomtat; szintet, lapszámot a Beállításban választhatsz.'}</span>
         </div>
         <div className="ps-cards">
           {games.map((s) => {
             const level = savedChoice(kidId, s.id)?.level ?? s.current(progress);
             return (
-              <button key={s.id} type="button" className="ps-card" onClick={() => setOpen(s.id)}>
-                <span className="ps-card__top">
-                  <span className={`pa-tile ${TILES[s.id].tile}`} aria-hidden="true">
-                    {TILES[s.id].glyph}
+              <article key={s.id} className="ps-card">
+                <Thumb tile={TILES[s.id].tile} glyph={TILES[s.id].glyph} />
+                <div className="ps-card__body">
+                  <h3>{s.game}</h3>
+                  <span className="ps-card__level">
+                    {`${level + 1}. ${s.levels[level]}`}
+                    <span className="pa-dots" aria-hidden="true">
+                      {s.levels.map((_, k) => (
+                        <i key={k} className={k <= level ? (k === level ? 'is-now' : 'is-done') : ''} />
+                      ))}
+                    </span>
                   </span>
-                  <span className="ps-card__title">
-                    <h3>{s.game}</h3>
-                    <span className="ps-card__level">{`${level + 1}. ${s.levels[level]}`}</span>
-                  </span>
-                </span>
-                <span className="ps-card__ask">{s.ask(level)}</span>
-                <span className="ps-card__go">
-                  Megnyitás
-                  <GoIcon />
-                </span>
-              </button>
+                  <span className="ps-card__ask">{s.ask(level)}</span>
+                </div>
+                <div className="ps-card__actions">
+                  <button type="button" className="pa-btn pa-btn--quiet ps-card__open" onClick={() => setOpen(s.id)}>
+                    Beállítás
+                    <GoIcon />
+                  </button>
+                  <button type="button" className="pa-btn pa-btn--go" aria-label={`${s.game} nyomtatása`} onClick={() => printGame(s)}>
+                    <PrintIcon />
+                    Nyomtatás
+                  </button>
+                </div>
+              </article>
             );
           })}
           {shelf === 'extras' &&
             EXTRAS.map((e) => (
-              <button key={e.id} type="button" className="ps-card" onClick={() => setExtra(e.id)}>
-                <span className="ps-card__top">
-                  <span className={`pa-tile ${EXTRA_TILES[e.id].tile}`} aria-hidden="true">
-                    {EXTRA_TILES[e.id].glyph}
-                  </span>
-                  <span className="ps-card__title">
-                    <h3>{e.title}</h3>
-                  </span>
-                </span>
-                <span className="ps-card__ask">{e.lead}</span>
-                <span className="ps-card__go">
-                  Megnyitás
-                  <GoIcon />
-                </span>
-              </button>
+              <article key={e.id} className="ps-card">
+                <Thumb tile={EXTRA_TILES[e.id].tile} glyph={EXTRA_TILES[e.id].glyph} solo />
+                <div className="ps-card__body">
+                  <h3>{e.title}</h3>
+                  <span className="ps-card__ask">{e.lead}</span>
+                </div>
+                <div className="ps-card__actions">
+                  <button type="button" className="pa-btn pa-btn--quiet ps-card__open" onClick={() => setExtra(e.id)}>
+                    Előnézet
+                    <GoIcon />
+                  </button>
+                  <button type="button" className="pa-btn pa-btn--go" aria-label={`${e.title} nyomtatása`} onClick={() => print(e.title, [<e.Page key="page" />])}>
+                    <PrintIcon />
+                    Nyomtatás
+                  </button>
+                </div>
+              </article>
             ))}
         </div>
       </section>
+
+      {printing && quick && createPortal(<div className="ps-print">{quick.pages}</div>, document.body)}
     </div>
+  );
+}
+
+/** A card's picture: a small sheet on the game's colour, its tasks drawn with the game's glyph. */
+function Thumb({ tile, glyph, solo }: { tile: string; glyph: ReactNode; solo?: boolean }) {
+  return (
+    <span className={`ps-thumb ${tile}`} aria-hidden="true">
+      <span className="ps-thumb__paper">
+        <span className="ps-thumb__head">
+          <i />
+          <i />
+        </span>
+        {solo ? (
+          <span className="ps-thumb__solo">{glyph}</span>
+        ) : (
+          <span className="ps-thumb__grid">
+            {[0, 1, 2, 3].map((k) => (
+              <span key={k}>{glyph}</span>
+            ))}
+          </span>
+        )}
+      </span>
+    </span>
+  );
+}
+
+function ScanIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" />
+      <path d="M8 12h8" />
+    </svg>
   );
 }

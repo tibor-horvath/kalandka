@@ -4,7 +4,7 @@ import { FitBox } from '../../../components/FitBox';
 import { useLadderRound } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
 import { useForm } from '../../../components/Stage';
-import { DoneTick, GuideBubble, NextIcon } from '../../../components/ui';
+import { DoneTick } from '../../../components/ui';
 import {
   BOX_W,
   LEFT_X,
@@ -34,6 +34,7 @@ import { numberCount } from '../../../lib/numbers';
 import { fanfare, popBubble } from '../../../lib/sound';
 import { speak } from '../../../lib/speech';
 import { useProgress } from '../../../state/progress';
+import { GuideSays, NextButton, useLater } from '../../../components/round';
 
 type Phase = 'ask' | 'tour' | 'solved';
 
@@ -134,7 +135,7 @@ export function Add({ onBack }: { onBack: () => void }) {
   const [wrong, setWrong] = useState<number | null>(null);
   // The row is the first-try streak; a wrong pick empties it at once, and a full row steps up.
   const { level, step, win, meter, goNext } = useLadderRound('add', { missed: wrong !== null });
-  const [round] = useState(() => buildAddRound(progress.addRound, level));
+  const [round] = useState(() => buildAddRound(progress.games.add.round, level));
   const form = useForm();
   const countingOn = round.level.strategy === 'on';
   const gathering = round.level.strategy === 'gather';
@@ -155,10 +156,8 @@ export function Add({ onBack }: { onBack: () => void }) {
   const [flying, setFlying] = useState<string | null>(null);
   /** Take levels: the carried copy still stands where it was picked up, for the one frame before its flight starts. */
   const [liftOff, setLiftOff] = useState<string | null>(null);
-  const timers = useRef<number[]>([]);
-  const later = (ms: number, fn: () => void) => {
-    timers.current.push(window.setTimeout(fn, ms));
-  };
+  const delay = useLater();
+  const later = (ms: number, fn: () => void) => delay(fn, ms);
 
   /** The bee spins for joy after a right answer. */
   const [cheer, setCheer] = useState(false);
@@ -190,10 +189,8 @@ export function Add({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     speak(questionFeedback(round, 0, round.level.strategy === 'take' && mustUntie(round.items, [], round.b)).speech);
-    const pending = timers.current;
     return () => {
       if (tour.current !== null) window.clearInterval(tour.current);
-      pending.forEach((t) => window.clearTimeout(t));
     };
   }, [round]);
 
@@ -335,7 +332,6 @@ export function Add({ onBack }: { onBack: () => void }) {
     }
   };
 
-
   const isVisited = (id: string) => visited.some((v) => v.id === id);
 
   // Phones: the scene is folded on a portrait phone and scaled (FitBox) to the room between the equation and the answers.
@@ -470,11 +466,7 @@ export function Add({ onBack }: { onBack: () => void }) {
         </div>
       )}
 
-      <div className="add-guide">
-        <GuideBubble mood={fb.mood} tone={fb.tone}>
-          {fb.text}
-        </GuideBubble>
-      </div>
+      <GuideSays line={fb} className="add-guide" />
 
       {!ready ? (
         <div className="choices choices--add" aria-hidden="true">
@@ -503,11 +495,7 @@ export function Add({ onBack }: { onBack: () => void }) {
             </button>
           );
         })}
-        {phase === 'solved' && (
-          <button type="button" className="big-btn" onClick={goNext}>
-            Következő <NextIcon />
-          </button>
-        )}
+        <NextButton show={phase === 'solved'} onNext={goNext} />
       </div>
       )}
     </GameShell>

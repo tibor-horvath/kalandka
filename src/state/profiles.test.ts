@@ -1,3 +1,4 @@
+import { save } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { ADD_LEVELS } from '../worlds/garden/games/add/logic';
 import { PRINT_SHEETS } from '../print/catalog';
@@ -10,21 +11,22 @@ const two = () => addKid(fromProgress(DEFAULT_PROGRESS, 'a'), { name: 'Lili', av
 
 describe('profiles', () => {
   it('turns the old single-child save into the first profile, keeping every bit of progress', () => {
-    const legacy = JSON.stringify({ ...DEFAULT_PROGRESS, seeds: 42, garden: ['tulipan'], voice: false, screenLimitMin: 20 });
+    const legacy = JSON.stringify({ seeds: 42, garden: ['tulipan'], voice: false, screenLimitMin: 20 });
     const s = parseProfiles(null, legacy);
     expect(s.kids).toHaveLength(1);
     expect(s.kids[0].name).toBe('');
     const p = progressOf(s, s.activeId);
-    expect(p.seeds).toBe(42);
+    expect(p.worlds.garden.earned).toBe(42);
     expect(p.garden).toEqual(['tulipan']);
     expect(p.voice).toBe(false);
     expect(p.screenLimitMin).toBe(20);
   });
 
   it('moves saves without a limit to 15 minutes once, keeping a chosen limit and a later "no limit"', () => {
-    const { limitDefaulted: _, ...old } = DEFAULT_PROGRESS;
-    const save = (a: object, b: object) => JSON.stringify({ kids: [{ id: 'a', name: 'A', avatar: 'frog', age: null }, { id: 'b', name: 'B', avatar: 'bee', age: null }], activeId: 'a', progress: { a, b } });
-    const s = parseProfiles(save({ ...old, screenLimitMin: 0 }, { ...old, screenLimitMin: 30 }), null);
+    // A save from before versions and before the default limit.
+    const old = { seeds: 1 };
+    const stored = (a: object, b: object) => JSON.stringify({ kids: [{ id: 'a', name: 'A', avatar: 'frog', age: null }, { id: 'b', name: 'B', avatar: 'bee', age: null }], activeId: 'a', progress: { a, b } });
+    const s = parseProfiles(stored({ ...old, screenLimitMin: 0 }, { ...old, screenLimitMin: 30 }), null);
     expect(progressOf(s, 'a').screenLimitMin).toBe(15);
     expect(progressOf(s, 'b').screenLimitMin).toBe(30);
     const off = applyUpdate(s, 'a', (p) => ({ ...p, screenLimitMin: 0 }));
@@ -34,15 +36,15 @@ describe('profiles', () => {
   it('starts fresh with one profile when nothing is saved, and survives a broken save', () => {
     expect(parseProfiles(null, null).kids).toHaveLength(1);
     expect(parseProfiles('{oops', null).kids).toHaveLength(1);
-    expect(progressOf(parseProfiles('{oops', null), parseProfiles('{oops', null).activeId).seeds).toBe(0);
+    expect(progressOf(parseProfiles('{oops', null), parseProfiles('{oops', null).activeId).worlds.garden.earned).toBe(0);
   });
 
   it('reads its own save back', () => {
-    const s = applyUpdate(two(), 'b', (p) => ({ ...p, seeds: 5 }));
+    const s = applyUpdate(two(), 'b', (p) => (save({ seeds: 5 }, p)));
     const back = parseProfiles(JSON.stringify(s), null);
     expect(back.kids.map((k) => k.name)).toEqual(['', 'Lili']);
-    expect(progressOf(back, 'b').seeds).toBe(5);
-    expect(progressOf(back, 'a').seeds).toBe(0);
+    expect(progressOf(back, 'b').worlds.garden.earned).toBe(5);
+    expect(progressOf(back, 'a').worlds.garden.earned).toBe(0);
   });
 
   it('moves a saved 3–4 age to 5 and drops unknown ages', () => {
@@ -53,16 +55,16 @@ describe('profiles', () => {
 
   it('keeps progress per child and device settings shared', () => {
     let s = two();
-    s = applyUpdate(s, 'a', (p) => ({ ...p, seeds: 3, voice: false, screenLimitMin: 30 }));
-    expect(progressOf(s, 'a').seeds).toBe(3);
-    expect(progressOf(s, 'b').seeds).toBe(0);
+    s = applyUpdate(s, 'a', (p) => (save({ seeds: 3, voice: false, screenLimitMin: 30 }, p)));
+    expect(progressOf(s, 'a').worlds.garden.earned).toBe(3);
+    expect(progressOf(s, 'b').worlds.garden.earned).toBe(0);
     expect(progressOf(s, 'b').voice).toBe(false);
     expect(progressOf(s, 'b').screenLimitMin).toBe(15);
   });
 
   it('sets starting levels from the age band', () => {
     expect(startingProgress('5')).toEqual(DEFAULT_PROGRESS);
-    expect(startingProgress('6').learnRound).toBe(5);
+    expect(startingProgress('6').games.learn.round).toBe(5);
     const big = startingProgress('7+');
     expect(big.unlockAll).toBe(true);
     expect(ladderOf(big, 'water').level).toBe(2);

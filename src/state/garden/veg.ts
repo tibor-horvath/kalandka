@@ -1,3 +1,4 @@
+import { spentIn } from '../balance';
 import type { Progress } from '../progress';
 import { PLOTS, isGrown, isWelcomed, openPlots, seedBalance } from './beds';
 import type { VisitorId } from './visitors';
@@ -72,13 +73,13 @@ export function canPlantVeg(p: Progress, i: number, id: VegId): boolean {
 export function plantVeg(p: Progress, i: number, id: VegId): Progress {
   if (!canPlantVeg(p, i, id)) return p;
   const veg = Array.from({ length: VEG_SPOTS * PLOTS }, (_, k) => vegAt(p, k));
-  veg[i] = { kind: id, at: p.gardenTasks };
-  return { ...p, veg, seedsSpent: p.seedsSpent + VEG_COST };
+  veg[i] = { kind: id, at: p.worlds.garden.tasks };
+  return { ...p, veg, worlds: spentIn(p, 'garden', VEG_COST) };
 }
 
 /** Ripe spots of this vegetable, in order. */
 export function ripeVegSpots(p: Progress, id: VegId): number[] {
-  return p.veg.flatMap((s, i) => (s && s.kind === id && vegRipe(s, p.gardenTasks) ? [i] : []));
+  return p.veg.flatMap((s, i) => (s && s.kind === id && vegRipe(s, p.worlds.garden.tasks) ? [i] : []));
 }
 
 /** Ripe vegetables of this kind, three to a spot. */
@@ -103,14 +104,14 @@ export const POLLEN_REST = 3;
 export function pollenFlowers(p: Progress): string[] {
   const ready = (key: string) => {
     const at = p.pollen[key];
-    return at === undefined || p.gardenTasks - at >= POLLEN_REST;
+    return at === undefined || p.worlds.garden.tasks - at >= POLLEN_REST;
   };
-  const beds = p.beds.flatMap((b, i) => (b && b.kind === 'flower' && isGrown(b, p.gardenTasks) ? [`b${i}`] : []));
+  const beds = p.beds.flatMap((b, i) => (b && b.kind === 'flower' && isGrown(b, p.worlds.garden.tasks) ? [`b${i}`] : []));
   const border = p.border.flatMap((f, i) => (f ? [`s${i}`] : []));
   return [...beds, ...border].filter(ready);
 }
 
 export function takePollen(p: Progress, n: number): Progress {
   const taken = pollenFlowers(p).slice(0, n);
-  return { ...p, pollen: { ...p.pollen, ...Object.fromEntries(taken.map((k) => [k, p.gardenTasks])) } };
+  return { ...p, pollen: { ...p.pollen, ...Object.fromEntries(taken.map((k) => [k, p.worlds.garden.tasks])) } };
 }

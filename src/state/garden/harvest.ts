@@ -1,3 +1,4 @@
+import { spentIn } from '../balance';
 import type { Progress } from '../progress';
 import { BEDS, bedAt, bedTree, gardenFull, growAfter, isGrown, seedBalance, treeOf, type Bed, type PlantKind } from './beds';
 
@@ -55,11 +56,11 @@ export function pickedFruit(bed: Bed): number {
 }
 
 export function thirstyBeds(p: Progress): number[] {
-  return p.beds.flatMap((b, i) => (b && isThirsty(b, p.gardenTasks) ? [i] : []));
+  return p.beds.flatMap((b, i) => (b && isThirsty(b, p.worlds.garden.tasks) ? [i] : []));
 }
 
 export function ripeTotal(p: Progress): number {
-  return p.beds.reduce((n, b) => n + (b ? ripeFruit(b, p.gardenTasks) : 0), 0);
+  return p.beds.reduce((n, b) => n + (b ? ripeFruit(b, p.worlds.garden.tasks) : 0), 0);
 }
 
 function withBed(p: Progress, i: number, bed: Bed): (Bed | null)[] {
@@ -86,19 +87,40 @@ export function basketTotal(p: Progress): number {
   return basketPears(p) + basketBerries(p) + basketOf(p, 'apple') + basketOf(p, 'cherry') + basketOf(p, 'nut');
 }
 
-/** Picks one ripe fruit into the basket; unchanged when there is none. */
+// The basket is a crate of twenty hollows per fruit (two ten-frames). With a kind's hollows full, its fruit waits on
+// the tree (which already holds no more than a few) until the child cooks it or gives it away. Nothing is taken away:
+// a save carried over with more in the basket keeps all of it, and picking that kind just waits.
+
+/** Hollows for each kind of fruit in the basket. */
+export const BASKET_MAX = 20;
+
+/** Fruit of one kind in the basket. */
+export function basketHolds(p: Progress, f: FruitKind): number {
+  if (f === 'pear') return basketPears(p);
+  if (f === 'berry') return basketBerries(p);
+  return basketOf(p, f);
+}
+
+/** No hollow is free for this kind of fruit. */
+export function basketFullFor(p: Progress, f: FruitKind): boolean {
+  return basketHolds(p, f) >= BASKET_MAX;
+}
+
+/** Picks one ripe fruit into the basket; unchanged when there is none, or its kind's hollows are full. */
 export function pickFruit(p: Progress, i: number): Progress {
   const bed = bedAt(p, i);
-  if (!bed || ripeFruit(bed, p.gardenTasks) === 0) return p;
+  if (!bed || ripeFruit(bed, p.worlds.garden.tasks) === 0) return p;
+  const f = fruitOf(bed);
+  if (f && basketFullFor(p, f)) return p;
   return addFruit({ ...p, beds: withBed(p, i, { ...bed, picked: pickedFruit(bed) + 1 }) }, bed, 1);
 }
 
 /** Waters a thirsty plant; fruit still on it stays there to pick. Unchanged when it is not thirsty. */
 export function water(p: Progress, i: number): Progress {
   const bed = bedAt(p, i);
-  if (!bed || !isThirsty(bed, p.gardenTasks)) return p;
-  const kept = ripeFruit(bed, p.gardenTasks);
-  return { ...p, beds: withBed(p, i, { ...bed, watered: p.gardenTasks, picked: 0, kept }) };
+  if (!bed || !isThirsty(bed, p.worlds.garden.tasks)) return p;
+  const kept = ripeFruit(bed, p.worlds.garden.tasks);
+  return { ...p, beds: withBed(p, i, { ...bed, watered: p.worlds.garden.tasks, picked: 0, kept }) };
 }
 
 /** Waters every thirsty plant at once (the watering can). */
@@ -146,9 +168,17 @@ export function recipeOpen(p: Progress, id: TreatId): boolean {
   return id !== 'loaf' || gardenFull(p);
 }
 
+/** Places on each of the Kamra's shelves: ten, five and five. */
+export const SHELF_MAX = 10;
+
+/** The treat's shelf has no free place; it can be cooked again once a visitor has taken some. */
+export function shelfFull(p: Progress, id: TreatId): boolean {
+  return treatsOf(p, id) >= SHELF_MAX;
+}
+
 export function canMake(p: Progress, id: TreatId): boolean {
   const r = recipeOf(id);
-  return recipeOpen(p, id) && basketPears(p) >= r.pears && basketBerries(p) >= r.berries && seedBalance(p) >= r.seeds;
+  return recipeOpen(p, id) && !shelfFull(p, id) && basketPears(p) >= r.pears && basketBerries(p) >= r.berries && seedBalance(p) >= r.seeds;
 }
 
 /** Makes a treat for the shelf; unchanged when the basket (or the seeds) are not enough. */
@@ -159,7 +189,7 @@ export function make(p: Progress, id: TreatId): Progress {
     ...p,
     pearsUsed: p.pearsUsed + r.pears,
     berriesUsed: p.berriesUsed + r.berries,
-    seedsSpent: p.seedsSpent + r.seeds,
+    worlds: spentIn(p, 'garden', r.seeds),
     pantry: { ...p.pantry, [id]: (p.pantry[id] ?? 0) + 1 }
   };
 }

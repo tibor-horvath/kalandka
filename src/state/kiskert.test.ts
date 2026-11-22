@@ -1,17 +1,12 @@
+import { save, type SavePatch } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PROGRESS, readProgress, type Progress } from './progress';
-import { BEDS, BORDER_SPOTS, GIFTS_EACH, PILE_OF, PLOT_BEDS, POLLEN_REST, SNACK_PILE, SNACK_SIZE, VEG_COST, VEG_GROWS, VEG_SPOTS, VISITORS, bedAt, bedTree, basketOf, basketTotal, broughtBy, canGiveFood, canPlantVeg, canSnack, canSnackWith, carryOverBeds, decorOf, foodGiftSize, fruitName, giftsOf, giveFood, giveSeeds, grownCount, openBeds, openBorder, openVeg, ownsTree, ownsVeg, pickFruit, plant, plantVeg, pollenFlowers, ripeVeg, seedBalance, seedGiftSize, snack, snackPile, takesSeeds, treatOutOfReach, vegAt, visitorsOf, wishOf, type Bed } from './garden';
+import { BEDS, BORDER_SPOTS, GIFTS_EACH, PLOT_BEDS, POLLEN_REST, SNACK_SIZE, VEG_COST, VEG_GROWS, VEG_SPOTS, VISITORS, bedAt, bedTree, basketOf, basketTotal, broughtBy, canGiveFood, canPlantVeg, canSnack, canSnackWith, carryOverBeds, decorOf, foodGiftSize, fruitName, giftsOf, giveFood, giveSeeds, grownCount, openBeds, openBorder, openVeg, ownsTree, ownsVeg, pickFruit, plant, plantVeg, pollenFlowers, ripeVeg, seedBalance, seedGiftSize, snack, snackedToday, takesSeeds, treatOutOfReach, vegAt, visitorsOf, type Bed } from './garden';
 
 const flower = (at = 0): Bed => ({ kind: 'flower', at });
 /** A garden with `grown` flowers grown in the first beds and these visitors welcomed. */
-const garden = (grown: number, visitorsSeen: number, extra: Partial<Progress> = {}): Progress => ({
-  ...DEFAULT_PROGRESS,
-  seeds: 200,
-  gardenTasks: 100,
-  beds: Array.from({ length: grown }, () => flower()),
-  visitorsSeen,
-  ...extra
-});
+const garden = (grown: number, visitorsSeen: number, extra: SavePatch = {}): Progress =>
+  save({ seeds: 200, gardenTasks: 100, beds: Array.from({ length: grown }, () => flower()), visitorsSeen, ...extra });
 const seen = (id: (typeof VISITORS)[number]['id']) => VISITORS.findIndex((v) => v.id === id) + 1;
 
 describe('fifteen beds per plot', () => {
@@ -36,12 +31,11 @@ describe('fifteen beds per plot', () => {
     expect(beds.slice(15, 25).map((b) => b?.at)).toEqual([10, 11, 12, 13, 14, 15, 16, 17, 18, 19]);
     const p = { ...DEFAULT_PROGRESS, beds };
     expect(openBeds(p)).toBe(BEDS);
-    expect(grownCount({ ...p, gardenTasks: 100 })).toBe(20);
+    expect(grownCount(save({ gardenTasks: 100 }, p))).toBe(20);
   });
 
   it('reads an old save once, and leaves a new one as it is', () => {
     const old = readProgress({ beds: [flower(), null, flower()].concat(Array(8).fill(null), [flower(7)]), stickersSeen: [] });
-    expect(old.plotBeds).toBe(15);
     expect(bedAt(old, 0)).not.toBeNull();
     expect(bedAt(old, 11)).toBeNull();
     expect(bedAt(old, 16)?.at).toBe(7);
@@ -83,7 +77,7 @@ describe('tree kinds', () => {
 
   it('picks apples into the basket, not into the recipes', () => {
     let p = plant(garden(3, seen('hedgehog')), 5, 'tree', 'malva', 'apple');
-    p = { ...p, gardenTasks: p.gardenTasks + 20 };
+    p = save({ gardenTasks: p.worlds.garden.tasks + 20 }, p);
     expect(fruitName(bedAt(p, 5)!)).toBe('alma');
     p = pickFruit(pickFruit(p, 5), 5);
     expect(basketOf(p, 'apple')).toBe(2);
@@ -106,7 +100,7 @@ describe('the Veteményes', () => {
     p = plantVeg(p, 0, 'carrot');
     expect(seedBalance(p)).toBe(200 - VEG_COST);
     expect(ripeVeg(p, 'carrot')).toBe(0);
-    p = { ...p, gardenTasks: p.gardenTasks + VEG_GROWS };
+    p = save({ gardenTasks: p.worlds.garden.tasks + VEG_GROWS }, p);
     expect(ripeVeg(p, 'carrot')).toBe(3);
     expect(grownCount(p)).toBe(22);
     expect(canPlantVeg(p, 0, 'carrot')).toBe(false);
@@ -126,7 +120,7 @@ describe('gifts from the garden', () => {
     let p = garden(22, seen('rabbit'));
     p = plantVeg(plantVeg(p, 0, 'carrot'), 1, 'carrot');
     expect(canGiveFood(p, 'rabbit')).toBe(false);
-    p = { ...p, gardenTasks: p.gardenTasks + VEG_GROWS };
+    p = save({ gardenTasks: p.worlds.garden.tasks + VEG_GROWS }, p);
     p = giveFood(p, 'rabbit');
     expect(giftsOf(p, 'rabbit')).toBe(1);
     expect(decorOf(p, 'rabbit').map((d) => d.id)).toEqual(['clover']);
@@ -153,20 +147,20 @@ describe('gifts from the garden', () => {
     expect(giftsOf(p, 'bee')).toBe(5);
     expect(pollenFlowers(p)).toHaveLength(7);
     expect(p.beds.filter(Boolean)).toHaveLength(20);
-    expect(pollenFlowers({ ...p, gardenTasks: p.gardenTasks + POLLEN_REST })).toHaveLength(22);
+    expect(pollenFlowers(save({ gardenTasks: p.worlds.garden.tasks + POLLEN_REST }, p))).toHaveLength(22);
   });
 });
 
 describe('the snack after the five gifts', () => {
   it('is one ripe spot a day, only once every gift is given', () => {
     let p = plantVeg(plantVeg(garden(22, seen('rabbit')), 0, 'carrot'), 1, 'carrot');
-    p = { ...p, gardenTasks: p.gardenTasks + VEG_GROWS };
+    p = save({ gardenTasks: p.worlds.garden.tasks + VEG_GROWS }, p);
     expect(canSnack(p, 'rabbit', '2026-11-08')).toBe(false);
     p = { ...p, gifts: { rabbit: GIFTS_EACH } };
     expect(canSnackWith(p, 'rabbit', 'food', '2026-11-08')).toBe(true);
     p = snack(p, 'rabbit', 'food', '2026-11-08');
     expect(ripeVeg(p, 'carrot')).toBe(3);
-    expect(snackPile(p, 'rabbit')).toBe(1);
+    expect(snackedToday(p, 'rabbit', '2026-11-08')).toBe(true);
     expect(canSnack(p, 'rabbit', '2026-11-08')).toBe(false);
     expect(canSnack(p, 'rabbit', '2026-11-09')).toBe(true);
     expect(canSnack(p, 'hedgehog', '2026-11-09')).toBe(false);
@@ -178,7 +172,6 @@ describe('the snack after the five gifts', () => {
     expect(snack(p, 'frog', 'food', 'd')).toBe(p);
     const frog = snack(p, 'frog', 'treat', 'd');
     expect(frog.pantry.compote).toBe(0);
-    expect(snackPile(frog, 'frog')).toBe(1);
     const hedgehog = snack(p, 'hedgehog', 'food', 'd');
     expect(basketOf(hedgehog, 'apple')).toBe(0);
     const bird = snack(p, 'blackbird', 'seeds', 'd');
@@ -187,13 +180,12 @@ describe('the snack after the five gifts', () => {
     expect(canSnackWith(p, 'frog', 'seeds', 'd')).toBe(false);
   });
 
-  it('grows the pile one thing per day up to ten, and keeps snacking after it is full', () => {
+  it('is not collected: a snack only marks the visitor full for the day', () => {
     let p = garden(3, seen('hedgehog'), { gifts: { hedgehog: GIFTS_EACH }, pantry: { jam: 20 } });
     for (let day = 1; day <= 12; day++) p = snack(p, 'hedgehog', 'treat', `day-${day}`);
-    expect(p.snacks.hedgehog).toBe(12);
-    expect(snackPile(p, 'hedgehog')).toBe(SNACK_PILE);
-    expect(PILE_OF.hedgehog).toBe('mushroom');
-    for (const v of VISITORS) expect(wishOf(v.id).decor.map((d) => d.id)).toContain(PILE_OF[v.id]);
+    expect(p.pantry.jam).toBe(8);
+    expect(p.snacked).toEqual({ hedgehog: 'day-12' });
+    expect('snacks' in p).toBe(false);
   });
 });
 
@@ -219,7 +211,9 @@ describe('a garden planted full without the fruit a treat needs', () => {
     expect(takesSeeds(garden(29, VISITORS.length), 'frog')).toBe(false);
   });
 
-  it('reads older saves without a snack pile', () => {
-    expect(snackPile(readProgress({ snacked: { rabbit: '2026-11-01' } }), 'rabbit')).toBe(0);
+  it('drops the old snack pile count from older saves', () => {
+    const p = readProgress({ version: 2, snacked: { rabbit: '2026-11-01' }, snacks: { rabbit: 4 } });
+    expect('snacks' in p).toBe(false);
+    expect(p.snacked.rabbit).toBe('2026-11-01');
   });
 });

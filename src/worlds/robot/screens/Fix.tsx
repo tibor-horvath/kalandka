@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { CELL, FRAME_H, FRAME_W, FloorCrates, FloorRobot, FloorTiles, useRover } from '../floor';
 import { useLadderRound, WinCard } from '../../../components/ladderRound';
 import { GameShell } from '../../../components/GameShell';
+import { PeekButton } from '../../../components/PeekButton';
 import { FitBox } from '../../../components/FitBox';
 import { STAGE_W, useWideStage } from '../../../components/Stage';
 import { Battery, CmdIcon } from '../art';
-import { GuideBubble, PlayIcon } from '../../../components/ui';
+import { PlayIcon } from '../../../components/ui';
 import {
   ONE_MORE_FEEDBACK,
   SHOW_CARD_FEEDBACK,
@@ -26,10 +27,9 @@ import {
   type FixTask
 } from '../games/fix';
 import { CMD_LABELS, run, type Card, type Cell, type RunResult } from '../games/path';
-import { speak } from '../../../lib/speech';
-import { buzz, chime, fanfare, popBubble } from '../../../lib/sound';
+import { buzz, popBubble } from '../../../lib/sound';
 import { useProgress } from '../../../state/progress';
-import { ROUND_HELP_AFTER } from '../../../state/taskLog';
+import { CsavarSays, short, useTaskRound } from './kit';
 
 /** Time per robot step while a program runs: room to turn first, then drive. */
 const STEP_MS = 600;
@@ -72,54 +72,15 @@ export function Fix({ onBack }: { onBack: () => void }) {
   const { progress } = useProgress();
   const roomy = useRoomyBoard() !== null;
   const { level: levelIndex, win: solve, meter, goNext } = useLadderRound('fix');
-  const round = useMemo(() => buildFixRound(levelIndex, progress.fixRound), [levelIndex, progress.fixRound]);
-  const [taskIdx, setTaskIdx] = useState(0);
-  const [fb, setFb] = useState<FixFeedback>(() => startFeedback(round.level));
-  const [solved, setSolved] = useState(false);
-  const timers = useRef<number[]>([]);
-  const later = (fn: () => void, ms: number) => {
-    timers.current.push(window.setTimeout(fn, ms));
-  };
-
-  /** Corrections, glows and "Mutasd!" this round; enough of them and the round needed help. */
-  const oops = useRef(0);
-  const say = (f: FixFeedback) => {
-    if (f.tone === 'oops') oops.current += 1;
-    setFb(f);
-    speak(f.speech);
-  };
-  const noteHelp = () => {
-    oops.current += 1;
-  };
-
-  useEffect(() => {
-    speak(startFeedback(round.level).speech);
-    const pending = timers.current;
-    return () => pending.forEach((t) => window.clearTimeout(t));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- One round per mount: App keys this screen by round.
-  }, []);
-
-  const done = () => {
-    const right = fixedFeedback(taskIdx);
-    if (taskIdx < round.tasks.length - 1) {
-      chime();
-      say(right);
-      later(() => {
-        const next = startFeedback(round.level);
-        setTaskIdx(taskIdx + 1);
-        // Only the short line: the child heard the whole instruction at the start of the round.
-        say({ ...next, speech: next.text });
-      }, NEXT_TASK_MS);
-      return;
-    }
-    const win = solvedFeedback();
-    setSolved(true);
-    fanfare();
-    buzz(40);
-    say({ ...win, speech: `${right.speech} ${win.speech}` });
-    solve(oops.current >= ROUND_HELP_AFTER);
-  };
-
+  const round = useMemo(() => buildFixRound(levelIndex, progress.games.fix.round), [levelIndex, progress.games.fix.round]);
+  const run = useTaskRound({
+    count: round.tasks.length,
+    first: startFeedback(round.level),
+    next: () => short(startFeedback(round.level)),
+    won: () => solvedFeedback(),
+    pause: NEXT_TASK_MS,
+    onWin: solve
+  });
 
   return (
     <GameShell
@@ -127,22 +88,15 @@ export function Fix({ onBack }: { onBack: () => void }) {
       className={`screen--path screen--fix${roomy ? ' is-roomy' : ''}`}
       title="Hibavadász"
       meter={meter}
-      justSolved={solved}
-      tasks={{ at: taskIdx, of: round.tasks.length, done: solved }}
+      justSolved={run.solved}
+      tasks={run.tasks}
       onBack={onBack}
-      onReplay={() => speak(fb.speech)}
+      onReplay={run.replay}
     >
-
-      <Task key={taskIdx} level={round.level} task={round.tasks[taskIdx]} solved={solved} say={say} noteHelp={noteHelp} onDone={done} later={later}>
-        <GuideBubble guide="csavar" mood={fb.mood} tone={fb.tone} csepiWidth={60}>
-          {fb.text}
-        </GuideBubble>
+      <Task key={run.taskIdx} level={round.level} task={round.tasks[run.taskIdx]} solved={run.solved} say={run.say} noteHelp={run.noteHelp} onDone={() => run.done(fixedFeedback(run.taskIdx))} later={run.later}>
+        <CsavarSays line={run.line} />
       </Task>
-
-      {solved && (
-        <WinCard onNext={goNext} />
-      )}
-
+      {run.solved && <WinCard onNext={goNext} />}
     </GameShell>
   );
 }
@@ -424,9 +378,7 @@ function Task({ level, task, solved, say, noteHelp, onDone, later, children }: T
 
         {!finished && (
           <div className="path-actions">
-            <button type="button" className="peek-btn peek-btn--robot" onClick={show} disabled={running}>
-              Mutasd!
-            </button>
+            <PeekButton label="Mutasd a hibát!" onClick={show} disabled={running} />
             {open === null && (
               <button type="button" className="big-btn big-btn--robot" onClick={play} disabled={running}>
                 <PlayIcon /> Indulás

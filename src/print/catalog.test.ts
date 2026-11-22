@@ -1,3 +1,4 @@
+import { save } from '../state/testSave';
 import { describe, expect, it } from 'vitest';
 import { GAME_IDS, type LadderGame } from '../state/games';
 import { LADDER_LEVELS, ladderOf, startAt, withLadder } from '../state/ladder';
@@ -12,7 +13,7 @@ import { DENSITIES, MAX_PAGES } from './sheet';
 
 describe('printable sheets', () => {
   it('has a sheet for every game', () => {
-    expect(PRINT_SHEETS.map((s) => s.id).sort()).toEqual([...GAME_IDS].sort());
+    expect(PRINT_SHEETS.map((s) => s.id).sort()).toEqual([...GAME_IDS, 'mixgarden', 'mixrobot', 'mixtower'].sort());
   });
 
   it('fills every page of every level and size', () => {
@@ -68,8 +69,8 @@ describe('printable sheets', () => {
     const next = nextPrintout(s, choice, [key(choice, 0), key(choice, 1)]);
     expect(next).toEqual({ ...choice, batch: 8 });
     expect(buildPages(s, next)).not.toEqual(buildPages(s, choice));
-    const progress = [0, 1].reduce((p, page) => markPageDone(p, key(choice, page), 1), DEFAULT_PROGRESS);
-    expect(markPageDone(progress, key(next, 0), 1)).not.toBe(progress);
+    const progress = [0, 1].reduce((p, page) => markPageDone(p, key(choice, page), [true]), DEFAULT_PROGRESS);
+    expect(markPageDone(progress, key(next, 0), [true])).not.toBe(progress);
   });
 
   it('starts a new child on the first level', () => {
@@ -126,7 +127,7 @@ describe('printable sheets', () => {
     }
     // Számmagok has no ladder: its sheets follow the round, Vegyesen after twenty.
     const learn = sheetFor('learn');
-    expect([0, 5, 10, 15, 19, 20, 24].map((learnRound) => learn.current({ ...DEFAULT_PROGRESS, learnRound }))).toEqual([0, 1, 2, 3, 3, 4, 4]);
+    expect([0, 5, 10, 15, 19, 20, 24].map((learnRound) => learn.current(save({ learnRound })))).toEqual([0, 1, 2, 3, 3, 4, 4]);
   });
 });
 
@@ -153,7 +154,7 @@ describe('answer links', () => {
   it('counts a finished page of every game in that game’s world', () => {
     for (const s of PRINT_SHEETS) {
       const key = pageKey(pageRef(s, { level: 0, density: 'normal', pages: 1, batch: 1 }, 0));
-      expect(pagesDoneIn(markPageDone(DEFAULT_PROGRESS, key, 1), s.world), s.id).toBe(1);
+      expect(pagesDoneIn(markPageDone(DEFAULT_PROGRESS, key, [true]), s.world), s.id).toBe(1);
     }
   });
 

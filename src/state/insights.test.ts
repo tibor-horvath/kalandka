@@ -1,3 +1,4 @@
+import { save } from './testSave';
 import { describe, expect, it } from 'vitest';
 import { article, gameNotes, gateQuestion, insights } from './insights';
 import { ladderOf, withLadder } from './ladder';
@@ -37,7 +38,7 @@ describe('task log', () => {
 describe('notes per game', () => {
   it('has a note for every game', () => {
     expect(gameNotes(DEFAULT_PROGRESS, DAY).map((n) => n.game)).toEqual([
-      'Számmagok', 'Locsolás', 'Virágsor', 'Villámszem', 'Mézút', 'Méhkas', 'Cserépbarátok',
+      'Számmagok', 'Locsolás', 'Virágsor', 'Villámszem', 'Méhkas', 'Mézút', 'Cserépbarátok',
       'Robotút', 'Válogatógép', 'Mérleg', 'Mintagép', 'Tükörgép', 'Kódzár', 'Hibavadász',
       'Napirend', 'Évszakok', 'Óraállító', 'Hány óra?', 'Digitóra', 'Kakukk alszik', 'Homokóra'
     ]);
@@ -52,7 +53,7 @@ describe('notes per game', () => {
   });
 
   it('gives a tip with the level and a home idea after a run of help', () => {
-    const n = note(solved('mirror', [false, false, true, true, true], { ...DEFAULT_PROGRESS, mirrorSolved: 20 }), 'Tükörgép');
+    const n = note(solved('mirror', [false, false, true, true, true], save({ mirrorSolved: 20 })), 'Tükörgép');
     expect(n.tone).toBe('tip');
     expect(n.title).toBe('A Tükörgépben a „Fel-le tükör” még nehéz.');
     expect(n.home).toMatch(/kézitükröt/);
@@ -80,14 +81,14 @@ describe('notes per game', () => {
 
   it('says "az" before a level name read with a vowel', () => {
     expect(['Elvétel 100-ig', 'Egy lámpa', '1–5, szórva', '5-ig', '11–20 csepp', '2–10 csepp', 'Két szín'].map(article)).toEqual(['az', 'az', 'az', 'az', 'a', 'a', 'a']);
-    const n = note(solved('mirror', [false, false, false], { ...DEFAULT_PROGRESS, mirrorSolved: 0 }), 'Tükörgép');
+    const n = note(solved('mirror', [false, false, false], save({ mirrorSolved: 0 })), 'Tükörgép');
     expect(n.title).toBe('Az „Egy lámpa” megy neki.');
     expect(n.short).toBe('3 / 3 segítség nélkül.');
   });
 
   it('counts the numbers met in Számmagok', () => {
-    expect(note({ ...DEFAULT_PROGRESS, learnSolved: 14 }, 'Számmagok').title).toBe('14 számot ismer 20-ig.');
-    expect(note({ ...DEFAULT_PROGRESS, learnSolved: 25 }, 'Számmagok').title).toBe('Minden számot ismer 20-ig.');
+    expect(note(save({ learnSolved: 14 }), 'Számmagok').title).toBe('14 számot ismer 20-ig.');
+    expect(note(save({ learnSolved: 25 }), 'Számmagok').title).toBe('Minden számot ismer 20-ig.');
   });
 });
 
@@ -99,7 +100,7 @@ describe('highlighted notes', () => {
   });
 
   it('puts tips first, then good news, Számmagok last', () => {
-    let p = solved('water', [false, false, false], { ...DEFAULT_PROGRESS, learnSolved: 14 });
+    let p = solved('water', [false, false, false], save({ learnSolved: 14 }));
     p = solved('patterns', [true, true, true], p);
     expect(insights(p, DAY).map((n) => [n.game, n.tone])).toEqual([
       ['Virágsor', 'tip'],

@@ -134,32 +134,16 @@
 
 /* ---------- cards: basket, sowing, gifts, welcome ---------- */
 .kk-basket { border: none; cursor: pointer; font: inherit; }
-/* The basket: a woven tray of fruit tiles. Each tile shows the fruit big with its count, then one small fruit per
-   piece (up to ten) so it can be counted without reading, then where the fruit goes. */
-.kbasket__card { width: min(540px, 100%); }
-.kbasket__card.is-wide { width: min(780px, 100%); }
+/* The basket: wooden fruit crates, one per kind, each with a moulded tray of twenty hollows (stores.css), and
+   where the fruit goes. */
+.kbasket__card { width: min(760px, 100%); }
+.kbasket__card.is-wide { width: min(760px, 100%); }
 .kbasket__total { height: 52px; background: #fff4cf; flex: none; }
 .kbasket__tray { border-radius: 28px; background: #f6ead0; overflow: hidden; }
 .kbasket__tray::before { content: ''; display: block; height: 12px; background: repeating-linear-gradient(90deg, #c98443 0 18px, #b0702f 18px 22px); }
-.kbasket__tiles { list-style: none; margin: 0; padding: 14px; display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: 12px; }
-.kbasket__tile { padding: 12px 10px 14px; border-radius: 24px; background: var(--paper); box-shadow: 0 4px 0 #e2cf9c; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
-.kbasket__art { position: relative; width: 96px; height: 76px; display: grid; place-items: center; }
-.kbasket__count { position: absolute; top: -6px; right: -14px; min-width: 50px; height: 50px; padding: 0 8px; border: 4px solid var(--paper); border-radius: 25px; background: var(--leaf); color: var(--paper); font-size: 28px; font-weight: 800; line-height: 1; display: grid; place-items: center; }
-.kbasket__name { font-size: 24px; font-weight: 800; line-height: 1; }
-.kbasket__pips { min-height: 26px; max-width: 160px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px; }
-.kbasket__pip { display: inline-flex; }
-.kbasket__pip svg { width: 20px; height: 22px; }
-.kbasket__more { font-family: var(--body); font-size: 16px; font-weight: 800; color: var(--ink-soft); }
 .kbasket__goes { height: 34px; padding: 0 12px; border-radius: 17px; background: var(--drop-tint); color: var(--drop-deep); font-family: var(--body); font-size: 16px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; }
 .kbasket__goes.is-visitor { background: var(--good-tint); color: var(--leaf-deep); }
 .is-phone .kbasket__total { height: 46px; font-size: 22px; }
-.is-phone .kbasket__tiles { grid-template-columns: repeat(min(var(--cols, 2), 2), minmax(0, 1fr)); padding: 10px; gap: 10px; }
-.is-phone .kbasket__tile { padding: 10px 6px 10px; gap: 6px; border-radius: 20px; }
-.is-phone .kbasket__art { width: 76px; height: 60px; }
-.is-phone .kbasket__art > svg { width: 52px; height: 52px; }
-.is-phone .kbasket__count { min-width: 42px; height: 42px; border-width: 3px; font-size: 23px; }
-.is-phone .kbasket__name { font-size: 20px; }
-.is-phone .kbasket__pip svg { width: 16px; height: 18px; }
 .is-phone .kbasket__goes { height: 30px; font-size: 14px; padding: 0 10px; }
 
 .sow__new { margin-left: 2px; padding: 0 8px; border-radius: 10px; background: #b4560b; color: var(--paper); font-size: 13px; line-height: 20px; }
@@ -170,16 +154,29 @@
 .gift__offers .gift__or { align-self: center; }
 .gift__treats--food { flex-wrap: wrap; justify-content: center; max-width: 340px; }
 .gift__decor { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-/* The snack pile: ten places in rows of five; the ones still to come are faded. */
-.gift__pile { display: grid; grid-template-columns: repeat(5, 56px); justify-content: center; gap: 4px 10px; margin-top: 10px; padding: 8px 16px; border-radius: 20px; background: #e9f4df; }
-.gift__pile-thing .decor-art { display: block; }
-.gift__pile-thing.is-later .decor-art { opacity: 0.2; filter: grayscale(1); }
-.is-phone .gift__pile { grid-template-columns: repeat(5, 40px); gap: 2px 8px; }
-.is-phone .gift__pile .decor-art { width: 40px; height: 40px; }
-/* On the Rét the pile sits in front of the visitor's feet, in rows of five. */
-.kk-home__pile { position: absolute; z-index: 3; left: 50%; bottom: 14%; width: 50%; translate: -50% 0; gap: 0 2px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; direction: ltr; }
-.kk-home__pile > span { display: block; }
-.kk-home__pile .decor-art { display: block; width: 100%; height: auto; }
+/* The day's snack, once all five gifts are given: a small panel with the choices side by side, which turns into a
+   calm "Jóllakott!" once the visitor has eaten. Nothing is collected; it comes back the next day. */
+.snack { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 16px 16px; border-radius: 26px; background: #fff7e0; border: 3px solid #f0d58a; }
+.snack.is-fed { background: var(--good-tint); border-color: var(--grass-deep); }
+.snack__title { margin: 0; display: inline-flex; align-items: center; gap: 8px; font-size: 24px; font-weight: 800; color: var(--oops-ink); }
+.snack.is-fed .snack__title { color: var(--leaf-deep); }
+.snack__offers { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.snack__offer { width: 148px; min-height: 120px; padding: 10px 8px; border: 3px solid #d6e4ee; border-radius: 22px; background: #f2f6f9; color: var(--ink-soft); font: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.snack__offer.is-ready { border-color: var(--grass-deep); background: var(--paper); color: var(--leaf-deep); box-shadow: 0 5px 0 var(--grass-deep); }
+.snack__offer.is-ready:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--grass-deep); }
+.snack__things { display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 48px; }
+.snack__name { font-size: 19px; font-weight: 800; line-height: 1.1; text-align: center; }
+.snack__fed { min-width: 260px; padding: 6px 12px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.snack__tick { width: 64px; height: 64px; border-radius: 50%; background: var(--paper); box-shadow: 0 4px 0 var(--grass-deep); display: grid; place-items: center; margin-bottom: 6px; }
+.snack__fed-big { font-size: 30px; font-weight: 800; color: var(--leaf-deep); }
+.snack__fed-small { font-family: var(--body); font-size: 18px; font-weight: 800; color: var(--ink-soft); }
+.is-phone .snack { padding: 10px 10px 12px; }
+.is-phone .snack__title { font-size: 20px; }
+.is-phone .snack__offer { width: 112px; min-height: 100px; }
+.is-phone .snack__name { font-size: 16px; }
+.is-phone .snack__fed { min-width: 0; }
+/* On the Rét a small heart on the name pill: the visitor has had today's snack. */
+.kk-home__full { display: inline-flex; margin-left: -2px; }
 
 .visitor-pop__art--with { display: flex; align-items: flex-end; gap: 28px; }
 .visitor-pop__packet { display: flex; flex-direction: column; align-items: center; gap: 8px; }

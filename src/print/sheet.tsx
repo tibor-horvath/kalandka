@@ -11,8 +11,15 @@ import { WORLDS, type WorldId } from '../state/worlds';
 // The tasks come from the games' own generators, so a sheet matches the child's level in the app;
 // tapping becomes circling, colouring, drawing a line or crossing out.
 
-/** Every game has its sheets. */
-export type PrintId = GameId;
+/** Each world's Vegyes kör sheet, mixing its games' tasks (see mix.tsx). Letters only, as page links want. */
+export type MixId = `mix${WorldId}`;
+
+/** Every game has its sheets, and every world a Vegyes kör sheet. */
+export type PrintId = GameId | MixId;
+
+export function mixIdOf(world: WorldId): MixId {
+  return `mix${world}`;
+}
 
 /** Fewer, bigger tasks for the little ones, or more, smaller ones on a page. */
 export type Density = 'big' | 'normal' | 'many';
@@ -73,11 +80,22 @@ export interface PrintSpec<T> {
   tasks: (req: TaskRequest) => T[];
   /** One task as an SVG; `answers` marks the solution (shown on the tablet only, never printed). */
   Task: (props: { task: T; answers: boolean }) => ReactNode;
+  /** What the game explains before this level, for a magyarázó lap the grown-up may print in front of the sheets. */
+  explain?: (level: number) => Explainer | null;
+}
+
+/** A magyarázó lap: the in-app explanation of a level's idea, slide by slide, on paper. */
+export interface Explainer {
+  /** The question it answers ("Mi a fél óra?"). */
+  title: string;
+  /** A line for the grown-up. */
+  note: string;
+  slides: { title: string; text: string; art: ReactNode }[];
 }
 
 /** Erases the task type so specs of different games share one list. */
 /** A game's sheets; its world and name come from the game list. */
-export function spec<T>(s: Omit<PrintSpec<T>, 'world' | 'game'>): PrintSpec<unknown> {
+export function spec<T>(s: Omit<PrintSpec<T>, 'world' | 'game' | 'id'> & { id: GameId }): PrintSpec<unknown> {
   const { world, name } = GAMES[s.id];
   return { ...s, world, game: name } as unknown as PrintSpec<unknown>;
 }
@@ -289,6 +307,47 @@ export function Sheet({ spec, level, grid, tasks, answers, footer, link }: { spe
   );
 }
 
+/**
+ * A magyarázó lap, printed (when the grown-up asks for it) in front of a level's sheets: the slides the game shows
+ * on the "?" button, big, to look at together. Nothing to solve on it, so no name line, star or QR code.
+ */
+export function ExplainSheet({ spec, level, explainer }: { spec: PrintSpec<unknown>; level: number; explainer: Explainer }) {
+  const n = explainer.slides.length;
+  const cols = n === 4 ? 2 : 1;
+  return (
+    <section className={`ps-sheet ps-sheet--${spec.world} ps-explain`}>
+      <header className="ps-head">
+        <div className="ps-head__text">
+          <span className="ps-world">{WORLDS.find((w) => w.id === spec.world)!.name} · magyarázó lap</span>
+          <h2 className="ps-title">{explainer.title}</h2>
+          <span className="ps-level">
+            <b>{spec.game}</b> · {level + 1}. szint: {spec.levels[level]}
+          </span>
+        </div>
+      </header>
+      <p className="ps-tip ps-explain__note">
+        <b>Szülőknek:</b> {explainer.note}
+      </p>
+      <div className="ps-explain__grid" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${Math.ceil(n / cols)}, minmax(0, 1fr))` }}>
+        {explainer.slides.map((s, i) => (
+          <div key={i} className="ps-explain__slide">
+            {n > 1 && <span className="ps-num">{i + 1}.</span>}
+            <div className="ps-pic">{s.art}</div>
+            <h3>{s.title}</h3>
+            <p>{s.text}</p>
+          </div>
+        ))}
+      </div>
+      <footer className="ps-foot">
+        <KalandkaIcon size={22} />
+        <KalandkaWordmark size={15} />
+        <span className="ps-foot__site">{siteAddress()}</span>
+        <span className="ps-foot__about">Gondolkodtató játékok 5–7 éveseknek</span>
+      </footer>
+    </section>
+  );
+}
+
 /** One page's tasks solved, in the page's numbering, to read on a phone beside the paper. */
 /** The line beside the answers when other answers are right too; nothing when the drawn answer is the only one. */
 export function OtherAnswers({ spec, level }: { spec: PrintSpec<unknown>; level: number }) {
@@ -300,7 +359,37 @@ export function OtherAnswers({ spec, level }: { spec: PrintSpec<unknown>; level:
   ) : null;
 }
 
-export function AnswerList({ spec, tasks, ticked, onTick }: { spec: PrintSpec<unknown>; tasks: unknown[]; ticked?: boolean[]; onTick?: (i: number) => void }) {
+const MARK_RIGHT = (
+  <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
+  </svg>
+);
+
+const MARK_WRONG = (
+  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+    <path d="M6 6l12 12M18 6L6 18" />
+  </svg>
+);
+
+/**
+ * The page's tasks with their answers. `onTick` makes each a plain checklist tick (the phone's answer page);
+ * `onJudge` asks for each one whether the child got it right (the parents' corner, where it counts for stickers).
+ */
+export function AnswerList({
+  spec,
+  tasks,
+  ticked,
+  onTick,
+  judged,
+  onJudge
+}: {
+  spec: PrintSpec<unknown>;
+  tasks: unknown[];
+  ticked?: boolean[];
+  onTick?: (i: number) => void;
+  judged?: (boolean | null)[];
+  onJudge?: (i: number, right: boolean) => void;
+}) {
   const { Task } = spec;
   const textures = useTextures();
   return (
@@ -308,8 +397,23 @@ export function AnswerList({ spec, tasks, ticked, onTick }: { spec: PrintSpec<un
       <Textures {...textures.ids} />
       <ol className="ps-answers">
         {tasks.map((t, i) => (
-          <li key={i} className={`ps-answer${onTick ? ' ps-answer--tick' : ''}${ticked?.[i] ? ' is-ticked' : ''}`}>
+          <li
+            key={i}
+            className={`ps-answer${onTick || onJudge ? ' ps-answer--tick' : ''}${onJudge ? ' ps-answer--judge' : ''}${ticked?.[i] || judged?.[i] === true ? ' is-ticked' : ''}${judged?.[i] === false ? ' is-wrong' : ''}`}
+          >
             <span className="ps-num">{i + 1}.</span>
+            {onJudge && (
+              <span className="ps-judge" role="group" aria-label={`${i + 1}. feladat`}>
+                <button type="button" className="ps-judge__btn ps-judge__btn--right" aria-pressed={judged?.[i] === true} onClick={() => onJudge(i, true)}>
+                  {MARK_RIGHT}
+                  Jó
+                </button>
+                <button type="button" className="ps-judge__btn ps-judge__btn--wrong" aria-pressed={judged?.[i] === false} onClick={() => onJudge(i, false)}>
+                  {MARK_WRONG}
+                  Hibás
+                </button>
+              </span>
+            )}
             {onTick && (
               <button type="button" className="ps-answer__tick" aria-pressed={!!ticked?.[i]} aria-label={`${i + 1}. feladat ellenőrizve`} onClick={() => onTick(i)}>
                 <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

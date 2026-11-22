@@ -1,3 +1,5 @@
+import { LADDER_GAMES, withRound } from './games';
+import { LADDER_DEFS } from '../worlds/defs';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ladderOf, placeAt, withLadder, type LadderGame } from './ladder';
 import { announceAll } from './unlocks';
@@ -88,10 +90,9 @@ export function progressOf(s: Profiles, id: string): Progress {
  * Where a child of this age starts on each ladder (0-based; a game left out starts at the bottom). On the low
  * side on purpose: a level too easy is climbed in a few tasks, while starting too high means failing first.
  */
-export const AGE_LEVELS: Record<Exclude<AgeBand, '5'>, Partial<Record<LadderGame, number>>> = {
-  '6': { water: 1, patterns: 1, flash: 1, add: 2, sort: 1, scale: 1 },
-  '7+': { water: 2, patterns: 2, trace: 2, flash: 2, add: 5, pots: 1, path: 2, sort: 3, scale: 2, seq: 2, mirror: 1, code: 2, fix: 1 }
-};
+export const AGE_LEVELS = Object.fromEntries(
+  (['6', '7+'] as const).map((age) => [age, Object.fromEntries(LADDER_GAMES.flatMap((g) => (LADDER_DEFS[g].ageStart?.[age] === undefined ? [] : [[g, LADDER_DEFS[g].ageStart![age]!]])))])
+) as Record<Exclude<AgeBand, '5'>, Partial<Record<LadderGame, number>>>;
 
 function placed(p: Progress, levels: Partial<Record<LadderGame, number>>): Progress {
   const games = Object.entries(levels) as [LadderGame, number][];
@@ -101,9 +102,9 @@ function placed(p: Progress, levels: Partial<Record<LadderGame, number>>): Progr
 
 /** Starting levels for a new child of this age. */
 export function startingProgress(age: AgeBand | null): Progress {
-  if (age === '6') return placed({ ...DEFAULT_PROGRESS, learnRound: 5 }, AGE_LEVELS['6']);
+  if (age === '6') return placed(withRound(DEFAULT_PROGRESS, 'learn', 5), AGE_LEVELS['6']);
   // Everything is open from the start, so Csepi says hello instead of announcing unlocks.
-  if (age === '7+') return placed(announceAll({ ...DEFAULT_PROGRESS, learnRound: 10, unlockAll: true }), AGE_LEVELS['7+']);
+  if (age === '7+') return placed(announceAll({ ...withRound(DEFAULT_PROGRESS, 'learn', 10), unlockAll: true }), AGE_LEVELS['7+']);
   return DEFAULT_PROGRESS;
 }
 
