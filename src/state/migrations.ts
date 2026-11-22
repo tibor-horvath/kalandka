@@ -109,7 +109,8 @@ function groupByGameAndWorld(raw: RawSave): RawSave {
 
 export const MIGRATIONS: readonly Migration[] = [
   { to: 1, about: 'the fixes made before saves had versions', run: beforeVersions },
-  { to: 2, about: 'rounds and solved counts per game, task clocks and rewards per world', run: groupByGameAndWorld }
+  { to: 2, about: 'rounds and solved counts per game, task clocks and rewards per world', run: groupByGameAndWorld },
+  { to: 3, about: 'daily snacks are no longer collected: the snack pile count goes', run: (raw) => without(raw, ['snacks']) }
 ];
 
 /** The version a save is written at now. */

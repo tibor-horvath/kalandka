@@ -34,7 +34,7 @@ import { chime, fanfare, popBubble } from '../../../lib/sound';
 import { article, capitalize, numberAttr, numberCount } from '../../../lib/numbers';
 import { speak } from '../../../lib/speech';
 import { useProgress, type Progress } from '../../../state/progress';
-import { type FruitKind, BASKET_MAX, SHELF_MAX, basketFullFor, basketHolds, fruitOf, shelfFull, BORDER_COST, BORDER_SPOTS, FIRST_FLOWER, FIRST_TREE, FLOWERS, FOOD_NAMES, GIFTS_EACH, PILE_OF, PLANT_OPTIONS, SNACK_PILE, SNACK_SIZE, PLOT_BEDS, RECIPES, TREAT_WANTED, VEG_COST, VEG_HELPINGS, VEG_SPOTS, VISITORS, basketBerries, basketPears, basketTotal, bedAt, bedFlower, bedName, bedTree, borderAt, borderPattern, broughtBy, buyFlower, canBuyFlower, canGive, canGiveFood, canGiveSeeds, canMake, canMakeAnything, canPlant, canPlantBorder, canPlantVeg, canSnack, canSnackWith, decorOf, emptyBeds, emptyBorder, flowerOf, foodGiftSize, foodOnHand, fruitName, gardenDone, gardenFull, giftSize, giftsOf, giftsReady, give, giveFood, giveSeeds, growAfter, growthOf, isGrown, isThirsty, make, newVisitor, visitorsOf, openBeds, openVeg, ownedFlowers, ownedTrees, ownedVegs, ownsFlower, ownsTree, pantryCount, pickFruit, pickedFruit, plant, plantBorder, plantVeg, pollenFlowers, recipeOf, recipeOpen, ripeFruit, ripeTotal, ripeVegSpots, seedBalance, seedGiftSize, snack, snackDue, snackPile, takesSeeds, thirstyBeds, treatOutOfReach, treatsOf, treeOf, vegAt, vegOf, vegRipe, visitorOf, visitorProgress, water, waterAll, welcomedVisitors, wishOf, type DecorId, type FlowerId, type PlantKind, type Recipe, type SnackHow, type TreatId, type TreeId, type VegId, type VisitorId } from '../../../state/garden';
+import { type FruitKind, BASKET_MAX, SHELF_MAX, basketFullFor, basketHolds, fruitOf, shelfFull, BORDER_COST, BORDER_SPOTS, FIRST_FLOWER, FIRST_TREE, FLOWERS, FOOD_NAMES, GIFTS_EACH, PLANT_OPTIONS, SNACK_SIZE, PLOT_BEDS, RECIPES, TREAT_WANTED, VEG_COST, VEG_HELPINGS, VEG_SPOTS, VISITORS, basketBerries, basketPears, basketTotal, bedAt, bedFlower, bedName, bedTree, borderAt, borderPattern, broughtBy, buyFlower, canBuyFlower, canGive, canGiveFood, canGiveSeeds, canMake, canMakeAnything, canPlant, canPlantBorder, canPlantVeg, canSnack, canSnackWith, decorOf, emptyBeds, emptyBorder, flowerOf, foodGiftSize, foodOnHand, fruitName, gardenDone, gardenFull, giftSize, giftsOf, giftsReady, give, giveFood, giveSeeds, growAfter, growthOf, isGrown, isThirsty, make, newVisitor, visitorsOf, openBeds, openVeg, ownedFlowers, ownedTrees, ownedVegs, ownsFlower, ownsTree, pantryCount, pickFruit, pickedFruit, plant, plantBorder, plantVeg, pollenFlowers, recipeOf, recipeOpen, ripeFruit, ripeTotal, ripeVegSpots, seedBalance, seedGiftSize, snack, snackDue, snackedToday, takesSeeds, thirstyBeds, treatOutOfReach, treatsOf, treeOf, vegAt, vegOf, vegRipe, visitorOf, visitorProgress, water, waterAll, welcomedVisitors, wishOf, type DecorId, type FlowerId, type PlantKind, type Recipe, type SnackHow, type TreatId, type TreeId, type VegId, type VisitorId } from '../../../state/garden';
 
 const CHEAPEST = Math.min(...PLANT_OPTIONS.map((o) => o.cost));
 
@@ -75,18 +75,9 @@ type Feast =
   | { visitor: VisitorId; kind: 'veg'; food: VegId; spots: number[]; total: number; gift: boolean }
   | { visitor: VisitorId; kind: 'pollen'; keys: string[]; total: number; gift: boolean };
 
-/** "gomba": one thing of a visitor's snack pile, as Csepi says it. */
-function pileName(id: VisitorId): string {
-  return wishOf(id).decor.find((d) => d.id === PILE_OF[id])!.name.toLowerCase();
-}
-
-/** What Csepi says when a snack has gone on the pile. */
-function pileLine(p: Progress, id: VisitorId): string {
-  const n = snackPile(p, id);
-  const v = visitorOf(id);
-  return n >= SNACK_PILE && (p.snacks[id] ?? 0) > SNACK_PILE
-    ? `${v.name} jóllakott. Tele a kupaca: tíz ${pileName(id)}!`
-    : `${v.name} jóllakott. Nézd, eggyel több ${pileName(id)} lett a kupacán. Már ${numberCount(n)}!`;
+/** What Csepi says when a visitor has had its snack for the day. */
+function snackLine(id: VisitorId): string {
+  return `${visitorOf(id).name} jóllakott. Köszöni az uzsonnát! Holnap újra örül egy kis falatnak.`;
 }
 
 type View = number | 'ret';
@@ -127,9 +118,6 @@ export function Garden({ onBack }: { onBack: () => void }) {
   const [guest, setGuest] = useState<VisitorId | null>(null);
   const [freshDecor, setFreshDecor] = useState<DecorId | null>(null);
   const givenDecor = useRef<DecorId | null>(null);
-  // The visitor whose snack pile just grew: its newest thing pops in once on the Rét.
-  const [freshPile, setFreshPile] = useState<VisitorId | null>(null);
-  const snackedNow = useRef<VisitorId | null>(null);
   const [done, setDone] = useState(false);
   const [feast, setFeast] = useState<Feast | null>(null);
   const [bite, setBite] = useState(0);
@@ -441,10 +429,9 @@ export function Garden({ onBack }: { onBack: () => void }) {
     thanks(v, after);
   };
 
-  /** A snack given on the gift card (a treat, a handful of seeds or fruit from the basket); the card says the pile line. */
+  /** A snack given on the gift card (a treat, a handful of seeds or fruit from the basket); the card thanks the child. */
   const snackedWith = (v: VisitorId, how: SnackHow) => {
     update((p) => snack(p, v, how));
-    snackedNow.current = v;
   };
 
   // Vegetables and pollen are eaten in the garden: the card closes, the visitor eats bite by bite and Csepi counts.
@@ -500,8 +487,7 @@ export function Garden({ onBack }: { onBack: () => void }) {
       });
     } else {
       setView('ret');
-      setFreshPile(f.visitor);
-      tell({ text: `${v.name} jóllakott!`, speech: `${prefersLess() ? `${counted}! ` : ''}${pileLine(after, f.visitor)}`, mood: 'cheer', tone: 'good' });
+      tell({ text: `${v.name} jóllakott!`, speech: `${prefersLess() ? `${counted}! ` : ''}${snackLine(f.visitor)}`, mood: 'cheer', tone: 'good' });
     }
   };
 
@@ -790,7 +776,7 @@ export function Garden({ onBack }: { onBack: () => void }) {
             )}
           </div>
         ) : (
-          <Meadow freshDecor={freshDecor} freshPile={freshPile} onGuest={(id) => {
+          <Meadow freshDecor={freshDecor} onGuest={(id) => {
             pokeAt(id);
             popBubble(3);
             setGuest(id);
@@ -1048,8 +1034,6 @@ export function Garden({ onBack }: { onBack: () => void }) {
             popBubble(1);
             setGuest(null);
             setFreshDecor(givenDecor.current);
-            setFreshPile(snackedNow.current);
-            snackedNow.current = null;
           }}
         />
       )}
@@ -1140,12 +1124,10 @@ function Welcome({ id, onWelcome }: { id: VisitorId; onWelcome: () => void }) {
  */
 function Meadow({
   freshDecor,
-  freshPile,
   onGuest,
   poked
 }: {
   freshDecor: DecorId | null;
-  freshPile: VisitorId | null;
   onGuest: (id: VisitorId) => void;
   poked: (id: string) => number;
 }) {
@@ -1160,13 +1142,13 @@ function Meadow({
           const given = giftsOf(progress, v.id);
           const { food, treat } = wishOf(v.id);
           const wants = canGiveFood(progress, v.id) ? 'food' : canGive(progress, v.id) ? 'treat' : canGiveSeeds(progress, v.id) ? 'seeds' : null;
-          const pile = snackPile(progress, v.id);
+          const full = given >= GIFTS_EACH && snackedToday(progress, v.id);
           return (
             <button
               key={v.id}
               type="button"
               className={`kk-home${wants ? ' is-waiting' : ''}`}
-              aria-label={`${v.name}, ${given} ajándék az ötből${pile ? `, ${pile} ${pileName(v.id)} a kupacán` : ''}${wants ? ', ajándékot vár' : ''}`}
+              aria-label={`${v.name}, ${given} ajándék az ötből${full ? ', ma már jóllakott' : ''}${wants ? ', ajándékot vár' : ''}`}
               onClick={() => onGuest(v.id)}
             >
               <span className="kk-home__clearing" aria-hidden="true" />
@@ -1175,15 +1157,6 @@ function Meadow({
                   <DecorArt id={d.id} size={56} />
                 </span>
               ))}
-              {pile > 0 && (
-                <span className="kk-home__pile" aria-hidden="true">
-                  {Array.from({ length: pile }, (_, k) => (
-                    <span key={k} className={freshPile === v.id && k === pile - 1 ? 'pop-in' : ''}>
-                      <DecorArt id={PILE_OF[v.id]} size={20} />
-                    </span>
-                  ))}
-                </span>
-              )}
               <span key={poked(v.id)} className={`kk-home__animal visitors__hop${poked(v.id) ? ' is-poked' : ''}`} aria-hidden="true">
                 <VisitorArt id={v.id} width={120} />
               </span>
@@ -1199,6 +1172,11 @@ function Meadow({
                     {Array.from({ length: GIFTS_EACH }, (_, k) => (
                       <span key={k} className={k < given ? 'is-given' : ''} />
                     ))}
+                  </span>
+                )}
+                {full && (
+                  <span className="kk-home__full" aria-hidden="true">
+                    <FullHeart size={16} />
                   </span>
                 )}
               </span>
@@ -1315,8 +1293,8 @@ function wishLine(p: Progress, id: VisitorId): string {
   const { food, treat } = wishOf(id);
   if (n === 0) {
     if (!snackDue(p, id)) return `${v.name} ma már jóllakott. Holnap újra örül egy kis uzsonnának.`;
-    if (canSnack(p, id)) return `${v.name} nagyon boldog. Kér egy kis uzsonnát? Minden uzsonnától nő a kupaca.`;
-    return `${v.name} nagyon boldog. Egy kis uzsonnának is örülne, ha lesz. Minden uzsonnától nő a kupaca.`;
+    if (canSnack(p, id)) return `${v.name} nagyon boldog. Kér egy kis uzsonnát? Válassz egyet!`;
+    return `${v.name} nagyon boldog. Egy kis uzsonnának is örülne, ha lesz.`;
   }
   const foodN = foodGiftSize(p, id);
   if (food && canGiveFood(p, id)) return `${v.name} ${numberAttr(foodN)} ${FOOD_NAMES[food].wanted} kér. Van a kertben, add oda neki!`;
@@ -1513,10 +1491,9 @@ function GiftCard({
   const foodN = foodGiftSize(progress, id);
   const onHand = food ? foodOnHand(progress, food) : 0;
   const eatsInGarden = food === 'carrot' || food === 'lettuce' || food === 'pollen';
-  // After the five gifts: the day's snack, and the pile it grows.
+  // After the five gifts: the day's snack, once a day. Nothing is collected; the visitor is just full until tomorrow.
   const snackToday = n === 0 && snackDue(progress, id);
-  const pile = snackPile(progress, id);
-  const [freshPile, setFreshPile] = useState(-1);
+  const [fedNow, setFedNow] = useState(false);
 
   useEffect(() => {
     speak(line);
@@ -1562,13 +1539,12 @@ function GiftCard({
     thanks('fruit', `${counting1(foodN)}! `);
   };
 
-  /** A snack given here: one more thing on the pile, which pops in on the card. */
+  /** A snack given here: the card turns to "Jóllakott!" for the rest of the day. */
   const snacked = (how: SnackHow, counted: string) => {
     fanfare();
     onSnack(how);
-    const after = snack(progress, id, how);
-    setFreshPile(snackPile(after, id) - 1);
-    tell(`${v.name} jóllakott!`, `${counted}${pileLine(after, id)}`);
+    setFedNow(true);
+    tell(`${v.name} jóllakott!`, `${counted}${snackLine(id)}`);
   };
 
   const offerSnack = (how: SnackHow) => {
@@ -1641,8 +1617,24 @@ function GiftCard({
                 }}
               />
             )}
-            {!counting && snackToday && (
-              <SnackOffers id={id} seeds={seeds} onOffer={offerSnack} />
+            {!counting && n === 0 && (
+              <section className={`snack${snackToday ? '' : ' is-fed'}`} aria-labelledby="snack-title">
+                <h3 id="snack-title" className="snack__title">
+                  <SnackSun />
+                  Mai uzsonna
+                </h3>
+                {snackToday ? (
+                  <SnackOffers id={id} seeds={seeds} onOffer={offerSnack} />
+                ) : (
+                  <div className={`snack__fed${fedNow ? ' pop-in' : ''}`}>
+                    <span className="snack__tick" aria-hidden="true">
+                      <FullHeart size={34} />
+                    </span>
+                    <span className="snack__fed-big">Jóllakott!</span>
+                    <span className="snack__fed-small">Holnap újra kér.</span>
+                  </div>
+                )}
+              </section>
             )}
             {!counting && n > 0 && food && (
               <button
@@ -1712,85 +1704,76 @@ function GiftCard({
           ))}
         </ul>
 
-        {n === 0 && (
-          <div className="gift__pile" aria-label={`${v.name} kupaca: ${pile} ${pileName(id)} a tízből`}>
-            {Array.from({ length: SNACK_PILE }, (_, k) => (
-              <span key={k} className={`gift__pile-thing${k < pile ? '' : ' is-later'}`} aria-hidden="true">
-                <span className={k === freshPile ? 'pop-in' : ''}>
-                  <DecorArt id={PILE_OF[id]} size={56} />
-                </span>
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
-/** The day's snack after the five gifts: three of the visitor's garden food, one treat, or (for those who take seeds) three seeds. */
+/** The day's snack after the five gifts, side by side: three of the visitor's garden food, one treat, or (for those who take seeds) three seeds. */
 function SnackOffers({ id, seeds, onOffer }: { id: VisitorId; seeds: number; onOffer: (how: SnackHow) => void }) {
   const { progress } = useProgress();
   const { food, treat } = wishOf(id);
   const onHand = food ? foodOnHand(progress, food) : 0;
   const ready = (how: SnackHow) => (canSnackWith(progress, id, how) ? ' is-ready' : '');
   const have = treatsOf(progress, treat);
+  const bag = seedBalance(progress);
   return (
-    <>
+    <div className="snack__offers">
       {food && (
-        <button
-          type="button"
-          className={`gift__offer${ready('food')}`}
-          onClick={() => onOffer('food')}
-          aria-label={`Uzsonna: ${SNACK_SIZE} ${FOOD_NAMES[food].name}. ${onHand} van.`}
-        >
-          <span className="gift__treats gift__treats--food" aria-hidden="true">
+        <button type="button" className={`snack__offer${ready('food')}`} onClick={() => onOffer('food')} aria-label={`Uzsonna: ${SNACK_SIZE} ${FOOD_NAMES[food].name}. ${onHand} van.`}>
+          <span className="snack__things" aria-hidden="true">
             {Array.from({ length: SNACK_SIZE }, (_, k) => (
               <span key={k} className={`pantry__thing${k < onHand ? '' : ' is-missing'}`}>
-                <FoodIcon id={food} size={34} />
+                <FoodIcon id={food} size={30} />
               </span>
             ))}
           </span>
-          <span className="gift__name-big">Egy kis {FOOD_NAMES[food].name}</span>
-          <span className="gift__label">Odaadom!</span>
+          <span className="snack__name">
+            {SNACK_SIZE} {FOOD_NAMES[food].name}
+          </span>
         </button>
       )}
-      {food && <span className="gift__or">vagy</span>}
-      <button
-        type="button"
-        className={`gift__offer${ready('treat')}`}
-        onClick={() => onOffer('treat')}
-        aria-label={`Uzsonna: egy ${recipeOf(treat).name.toLowerCase()}. A polcon ${have} van.`}
-      >
-        <span className="gift__treats" aria-hidden="true">
+      <button type="button" className={`snack__offer${ready('treat')}`} onClick={() => onOffer('treat')} aria-label={`Uzsonna: egy ${recipeOf(treat).name.toLowerCase()}. A polcon ${have} van.`}>
+        <span className="snack__things" aria-hidden="true">
           <span className={`pantry__thing${have > 0 ? '' : ' is-missing'}`}>
-            <TreatArt id={treat} size={56} />
+            <TreatArt id={treat} size={44} />
           </span>
         </span>
-        <span className="gift__label">{recipeOpen(progress, treat) ? 'Odaadom!' : 'Ha tele a kert'}</span>
+        <span className="snack__name">{recipeOpen(progress, treat) ? recipeOf(treat).name : 'Ha tele a kert'}</span>
       </button>
       {seeds > 0 && (
-        <>
-          <span className="gift__or">vagy</span>
-          <button
-            type="button"
-            className={`gift__offer${ready('seeds')}`}
-            onClick={() => onOffer('seeds')}
-            aria-label={`Uzsonna: ${seeds} mag. A zsákban ${seedBalance(progress)} van.`}
-          >
-            <span className="gift__name-big">Egy kis mag</span>
-            <span className="gift__seeds" aria-hidden="true">
-              {Array.from({ length: seeds }, (_, k) => (
-                <span key={k} className={`pantry__thing${k < seedBalance(progress) ? '' : ' is-missing'}`}>
-                  <Seed size={26} />
-                </span>
-              ))}
-            </span>
-            <span className="gift__label">Odaadom!</span>
-          </button>
-        </>
+        <button type="button" className={`snack__offer${ready('seeds')}`} onClick={() => onOffer('seeds')} aria-label={`Uzsonna: ${seeds} mag. A zsákban ${bag} van.`}>
+          <span className="snack__things" aria-hidden="true">
+            {Array.from({ length: seeds }, (_, k) => (
+              <span key={k} className={`pantry__thing${k < bag ? '' : ' is-missing'}`}>
+                <Seed size={26} />
+              </span>
+            ))}
+          </span>
+          <span className="snack__name">{seeds} mag</span>
+        </button>
       )}
-    </>
+    </div>
+  );
+}
+
+/** A small sun over a plate: the day's snack. */
+function SnackSun() {
+  return (
+    <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+      <circle cx="12" cy="10" r="4" fill="#ffd24a" stroke="#c98a00" />
+      <path d="M12 2.5v1.6M5.6 5.2l1.1 1.1M18.4 5.2l-1.1 1.1M3 10h1.6M19.4 10H21" stroke="#c98a00" />
+      <path d="M3.5 17h17M6 20.5h12" />
+    </svg>
+  );
+}
+
+/** A filled heart: the visitor has had its snack today. */
+function FullHeart({ size }: { size: number }) {
+  return (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24">
+      <path d="M12 20.5s-7.5-4.6-7.5-10.4A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.8c0 5.8-7.5 10.4-7.5 10.4z" fill="#e0475b" stroke="#a8283a" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
   );
 }
 

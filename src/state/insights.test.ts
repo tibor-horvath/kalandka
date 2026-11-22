@@ -38,7 +38,7 @@ describe('task log', () => {
 describe('notes per game', () => {
   it('has a note for every game', () => {
     expect(gameNotes(DEFAULT_PROGRESS, DAY).map((n) => n.game)).toEqual([
-      'Számmagok', 'Locsolás', 'Virágsor', 'Villámszem', 'Mézút', 'Méhkas', 'Cserépbarátok',
+      'Számmagok', 'Locsolás', 'Virágsor', 'Villámszem', 'Méhkas', 'Mézút', 'Cserépbarátok',
       'Robotút', 'Válogatógép', 'Mérleg', 'Mintagép', 'Tükörgép', 'Kódzár', 'Hibavadász',
       'Napirend', 'Évszakok', 'Óraállító', 'Hány óra?', 'Digitóra', 'Kakukk alszik', 'Homokóra'
     ]);
