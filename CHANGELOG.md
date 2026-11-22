@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.19.0](https://github.com/tibor-horvath/kalandka/compare/v1.18.0...v1.19.0) (2026-11-22)
+
+
+### Added
+
+* enhance CI workflows with timeout settings and improve Rest com… ([#96](https://github.com/tibor-horvath/kalandka/issues/96)) ([f6a1438](https://github.com/tibor-horvath/kalandka/commit/f6a14382348e39c78bd59b825a15b4ba68eff5e7))
+
+
+### Changed
+
+* Refactor snack system: remove snack pile tracking, update r… ([#94](https://github.com/tibor-horvath/kalandka/issues/94)) ([a2e410f](https://github.com/tibor-horvath/kalandka/commit/a2e410f5b98ac0b48925b90870c5c8d55e334046))
+
 ## [1.18.0](https://github.com/tibor-horvath/kalandka/compare/v1.17.0...v1.18.0) (2026-11-18)
 
 
