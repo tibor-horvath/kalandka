@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties, type ComponentType } from 'rea
 import { AVATARS, Avatar } from '../components/avatars';
 import { Csepi } from '../components/Csepi';
 import { useModal } from '../components/Modal';
+import { ScanButton } from '../components/hub';
 import { StickerDisc } from '../components/stickers';
 import { LockIcon, SpeakerIcon } from '../components/ui';
 import { speak, type Speaker } from '../lib/speech';
@@ -129,8 +130,20 @@ function ReplayButton({ onClick }: { onClick: () => void }) {
  * Shown when today's play time is used up, or during evening rest. The guide of the world played last rests here,
  * next to what the child did today and a picture of "sleep, then play again". Only the parents' gate leads on;
  * on a shared device a sibling whose own time is left can take over (onSwitchTo), after one more tap on their own page.
+ * `onScan`: "Kész lap" beside "Szülőknek" opens the same gate set to Lap beolvasása, so a grown-up can count a
+ * sheet finished on paper during the rest. It adds no play time; a sticker the sheet earns shows under "Ma ezt csináltad".
  */
-export function Rest({ evening = false, onParents, onSwitchTo }: { evening?: boolean; onParents: () => void; onSwitchTo?: (id: string) => void }) {
+export function Rest({
+  evening = false,
+  onParents,
+  onScan,
+  onSwitchTo
+}: {
+  evening?: boolean;
+  onParents: () => void;
+  onScan?: () => void;
+  onSwitchTo?: (id: string) => void;
+}) {
   const { progress } = useProgress();
   const { profiles } = useProfiles();
   const modal = useModal<HTMLDivElement>();
@@ -266,10 +279,13 @@ export function Rest({ evening = false, onParents, onSwitchTo }: { evening?: boo
             </div>
           </>
         )}
-        <button type="button" className="parents-btn rest__parents" onClick={onParents}>
-          <LockIcon size={20} />
-          <span className="parents-btn__label">Szülőknek</span>
-        </button>
+        <div className="rest__corner">
+          {onScan && <ScanButton className="rest__parents" onClick={onScan} />}
+          <button type="button" className="parents-btn rest__parents" onClick={onParents}>
+            <LockIcon size={20} />
+            <span className="parents-btn__label">Szülőknek</span>
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -14,5 +14,7 @@ jobs:
   title:
     name: Conventional title
     uses: tibor-horvath/ci-toolkit/.github/workflows/pr-title-lint.yml@v2
+    with:
+      timeout-minutes: 5
     permissions:
       pull-requests: read

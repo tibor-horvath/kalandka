@@ -19,16 +19,6 @@ function RestartIcon() {
   );
 }
 
-function HomeIcon() {
-  return (
-    <svg aria-hidden="true" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 11l9-7 9 7" />
-      <path d="M5 10v10h14V10" />
-      <path d="M10 20v-6h4v6" />
-    </svg>
-  );
-}
-
 function SavedIcon() {
   return (
     <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
@@ -41,8 +31,8 @@ function SavedIcon() {
 /**
  * Last resort when a screen throws while drawing: instead of a blank page, Csepi says (and reads aloud) that
  * they got lost, and one big button starts the app again, back on the home screen of the world the child was in
- * (no "Ki játszik?" picker in between, see app/resume). After the tap the button stays
- * pressed and Csepi cheers, so the child sees the tap worked while the page reloads. Progress is saved as it
+ * (no "Ki játszik?" picker in between, see app/resume). After the tap the button goes away and Csepi cheers,
+ * so the child sees the tap worked and has nothing left to press while the page reloads. Progress is saved as it
  * happens, so nothing is lost; a quiet line on the grass tells the grown-up so.
  * It stands outside the Stage, so it still shows if the Stage itself is what broke, and it sizes itself.
  */
@@ -96,9 +86,18 @@ export class Oops extends Component<{ children: ReactNode }, { broken: boolean; 
             </div>
           </div>
 
-          <button type="button" className="oops__btn" onClick={this.restart} disabled={restarting} aria-busy={restarting} autoFocus>
-            {restarting ? <HomeIcon /> : <RestartIcon />}
-            {restarting ? 'Haza' : 'Újra'}
+          {/* One tap is the whole way back: the button then steps aside (keeping its room, so nothing jumps) and only
+              Csepi's cheer stays, so nothing on screen looks like a second button to press. */}
+          <button
+            type="button"
+            className={`oops__btn${restarting ? ' oops__btn--gone' : ''}`}
+            onClick={this.restart}
+            disabled={restarting}
+            aria-hidden={restarting || undefined}
+            autoFocus
+          >
+            <RestartIcon />
+            Újra
           </button>
         </div>
 

@@ -75,9 +75,9 @@ export function PrinterIcon({ size = 22 }: { size?: number }) {
 }
 
 /** Lap beolvasása, behind the parents' gate: beside Nyomtatás on "Ki játszik?", where the printouts come from. */
-export function ScanButton({ onClick }: { onClick: () => void }) {
+export function ScanButton({ onClick, className }: { onClick: () => void; className?: string }) {
   return (
-    <button type="button" className="parents-btn" onClick={onClick}>
+    <button type="button" className={className ? `parents-btn ${className}` : 'parents-btn'} onClick={onClick}>
       <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 8V5a1 1 0 0 1 1-1h3" />
         <path d="M16 4h3a1 1 0 0 1 1 1v3" />

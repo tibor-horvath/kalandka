@@ -315,7 +315,7 @@ function Game() {
         {!resting && !inParents && progress.warnBefore && remaining <= WARN_SECONDS && <TimeBanner remaining={remaining} />}
         {!resting && !inParents && timeUp && !progress.warnBefore && <TimeBanner remaining={0} />}
         {resting && !inParents && (
-          <Rest evening={evening && remaining > 0} onParents={() => openGate()} onSwitchTo={profiles.kids.length > 1 && !evening ? pick : undefined} />
+          <Rest evening={evening && remaining > 0} onParents={() => openGate()} onScan={openScan} onSwitchTo={profiles.kids.length > 1 && !evening ? pick : undefined} />
         )}
       </Suspense>
       {parents === 'gate' && (
